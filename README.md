@@ -1,4 +1,8 @@
 # ADAM
+<<<<<<< HEAD
+=======
+the Amsterdam Decoding And Modeling (ADAM) toolbox
+>>>>>>> origin/bugfixes
 
 [![ADAM](https://github.com/fahrenfort/ADAM/tree/master/install/ICON.png)](https://github.com/fahrenfort/ADAM/tree/master/install/ICON.png)
 
