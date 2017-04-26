@@ -1,9 +1,5 @@
-# ADAM
-=======
-the Amsterdam Decoding And Modeling (ADAM) toolbox
-
-
-[![ADAM](https://github.com/fahrenfort/ADAM/blob/master/install/ADAM_logo.pdf)](https://github.com/fahrenfort/ADAM/blob/master/install/ADAM_logo.pdf)
+# ADAM TOOLBOX
+[![ADAM](http://www.fahrenfort.com/images/ADAM_logo.pdf)](http://www.fahrenfort.com/images/ADAM_logo.pdf)
 
 - Use the same data for training and testing through a k-fold leave-one-out procedure
 - Use different datasets for testing and training
