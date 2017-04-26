@@ -4,7 +4,7 @@
 # What is it?
 ADAM is an open source Matlab Toolbox. It allows you to perform multivariate analyses on your EEG and/or MEG data using backward decoding (BDM) and forward encoding models (FEM).
 
-# Features (incomplete list)
+# Features
 - Perform multivariate classification analyses (backward decoding) using an arbitrary number of conditions
 - Compute forward encoding models, including Channel Tuning Functions (CTFs), either across time or averaged over time
 - Use the same data for training and testing through a k-fold leave-one-out procedure
@@ -29,3 +29,6 @@ One of the big advantages of this toolbox is that it takes generic input formats
 - A recent version of [EEGLAB](https://sccn.ucsd.edu/eeglab/downloadtoolbox.php) (>13, lower versions might or might not work)
 - A recent install of [FieldTrip](http://www.fieldtriptoolbox.org/download) (>2015, lower versions might or might not work)
 - A reasonably modern computer (>=8GB memory, enough HD space, modern processor, more is better)
+
+# Manual
+We are currently working to supply an up-to-date manual of the toolbox, including some easy to use wrapper functions, which will be presented at the [ICON conference](http://www.icon2017.org) 5-8 August 2017 in Amsterdam
