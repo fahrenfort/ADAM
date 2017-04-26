@@ -1,0 +1,38 @@
+EEG analysis pipeline:
+- re-reference
+- identify and interpolate bad channels -> save names of rejected channels
+
+* Merge datasets beloning to the same sessions (only same-day blocks!)
+
+- Read in data into EEG lab:
+	* epoch (think about window!)
+	* highpass filter (.1 or .01)
+	* interpolate electrodes (make electrode_interpolation files)
+
+- for ICA blink removal:
+	highpass (preferably at 1 hz)
+	remove mean of entire window
+	best on continuous, but not necessary
+	if epoched: prevent overlapping time windows
+
+
+- Run ICA on continuous data with options 1 Hz highpass filter and interpolate electrodes (use electrode_interpolation files from main analysis pipeline)
+- Apply that ICA to the epoched .1 Hz filtered data to remove blinks
+- Identify bad components using ADJUST plugin
+- Throw out bad components and calculate back data without those components
+- Check data
+
+* Merge datasets belonging to the same subjects (only if coming from different days)
+
+- Mark eye-movements and other artifacts in trigger codes so these are not analyzed (optional)
+
+- Analyze (classification or forward modeling), baseline correction and muscle rejection is done by script
+
+-------------------------------------------------------------------
+
+1) Highpass filter (.1) and epoch
+2) Run ICA on continuous 1 Hz highpass filtered data, interpolate bad channels
+3) Remove eye-blinks from .1 Hz highpass filtered and epoched data using ADJUST
+4) Inspect components, iterate to remove only blink artifacts
+5) Mark eye-movements from HEOG and VEOG in trigger codes so these are not analyzed
+6) Run analysis (do baselining and muscle artefact removal during analysis, or throw out bad trials beforehand)
