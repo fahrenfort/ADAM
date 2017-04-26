@@ -1,6 +1,7 @@
-# ADAM TOOLBOX
-[![ADAM](http://www.fahrenfort.com/images/ADAM_logo.pdf)](http://www.fahrenfort.com/images/ADAM_logo.pdf)
 
+[![ADAM](http://www.fahrenfort.com/images/ADAM_logo.png)](http://www.fahrenfort.com/images/ADAM_logo.png)
+
+# Features
 - Use the same data for training and testing through a k-fold leave-one-out procedure
 - Use different datasets for testing and training
 - Gives the option to either do time-frequency (TFR) decomposition first (using Fieldtrip) performing the analysis on a range of frequency bands, or just work with the raw EEG
