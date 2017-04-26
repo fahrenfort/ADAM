@@ -1,7 +1,8 @@
 
 [![ADAM](http://www.fahrenfort.com/images/ADAM_logo.png)](https://github.com/fahrenfort/ADAM)
 
-# ADAM is an open source Matlab Toolbox. It allows you to perform multivariate analyses on your EEG and MEG data using backward decoding (BDM) and forward encoding models (FEM).
+# What is it?
+ADAM is an open source Matlab Toolbox. It allows you to perform multivariate analyses on your EEG and/or MEG data using backward decoding (BDM) and forward encoding models (FEM).
 
 # Features (incomplete list)
 - Perform multivariate classification analyses (backward decoding) using an arbitrary number of conditions
