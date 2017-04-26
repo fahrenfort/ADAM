@@ -1,5 +1,5 @@
 
-[![ADAM](http://www.fahrenfort.com/images/ADAM_logo.png)](http://www.fahrenfort.com/images/ADAM_logo.png)
+[![ADAM](https://github.com/fahrenfort/ADAM)](http://www.fahrenfort.com/images/ADAM_logo.png)
 
 # Features
 - Use the same data for training and testing through a k-fold leave-one-out procedure
