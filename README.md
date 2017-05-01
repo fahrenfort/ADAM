@@ -1,5 +1,5 @@
 
-[![ADAM](http://www.fahrenfort.com/images/ADAM_logo.png)](https://github.com/fahrenfort/ADAM)
+[![ADAM](/install/ADAM_header.png)](https://github.com/fahrenfort/ADAM)
 
 # What is it?
 ADAM is an open source Matlab Toolbox. It allows you to perform multivariate analyses on your EEG and/or MEG data using backward decoding (BDM) and forward encoding models (FEM).
@@ -12,6 +12,7 @@ ADAM is an open source Matlab Toolbox. It allows you to perform multivariate ana
 - Gives the option to either do time-frequency (TFR) decomposition first (using Fieldtrip) performing the analysis on a range of frequency bands, or just work with the raw EEG
 - The decoding can either be performed on induced TFR power or total TFR power
 - Do trial binning if required
+- Strictly enforces balanced designs
 - Compute Generalization Across Time (GAT) matrices (King et al, TiCS 2014) or time by frequency matrices, both for classification and for CTFs (forward modeling, e.g. see Foster et al 2016 or Samaha et al. 2016)
 - Compute GAT matrices for raw EEG or for any frequency (if using TFR data)
 - Average over training windows, average over testing windows, average over frequency windows
