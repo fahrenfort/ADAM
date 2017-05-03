@@ -9,6 +9,7 @@ if nargin<2
     help plotMVPA;
     return
 end
+ndec = 2;
 singleplot = false;
 plotorder = [];
 folder = '';
@@ -24,6 +25,7 @@ if numel(line_colors)<numel(stats) || isempty(line_colors)
 else
     gsettings.line_colors = line_colors;
 end
+gsettings.ndec = ndec;
 
 % main routine, either plot only one or all conditions
 title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
@@ -345,7 +347,7 @@ if strcmpi(plottype,'2D')
     ylabel(measuremethod);
     set(gca,'YTick',yaxis);
     if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
-        Ylabel = strsplit(deblank(sprintf('%0.2f ',yaxis)),' ');
+        Ylabel = strsplit(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ');
         Ylabel((yaxis == chance)) = {'chance'}; % say "chance".
         set(gca,'YTickLabel',Ylabel);
     end
@@ -379,7 +381,7 @@ else
     % set ticks on color bar
     set(hcb,'YTick',zaxis);
     if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
-        Ylabel = strsplit(deblank(sprintf('%0.2f ',zaxis)),' ');
+        Ylabel = strsplit(deblank(sprintf(['%0.' num2str(ndec) 'f '],zaxis)),' ');
         Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
         set(hcb,'YTickLabel',Ylabel);
     end
