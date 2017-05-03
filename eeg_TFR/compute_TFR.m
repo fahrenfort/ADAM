@@ -66,7 +66,7 @@ end
 % Hanning taper for low frequencies
 cfg              = [];
 cfg.output       = 'pow';
-cfg.channel      = 'EEG';
+%cfg.channel      = 'EEG';
 cfg.method       = 'mtmconvol';
 cfg.taper        = 'hanning';
 cfg.foi          = frequencies(frequencies<=30);                        % analysis 2 to 30 Hz in steps of 2 Hz
@@ -90,7 +90,7 @@ end
 % multitaper for higher frequencies
 cfg = [];
 cfg.output     = 'pow';
-cfg.channel    = 'EEG';
+% cfg.channel    = 'EEG';
 cfg.method     = 'mtmconvol';
 cfg.taper      = 'dpss';
 cfg.foi        = frequencies(frequencies>30);
