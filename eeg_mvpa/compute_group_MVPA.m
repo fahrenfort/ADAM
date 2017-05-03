@@ -73,6 +73,7 @@ if isempty(folder_name)
     for cdirz = 1:numel(dirz)
         [stats(cdirz), weights(cdirz), gsettings] = subcompute_group_MVPA([folder_name filesep dirz{cdirz}],gsettings,mask);
     end
+    gsettings.folder = folder_name;
 else
     if ~exist('folder_name','dir') && ~iscell(folder_name) 
         error([folder_name ' should refer to a full and existing folder path']);
@@ -133,8 +134,7 @@ if freqfolder
     if strcmpi(get_dim,'freq_time') && f_freq_time
         plotFreq{1} = [filesep 'allfreqs'];
     elseif strcmpi(get_dim,'freq_time')
-        disp('WARNING: freq_time is not available in this folder, defaulting to time_time')
-        get_dim = 'time_time';
+        error('ERROR: freq_time is not available in this folder, try gsettings.get_dim = time_time')
     else
         if isempty(freqlim)
             freqlim = input('What frequency or frequency range should I extract? ');
@@ -190,9 +190,6 @@ end
 % get filenames
 subjectfiles = dir([folder_name filesep channelpool plotFreq{1} filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
-%name = strsplit(folder_name,filesep);
-%name = name(1:end-1);
-gsettings.folder = folder_name;
 subjectfiles = { subjectfiles(:).name };
 
 % limiting subjects
@@ -231,13 +228,14 @@ for cSubj = 1:nSubj
                 corPatternsOverTime = matObj.corPatternsOverTime;
             end
         end
-        % sum up frequency accuracies to compute average
+        % sum up frequency accuracies to compute average over frequencies
         if ~exist('ClassOverTimeAv','var');
             ClassOverTimeAv = zeros(size(ClassOverTime));
         end
         ClassOverTimeAv = ClassOverTimeAv + ClassOverTime;
     end
-    % compute average classification correct over frequencies
+    % by default it computes the average over frequencies when specifying
+    % time_time (gsettings.reduce_dims = 'avfreq' is actually superfluous)
     ClassOverTime = ClassOverTimeAv / numel(plotFreq);
     settings = matObj.settings;
     [ClassOverTime, settings, gsettings, lim1,lim2] = restrict_ClassOverTime(ClassOverTime,settings,gsettings);
