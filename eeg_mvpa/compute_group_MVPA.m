@@ -132,7 +132,7 @@ f_freq_time = ~isempty(dir([folder_name filesep channelpool filesep 'allfreqs'])
 freqfolder = any([f_time_time f_freq_time]);
 if freqfolder
     if strcmpi(get_dim,'freq_time') && f_freq_time
-        plotFreq{1} = [filesep 'allfreqs'];
+        plotFreq = {[filesep 'allfreqs']};
     elseif strcmpi(get_dim,'freq_time')
         error('ERROR: freq_time is not available in this folder, try gsettings.get_dim = time_time')
     else

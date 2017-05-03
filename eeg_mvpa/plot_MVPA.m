@@ -150,7 +150,7 @@ if mean(times{1}<10)
 end
 
 % limit frequency
-if numel(freqlim) == 2 && strcmpi(dimord,'frequency_time') && ~strcmpi(reduce_dims,'avfreq')
+if numel(freqlim) == 2 && strcmpi(dimord,'frequency_time') % && ~strcmpi(reduce_dims,'avfreq')
     lowIndex = nearest(freqs,freqlim(1));
     highIndex = nearest(freqs,freqlim(2));
     freqs = freqs(lowIndex:highIndex);
