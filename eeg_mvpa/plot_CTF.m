@@ -379,7 +379,7 @@ else
         templim = weightlim;
     end
     if flat
-        maxsig = max(templim)/2;
+        maxsig = max(templim)+.1;
         addy = 4;
     else
         maxsig = min(templim);
