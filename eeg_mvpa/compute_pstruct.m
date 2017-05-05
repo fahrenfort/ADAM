@@ -20,20 +20,20 @@ for c = 1:numel(clusterlist)
     thisdata = data; thisdata(~thisclust|~mask) = 0; % isolate cluster
     [~,indx1,indx2]=max2d(thisdata); % get peak
     if isempty(connectivity)
-        if strcmpi(plottype,'2D')
+        if any(size(data)==1) % this is a 2D plot
             pstruct(c).start_time = round(times{1}(find(thisclust(mask), 1,'first'))*1000);
             pstruct(c).stop_time = round(times{1}(find(thisclust(mask), 1,'last'))*1000);
             pstruct(c).peak_time = round(times{1}(indx1)*1000);
         elseif strcmpi(dimord,'time_time')
-            pstruct(c).start_train = round(times{1}(find(mean(thisclust,2),1,'first'))*1000);
-            pstruct(c).stop_train = round(times{1}(find(mean(thisclust,2),1,'last'))*1000);
+            pstruct(c).start_train = round(times{1}(find(mean(thisclust,1),1,'first'))*1000); % average over test
+            pstruct(c).stop_train = round(times{1}(find(mean(thisclust,1),1,'last'))*1000);
             pstruct(c).peak_train = round(times{1}(indx1)*1000);
-            pstruct(c).start_test = round(times{2}(find(mean(thisclust,1),1,'first'))*1000);
-            pstruct(c).stop_test = round(times{2}(find(mean(thisclust,1),1,'last'))*1000);
+            pstruct(c).start_test = round(times{2}(find(mean(thisclust,2),1,'first'))*1000); % average over train
+            pstruct(c).stop_test = round(times{2}(find(mean(thisclust,2),1,'last'))*1000);
             pstruct(c).peak_test = round(times{1}(indx2)*1000);
-        elseif strcmpi(dimord,'frequency_time')
+        elseif strcmpi(dimord,'freq_time')
             freqs = settings.freqs;
-            pstruct(c).start_time = round(times{1}(find(mean(thisclust,1),1,'first'))*1000);
+            pstruct(c).start_time = round(times{1}(find(mean(thisclust,1),1,'first'))*1000); % average over freq
             pstruct(c).stop_time = round(times{1}(find(mean(thisclust,1),1,'last'))*1000);
             pstruct(c).peak_time = round(times{1}(indx2)*1000);
             if ~strcmpi(reduce_dims,'avfreq')

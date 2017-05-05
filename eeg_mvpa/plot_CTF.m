@@ -1,5 +1,5 @@
-function avgctfstruct = plot_CTF(stats,weights,gsettings)
-% function plot_CTF(stats,weights,gsettings)
+function avgctfstruct = plot_CTF(stats,weights,cfg)
+% function plot_CTF(stats,weights,cfg)
 % plot channel responses of forward encoding model, takes data from
 % compute_group_MVPA
 %
@@ -16,10 +16,10 @@ startdir = '';
 singleplot = false;
 BLtime = [];
 plottype = '3D';
-v2struct(gsettings);
+v2struct(cfg);
 if strcmpi(plottype,'3D')
     singleplot = false;
-    gsettings.singleplot = false;
+    cfg.singleplot = false;
 end
 
 v2struct(stats(1).settings,{'fieldNames','dimord'});
@@ -28,17 +28,17 @@ v2struct(stats(1).settings,{'fieldNames','dimord'});
 % can only use diag if testlim is trainlim and dimension is time_time
 if strcmpi(reduce_dims, 'diag') && strcmpi(dimord,'time_time')
     if numel(testlim) == 1
-        gsettings.testlim = [];
+        cfg.testlim = [];
     end
     if numel(trainlim) == 1
-        gsettings.trainlim = [];
+        cfg.trainlim = [];
     end
-    gsettings.testlim = gsettings.trainlim;
+    cfg.testlim = cfg.trainlim;
 end
 % general time limit
 if ~isempty(timelim) % timelim takes precedence
-    gsettings.trainlim = timelim;
-    gsettings.testlim = timelim;
+    cfg.trainlim = timelim;
+    cfg.testlim = timelim;
 end
 % limit freq in this case CTF = freq * time * channelweight becomes CTF = time * channelweight
 if strcmp(dimord,'frequency_time')
@@ -48,7 +48,7 @@ if strcmp(dimord,'frequency_time')
     if numel(freqlim) == 1
         freqlim(2) = freqlim(1);
     end
-    gsettings.freqlim = freqlim;
+    cfg.freqlim = freqlim;
 end
 
 % % limit subjects?
@@ -77,10 +77,10 @@ end
 
 % loop for main conditions
 for cStats=1:numel(stats)
-    if strcmp(gsettings.plotfield,'CTF') && numel(stats) > 1
+    if strcmp(cfg.plotfield,'CTF') && numel(stats) > 1
         if singleplot
             hold on;
-            gsettings.color = colororder(cStats,:);
+            cfg.color = colororder(cStats,:);
             if ~isempty(BLtime) && BLtime(1)<= BLtime(2)
                 legend_text{cStats*2-1} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
                 legend_text{cStats*2} = 'Baseline';
@@ -91,7 +91,7 @@ for cStats=1:numel(stats)
             subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
         end
     end
-    [indivCTFs, pStruct] = plot_routine(stats(cStats),weights(cStats),gsettings);
+    [indivCTFs, pStruct] = plot_routine(stats(cStats),weights(cStats),cfg);
     avgctfstruct(cStats).indivCTFs = indivCTFs;
     avgctfstruct(cStats).pStruct = pStruct;
     avgctfstruct(cStats).condname = stats(cStats).condname;
@@ -102,11 +102,11 @@ if singleplot
 end
 
 % what to plot: individual condition CTFs or average CTF?
-function [indivCTFs, pStruct] = plot_routine(stats,weights,gsettings)
+function [indivCTFs, pStruct] = plot_routine(stats,weights,cfg)
 indivCTFs = [];
 plotfield = 'CTF';
 shiftindiv = false;
-v2struct(gsettings);
+v2struct(cfg);
 nCond = size(weights.CTF,ndims(weights.CTF));
 if strcmp(plotfield,'CTFpercond')
     v2struct(weights);
@@ -130,22 +130,22 @@ if strcmp(plotfield,'CTFpercond')
         weights.semCTF = semCTFpercond{cCond};
         weights.channel_pos = channel_pos{cCond};
         subplot(numSubplots(nCond,1),numSubplots(nCond,2),cCond);
-        [indivCTFs{cCond}, pStruct{cCond}] = subplot_CTF(stats,weights,gsettings);
+        [indivCTFs{cCond}, pStruct{cCond}] = subplot_CTF(stats,weights,cfg);
         set(gcf,'name',stats.condname,'numbertitle','off');
         title_text = ['condition ' num2str(cCond)];
         title(title_text);
     end
 else
     weights.channel_pos =  1:nCond;
-    [indivCTFs, pStruct] = subplot_CTF(stats,weights,gsettings);
-    if ~isfield(gsettings,'color')
+    [indivCTFs, pStruct] = subplot_CTF(stats,weights,cfg);
+    if ~isfield(cfg,'color')
         title(strrep(stats.condname,'_',' '));
     end
 end
 
 
 % use subfunction to do all the plotting, plots individual CTFs
-function [indivCTF, pStruct] = subplot_CTF(stats,weights,gsettings)
+function [indivCTF, pStruct] = subplot_CTF(stats,weights,cfg)
 pStruct = [];
 % unpack weights
 v2struct(weights);
@@ -177,7 +177,7 @@ iterations = 1000;
 one_two_tailed = 'two';
 mpcompcor_method = 'cluster_based';
 % then unpack graphsettings too
-v2struct(gsettings);
+v2struct(cfg);
 pval(1) = indiv_pval;
 pval(2) = cluster_pval;
 if isempty(colorlim)
@@ -364,9 +364,9 @@ if strcmp(plottype,'2D')
     set(gca,'XTickLabel',num2cell(channel_pos));
     xlabel('channel');
     % legend
-    if any(BLtime) && ~isfield(gsettings,'color');
+    if any(BLtime) && ~isfield(cfg,'color');
         legend({'CTF', 'baseline'});
-    else ~isfield(gsettings,'color');
+    else ~isfield(cfg,'color');
         legend({'CTF'});
     end
     legend boxoff;
@@ -388,8 +388,8 @@ else
     maxChan = round(size(indivCTF,3)/2);
     minChan = size(indivCTF,3);
     if strcmpi(mpcompcor_method, 'cluster_based')
-        gsettings.plottype = '2D'; % little hack to get pStruct right, because we have removed a dimension
-        % [ clusterPvals, pStruct ] = cluster_based_permutation(indivCTF(:,:,maxChan),indivCTF(:,:,minChan),gsettings,settings);
+        cfg.plottype = '2D'; % little hack to get pStruct right, because we have removed a dimension
+        % [ clusterPvals, pStruct ] = cluster_based_permutation(indivCTF(:,:,maxChan),indivCTF(:,:,minChan),cfg,settings);
         % indivCTF(subj,time,chan)
         % compute slopes
         for cSubj = 1:size(indivCTF,1)
@@ -397,8 +397,8 @@ else
                 [~,~,slope(cSubj,cTime)] = fit_slope(squeeze(indivCTF(cSubj,cTime,:))');
             end
         end
-        [ clusterPvals, pStruct ] = cluster_based_permutation(slope,0,gsettings,settings);
-        gsettings.plottype = '3D'; % little hack to get pStruct right
+        [ clusterPvals, pStruct ] = cluster_based_permutation(slope,0,cfg,settings);
+        cfg.plottype = '3D'; % little hack to get pStruct right
         sigline = nan(size(clusterPvals));
         sigline(clusterPvals < pval(1)) = maxsig;
     elseif strcmpi(mpcompcor_method, 'uncorrected')

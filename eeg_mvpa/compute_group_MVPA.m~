@@ -216,12 +216,12 @@ for cSubj = 1:nSubj
         v2struct(settings);
         
         % get data
-        if ~isempty(whos(matObj,'BDM')) && strcmpi(plot_model,'BDM')
-            v2struct(matObj.BDM); % unpack 
-        elseif ~isempty(whos(matObj,'FEM')) && strcmpi(plot_model,'FEM')
-            v2struct(matObj.FEM); % unpack 
-        else
-            error('cannot find data');
+        if ~isempty(whos(matObj,'BDM'))
+            if strcmpi(plot_model,'BDM')
+                v2struct(matObj.BDM); % unpack fields
+            else
+                v2struct(matObj.FEM); % unpack fields
+            end
         end
                
         % find limits
@@ -435,7 +435,7 @@ function [settings, cfg, lim1, lim2, dataindex, firstchanlocs] = find_limits(set
 % find limits within which to constrain ClassOverTime
 v2struct(cfg); % unpack cfg
 v2struct(settings); % unpack settings
-if strcmpi(dimord,'freq_time') 
+if isfield(cfg,'freqs') 
     freqs = settings.freqs; % to fix that freqs is also a function and v2struct can't deal with that
 end
 
@@ -498,6 +498,4 @@ end
 
 % consolidate
 settings.times = times;
-if strcmpi(dimord,'freq_time')
-    settings.freqs = freqs;
-end
+settings.freqs = freqs;
