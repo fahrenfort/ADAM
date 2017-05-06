@@ -18,20 +18,20 @@ startdir = '';
 line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
 v2struct(cfg);
 if any(size(stats(1).ClassOverTime)==1)
-    plottype = '2D';
+    plottype = '2D'; %  used internally in this function
 else
     plottype = '3D';
 end
+cfg.plottype = plottype;
 if strcmpi(plottype,'3D')
     singleplot = false;
+    cfg.singleplot = singleplot;
 end
-cfg.singleplot = singleplot;
 if numel(line_colors)<numel(stats) || isempty(line_colors)
-    cfg.line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
-else
+    line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
     cfg.line_colors = line_colors;
 end
-cfg.ndec = ndec;
+cfg.ndec = ndec; % number of decimals used when plotting y-axis tick labels
 
 % main routine, either plot only one or all conditions
 if ~plotsubject
@@ -127,11 +127,6 @@ freqs = 0;
 v2struct(settings);
 
 % fill some empties
-if any(size(ClassOverTime)==1)
-    plottype = '2D';
-else
-    plottype = '3D';
-end
 if isempty(freqtick)
     if max(freqlim) >= 60
         freqtick = 20;
