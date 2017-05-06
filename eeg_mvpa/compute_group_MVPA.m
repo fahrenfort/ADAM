@@ -158,12 +158,12 @@ if freqfolder
             plotFreq{1} = [filesep 'freq' num2str(freqlim)];
         end
     elseif strcmpi(plot_dim,'time_time') && ~freqfolder_contains_time_time
-        disp('WARNING: time_time is not availaible in this folder, defaulting to cfg.plot_dim = ''freq_time''');
+        disp('WARNING: time_time is not available in this folder, defaulting to cfg.plot_dim = ''freq_time''');
         plot_dim = 'freq_time';
         plotFreq{1} = [filesep 'allfreqs'];
     end
 else
-    plotFreq{1} = '';
+    plotFreq = {''};
     freqlim = [];
 end
         
@@ -429,6 +429,7 @@ else
     end
 end
 stats.weights = weights;
+stats.cfg = cfg;
 disp('done!');
 
 function [settings, cfg, lim1, lim2, dataindex, firstchanlocs] = find_limits(settings, cfg, firstchanlocs) 

@@ -82,7 +82,6 @@ if nargin<3
 end
 
 % setting some graph defaults
-nconds = stats.settings.nconds;
 trainlim = [];
 testlim = [];
 freqlim = [];
@@ -101,10 +100,7 @@ mpcompcor_method = 'uncorrected';
 plotsubjects = false;
 indiv_pval = .05;
 one_two_tailed = 'two';
-
-% then unpack cfgs to overwrite defaults, first original from stats, then the new one 
-oldcfg = stats.cfg;
-v2struct(oldcfg); % unpack the stats-specific cfg
+% then unpack cfg (to overwrite)
 v2struct(cfg);
 if isempty(splinefreq)
     makespline = false;
@@ -114,9 +110,11 @@ end
 
 % unpack stats
 v2struct(stats);
+v2struct(cfg); % unpack the stats-specifi
 settings = stats.settings; % little hardcoded hack because settings.m is apparently also a function
 
 % now settings should be here, unpack these too
+nconds = 2;
 freqs = 0;
 v2struct(settings);
 
@@ -155,6 +153,48 @@ if mean(times{1}<10)
         times{2} = round(times{2} * 1000);
     end
 end
+
+% % limit frequency
+% if numel(freqlim) == 2 && strcmpi(dimord,'frequency_time') % && ~strcmpi(reduce_dims,'avfreq')
+%     lowIndex = nearest(freqs,freqlim(1));
+%     highIndex = nearest(freqs,freqlim(2));
+%     freqs = freqs(lowIndex:highIndex);
+%     ClassOverTime = ClassOverTime(lowIndex:highIndex,:);
+%     if ~isempty(pVals)
+%         pVals = pVals(lowIndex:highIndex,:);
+%     end
+%     if ~isempty(StdError)
+%         StdError = StdError(lowIndex:highIndex,:);
+%     end
+% end
+
+% % limit y-axis time
+% if numel(testlim) == 2 && strcmpi(dimord,'time_time') && ~strcmpi(reduce_dims,'avtest')
+%     lowIndex = nearest(times{2},testlim(1));
+%     highIndex = nearest(times{2},testlim(2));
+%     times{2} = times{2}(lowIndex:highIndex);
+%     ClassOverTime = ClassOverTime(lowIndex:highIndex,:);
+%     if ~isempty(pVals)
+%         pVals = pVals(lowIndex:highIndex,:);
+%     end
+%     if ~isempty(StdError)
+%         StdError = StdError(lowIndex:highIndex,:);
+%     end
+% end
+
+% % limit x-axis time (always)
+% if ~isempty(trainlim) && ~strcmpi(reduce_dims,'avtrain');
+%     lowIndex = nearest(times{1},trainlim(1));
+%     highIndex = nearest(times{1},trainlim(2));
+%     times{1} = times{1}(lowIndex:highIndex);
+%     ClassOverTime = ClassOverTime(:,lowIndex:highIndex);
+%     if ~isempty(pVals)
+%         pVals = pVals(:,lowIndex:highIndex);
+%     end
+%     if ~isempty(StdError)
+%         StdError = StdError(:,lowIndex:highIndex);
+%     end
+% end
 
 % set color-limits (z-axis) or y-limits
 if strcmpi(measuremethod,'hr-far')
@@ -202,8 +242,8 @@ if strcmpi(plottype,'2D')
     end
     % some smoothing on 2D using spline
     if makespline
-       data = compute_spline_on_classify(data,xaxis',splinefreq);
-       stdData = compute_spline_on_classify(stdData,xaxis',splinefreq);
+       data = compute_spline_on_classify(data,xaxis,splinefreq);
+       stdData = compute_spline_on_classify(stdData,xaxis,splinefreq);
     end
 else
     zaxis = sort(unique([cent_acctick:-acctick:min(acclim) cent_acctick:acctick:max(acclim)]));
@@ -325,7 +365,7 @@ else
     end
     % some smoothing on 3D
     if makespline
-        if ndims(data) > 2 % DOUBLE CHECK WHETHER THIS IS OK
+        if ndims(data) > 2
             [X,Y,Z] = meshgrid(1:size(data,2),1:size(data,1),1:size(data,3));
             [XX,YY,ZZ] = meshgrid(linspace(1,size(data,2),round(size(data,2)/smoothfactor)),linspace(1,size(data,1),round(size(data,1)/smoothfactor)),1:size(data,3));
             data = interp3(X,Y,Z,data,XX,YY,ZZ);
@@ -382,3 +422,4 @@ end
 if ~exist('H')
     H = [];
 end
+return
