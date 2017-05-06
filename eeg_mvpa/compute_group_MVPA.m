@@ -189,7 +189,7 @@ end
 
 % prepare figure in case individual subjects are plotted
 if plotsubjects;
-    fh = figure('name','individual subjects');
+    fh = figure('name',['individual subjects, condition: ' condname]);
     set(fh, 'Position', get(0,'Screensize'));
     set(fh,'color','w');
 end
@@ -266,9 +266,6 @@ for cSubj = 1:nSubj
         elseif strcmpi(reduce_dims,'diag') && strcmpi(dimord,'time_time')
             ClassOverTime = diag(ClassOverTime);
             mask = diag(mask);
-            % if sum(size(squeeze(ClassOverTime))==1) % is one of the dimensions 1?
-            %   ClassOverTime = diag(ClassOverTime); % put the values back on the diagonal for consistency
-            % end
         elseif strcmpi(reduce_dims,'diag') && strcmpi(dimord,'freq_time')
             disp('WARNING: cannot reduce dimensionality along diagonal when dimord is freq_time');
         end
@@ -325,14 +322,15 @@ for cSubj = 1:nSubj
         subplot(numSubplots(nSubj,1),numSubplots(nSubj,2),cSubj);
         onestat.ClassOverTime = ClassOverTime;
         onestat.StdError = [];
-        onestat.pVals = [];
+        onestat.pVals = zeros(size(ClassOverTime));
         onestat.indivClassOverTime = [];
         onestat.settings = settings;
         onestat.condname = condname;
         onestat.channelpool = channelpool;
-        tempsettings = cfg;
-        tempsettings.timetick = 500;
-        plot_MVPA(onestat,tempsettings);
+        tmpcfg = cfg;
+        tmpcfg.plotsubject = true;
+        plot_MVPA(onestat,tmpcfg);
+        ntitle(['subject ' num2str(cSubj)],'fontsize',10);
     end
 end
 
@@ -349,43 +347,32 @@ ClassAverage(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = mean
 ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 
 % statistical testing
-if strcmpi(mpcompcor_method,'fdr')
-    % FDR CORRECTION
-    if strcmpi(one_two_tailed,'two')
-        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','both');
+if nSubj > 1
+    if strcmpi(mpcompcor_method,'fdr')
+        % FDR CORRECTION
+        if strcmpi(one_two_tailed,'two')
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','both');
+        else
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','right');
+        end
+        thresh = fdr(squeeze(ClassPvals),pval(2));
+        ClassPvals(ClassPvals>thresh) = 1;
+    elseif strcmpi(mpcompcor_method,'cluster_based')
+        % CLUSTER BASED CORRECTION
+        [ClassPvals, pStruct] = cluster_based_permutation(ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings,mask);
+    elseif strcmpi(mpcompcor_method,'uncorrected')
+        % NO MP CORRECTION
+        if strcmpi(one_two_tailed,'two')
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','both');
+        else
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','right');
+        end
+        ClassPvals(~mask) = 1;
     else
-        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','right');
+        % NO TESTING, PLOT ALL
+        ClassPvals = zeros([size(ClassOverTimeAll{1},2) size(ClassOverTimeAll{1},3)]);
     end
-    %     if strcmpi(plottype,'2D')
-    %         thresh = fdr(diag(squeeze(ClassPvals)),pval(2));
-    %     else
-    thresh = fdr(squeeze(ClassPvals),pval(2));
-    %     end
-    ClassPvals(ClassPvals>thresh) = 1;
-elseif strcmpi(mpcompcor_method,'cluster_based')
-    % CLUSTER BASED CORRECTION
-    [ClassPvals, pStruct] = cluster_based_permutation(ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings,mask);
-%     if strcmpi(plottype,'2D') 
-%         for cSubj = 1:nSubj
-%             DiagTotal{1}(cSubj,:) = diag(squeeze(ClassOverTimeAll{1}(cSubj,:,:)));
-%             DiagTotal{2}(cSubj,:) = diag(squeeze(ClassOverTimeAll{2}(cSubj,:,:)));
-%         end
-%         [ DiagPvals, pStruct ] = cluster_based_permutation(DiagTotal{1},DiagTotal{2},cfg,settings,mask);
-%         ClassPvals = ones(size(ClassAverage));
-%         ClassPvals(logical(eye(size(ClassPvals)))) = DiagPvals;
-%     else
-%        [ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)), pStruct] = cluster_based_permutation(ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings,mask);
-%    end
-elseif strcmpi(mpcompcor_method,'uncorrected')
-    % NO MP CORRECTION
-    if strcmpi(one_two_tailed,'two')
-        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','both');
-    else
-        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','right');
-    end
-    ClassPvals(~mask) = 1;
 else
-    % NO TESTING, PLOT ALL
     ClassPvals = zeros([size(ClassOverTimeAll{1},2) size(ClassOverTimeAll{1},3)]);
 end
 

@@ -10,8 +10,9 @@ if nargin<2
     return
 end
 ndec = 2;
+plotsubject = false;
 singleplot = false;
-plotorder = [];
+plot_order = [];
 folder = '';
 startdir = '';
 line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
@@ -33,24 +34,26 @@ end
 cfg.ndec = ndec;
 
 % main routine, either plot only one or all conditions
-title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
-title_text = title_text(1:find(title_text==filesep,1,'last')-1);
-fh = figure('name',title_text);
-set(fh,'color','w');
-if numel(stats)>2
-    set(fh, 'Position', get(0,'Screensize'));
-elseif numel(stats) == 2
-    set(fh, 'Position', get(0,'Screensize')/1.5);
-else
-    set(fh, 'Position', get(0,'Screensize')/3);
+if ~plotsubject
+    title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
+    title_text = title_text(1:find(title_text==filesep,1,'last')-1);
+    fh = figure('name',title_text);
+    set(fh,'color','w');
+    if numel(stats)>2
+        set(fh, 'Position', get(0,'Screensize'));
+    elseif numel(stats) == 2
+        set(fh, 'Position', get(0,'Screensize')/1.5);
+    else
+        set(fh, 'Position', get(0,'Screensize')/3);
+    end
 end
 if numel(stats)>1
     % main loop for each condition
     for cStats=1:numel(stats)
-        if ~isempty(plotorder)
-            suborder = find(strcmpi(stats(cStats).condname,cfg.plotorder),1);
+        if ~isempty(plot_order)
+            suborder = find(strcmpi(stats(cStats).condname,cfg.plot_order),1);
             if isempty(suborder) 
-                error('cannot find condition name specified in cfg.plotorder');
+                error('cannot find condition name specified in cfg.plot_order');
             end
         else
             suborder = cStats;
@@ -83,6 +86,7 @@ end
 
 % setting some graph defaults
 nconds = stats.settings.nconds;
+plotsubject = false;
 trainlim = [];
 testlim = [];
 freqlim = [];
@@ -103,8 +107,10 @@ indiv_pval = .05;
 one_two_tailed = 'two';
 
 % then unpack cfgs to overwrite defaults, first original from stats, then the new one 
-oldcfg = stats.cfg;
-v2struct(oldcfg); % unpack the stats-specific cfg
+if isfield(stats,'cfg')
+    oldcfg = stats.cfg;
+    v2struct(oldcfg); % unpack the stats-specific cfg
+end
 v2struct(cfg);
 if isempty(splinefreq)
     makespline = false;
@@ -157,8 +163,9 @@ if mean(times{1}<10)
 end
 
 % set color-limits (z-axis) or y-limits
-if strcmpi(measuremethod,'hr-far')
+if strcmpi(measuremethod,'hr-far') || strcmpi(plot_model,'FEM')
     chance = 0;
+    cent_acctick = 0;
 else
     chance = cent_acctick;
 end
@@ -240,7 +247,7 @@ for tick = findticks
 end
 
 % do the same for y-axis
-if strcmpi(ydim,'frequency')
+if strcmpi(ydim,'freq')
     findticks = yticks:yticks:max(yaxis);
 else
     if min(yaxis) < 0 && max(yaxis) > 0
@@ -295,12 +302,14 @@ if strcmpi(plottype,'2D')
             end
         end
         if strcmpi(one_two_tailed,'one') one_two_tailed = '1'; else   one_two_tailed = '2'; end
-        if strcmpi(mpcompcor_method,'uncorrected')
-            h_legend = legend(H.mainLine,[' p < ' num2str(indiv_pval) ' (uncorrected, ' one_two_tailed '-sided)']); % ,'Location','SouthEast'
-        elseif strcmpi(mpcompcor_method,'cluster_based')
-            h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (cluster based, ' one_two_tailed '-sided)']);
-        elseif strcmpi(mpcompcor_method,'fdr')
-            h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (FDR, ' one_two_tailed '-sided)']);
+        if ~plotsubject
+            if strcmpi(mpcompcor_method,'uncorrected')
+                h_legend = legend(H.mainLine,[' p < ' num2str(indiv_pval) ' (uncorrected, ' one_two_tailed '-sided)']); % ,'Location','SouthEast'
+            elseif strcmpi(mpcompcor_method,'cluster_based')
+                h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (cluster based, ' one_two_tailed '-sided)']);
+            elseif strcmpi(mpcompcor_method,'fdr')
+                h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (FDR, ' one_two_tailed '-sided)']);
+            end
         end
         legend boxoff;
         %set(h_legend,'FontSize',14);
@@ -339,15 +348,19 @@ else
     imagesc(data);
     caxis(acclim);
     set(gca,'YDir','normal'); % set the y-axis right
-    hcb=colorbar;
-    % set ticks on color bar
-    set(hcb,'YTick',zaxis);
-    if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
-        Ylabel = strsplit(deblank(sprintf(['%0.' num2str(ndec) 'f '],zaxis)),' ');
-        Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
-        set(hcb,'YTickLabel',Ylabel);
+    if ~plotsubject
+        hcb=colorbar;
     end
-    if strcmpi(ydim,'frequency')
+    % set ticks on color bar
+    if ~plotsubject
+        set(hcb,'YTick',zaxis);
+        if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
+            Ylabel = strsplit(deblank(sprintf(['%0.' num2str(ndec) 'f '],zaxis)),' ');
+            Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
+            set(hcb,'YTickLabel',Ylabel);
+        end
+    end
+    if strcmpi(ydim,'freq')
         ylabel('frequency in Hz');
         xlabel('time in ms');
     else
@@ -363,17 +376,15 @@ set(gca,'XTick',indx);
 xlim([min(indx) max(indx)]);
 roundto = xticks;
 set(gca,'XTickLabel',num2cell(round(xaxis(indx)/roundto)*roundto));
-set(gca,'FontSize',22);
+if plotsubject
+    set(gca,'FontSize',10);
+else
+    set(gca,'FontSize',22);
+end
 set(gca,'color','none');
 axis square;
 if inverty
     set(gca,'YDir','reverse');
-end
-% plot title
-if plotsubjects && sum(sum(stats.pVals)) == numel(stats.pVals)
-    [~,subj_nr,~] = fileparts(filenames{1});
-    subj_nr = subj_nr(regexp(subj_nr,'\d'));
-    ntitle(['subj ' subj_nr],'fontsize',22);
 end
 if (isempty(acclim2D) && strcmpi(plottype,'2D')) || (isempty(acclim3D) && strcmpi(plottype,'3D')) 
     sameaxes('xyzc',gcf());
