@@ -255,12 +255,21 @@ for cSubj = 1:nSubj
         
         % if applicable, reduce dimensionality (creates 2D plot)
         if strcmpi(reduce_dims,'avfreq') && strcmpi(dimord,'freq_time')
+            if isempty(freqlim)
+                disp('WARNING: you are averaging across ALL frequencies, are you sure that is what you want?');
+            end
             ClassOverTime = mean(ClassOverTime,1);
             mask = sum(mask,1);
         elseif strcmpi(reduce_dims,'avtrain') && strcmpi(dimord,'time_time')
+            if isempty(trainlim)
+                disp('WARNING: you are averaging across ALL training time points, are you sure that is what you want?');
+            end
             ClassOverTime = mean(ClassOverTime,2); % IMPORTANT, TRAIN IS ON SECOND DIMENSION
             mask = sum(mask,2);
         elseif strcmpi(reduce_dims,'avtest') && strcmpi(dimord,'time_time')
+            if isempty(trainlim)
+                disp('WARNING: you are averaging across ALL testing time points, are you sure that is what you want?');
+            end
             ClassOverTime = mean(ClassOverTime,1); % IMPORTANT, TEST IS ON FIRST DIMENSION
             mask = sum(mask,1);
         elseif strcmpi(reduce_dims,'diag') && strcmpi(dimord,'time_time')
@@ -466,7 +475,6 @@ elseif strcmpi(dimord,'freq_time') && numel(freqlim) == 1
     lim1 = nearest(freqs,freqlim);
     freqs = freqs(lim1);
 elseif strcmpi(dimord,'freq_time') && isempty(freqlim)
-    disp('WARNING: you are averaging across ALL frequencies, are you sure that is what you want?');
     lim1 = true(size(freqs));
 elseif strcmpi(dimord,'time_time') && ~isempty(testlim)
     lim1 = nearest(times{2}*1000,testlim(1)):nearest(times{2}*1000,testlim(2));
