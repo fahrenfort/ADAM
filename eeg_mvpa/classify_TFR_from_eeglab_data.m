@@ -724,7 +724,7 @@ if ~crossclass
         clear FEMfreq_*;
     end
     settings.freqs = frequencies;
-    settings.dimord = 'frequency_time';
+    settings.dimord = 'freq_time';
     mkdir([outpath filesep 'allfreqs']);
     % count filenames from 001 onwards if computing under permutation or iteration
     if randomize_labels || iterate
