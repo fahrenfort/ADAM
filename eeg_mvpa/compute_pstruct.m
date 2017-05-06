@@ -21,9 +21,14 @@ for c = 1:numel(clusterlist)
     [~,indx1,indx2]=max2d(thisdata); % get peak
     if isempty(connectivity)
         if any(size(data)==1) % this is a 2D plot
-            pstruct(c).start_time = round(times{1}(find(thisclust(mask), 1,'first'))*1000);
-            pstruct(c).stop_time = round(times{1}(find(thisclust(mask), 1,'last'))*1000);
-            pstruct(c).peak_time = round(times{1}(indx1)*1000);
+            if strcmpi(reduce_dims,'avtrain') || strcmpi(reduce_dims,'avtrain')
+                timInd = 2;
+            else
+                timInd = 1;
+            end
+            pstruct(c).start_time = round(times{timInd}(find(thisclust(mask), 1,'first'))*1000);
+            pstruct(c).stop_time = round(times{timInd}(find(thisclust(mask), 1,'last'))*1000);
+            pstruct(c).peak_time = round(times{timInd}(indx1)*1000);
         elseif strcmpi(dimord,'time_time')
             pstruct(c).start_train = round(times{1}(find(mean(thisclust,1),1,'first'))*1000); % average over test
             pstruct(c).stop_train = round(times{1}(find(mean(thisclust,1),1,'last'))*1000);

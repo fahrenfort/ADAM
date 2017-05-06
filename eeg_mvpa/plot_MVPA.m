@@ -184,11 +184,15 @@ end
 acclim = sort(acclim);
 
 % determine axes
-xaxis=times{1};
+if strcmpi(reduce_dims,'avtrain') || strcmpi(reduce_dims,'avfreq')
+    yaxis = times{1};
+    xaxis = times{2};
+else
+    yaxis = times{2};
+    xaxis=times{1};
+end
 if strcmpi(ydim,'freq')
     yaxis=round(freqs);
-elseif strcmpi(ydim,'time')
-    yaxis = times{2};
 end
 
 % stuff particular to 2D and 3D plotting
