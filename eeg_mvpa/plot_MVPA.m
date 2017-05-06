@@ -279,7 +279,7 @@ if strcmpi(plottype,'2D')
     % plot significant time points
     if ~isempty(pVals)
         sigdata = data;
-        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both')
+        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~plotsubject && ~strcmpi(mpcompcor_method,'none')
             if inverty
                 sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/100)*cGraph;
             else
@@ -301,7 +301,7 @@ if strcmpi(plottype,'2D')
                 H.mainLine=plot(1:numel(sigdata),sigdata,line_colors{cGraph},'LineWidth',2); % sigline on graph
             end
         end
-        if strcmpi(one_two_tailed,'one') one_two_tailed = '1'; else   one_two_tailed = '2'; end
+        if strcmpi(one_two_tailed,'one') one_two_tailed = '1'; else  one_two_tailed = '2'; end
         if ~plotsubject
             if strcmpi(mpcompcor_method,'uncorrected')
                 h_legend = legend(H.mainLine,[' p < ' num2str(indiv_pval) ' (uncorrected, ' one_two_tailed '-sided)']); % ,'Location','SouthEast'

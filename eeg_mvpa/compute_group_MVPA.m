@@ -330,7 +330,10 @@ for cSubj = 1:nSubj
         tmpcfg = cfg;
         tmpcfg.plotsubject = true;
         plot_MVPA(onestat,tmpcfg);
-        ntitle(['subject ' num2str(cSubj)],'fontsize',10);
+        subjname = subjectfiles{cSubj};
+        underscores = strfind(subjname,'_');
+        subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
+        ntitle(subjname,'fontsize',10,'fontweight','bold');
     end
 end
 
@@ -343,6 +346,7 @@ end
 
 % compute standard errors and averages
 ClassStdErr(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1));
+if sum(sum(ClassStdErr)) == 0 ClassStdErr = []; end % don't plot stderror when there is none
 ClassAverage(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = mean(ClassOverTimeAll{1},1);
 ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 
