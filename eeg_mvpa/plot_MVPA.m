@@ -31,7 +31,7 @@ if numel(line_colors)<numel(stats) || isempty(line_colors)
     line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
     cfg.line_colors = line_colors;
 end
-cfg.ndec = ndec; % number of decimals used when plotting y-axis tick labels
+cfg.ndec = ndec; % number of decimals used when plotting accuracy tick labels
 
 % main routine, either plot only one or all conditions
 if ~plotsubject
@@ -373,7 +373,6 @@ else
 end
 % set ticks on horizontal axis
 set(gca,'XTick',indx);
-xlim([min(indx) max(indx)]);
 roundto = xticks;
 set(gca,'XTickLabel',num2cell(round(xaxis(indx)/roundto)*roundto));
 if plotsubject
