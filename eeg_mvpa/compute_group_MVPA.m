@@ -16,7 +16,8 @@ function [stats,cfg] = compute_group_MVPA(folder_name,cfg,mask)
 % cfg.indiv_pval = .05;
 % cfg.cluster_pval = .05;
 % cfg.mpcompcor_method = 'uncorrected' (default, can also be 'cluster_based', 'fdr' or 'none')
-% cfg.plot_dims = 
+% cfg.plot_dim = 'time_time' or 'time_freq' (default: 'time_time')
+% cfg.reduce_dims = 'diag', 'avtrain', 'avtest' or 'avfreq' or []
 % cfg.trainlim = is the time limits over which to constrain the
 % training data, in ms.
 % cfg.testlim = the time limits over which to constrain the testing
@@ -259,26 +260,56 @@ for cSubj = 1:nSubj
                 disp('WARNING: you are averaging across ALL frequencies, are you sure that is what you want?');
             end
             ClassOverTime = mean(ClassOverTime,1);
+            WeightsOverTime = mean(WeightsOverTime,1);
+            if strcmpi(plot_model,'BDM')
+                covPatternsOverTime = mean(covPatternsOverTime,1);
+                corPatternsOverTime = mean(corPatternsOverTime,1);
+%           NOTE: the plot_CTF function still assumes the full matrix, 
+%           needs to be updated. For now just pass the full matrix. When
+%           this is fixed, could also plot CTF across al testing points
+%           when training on one specific timepoint or vice versa
+%             else
+%                 C2_average = mean(C2_average,1);
+%                 C2_percondition = mean(C2_percondition,1);
+            end
             mask = sum(mask,1);
         elseif strcmpi(reduce_dims,'avtrain') && strcmpi(dimord,'time_time')
             if isempty(trainlim)
                 disp('WARNING: you are averaging across ALL training time points, are you sure that is what you want?');
             end
             ClassOverTime = mean(ClassOverTime,2); % IMPORTANT, TRAIN IS ON SECOND DIMENSION
+%             if strcmpi(plot_model,'FEM')
+%                 C2_average = mean(C2_average,2);
+%                 C2_percondition = mean(C2_percondition,2);
+%             end
             mask = sum(mask,2);
         elseif strcmpi(reduce_dims,'avtest') && strcmpi(dimord,'time_time')
             if isempty(trainlim)
                 disp('WARNING: you are averaging across ALL testing time points, are you sure that is what you want?');
             end
             ClassOverTime = mean(ClassOverTime,1); % IMPORTANT, TEST IS ON FIRST DIMENSION
+%             if strcmpi(plot_model,'FEM')
+%                 C2_average = mean(C2_average,1);
+%                 C2_percondition = mean(C2_percondition,1);
+%             end
             mask = sum(mask,1);
         elseif strcmpi(reduce_dims,'diag') && strcmpi(dimord,'time_time')
             ClassOverTime = diag(ClassOverTime);
+%             if strcmpi(plot_model,'FEM')
+%                 for c1 =1:size(C2_percondition,3)
+%                     diagC2_average(:,c1) = diag(C2_average(:,:,c1));
+%                     for c2 = 1:size(C2_percondition,4)
+%                         diagC2_percondition(:,c1,c2) = diag(C2_percondition(:,:,c1,c2));
+%                     end
+%                 end
+%                 C2_average = diagC2_average;
+%                 C2_percondition = diagC2_percondition;
+%             end
             mask = diag(mask);
         elseif strcmpi(reduce_dims,'diag') && strcmpi(dimord,'freq_time')
             disp('WARNING: cannot reduce dimensionality along diagonal when dimord is freq_time');
         end
-               
+        
         % sum up to compute average over frequencies (avfreq)
         if ~exist('ClassOverTimeAv','var'); ClassOverTimeAv = zeros(size(ClassOverTime)); end
         if ~exist('WeightsOverTimeAv','var'); WeightsOverTimeAv = zeros(size(WeightsOverTime)); end
@@ -466,8 +497,8 @@ end
 % continue limit operation
 % NOTE: ClassOverTime has dimensions: test_time * train_time OR freq * time
 % In settings, times{1} is always train and times{2} is always test, but 
-% ClassOverTime(1,:) is the first element of test_time and
-% ClassOverTime(:,1) is the first element of train_time
+% ClassOverTime(1,:) is the first element of test_time (1st dimension) and
+% ClassOverTime(:,1) is the first element of train_time (2nd dimension)
 if strcmpi(dimord,'freq_time') && numel(freqlim)>1
     lim1 = nearest(freqs,min(freqlim)):nearest(freqs,max(freqlim));
     freqs = freqs(lim1);
