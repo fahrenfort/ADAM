@@ -1,11 +1,13 @@
-function avgctfstruct = plot_CTF(stats,weights,gsettings)
-% function plot_CTF(stats,weights,gsettings)
+function avgctfstruct = plot_CTF(stats,cfg)
+% function plot_CTF(stats,weights,cfg)
 % plot channel responses of forward encoding model, takes data from
 % compute_group_MVPA
+% THIS FUNCTION NEEDS SOME UPDATING TO RELY ONLY ON compute_group_MVPA TO
+% LIMIT DIMENSIONS AND COMPUTE STATS
 %
 % By J.J.Fahrenfort, VU 2016 
-if nargin<3
-    disp('cannot plot graph without some settings, need at least 3 arguments:');
+if nargin<2
+    disp('cannot plot graph without some settings, need at least 2 arguments:');
     help plot_CTF;
     return;
 end
@@ -16,10 +18,10 @@ startdir = '';
 singleplot = false;
 BLtime = [];
 plottype = '3D';
-v2struct(gsettings);
+v2struct(cfg);
 if strcmpi(plottype,'3D')
     singleplot = false;
-    gsettings.singleplot = false;
+    cfg.singleplot = false;
 end
 
 v2struct(stats(1).settings,{'fieldNames','dimord'});
@@ -28,33 +30,28 @@ v2struct(stats(1).settings,{'fieldNames','dimord'});
 % can only use diag if testlim is trainlim and dimension is time_time
 if strcmpi(reduce_dims, 'diag') && strcmpi(dimord,'time_time')
     if numel(testlim) == 1
-        gsettings.testlim = [];
+        cfg.testlim = [];
     end
     if numel(trainlim) == 1
-        gsettings.trainlim = [];
+        cfg.trainlim = [];
     end
-    gsettings.testlim = gsettings.trainlim;
+    cfg.testlim = cfg.trainlim;
 end
 % general time limit
 if ~isempty(timelim) % timelim takes precedence
-    gsettings.trainlim = timelim;
-    gsettings.testlim = timelim;
+    cfg.trainlim = timelim;
+    cfg.testlim = timelim;
 end
 % limit freq in this case CTF = freq * time * channelweight becomes CTF = time * channelweight
-if strcmp(dimord,'frequency_time')
+if strcmp(dimord,'freq_time')
     if isempty(freqlim)
         freqlim = input('What frequency or frequency range should I extract? ');
     end
     if numel(freqlim) == 1
         freqlim(2) = freqlim(1);
     end
-    gsettings.freqlim = freqlim;
+    cfg.freqlim = freqlim;
 end
-
-% % limit subjects?
-% if ~isempty(exclsubj)
-%    weights = select_subjects(weights,exclsubj,true);
-% end
 
 if strcmp(plotfield,'CTF')
     % make figure
@@ -77,10 +74,10 @@ end
 
 % loop for main conditions
 for cStats=1:numel(stats)
-    if strcmp(gsettings.plotfield,'CTF') && numel(stats) > 1
+    if strcmp(cfg.plotfield,'CTF') && numel(stats) > 1
         if singleplot
             hold on;
-            gsettings.color = colororder(cStats,:);
+            cfg.color = colororder(cStats,:);
             if ~isempty(BLtime) && BLtime(1)<= BLtime(2)
                 legend_text{cStats*2-1} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
                 legend_text{cStats*2} = 'Baseline';
@@ -91,7 +88,7 @@ for cStats=1:numel(stats)
             subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
         end
     end
-    [indivCTFs, pStruct] = plot_routine(stats(cStats),weights(cStats),gsettings);
+    [indivCTFs, pStruct] = plot_routine(stats(cStats),cfg);
     avgctfstruct(cStats).indivCTFs = indivCTFs;
     avgctfstruct(cStats).pStruct = pStruct;
     avgctfstruct(cStats).condname = stats(cStats).condname;
@@ -102,11 +99,12 @@ if singleplot
 end
 
 % what to plot: individual condition CTFs or average CTF?
-function [indivCTFs, pStruct] = plot_routine(stats,weights,gsettings)
+function [indivCTFs, pStruct] = plot_routine(stats,cfg)
 indivCTFs = [];
 plotfield = 'CTF';
 shiftindiv = false;
-v2struct(gsettings);
+v2struct(cfg);
+weights = stats.weights;
 nCond = size(weights.CTF,ndims(weights.CTF));
 if strcmp(plotfield,'CTFpercond')
     v2struct(weights);
@@ -130,22 +128,22 @@ if strcmp(plotfield,'CTFpercond')
         weights.semCTF = semCTFpercond{cCond};
         weights.channel_pos = channel_pos{cCond};
         subplot(numSubplots(nCond,1),numSubplots(nCond,2),cCond);
-        [indivCTFs{cCond}, pStruct{cCond}] = subplot_CTF(stats,weights,gsettings);
+        [indivCTFs{cCond}, pStruct{cCond}] = subplot_CTF(stats,weights,cfg);
         set(gcf,'name',stats.condname,'numbertitle','off');
         title_text = ['condition ' num2str(cCond)];
         title(title_text);
     end
 else
     weights.channel_pos =  1:nCond;
-    [indivCTFs, pStruct] = subplot_CTF(stats,weights,gsettings);
-    if ~isfield(gsettings,'color')
+    [indivCTFs, pStruct] = subplot_CTF(stats,weights,cfg);
+    if ~isfield(cfg,'color')
         title(strrep(stats.condname,'_',' '));
     end
 end
 
 
 % use subfunction to do all the plotting, plots individual CTFs
-function [indivCTF, pStruct] = subplot_CTF(stats,weights,gsettings)
+function [indivCTF, pStruct] = subplot_CTF(stats,weights,cfg)
 pStruct = [];
 % unpack weights
 v2struct(weights);
@@ -177,7 +175,7 @@ iterations = 1000;
 one_two_tailed = 'two';
 mpcompcor_method = 'cluster_based';
 % then unpack graphsettings too
-v2struct(gsettings);
+v2struct(cfg);
 pval(1) = indiv_pval;
 pval(2) = cluster_pval;
 if isempty(colorlim)
@@ -208,7 +206,7 @@ end
 semCTF = squeeze(std(indivCTF))/sqrt(size(indivCTF,1));
 
 % limit subjects, frequency and time
-if strcmp(dimord,'frequency_time')
+if strcmp(dimord,'freq_time')
     lowIndex = nearest(freqs,freqlim(1));
     highIndex = nearest(freqs,freqlim(2));
     freqs = freqs(lowIndex:highIndex);
@@ -274,7 +272,7 @@ end
 xaxis=times{1};
 
 % extract specific train time, test time or frequency
-if strcmpi(dimord,'frequency_time')
+if strcmpi(dimord,'freq_time')
     if numel(freqs) > 1
         CTF = squeeze(mean(CTF,1));
         semCTF = squeeze(mean(semCTF,1));
@@ -364,9 +362,9 @@ if strcmp(plottype,'2D')
     set(gca,'XTickLabel',num2cell(channel_pos));
     xlabel('channel');
     % legend
-    if any(BLtime) && ~isfield(gsettings,'color');
+    if any(BLtime) && ~isfield(cfg,'color');
         legend({'CTF', 'baseline'});
-    else ~isfield(gsettings,'color');
+    else ~isfield(cfg,'color');
         legend({'CTF'});
     end
     legend boxoff;
@@ -379,7 +377,7 @@ else
         templim = weightlim;
     end
     if flat
-        maxsig = max(templim)/2;
+        maxsig = max(templim)+.1;
         addy = 4;
     else
         maxsig = min(templim);
@@ -388,8 +386,8 @@ else
     maxChan = round(size(indivCTF,3)/2);
     minChan = size(indivCTF,3);
     if strcmpi(mpcompcor_method, 'cluster_based')
-        gsettings.plottype = '2D'; % little hack to get pStruct right, because we have removed a dimension
-        % [ clusterPvals, pStruct ] = cluster_based_permutation(indivCTF(:,:,maxChan),indivCTF(:,:,minChan),gsettings,settings);
+        cfg.plottype = '2D'; % little hack to get pStruct right, because we have removed a dimension
+        % [ clusterPvals, pStruct ] = cluster_based_permutation(indivCTF(:,:,maxChan),indivCTF(:,:,minChan),cfg,settings);
         % indivCTF(subj,time,chan)
         % compute slopes
         for cSubj = 1:size(indivCTF,1)
@@ -397,8 +395,8 @@ else
                 [~,~,slope(cSubj,cTime)] = fit_slope(squeeze(indivCTF(cSubj,cTime,:))');
             end
         end
-        [ clusterPvals, pStruct ] = cluster_based_permutation(slope,0,gsettings,settings);
-        gsettings.plottype = '3D'; % little hack to get pStruct right
+        [ clusterPvals, pStruct ] = cluster_based_permutation(slope,0,cfg,settings);
+        cfg.plottype = '3D'; % little hack to get pStruct right
         sigline = nan(size(clusterPvals));
         sigline(clusterPvals < pval(1)) = maxsig;
     elseif strcmpi(mpcompcor_method, 'uncorrected')
@@ -427,7 +425,7 @@ else
     indy = round(linspace(1,size(CTF,2)*10,size(CTF,2)));
     % indy = indy(1+makeround:end);   
     % interpolate x to make smooth: time  
-    if ~isempty(temporalsmoothness) && ~strcmp(dimord,'frequency_time')
+    if ~isempty(temporalsmoothness) && ~strcmp(dimord,'freq_time')
         sf = round(1000*size(CTF,1)/(xaxis(end)-xaxis(1)));
         downfactor = temporalsmoothness/sf; % resample to temporalsmoothness
         x = linspace(1,size(CTF,1),size(CTF,1));

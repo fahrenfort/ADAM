@@ -13,7 +13,7 @@ function fullname = compute_TFR_from_eeglab(filepath,filename,outpath,resample_t
 % correction is applied. If separated by a semicolon, the first part is for the
 % tf_baseline and the second part for the erp_baseline
 % e.g. tf_and_erp_baseline = '-.35,-.1;-.25,0' uses a baseline of -350 to
-% -250 ms for the tf baseline and a baseline of -250 to 0 ms for the erp
+% -100 ms for the tf baseline and a baseline of -250 to 0 ms for the erp
 % baseline. To apply only one type of baseline, set the other type to 0,0,
 % like this: tf_and_erp_baseline = '-.35,-.1;0,0'; applies only a TF
 % baseline.

@@ -1,49 +1,59 @@
-function map = plot_MVPA(stats,gsettings)
-% function plotMVPA(stats,gsettings)
+function map = plot_MVPA(stats,cfg)
+% function plotMVPA(stats,cfg)
 % draw classification accuracy based on stats produced by
 % compute_group_MVPA
 %
-% By J.J.Fahrenfort, VU, 2014, 2015, 2016 
+% By J.J.Fahrenfort, VU, 2014, 2015, 2016, 2017
 if nargin<2
     disp('cannot plot graph without some settings, need at least 2 arguments:');
     help plotMVPA;
     return
 end
+ndec = 2;
+plotsubject = false;
 singleplot = false;
-plotorder = [];
+plot_order = [];
 folder = '';
 startdir = '';
 line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
-v2struct(gsettings);
+v2struct(cfg);
+if any(size(stats(1).ClassOverTime)==1)
+    plottype = '2D'; %  used internally in this function
+else
+    plottype = '3D';
+end
+cfg.plottype = plottype;
 if strcmpi(plottype,'3D')
     singleplot = false;
+    cfg.singleplot = singleplot;
 end
-gsettings.singleplot = singleplot;
 if numel(line_colors)<numel(stats) || isempty(line_colors)
-    gsettings.line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
-else
-    gsettings.line_colors = line_colors;
+    line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
+    cfg.line_colors = line_colors;
 end
+cfg.ndec = ndec; % number of decimals used when plotting accuracy tick labels
 
 % main routine, either plot only one or all conditions
-title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
-title_text = title_text(1:find(title_text==filesep,1,'last')-1);
-fh = figure('name',title_text);
-set(fh,'color','w');
-if numel(stats)>2
-    set(fh, 'Position', get(0,'Screensize'));
-elseif numel(stats) == 2
-    set(fh, 'Position', get(0,'Screensize')/1.5);
-else
-    set(fh, 'Position', get(0,'Screensize')/3);
+if ~plotsubject
+    title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
+    title_text = title_text(1:find(title_text==filesep,1,'last')-1);
+    fh = figure('name',title_text);
+    set(fh,'color','w');
+    if numel(stats)>2
+        set(fh, 'Position', get(0,'Screensize'));
+    elseif numel(stats) == 2
+        set(fh, 'Position', get(0,'Screensize')/1.5);
+    else
+        set(fh, 'Position', get(0,'Screensize')/3);
+    end
 end
 if numel(stats)>1
     % main loop for each condition
     for cStats=1:numel(stats)
-        if ~isempty(plotorder)
-            suborder = find(strcmpi(stats(cStats).condname,gsettings.plotorder),1);
+        if ~isempty(plot_order)
+            suborder = find(strcmpi(stats(cStats).condname,cfg.plot_order),1);
             if isempty(suborder) 
-                error('cannot find condition name specified in gsettings.plotorder');
+                error('cannot find condition name specified in cfg.plot_order');
             end
         else
             suborder = cStats;
@@ -51,12 +61,12 @@ if numel(stats)>1
         disp(['plot ' num2str(suborder)]);
         if singleplot
             hold on;
-            [map, H] = subplot_MVPA(stats(cStats),gsettings,suborder);
+            [map, H] = subplot_MVPA(stats(cStats),cfg,suborder);
             legend_handle(suborder) = H.mainLine;
             legend_text{suborder} = regexprep(stats(cStats).condname,'_',' ');
         else
             subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),suborder);
-            map = subplot_MVPA(stats(cStats),gsettings);
+            map = subplot_MVPA(stats(cStats),cfg);
             title(regexprep(stats(cStats).condname,'_',' '));
         end
     end
@@ -65,32 +75,18 @@ if numel(stats)>1
         legend boxoff;
     end
 else
-    try
-        map = subplot_MVPA(stats,gsettings);
-    catch
-        disp('you can only plot 3D given the settings you supplied');
-        gsettings.plottype = '3D';
-        map = subplot_MVPA(stats,gsettings);
-    end
+    map = subplot_MVPA(stats,cfg);
 end
 
-function [map, H] = subplot_MVPA(stats,gsettings,cGraph)
+function [map, H] = subplot_MVPA(stats,cfg,cGraph)
 map = [];
 if nargin<3
     cGraph = 1;
 end
 
-% unpack stats
-v2struct(stats);
-settings = stats.settings; % little hardcoded hack because settings.m is apparently also a function
-
-% now settings should be here, unpack these too
-nconds = 2;
-freqs = 0;
-reduce_dims = '';
-v2struct(settings);
-
 % setting some graph defaults
+nconds = stats.settings.nconds;
+plotsubject = false;
 trainlim = [];
 testlim = [];
 freqlim = [];
@@ -105,16 +101,30 @@ plotsigline_method = 'both';
 splinefreq = [];
 timetick = 250;
 acctick = .05;
-plottype = '2D';
 mpcompcor_method = 'uncorrected';
 plotsubjects = false;
-% then unpack graphsettings too
-v2struct(gsettings);
+indiv_pval = .05;
+one_two_tailed = 'two';
+
+% then unpack cfgs to overwrite defaults, first original from stats, then the new one 
+if isfield(stats,'cfg')
+    oldcfg = stats.cfg;
+    v2struct(oldcfg); % unpack the stats-specific cfg
+end
+v2struct(cfg);
 if isempty(splinefreq)
     makespline = false;
 else
     makespline = true;
 end
+
+% unpack stats
+v2struct(stats);
+settings = stats.settings; % little hardcoded hack because settings.m is apparently also a function
+
+% now settings should be here, unpack these too
+freqs = 0;
+v2struct(settings);
 
 % fill some empties
 if isempty(freqtick)
@@ -147,57 +157,16 @@ if mean(times{1}<10)
     end
 end
 
-% limit frequency
-if numel(freqlim) == 2 && strcmpi(dimord,'frequency_time') && ~strcmpi(reduce_dims,'avfreq')
-    lowIndex = nearest(freqs,freqlim(1));
-    highIndex = nearest(freqs,freqlim(2));
-    freqs = freqs(lowIndex:highIndex);
-    ClassOverTime = ClassOverTime(lowIndex:highIndex,:);
-    if ~isempty(pVals)
-        pVals = pVals(lowIndex:highIndex,:);
-    end
-    if ~isempty(StdError)
-        StdError = StdError(lowIndex:highIndex,:);
-    end
-end
-
-% limit y-axis time
-if numel(testlim) == 2 && strcmpi(dimord,'time_time') && ~strcmpi(reduce_dims,'avtest')
-    lowIndex = nearest(times{2},testlim(1));
-    highIndex = nearest(times{2},testlim(2));
-    times{2} = times{2}(lowIndex:highIndex);
-    ClassOverTime = ClassOverTime(lowIndex:highIndex,:);
-    if ~isempty(pVals)
-        pVals = pVals(lowIndex:highIndex,:);
-    end
-    if ~isempty(StdError)
-        StdError = StdError(lowIndex:highIndex,:);
-    end
-end
-
-% limit x-axis time (always)
-if ~isempty(trainlim) && ~strcmpi(reduce_dims,'avtrain');
-    lowIndex = nearest(times{1},trainlim(1));
-    highIndex = nearest(times{1},trainlim(2));
-    times{1} = times{1}(lowIndex:highIndex);
-    ClassOverTime = ClassOverTime(:,lowIndex:highIndex);
-    if ~isempty(pVals)
-        pVals = pVals(:,lowIndex:highIndex);
-    end
-    if ~isempty(StdError)
-        StdError = StdError(:,lowIndex:highIndex);
-    end
-end
-
 % set color-limits (z-axis) or y-limits
-if strcmpi(measuremethod,'hr-far')
+if strcmpi(measuremethod,'hr-far') || strcmpi(plot_model,'FEM')
     chance = 0;
+    cent_acctick = 0;
 else
     chance = cent_acctick;
 end
 if isempty(acclim)
     mx = max(max((ClassOverTime(:)-chance)));
-    if strcmpi(plottype,'2D')
+    if strcmpi(plottype,'2D') % this is a 2D plot
         shift = mx/20;
         acclim = [chance-shift mx+chance+shift];
     else
@@ -210,21 +179,23 @@ end
 acclim = sort(acclim);
 
 % determine axes
-xaxis=times{1};
-if strcmpi(ydim,'frequency')
-    yaxis=round(freqs);
-elseif strcmpi(ydim,'time')
+if strcmpi(reduce_dims,'avtrain') 
+    xaxis = times{2};
+elseif strcmpi(reduce_dims,'avtest') || strcmpi(reduce_dims,'avfreq')
+    xaxis = times{1};
+elseif strcmpi(dimord,'time_time')
+    xaxis = times{1};
     yaxis = times{2};
+elseif strcmpi(dimord,'freq_time')
+    xaxis = times{1};
+    yaxis=round(freqs);
 end
 
 % stuff particular to 2D and 3D plotting
 if strcmpi(plottype,'2D')
     yaxis = sort(unique([cent_acctick:-acctick:min(acclim) cent_acctick:acctick:max(acclim)]));
-    data = diag(ClassOverTime);
-    if ~isempty(pVals)
-        pVals = diag(pVals);
-    end
-    stdData = diag(StdError);
+    data = ClassOverTime;
+    stdData = StdError;
     % some downsampling on 2D
     if ~isempty(downsamplefactor) && downsamplefactor > 0
         xaxis = downsample(xaxis,downsamplefactor);
@@ -238,8 +209,8 @@ if strcmpi(plottype,'2D')
     end
     % some smoothing on 2D using spline
     if makespline
-       data = compute_spline_on_classify(data,xaxis,splinefreq);
-       stdData = compute_spline_on_classify(stdData,xaxis,splinefreq);
+       data = compute_spline_on_classify(data,xaxis',splinefreq);
+       stdData = compute_spline_on_classify(stdData,xaxis',splinefreq);
     end
 else
     zaxis = sort(unique([cent_acctick:-acctick:min(acclim) cent_acctick:acctick:max(acclim)]));
@@ -249,7 +220,7 @@ end
 % set ticks for x-axis and y-axis
 xticks = timetick;
 if strcmpi(plottype,'3D')
-    if strcmpi(ydim,'frequency')
+    if strcmpi(ydim,'freq')
         yticks = freqtick;
     else
         yticks = xticks;
@@ -276,7 +247,7 @@ for tick = findticks
 end
 
 % do the same for y-axis
-if strcmpi(ydim,'frequency')
+if strcmpi(ydim,'freq')
     findticks = yticks:yticks:max(yaxis);
 else
     if min(yaxis) < 0 && max(yaxis) > 0
@@ -308,7 +279,7 @@ if strcmpi(plottype,'2D')
     % plot significant time points
     if ~isempty(pVals)
         sigdata = data;
-        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both')
+        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~plotsubject && ~strcmpi(mpcompcor_method,'none')
             if inverty
                 sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/100)*cGraph;
             else
@@ -330,13 +301,15 @@ if strcmpi(plottype,'2D')
                 H.mainLine=plot(1:numel(sigdata),sigdata,line_colors{cGraph},'LineWidth',2); % sigline on graph
             end
         end
-        if strcmpi(one_two_tailed,'one') one_two_tailed = '1'; else   one_two_tailed = '2'; end
-        if strcmpi(mpcompcor_method,'uncorrected')
-            h_legend = legend(H.mainLine,[' p < ' num2str(indiv_pval) ' (uncorrected, ' one_two_tailed '-sided)']); % ,'Location','SouthEast'
-        elseif strcmpi(mpcompcor_method,'cluster_based')
-            h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (cluster based, ' one_two_tailed '-sided)']);
-        elseif strcmpi(mpcompcor_method,'fdr')
-            h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (FDR, ' one_two_tailed '-sided)']);
+        if strcmpi(one_two_tailed,'one') one_two_tailed = '1'; else  one_two_tailed = '2'; end
+        if ~plotsubject
+            if strcmpi(mpcompcor_method,'uncorrected')
+                h_legend = legend(H.mainLine,[' p < ' num2str(indiv_pval) ' (uncorrected, ' one_two_tailed '-sided)']); % ,'Location','SouthEast'
+            elseif strcmpi(mpcompcor_method,'cluster_based')
+                h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (cluster based, ' one_two_tailed '-sided)']);
+            elseif strcmpi(mpcompcor_method,'fdr')
+                h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (FDR, ' one_two_tailed '-sided)']);
+            end
         end
         legend boxoff;
         %set(h_legend,'FontSize',14);
@@ -345,7 +318,7 @@ if strcmpi(plottype,'2D')
     ylabel(measuremethod);
     set(gca,'YTick',yaxis);
     if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
-        Ylabel = strsplit(deblank(sprintf('%0.2f ',yaxis)),' ');
+        Ylabel = strsplit(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ');
         Ylabel((yaxis == chance)) = {'chance'}; % say "chance".
         set(gca,'YTickLabel',Ylabel);
     end
@@ -361,7 +334,7 @@ else
     end
     % some smoothing on 3D
     if makespline
-        if ndims(data) > 2
+        if ndims(data) > 2 % DOUBLE CHECK WHETHER THIS IS OK
             [X,Y,Z] = meshgrid(1:size(data,2),1:size(data,1),1:size(data,3));
             [XX,YY,ZZ] = meshgrid(linspace(1,size(data,2),round(size(data,2)/smoothfactor)),linspace(1,size(data,1),round(size(data,1)/smoothfactor)),1:size(data,3));
             data = interp3(X,Y,Z,data,XX,YY,ZZ);
@@ -375,15 +348,19 @@ else
     imagesc(data);
     caxis(acclim);
     set(gca,'YDir','normal'); % set the y-axis right
-    hcb=colorbar;
-    % set ticks on color bar
-    set(hcb,'YTick',zaxis);
-    if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
-        Ylabel = strsplit(deblank(sprintf('%0.2f ',zaxis)),' ');
-        Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
-        set(hcb,'YTickLabel',Ylabel);
+    if ~plotsubject
+        hcb=colorbar;
     end
-    if strcmpi(ydim,'frequency')
+    % set ticks on color bar
+    if ~plotsubject
+        set(hcb,'YTick',zaxis);
+        if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
+            Ylabel = strsplit(deblank(sprintf(['%0.' num2str(ndec) 'f '],zaxis)),' ');
+            Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
+            set(hcb,'YTickLabel',Ylabel);
+        end
+    end
+    if strcmpi(ydim,'freq')
         ylabel('frequency in Hz');
         xlabel('time in ms');
     else
@@ -396,20 +373,17 @@ else
 end
 % set ticks on horizontal axis
 set(gca,'XTick',indx);
-xlim([min(indx) max(indx)]);
 roundto = xticks;
 set(gca,'XTickLabel',num2cell(round(xaxis(indx)/roundto)*roundto));
-set(gca,'FontSize',22);
+if plotsubject
+    set(gca,'FontSize',10);
+else
+    set(gca,'FontSize',22);
+end
 set(gca,'color','none');
 axis square;
 if inverty
     set(gca,'YDir','reverse');
-end
-% plot title
-if plotsubjects && sum(sum(stats.pVals)) == numel(stats.pVals)
-    [~,subj_nr,~] = fileparts(filenames{1});
-    subj_nr = subj_nr(regexp(subj_nr,'\d'));
-    ntitle(['subj ' subj_nr],'fontsize',22);
 end
 if (isempty(acclim2D) && strcmpi(plottype,'2D')) || (isempty(acclim3D) && strcmpi(plottype,'3D')) 
     sameaxes('xyzc',gcf());
@@ -418,4 +392,3 @@ end
 if ~exist('H')
     H = [];
 end
-return

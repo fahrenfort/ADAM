@@ -38,4 +38,7 @@ Thumbs.db
 
 # Temporary matlab files #
 ##########################
+.m~
 .~
+
+*.m~

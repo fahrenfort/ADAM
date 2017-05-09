@@ -1,4 +1,4 @@
-function [ clusterPvals, pStruct ] = cluster_based_permutation(data1,data2_or_chance_level,gsettings,settings,mask,connectivity)
+function [ clusterPvals, pStruct ] = cluster_based_permutation(data1,data2_or_chance_level,cfg,settings,mask,connectivity)
 % implements Maris, E., & Oostenveld, R. (2007). Nonparametric statistical
 % testing of EEG- and MEG-data. Journal of Neuroscience Methods, 164(1),
 % 177?190. http://doi.org/10.1016/J.Jneumeth.2007.03.024
@@ -15,13 +15,13 @@ function [ clusterPvals, pStruct ] = cluster_based_permutation(data1,data2_or_ch
 % data2_or_chance either contains a data matrix of the same size as data1,
 % or contains a single value corresponding to the value against which data1
 % should be tested.
-% gsettings.indiv_pval and gsettings.cluster_pval respectively determine
+% cfg.indiv_pval and cfg.cluster_pval respectively determine
 % the p-value used for inclusion into the cluser, and the p-value used for
 % evaluation overall cluster significance
-% gsettings.paired (true or false) and gsettings.tail ('one' or 'two)
+% cfg.paired (true or false) and cfg.tail ('one' or 'two)
 % determine whether to apply paired t-testing and whether to apply one- or
 % two-tailed testing
-% gsettings.iterations is the number of iterations in the permutation 
+% cfg.iterations is the number of iterations in the permutation 
 % mask is the same size as data1 without the subjects (so dim1 x dim2), and
 % allows you to restrict the cluster based test to a specific region by
 % specifying 0 for the regions that should not be included and 1 for the
@@ -50,13 +50,13 @@ else
 end
 mask = logical(mask);
 
-% some default settings (these are defined by gsettings)
+% some default settings (these are defined by cfg)
 indiv_pval = .05; % default = .05
 cluster_pval = .05; % default = .05
 iterations = 1000;
 paired = true;
 tail = 'two';
-v2struct(gsettings);
+v2struct(cfg);
 pval = [indiv_pval, cluster_pval];
 
 % repeat data if data2 is a chance variable
@@ -137,8 +137,8 @@ else
         end
     end
 end
-pStruct.posclusters = compute_pstruct(posLabels,clusterPvals,mean(data1)-mean(data2),gsettings,settings,mask,connectivity);
-pStruct.negclusters = compute_pstruct(negLabels,clusterPvals,mean(data2)-mean(data1),gsettings,settings,mask,connectivity);
+pStruct.posclusters = compute_pstruct(posLabels,clusterPvals,squeeze(mean(data1)-mean(data2)),cfg,settings,mask,connectivity);
+pStruct.negclusters = compute_pstruct(negLabels,clusterPvals,squeeze(mean(data2)-mean(data1)),cfg,settings,mask,connectivity);
 
 function [posSizes, negSizes, posLabels, negLabels, pVals] = compute_cluster_sizes(data1,data2,indiv_pval,one_two_tailed,mask,connectivity,paired)
 % step 1, determine 'actual' p values

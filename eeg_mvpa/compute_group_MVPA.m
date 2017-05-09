@@ -1,5 +1,5 @@
-function [stats,weights,gsettings] = compute_group_MVPA(folder_name,gsettings,mask)
-% function [stats,weights,gsettings] = compute_group_MVPA(folder_name,gsettings,mask)
+function [stats,cfg] = compute_group_MVPA(folder_name,cfg,mask)
+% function [stats,weights,cfg] = compute_group_MVPA(folder_name,cfg,mask)
 %
 % Extracts group classification data, classifier weights, forward model
 % parameters etc. Also does basic stats on the extracted conditions.
@@ -10,140 +10,146 @@ function [stats,weights,gsettings] = compute_group_MVPA(folder_name,gsettings,ma
 % indicate the root folder in which the folders that contain the condition
 % folders are located (use this if you want to compute more than one
 % condition at once). The conditions will be plotted in subplots by
-% plot_MVPA and plot_CTF gsettings is a struct that contains some input
+% plot_MVPA and plot_CTF cfg is a struct that contains some input
 % settings for compute_group_MVPA and ensueing plot functions:
-% gsettings.one_two_tailed = 'two' (can also be 'one')
-% gsettings.indiv_pval = .05;
-% gsettings.cluster_pval = .05;
-% gsettings.mpcompcor_method = 'uncorrected' (default, can also be 'cluster_based', 'fdr' or 'none')
-% gsettings.plottype = '2D' (default, can also be '3D'), determines whether
-% only to extract and test the diagonal, or whether to etract time_time or time_frequency
-% gsettings.trainlim = is the time limits over which to constrain the
+% cfg.one_two_tailed = 'two' (can also be 'one')
+% cfg.indiv_pval = .05;
+% cfg.cluster_pval = .05;
+% cfg.mpcompcor_method = 'uncorrected' (default, can also be 'cluster_based', 'fdr' or 'none')
+% cfg.plot_dim = 'time_time' or 'time_freq' (default: 'time_time')
+% cfg.reduce_dims = 'diag', 'avtrain', 'avtest' or 'avfreq' or []
+% cfg.trainlim = is the time limits over which to constrain the
 % training data, in ms.
-% gsettings.testlim = the time limits over which to constrain the testing
+% cfg.testlim = the time limits over which to constrain the testing
 % data, in ms.
-% gsettings.timelim constrains trainlim and testlim at once (only works if
-% trainlim and testlim are empty)
-% gsettings.freqlim = is the frequency limits over which to constrain the
+% cfg.timelim constrains trainlim and testlim at once (takes precedence
+% over trainlim and testlim
+% cfg.freqlim = is the frequency limits over which to constrain the
 % frequency dimension.
-% gsettings.channelpool = 'ALL' (can also be e.g. 'OCCIP', see
+% cfg.channelpool = 'ALL' (can also be e.g. 'OCCIP', see
 % classify_RAW_eeglab_data.m and classify_TFR_from_eeglab_data.m for more 
 % options.
-% gsettings.exclsubj = index numbers of subjects to skip (not including
+% cfg.exclsubj = index numbers of subjects to skip (not including
 % these subjects in the results structs). No subjects are excluded when
 % left empty (default).
 % Specify whether to extract the BDM or the FEM data using
-% gsettings.plotmodel = 'BDM' (default) or 'FEM'
+% cfg.plot_model = 'BDM' (default) or 'FEM'
 % You can also (optionally) specify which conditions you want to extract
-% (and in which order) using gsettings.plotorder, as a cell array.
+% (and in which order) using cfg.plot_order, as a cell array.
 %
 % Example: 
-% gsettings.timelim = [0.2 1.2];
-% gsettings.mpcompcor_method = 'cluster_based';
-% gsettings.startdir = '/Volumes/backup/WM_debunk_EEG';
-% gsettings.plotorder = { 'LOCATION_TASK','SEARCH_TASK'};
-% gsettings.plotmodel = 'FEM';
-% [stats, weights, gsettings] = compute_group_MVPA('',gsettings);
+% cfg.timelim = [0.2 1.2];
+% cfg.mpcompcor_method = 'cluster_based';
+% cfg.startdir = '/Volumes/backup/WM_debunk_EEG';
+% cfg.plot_order = { 'LOCATION_TASK','SEARCH_TASK'};
+% cfg.plot_model = 'FEM';
+% [stats, cfg] = compute_group_MVPA('',cfg);
 % 
-% By J.J.Fahrenfort, VU 2015, 2016
+% By J.J.Fahrenfort, VU 2015, 2016, 2017
 
 % First get some settings
 if nargin<3
     mask = [];
 end
 
+% backwards compatibility
+plot_dim = 'time_time'; % default, 'time_time' or 'freq_time'
+v2struct(cfg);
+if exist('plotmodel','var')
+    plot_model = plotmodel;
+    cfg.plot_model = plot_model;
+    cfg = rmfield(cfg,'plotmodel');
+end
+if exist('get_dim','var')
+    plot_dim = get_dim;
+    cfg.plot_dim = plot_dim;
+    cfg = rmfield(cfg,'get_dim');
+end
+if strcmpi(plot_dim,'frequency_time') || strcmpi(plot_dim,'time_frequency') || strcmpi(plot_dim,'time_freq')
+    plot_dim = 'freq_time';
+    cfg.plot_dim = plot_dim;
+end
+if exist('plotorder','var')
+    plot_order = plotorder;
+    cfg.plot_order = plot_order;
+    cfg = rmfield(cfg,'plotorder');
+end
+    
 % Main routine, is a folder name specified? If not, pop up selection dialog
 if isempty(folder_name)
-    if ~isfield(gsettings,'startdir')
-        gsettings.startdir = '';
-        disp('NOTE: it is easier to select a directory when you indicate a starting directory in gsettings.startdir');
+    if ~isfield(cfg,'startdir')
+        cfg.startdir = '';
+        disp('NOTE: it is easier to select a directory when you indicate a starting directory using cfg.startdir, otherwise you have to start selection from root every time...');
     end
-    folder_name = uigetdir(gsettings.startdir,'select directory to plot');
+    folder_name = uigetdir(cfg.startdir,'select directory to plot');
     if ~ischar(folder_name)
         return
     end
-    if ~isfield(gsettings,'plotorder') || isempty(gsettings.plotorder)
+    if ~exist('plot_order','var') || isempty(plot_order)
         dirz = dir(folder_name);
         dirz = {dirz([dirz(:).isdir]).name};
-        dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
-        % gsettings.plotorder = dirz;
+        dirz = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
     else
-        dirz = gsettings.plotorder;
+        dirz = cfg.plot_order;
     end
+    % loop through directories
     for cdirz = 1:numel(dirz)
-        [stats(cdirz), weights(cdirz), gsettings] = subcompute_group_MVPA([folder_name filesep dirz{cdirz}],gsettings,mask);
+        [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name filesep dirz{cdirz}],cfg,mask);
     end
+    cfg.folder = folder_name;
 else
     if ~exist('folder_name','dir') && ~iscell(folder_name) 
-        error([folder_name ' should refer to a full and existing folder path']);
+        error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
     end
-    [stats, weights, gsettings] = subcompute_group_MVPA(folder_name,gsettings,mask);
+    [stats, cfg] = subcompute_group_MVPA(folder_name,cfg,mask);
 end
 
-function [stats,weights,gsettings] = subcompute_group_MVPA(folder_name,gsettings,mask)
+% subroutine for each condition
+function [stats,cfg] = subcompute_group_MVPA(folder_name,cfg,mask)
 % set defaults
 one_two_tailed = 'two';
 indiv_pval = .05;
 cluster_pval = .05;
 plotsubjects = false;
 name = [];
-channelpool = 'ALL';
+channelpool = 'ALL'; % 'ALL', 'OCCIP', 'PARIET' etc, see select_channels.m function to make adjustments
 mpcompcor_method = 'uncorrected';
-plottype = '2D';
-reduce_dims = [];
-plotmodel = 'BDM';
+plot_model = 'BDM'; % 'BDM' or 'FEM'
+reduce_dims = []; % 'diag' 'avtrain' 'avtest' or 'avfreq'
 timelim = [];
-timelim2 = [];
 trainlim = [];
 testlim = [];
 freqlim = [];
 exclsubj= [];
-get_dim = 'freq_time'; % default
-% unpack graphsettings
-v2struct(gsettings);
-if strcmpi(plottype,'2D') && isempty(reduce_dims)
-    reduce_dims = 'diag'; % 'avtrain' 'diag' 'avtest' 'avfreq'
-    gsettings.reduce_dims = reduce_dims;
-end
-if strcmpi(get_dim,'frequency_time') || strcmpi(get_dim,'time_frequency') || strcmpi(get_dim,'time_freq')
-    get_dim = 'freq_time';
-    gsettings.get_dim = get_dim;
-end
-
+v2struct(cfg);
 % general time limit
-if ~isempty(timelim) % && isempty(trainlim) && isempty(testlim) timelim takes precedence
-    trainlim = timelim;
-    testlim = timelim;
-    gsettings.trainlim = trainlim;
-    gsettings.testlim = testlim;
+if ~isempty(timelim) % timelim takes precedence
+    cfg.trainlim = trainlim;
+    cfg.testlim = testlim;
 end
 
-% fill some empties
-if isempty(channelpool)
-    error('no channelpool was specified in settings, set gsettings.channelpool to ALL or OCCIP or similar, see classify_ functions.');
-end
+% unpack settings
+v2struct(cfg);
+
+% set defaults
 pval(1) = indiv_pval;
 pval(2) = cluster_pval;
 
 % some logical checking: is this a frequency folder?
-f_time_time = ~isempty(dir([folder_name filesep channelpool filesep 'freq*'])); % contains_2Dfreqs
-f_freq_time = ~isempty(dir([folder_name filesep channelpool filesep 'allfreqs'])); % contains_3Dfreqs
-freqfolder = any([f_time_time f_freq_time]);
+freqfolder_contains_time_time = ~isempty(dir([folder_name filesep channelpool filesep 'freq*'])); 
+freqfolder_contains_freq_time = ~isempty(dir([folder_name filesep channelpool filesep 'allfreqs']));
+freqfolder = any([freqfolder_contains_time_time freqfolder_contains_freq_time]);
 if freqfolder
-    if strcmpi(get_dim,'freq_time') && f_freq_time
-        plotFreq{1} = [filesep 'allfreqs'];
-    elseif strcmpi(get_dim,'freq_time')
-        disp('WARNING: freq_time is not available in this folder, defaulting to time_time')
-        get_dim = 'time_time';
-    else
-        if isempty(freqlim)
-            freqlim = input('What frequency or frequency range should I extract? ');
-        end
-        if numel(freqlim) == 1
-            freqlim(2) = freqlim(1);
-        end
+    if strcmpi(plot_dim,'freq_time') && freqfolder_contains_freq_time
+        plotFreq = {[filesep 'allfreqs']};
+    elseif strcmpi(plot_dim,'freq_time')
+        disp('WARNING: freq_time is not availaible in this folder, defaulting to cfg.plot_dim = ''time_time''');
+        plot_dim = 'time_time';
     end
-    if strcmpi(get_dim,'time_time') && f_time_time
+    if strcmpi(plot_dim,'time_time') && freqfolder_contains_time_time
+        if isempty(freqlim)
+            freqlim = input('What frequency or frequency range should I extract (e.g. type [2 10] to average between 2 and 10 Hz)? ');
+        end
         if numel(freqlim) > 1 % make a list of frequencies over which to average
             freqlist = dir([folder_name filesep channelpool filesep 'freq*']); freqlist = {freqlist(:).name};
             for c=1:numel(freqlist); freqsindir(c) = string2double(regexprep(freqlist{c},'freq','')); end
@@ -152,47 +158,23 @@ if freqfolder
         else % or just a single frequency
             plotFreq{1} = [filesep 'freq' num2str(freqlim)];
         end
-    elseif strcmpi(get_dim,'time_time')
-        disp('WARNING: time_time is not availaible in this folder, defaulting to freq_time')
-        get_dim = 'freq_time';
+    elseif strcmpi(plot_dim,'time_time') && ~freqfolder_contains_time_time
+        disp('WARNING: time_time is not available in this folder, defaulting to cfg.plot_dim = ''freq_time''');
+        plot_dim = 'freq_time';
         plotFreq{1} = [filesep 'allfreqs'];
     end
 else
-    plotFreq{1} = '';
+    plotFreq = {''};
     freqlim = [];
 end
         
-% if contains_2Dfreqs && ~isempty(freqlim)
-%     if numel(freqlim) > 1 % make a list of frequencies over which to average
-%         freqlist = dir([folder_name filesep channelpool filesep 'freq*']); freqlist = {freqlist(:).name};
-%         for c=1:numel(freqlist); freqsindir(c) = string2double(regexprep(freqlist{c},'freq','')); end
-%         freqsindir = sort(freqsindir); freqs2keep = find(freqsindir >= min(freqlim) & freqsindir <= max(freqlim));
-%         for c=1:numel(freqs2keep); plotFreq{c} = [filesep 'freq' num2str(freqsindir(freqs2keep(c)))]; end
-%     else % or just a single frequency
-%         plotFreq{1} = [filesep 'freq' num2str(freqlim)];
-%     end
-% elseif contains_3Dfreqs
-%     plotFreq{1} = [filesep 'allfreqs'];
-% else
-%     plotFreq{1} = '';
-%     freqlim = [];
-% end
-
 % pack graphsettings with defaults
-nameOfStruct2Update = 'gsettings';
-gsettings = v2struct(freqlim,plotFreq,trainlim,testlim,one_two_tailed,indiv_pval,cluster_pval,plotmodel,mpcompcor_method,plottype,reduce_dims,freqlim,nameOfStruct2Update);
-
-% make mask 2D if plot is 2D
-if strcmpi(plottype,'2D')
-    mask = diag(mask);
-end
+nameOfStruct2Update = 'cfg';
+cfg = v2struct(freqlim,plotFreq,trainlim,testlim,one_two_tailed,indiv_pval,cluster_pval,plot_model,mpcompcor_method,reduce_dims,freqlim,nameOfStruct2Update);
 
 % get filenames
 subjectfiles = dir([folder_name filesep channelpool plotFreq{1} filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
-%name = strsplit(folder_name,filesep);
-%name = name(1:end-1);
-gsettings.folder = folder_name;
 subjectfiles = { subjectfiles(:).name };
 
 % limiting subjects
@@ -200,168 +182,249 @@ if ~isempty(exclsubj)
    subjectfiles = select_subjects(subjectfiles,exclsubj,true);
 end
 
+% see if data exists
 nSubj = numel(subjectfiles);
 if nSubj == 0
     error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq]);
 end
+
+% prepare figure in case individual subjects are plotted
 if plotsubjects;
-    fh = figure('name','individual subjects');
+    fh = figure('name',['individual subjects, condition: ' condname]);
     set(fh, 'Position', get(0,'Screensize'));
     set(fh,'color','w');
 end
 
 % do the loop, restrict time and frequency if applicable
+firstchanlocs = [];
 for cSubj = 1:nSubj
     fprintf(1,'loading subject %d of %d\n', cSubj, nSubj);
-    clear ClassOverTimeAv;
-    % loop over frequencies
+    
+    % initialize subject
+    clear ClassOverTimeAv WeightsOverTimeAv covPatternsOverTimeAv corPatternsOverTimeAv C2_averageAv C2_perconditionAv;
+
+    % loop over frequencies (if no frequencies exist, it simply loads raw)
     for cFreq = 1:numel(plotFreq)
+        
+        % locate data
         matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep subjectfiles{cSubj}]);
-        if ~isempty(whos(matObj,'BDM'))
-            if strcmpi(plotmodel,'BDM')
-                v2struct(matObj.BDM); % unpack fields
-            else
-                v2struct(matObj.FEM); % unpack fields
-            end
-        else % BW compatibility, will become obsolete over time
-            ClassOverTime = matObj.ClassOverTime;
-            WeightsOverTime = matObj.WeightsOverTime;
-            if isfield(matObj,'covPatternsOverTime')
-                covPatternsOverTime = matObj.covPatternsOverTime;
-                corPatternsOverTime = matObj.corPatternsOverTime;
-            end
+        settings = matObj.settings;
+        
+        % for backward compatibility
+        if strcmpi(settings.dimord,'frequency_time')
+            settings.dimord = 'freq_time';
         end
-        % sum up frequency accuracies to compute average
-        if ~exist('ClassOverTimeAv','var');
-            ClassOverTimeAv = zeros(size(ClassOverTime));
+        v2struct(settings);
+        
+        % get data
+        if ~isempty(whos(matObj,'BDM')) && strcmpi(plot_model,'BDM')
+            v2struct(matObj.BDM); % unpack 
+        elseif ~isempty(whos(matObj,'FEM')) && strcmpi(plot_model,'FEM')
+            v2struct(matObj.FEM); % unpack 
+        else
+            error('cannot find data');
         end
-        ClassOverTimeAv = ClassOverTimeAv + ClassOverTime;
-    end
-    % compute average classification correct over frequencies
-    ClassOverTime = ClassOverTimeAv / numel(plotFreq);
-    settings = matObj.settings;
-    [ClassOverTime, settings, gsettings, lim1,lim2] = restrict_ClassOverTime(ClassOverTime,settings,gsettings);
-    v2struct(gsettings);
-    ClassTotal{1}(cSubj,1:size(ClassOverTime,1),1:size(ClassOverTime,2)) = ClassOverTime;
-    
-    % first get the relevant electrodes and put them in the same order
-    % as in chanlocdata
-    if ~isfield(settings,'chanlocs') % if no chanlocdata exist in settings
-        if ~exist('chanlocdata','var')
-            chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
-        end
-        [~, chanindex, dataindex] = intersect({chanlocdata(:).labels},settings.channels,'stable');
-        chanlocs = chanlocdata(chanindex); % put all in the same order as imported locations 
-    else % otherwise just extract from settings
-        chanlocs = settings.chanlocs{1};
+               
+        % find limits
         if ~exist('firstchanlocs','var')
-            firstchanlocs = chanlocs;
+            firstchanlocs = [];
         end
-        [~, ~, dataindex] = intersect({firstchanlocs(:).labels},{chanlocs(:).labels},'stable');
-        chanlocs = firstchanlocs;
-    end
-    if numel(chanlocs) < numel(settings.channels)
-        error('could not find location info for all channels');
+        [settings, cfg, lim1, lim2, dataindex, firstchanlocs] = find_limits(settings, cfg, firstchanlocs);
+        v2struct(cfg);
+        
+        % limit ClassOverTime
+        ClassOverTime = ClassOverTime(lim1,lim2);
+        
+        % limit weights too
+        if strcmpi(dimord,'freq_time')
+            WeightsOverTime = WeightsOverTime(lim1,lim2,dataindex,:);
+        else
+            WeightsOverTime = WeightsOverTime(lim2,dataindex,:);
+        end
+        if strcmpi(plot_model,'BDM')
+            if strcmpi(dimord,'freq_time')
+                covPatternsOverTime = covPatternsOverTime(lim1,lim2,dataindex);
+                corPatternsOverTime = corPatternsOverTime(lim1,lim2,dataindex);
+            else
+                covPatternsOverTime = covPatternsOverTime(lim2,dataindex);
+                corPatternsOverTime = corPatternsOverTime(lim2,dataindex);
+            end
+        else
+            C2_average = C2_average(lim1,lim2,:);
+            C2_percondition = C2_percondition(lim1,lim2,:,:);
+        end
+        
+        % if applicable, reduce dimensionality (creates 2D plot)
+        if strcmpi(reduce_dims,'avfreq') && strcmpi(dimord,'freq_time')
+            if isempty(freqlim)
+                disp('WARNING: you are averaging across ALL frequencies, are you sure that is what you want?');
+            end
+            ClassOverTime = mean(ClassOverTime,1);
+            WeightsOverTime = mean(WeightsOverTime,1);
+            if strcmpi(plot_model,'BDM')
+                covPatternsOverTime = mean(covPatternsOverTime,1);
+                corPatternsOverTime = mean(corPatternsOverTime,1);
+%           NOTE: the plot_CTF function still assumes the full matrix, 
+%           needs to be updated. For now just pass the full matrix. When
+%           this is fixed, could also plot CTF across al testing points
+%           when training on one specific timepoint or vice versa
+%             else
+%                 C2_average = mean(C2_average,1);
+%                 C2_percondition = mean(C2_percondition,1);
+            end
+            mask = sum(mask,1);
+        elseif strcmpi(reduce_dims,'avtrain') && strcmpi(dimord,'time_time')
+            if isempty(trainlim)
+                disp('WARNING: you are averaging across ALL training time points, are you sure that is what you want?');
+            end
+            ClassOverTime = mean(ClassOverTime,2); % IMPORTANT, TRAIN IS ON SECOND DIMENSION
+%             if strcmpi(plot_model,'FEM')
+%                 C2_average = mean(C2_average,2);
+%                 C2_percondition = mean(C2_percondition,2);
+%             end
+            mask = sum(mask,2);
+        elseif strcmpi(reduce_dims,'avtest') && strcmpi(dimord,'time_time')
+            if isempty(trainlim)
+                disp('WARNING: you are averaging across ALL testing time points, are you sure that is what you want?');
+            end
+            ClassOverTime = mean(ClassOverTime,1); % IMPORTANT, TEST IS ON FIRST DIMENSION
+%             if strcmpi(plot_model,'FEM')
+%                 C2_average = mean(C2_average,1);
+%                 C2_percondition = mean(C2_percondition,1);
+%             end
+            mask = sum(mask,1);
+        elseif strcmpi(reduce_dims,'diag') && strcmpi(dimord,'time_time')
+            ClassOverTime = diag(ClassOverTime);
+%             if strcmpi(plot_model,'FEM')
+%                 for c1 =1:size(C2_percondition,3)
+%                     diagC2_average(:,c1) = diag(C2_average(:,:,c1));
+%                     for c2 = 1:size(C2_percondition,4)
+%                         diagC2_percondition(:,c1,c2) = diag(C2_percondition(:,:,c1,c2));
+%                     end
+%                 end
+%                 C2_average = diagC2_average;
+%                 C2_percondition = diagC2_percondition;
+%             end
+            mask = diag(mask);
+        elseif strcmpi(reduce_dims,'diag') && strcmpi(dimord,'freq_time')
+            disp('WARNING: cannot reduce dimensionality along diagonal when dimord is freq_time');
+        end
+        
+        % sum up to compute average over frequencies (avfreq)
+        if ~exist('ClassOverTimeAv','var'); ClassOverTimeAv = zeros(size(ClassOverTime)); end
+        if ~exist('WeightsOverTimeAv','var'); WeightsOverTimeAv = zeros(size(WeightsOverTime)); end
+        ClassOverTimeAv = ClassOverTimeAv + ClassOverTime;
+        WeightsOverTimeAv = WeightsOverTimeAv + WeightsOverTime;
+        if strcmpi(plot_model,'BDM')
+            if ~exist('covPatternsOverTimeAv','var'); covPatternsOverTimeAv = zeros(size(covPatternsOverTime)); end
+            if ~exist('corPatternsOverTimeAv','var'); corPatternsOverTimeAv = zeros(size(corPatternsOverTime)); end
+            covPatternsOverTimeAv = covPatternsOverTimeAv + covPatternsOverTime;
+            corPatternsOverTimeAv = corPatternsOverTimeAv + corPatternsOverTime;
+        else
+            if ~exist('C2_averageAv','var'); C2_averageAv = zeros(size(C2_average)); end
+            if ~exist('C2_perconditionAv','var'); C2_perconditionAv = zeros(size(C2_percondition)); end
+            C2_averageAv = C2_averageAv + C2_average;
+            C2_perconditionAv = C2_perconditionAv + C2_percondition;
+        end
+        
     end
     
-    % STILL NEED TO IMPLEMENT FREQUENCY AVERAGING OVER WeightsOverTime,
-    % covPatternsOverTime, corPatternsOverTime etc 
-    
-    % extract weights and patterns: time x channel or freq x time x channel
-    % make sure that all subject data are in the same electrode order by using dataindex
-    if strcmpi(settings.dimord,'frequency_time')
-        if exist('WeightsOverTime', 'var'); WeightsOverTimeAll(cSubj,:,:,:,:) = WeightsOverTime(lim2,lim1,dataindex,:); end;
-        if exist('covPatternsOverTime', 'var'); covPatternsOverTimeAll(cSubj,:,:,:) = covPatternsOverTime(lim2,lim1,dataindex); end;
-        if exist('corPatternsOverTime', 'var'); corPatternsOverTimeAll(cSubj,:,:,:) = corPatternsOverTime(lim2,lim1,dataindex); end;
+    % by default it computes the average over frequencies when specifying
+    % time_time (cfg.reduce_dims = 'avfreq' is actually superfluous in this case)
+    ClassOverTime = ClassOverTimeAv / numel(plotFreq);
+    WeightsOverTime = WeightsOverTimeAv / numel(plotFreq);
+    if strcmpi(plot_model,'BDM')
+        covPatternsOverTime = covPatternsOverTimeAv / numel(plotFreq);
+        corPatternsOverTime = corPatternsOverTimeAv / numel(plotFreq);
     else
-        if exist('WeightsOverTime', 'var') && ~isempty(WeightsOverTime); WeightsOverTimeAll(cSubj,:,:,:) = WeightsOverTime(lim1,dataindex,:); end;
-        if exist('covPatternsOverTime', 'var'); covPatternsOverTimeAll(cSubj,:,:) = covPatternsOverTime(lim1,dataindex); end;
-        if exist('corPatternsOverTime', 'var'); corPatternsOverTimeAll(cSubj,:,:) = corPatternsOverTime(lim1,dataindex); end;
+        C2_average = C2_averageAv / numel(plotFreq);
+        C2_percondition = C2_perconditionAv / numel(plotFreq);
     end
-    if exist('C2_average', 'var'); C2_averageAll(cSubj,:,:,:) = C2_average(lim2,lim1,:); end;
-    if exist('C2_percondition', 'var'); C2_perconditionAll(cSubj,:,:,:,:) = C2_percondition(lim2,lim1,:,:); end;
     
-    indivClassOverTime(cSubj,:,:) = ClassOverTime;
-    if strcmpi(plottype,'3D')
-        indivClassAv(cSubj) = mean(mean(ClassOverTime));
+    % make big matrix of of all subjects
+    ClassOverTimeAll{1}(cSubj,:,:) = ClassOverTime;
+    indx = [{cSubj} repmat({':'}, 1, ndims(WeightsOverTime))];
+    WeightsOverTimeAll(indx{:}) = WeightsOverTime;
+    if strcmpi(plot_model,'BDM')
+        indx = [{cSubj} repmat({':'}, 1, ndims(covPatternsOverTime))];
+        covPatternsOverTimeAll(indx{:}) = covPatternsOverTime;
+        indx = [{cSubj} repmat({':'}, 1, ndims(corPatternsOverTime))];
+        corPatternsOverTimeAll(indx{:}) = corPatternsOverTime;
     else
-        indivClassAv(cSubj) = mean(mean(diag(squeeze(ClassOverTime))));
+        indx = [{cSubj} repmat({':'}, 1, ndims(C2_average))];
+        C2_averageAll(indx{:}) = C2_average;
+        indx = [{cSubj} repmat({':'}, 1, ndims(C2_percondition))];
+        C2_perconditionAll(indx{:}) = C2_percondition;
     end
+    
+    % plot individual subjects
     if plotsubjects
         subplot(numSubplots(nSubj,1),numSubplots(nSubj,2),cSubj);
         onestat.ClassOverTime = ClassOverTime;
         onestat.StdError = [];
-        onestat.pVals = [];
+        onestat.pVals = zeros(size(ClassOverTime));
         onestat.indivClassOverTime = [];
-        onestat.indivClassAv = [];
         onestat.settings = settings;
         onestat.condname = condname;
         onestat.channelpool = channelpool;
-        tempsettings = gsettings;
-        tempsettings.timetick = 500;
-        plot_MVPA(onestat,tempsettings);
+        tmpcfg = cfg;
+        tmpcfg.plotsubject = true;
+        plot_MVPA(onestat,tmpcfg);
+        subjname = subjectfiles{cSubj};
+        underscores = strfind(subjname,'_');
+        subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
+        ntitle(subjname,'fontsize',10,'fontweight','bold');
     end
 end
 
 % determine chance level
-if strcmpi(settings.measuremethod,'hr-far') || strcmpi(plotmodel,'FEM')
+if strcmpi(settings.measuremethod,'hr-far') || strcmpi(plot_model,'FEM')
     chance = 0;
 else
     chance = 1/settings.nconds;
 end
 
 % compute standard errors and averages
-ClassStdErr(1:size(ClassTotal{1},2),1:size(ClassTotal{1},3)) = std(ClassTotal{1},0,1)/sqrt(size(ClassTotal{1},1));
-ClassAverage(1:size(ClassTotal{1},2),1:size(ClassTotal{1},3)) = mean(ClassTotal{1},1);
-ClassTotal{2} = repmat(chance,size(ClassTotal{1}));
+ClassStdErr(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1));
+if sum(sum(ClassStdErr)) == 0 ClassStdErr = []; end % don't plot stderror when there is none
+ClassAverage(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = mean(ClassOverTimeAll{1},1);
+ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 
 % statistical testing
-if strcmpi(mpcompcor_method,'fdr')
-    % FDR CORRECTION
-    if strcmpi(one_two_tailed,'two')
-        [~,ClassPvals(1:size(ClassTotal{1},2),1:size(ClassTotal{1},3))] = ttest(ClassTotal{1},ClassTotal{2},'tail','both');
-    else
-        [~,ClassPvals(1:size(ClassTotal{1},2),1:size(ClassTotal{1},3))] = ttest(ClassTotal{1},ClassTotal{2},'tail','right');
-    end
-    if strcmpi(plottype,'2D')
-        thresh = fdr(diag(squeeze(ClassPvals)),pval(2));
-    else
-        thresh = fdr(squeeze(ClassPvals),pval(2));
-    end
-    ClassPvals(ClassPvals>thresh) = 1;
-elseif strcmpi(mpcompcor_method,'cluster_based')
-    % CLUSTER BASED CORRECTION
-    if strcmpi(plottype,'2D') 
-        for cSubj = 1:nSubj
-            DiagTotal{1}(cSubj,:) = diag(squeeze(ClassTotal{1}(cSubj,:,:)));
-            DiagTotal{2}(cSubj,:) = diag(squeeze(ClassTotal{2}(cSubj,:,:)));
+if nSubj > 1
+    if strcmpi(mpcompcor_method,'fdr')
+        % FDR CORRECTION
+        if strcmpi(one_two_tailed,'two')
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','both');
+        else
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','right');
         end
-        % mask = diag(mask);
-        [ DiagPvals, pStruct ] = cluster_based_permutation(DiagTotal{1},DiagTotal{2},gsettings,settings,mask);
-        ClassPvals = ones(size(ClassAverage));
-        ClassPvals(logical(eye(size(ClassPvals)))) = DiagPvals;
+        thresh = fdr(squeeze(ClassPvals),pval(2));
+        ClassPvals(ClassPvals>thresh) = 1;
+    elseif strcmpi(mpcompcor_method,'cluster_based')
+        % CLUSTER BASED CORRECTION
+        [ClassPvals, pStruct] = cluster_based_permutation(ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings,mask);
+    elseif strcmpi(mpcompcor_method,'uncorrected')
+        % NO MP CORRECTION
+        if strcmpi(one_two_tailed,'two')
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','both');
+        else
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','right');
+        end
+        ClassPvals(~mask) = 1;
     else
-        [ClassPvals(1:size(ClassTotal{1},2),1:size(ClassTotal{1},3)), pStruct] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},gsettings,settings,mask);
+        % NO TESTING, PLOT ALL
+        ClassPvals = zeros([size(ClassOverTimeAll{1},2) size(ClassOverTimeAll{1},3)]);
     end
-elseif strcmpi(mpcompcor_method,'uncorrected')
-    % NO MP CORRECTION
-    if strcmpi(one_two_tailed,'two')
-        [~,ClassPvals(1:size(ClassTotal{1},2),1:size(ClassTotal{1},3))] = ttest(ClassTotal{1},ClassTotal{2},'tail','both');
-    else
-        [~,ClassPvals(1:size(ClassTotal{1},2),1:size(ClassTotal{1},3))] = ttest(ClassTotal{1},ClassTotal{2},'tail','right');
-    end
-    ClassPvals(~mask) = 1;
 else
-    % NO TESTING, PLOT ALL
-    ClassPvals = zeros([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
+    ClassPvals = zeros([size(ClassOverTimeAll{1},2) size(ClassOverTimeAll{1},3)]);
 end
 
 % outputs
 stats.ClassOverTime = ClassAverage;
 stats.StdError = ClassStdErr;
 stats.pVals = ClassPvals;
-stats.indivClassOverTime = indivClassOverTime;
-stats.indivClassAv = indivClassAv;
+stats.indivClassOverTime = ClassOverTimeAll{1};
 stats.settings = settings;
 stats.condname = condname;
 stats.filenames = subjectfiles;
@@ -369,7 +432,7 @@ stats.channelpool = channelpool;
 if exist('pStruct','var')
     stats.pStruct = pStruct;
 end
-%gsettings = v2struct(name,nameOfStruct2Update);
+%cfg = v2struct(name,nameOfStruct2Update);
 
 % compute weights stuff
 weights.chanlocs = chanlocs;
@@ -377,20 +440,15 @@ if exist('WeightsOverTimeAll','var')
     weights.avWeights = squeeze(mean(WeightsOverTimeAll,1));
     weights.indivWeights = squeeze(WeightsOverTimeAll);
 end
-if exist('covPatternsOverTimeAll','var')
+if strcmpi(plot_model,'BDM')
     weights.avCovPatterns = squeeze(mean(covPatternsOverTimeAll,1));   
     weights.indivCovPatterns = squeeze(covPatternsOverTimeAll);
-end
-if exist('corPatternsOverTimeAll','var')
     weights.avCorPatterns = squeeze(mean(corPatternsOverTimeAll,1));
     weights.indivCorPatterns = squeeze(corPatternsOverTimeAll);
-end
-if exist('C2_averageAll','var')
+else
     weights.CTF = squeeze(mean(C2_averageAll,1));
     weights.semCTF = squeeze(std(C2_averageAll,0,1)/sqrt(size(C2_averageAll,1)));
     weights.indivCTF = squeeze(C2_averageAll);
-end
-if exist('C2_perconditionAll','var')
     CTFpercond = squeeze(mean(C2_perconditionAll,1));
     semCTFpercond = squeeze(std(C2_perconditionAll,0,1)/sqrt(size(C2_perconditionAll,1)));
     indivCTFpercond = squeeze(C2_perconditionAll);
@@ -401,83 +459,76 @@ if exist('C2_perconditionAll','var')
         weights.indivCTFpercond{cCond} = squeeze(indivCTFpercond(:,:,:,cCond,:));
     end
 end
-weights.filenames = subjectfiles;
-
-% determine file name for graph when plotting
-base_folder = folder_name;
-if exist('startdir','var') && strncmp(base_folder,startdir,numel(startdir))
-    tmp = base_folder(numel(startdir)+1:end);
-    tmp = strsplit(tmp,filesep);
-    try
-        gsettings.outfile = strjoin('_',tmp(3:end-1));
-    catch
-        gsettings.outfile = strjoin(tmp(3:end-1),'_');
-    end
-else
-    gsettings.outfile = '';
-end
+stats.weights = weights;
+stats.cfg = cfg;
 disp('done!');
 
+function [settings, cfg, lim1, lim2, dataindex, firstchanlocs] = find_limits(settings, cfg, firstchanlocs) 
 % find limits within which to constrain ClassOverTime
-function [limitedClassOverTime, settings, gsettings, lim1, lim2] = restrict_ClassOverTime(ClassOverTime,settings,gsettings) 
-% unpack graphsettings
-v2struct(gsettings);
-v2struct(settings);
-if strcmpi(dimord,'frequency_time')
-    freqs = settings.freqs; % little hack to overcome the fact that freqs is also a function and v2struct can't deal with that
+v2struct(cfg); % unpack cfg
+v2struct(settings); % unpack settings
+if strcmpi(dimord,'freq_time') 
+    freqs = settings.freqs; % to fix that freqs is also a function and v2struct can't deal with that
 end
 
-% OLD bw compatible, can remove self/other after some time
-if isfield(settings.times,'self')
-    clear times;
-    times{1} = settings.times.self;
-end
-if isfield(settings.times,'other')
-    times{2} = settings.times.other;
-elseif numel(settings.times) == 1 && strcmpi(settings.dimord,'time_time')
+if numel(settings.times) == 1 && strcmpi(settings.dimord,'time_time')
     times{2} = times{1};
 end
 
+% get the relevant electrodes and obtain the correct order for weights
+if ~isfield(settings,'chanlocs') % if no chanlocdata exist in settings
+    if ~exist('chanlocdata','var')
+        chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
+    end
+    [~, chanindex, dataindex] = intersect({chanlocdata(:).labels},settings.channels,'stable');
+    chanlocs = chanlocdata(chanindex); % put all in the same order as imported locations
+else % otherwise just extract from settings
+    chanlocs = settings.chanlocs{1};
+    if isempty(firstchanlocs)
+        firstchanlocs = chanlocs;
+    end
+    [~, ~, dataindex] = intersect({firstchanlocs(:).labels},{chanlocs(:).labels},'stable');
+    chanlocs = firstchanlocs;
+end
+if numel(chanlocs) < numel(settings.channels)
+    error('could not find location info for all channels');
+end
+
 % continue limit operation
-if strcmpi(dimord,'frequency_time') && numel(freqlim)>1
-    lim2 = nearest(freqs,freqlim(1)):nearest(freqs,freqlim(2));
-    settings.freqs = freqs(lim2);
-elseif strcmpi(dimord,'frequency_time') && numel(freqlim) == 1
-    lim2 = nearest(freqs,freqlim);
-    settings.freqs = freqs(lim2);
+% NOTE: ClassOverTime has dimensions: test_time * train_time OR freq * time
+% In settings, times{1} is always train and times{2} is always test, but 
+% ClassOverTime(1,:) is the first element of test_time (1st dimension) and
+% ClassOverTime(:,1) is the first element of train_time (2nd dimension)
+if strcmpi(dimord,'freq_time') && numel(freqlim)>1
+    lim1 = nearest(freqs,min(freqlim)):nearest(freqs,max(freqlim));
+    freqs = freqs(lim1);
+elseif strcmpi(dimord,'freq_time') && numel(freqlim) == 1
+    lim1 = nearest(freqs,freqlim);
+    freqs = freqs(lim1);
+elseif strcmpi(dimord,'freq_time') && isempty(freqlim)
+    lim1 = true(size(freqs));
 elseif strcmpi(dimord,'time_time') && ~isempty(testlim)
-    lim2 = nearest(times{2}*1000,testlim(1)):nearest(times{2}*1000,testlim(2));
-    times{2} = times{2}(lim2);
+    lim1 = nearest(times{2}*1000,testlim(1)):nearest(times{2}*1000,testlim(2));
+    times{2} = times{2}(lim1); % that is why times{2}(lim1)!
 else
-    lim2 = true(size(ClassOverTime,1),1);
+    lim1 = true(size(times{2})); % that is why lim1 = true(size(times{2}))!
 end
 
 % the time dimension (always present)
 if ~isempty(trainlim)
-    lim1 = nearest(times{1}*1000,trainlim(1)):nearest(times{1}*1000,trainlim(2));
-    times{1} = times{1}(lim1);
+    lim2 = nearest(times{1}*1000,trainlim(1)):nearest(times{1}*1000,trainlim(2));
+    times{1} = times{1}(lim2); % that is why times{1}(lim2)!
 else
-    lim1 = true(size(ClassOverTime,2),1);
+    lim2 = true(size(times{1}));
 end
 
-% if plottype is 2D and the domain is time_time, restrict lim2 by the same thing as lim1
-if strcmpi(plottype,'2D') && strcmpi(dimord,'time_time')
-    lim2 = lim1;
+% if the diagonal is plotted in 2D, restriction should be matched
+if strcmpi(reduce_dims,'diag') && strcmpi(dimord,'time_time')
+    lim1 = lim2;
 end
 
-% now restrict
-limitedClassOverTime = ClassOverTime(lim2,lim1);
+% consolidate
 settings.times = times;
-
-% and if applicable, average
-if strcmpi(reduce_dims,'avfreq') && strcmpi(dimord,'freq_time')
-    limitedClassOverTime = mean(limitedClassOverTime,1);
-elseif strcmpi(reduce_dims,'avtrain') && strcmpi(dimord,'time_time')
-    limitedClassOverTime = mean(limitedClassOverTime,1);
-elseif strcmpi(reduce_dims,'avtest') && strcmpi(dimord,'time_time')
-    limitedClassOverTime = mean(limitedClassOverTime,2);
-elseif strcmpi(reduce_dims,'diag')
-    if sum(size(squeeze(limitedClassOverTime))==1) % is one of the dimensions 1?
-        limitedClassOverTime = diag(limitedClassOverTime); % put the values back on the diagonal for consistency
-    end
+if strcmpi(dimord,'freq_time')
+    settings.freqs = freqs;
 end
