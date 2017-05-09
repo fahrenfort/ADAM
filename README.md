@@ -32,7 +32,7 @@ One of the big advantages of this toolbox is that it takes generic input formats
 - A reasonably modern computer (>=8GB memory, enough HD space, modern processor, more is better)
 
 # Version
-The software is currently in pre-release, meaning that it is available for download but important features are still under development. We foresee that a first 'official' release will become available within the next few months.
+The software is currently in pre-release, meaning that it is available for download but important features are still under development. We are still streamlining the basic analysis pipeline, to make it more consistent and more usable. **If you download the software now, expect no support, but do expect unexpected changes during updates.** We foresee that a first 'official' release will become available within the next few months.
 
 # Manual
 We are currently working to supply an up-to-date manual of the toolbox, including some easy to use wrapper functions, which will be presented at the [ICON conference](http://www.icon2017.org) 5-8 August 2017 in Amsterdam
