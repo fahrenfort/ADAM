@@ -3,7 +3,8 @@ function avgctfstruct = plot_CTF(stats,cfg)
 % plot channel responses of forward encoding model, takes data from
 % compute_group_MVPA
 % THIS FUNCTION NEEDS SOME UPDATING TO RELY ONLY ON compute_group_MVPA TO
-% LIMIT DIMENSIONS AND COMPUTE STATS
+% LIMIT DIMENSIONS AND COMPUTE STATS, AND MORE GENERALLY NEEDS A THOROUGH
+% CLEANUP
 %
 % By J.J.Fahrenfort, VU 2016 
 if nargin<2
@@ -18,11 +19,39 @@ startdir = '';
 singleplot = false;
 BLtime = [];
 plottype = '3D';
+if isfield(cfg,'BLtime') && cfg.BLtime(1)<= cfg.BLtime(2)
+    if numel(stats) > 1
+        line_colors = {[0.5 0 0],[1 .5 .5],[0 .5 0],[.5 1 .5],[0 0 .5],[.5 .5 1],[.5 .5 0],[1 1 .5],[0 .5 .5],[.5 1 1],[.5 0 .5],[1 .5 1]};
+    else
+        line_colors = {[0 0 0],[.9 .9 .9]};
+    end
+else
+    if numel(stats) > 1
+        line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
+    else
+        line_colors = {[0 0 0]};
+    end
+end
 v2struct(cfg);
 if strcmpi(plottype,'3D')
     singleplot = false;
     cfg.singleplot = false;
 end
+containsbaseline = ~isempty(BLtime) && cfg.BLtime(1)<= cfg.BLtime(2);
+if containsbaseline && numel(line_colors)<numel(stats)*2 || isempty(line_colors)
+    if numel(stats) > 1
+        line_colors = {[0.5 0 0],[1 .5 .5],[0 .5 0],[.5 1 .5],[0 0 .5],[.5 .5 1],[.5 .5 0],[1 1 .5],[0 .5 .5],[.5 1 1],[.5 0 .5],[1 .5 1]};
+    else
+        line_colors = {[0 0 0],[.5 .5 .5]};
+    end
+elseif ~containsbaseline && numel(line_colors)<numel(stats) || isempty(line_colors)
+    if numel(stats) > 1
+        line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
+    else
+        line_colors = {[0 0 0]};
+    end
+end
+cfg.line_colors = line_colors;
 
 v2struct(stats(1).settings,{'fieldNames','dimord'});
 
@@ -70,27 +99,32 @@ if strcmp(plotfield,'CTF')
     set(fh,'color','w');
 end
 
-if singleplot
-    colororder = get(gca,'ColorOrder');
-end
+% if singleplot
+%     colororder = get(gca,'ColorOrder');
+% end
 
 % loop for main conditions
 for cStats=1:numel(stats)
-    if strcmp(cfg.plotfield,'CTF') && numel(stats) > 1
+    if strcmp(cfg.plotfield,'CTF')
         if singleplot
             hold on;
-            cfg.color = colororder(cStats,:);
             if ~isempty(BLtime) && BLtime(1)<= BLtime(2)
                 legend_text{cStats*2-1} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
-                legend_text{cStats*2} = 'Baseline';
+                legend_text{cStats*2} = 'baseline';
             else
                 legend_text{cStats} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
             end
         else
+            if ~isempty(BLtime) && BLtime(1)<= BLtime(2)
+                legend_text{1} = 'CTF';
+                legend_text{2} = 'baseline';
+            else
+                legend_text{1} = 'CTF';
+            end
             subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
         end
     end
-    [indivCTFs, pStruct] = plot_routine(stats(cStats),cfg);
+    [indivCTFs, pStruct] = plot_routine(stats(cStats),cfg,cStats);
     avgctfstruct(cStats).indivCTFs = indivCTFs;
     avgctfstruct(cStats).pStruct = pStruct;
     avgctfstruct(cStats).condname = stats(cStats).condname;
@@ -98,10 +132,14 @@ end
 
 if singleplot
     legend(legend_text);
+    legend boxoff;
 end
 
 % what to plot: individual condition CTFs or average CTF?
-function [indivCTFs, pStruct] = plot_routine(stats,cfg)
+function [indivCTFs, pStruct] = plot_routine(stats,cfg,cGraph)
+if nargin<3
+    cGraph = 1;
+end
 indivCTFs = [];
 plotfield = 'CTF';
 shiftindiv = false;
@@ -137,15 +175,18 @@ if strcmp(plotfield,'CTFpercond')
     end
 else
     weights.channel_pos =  1:nCond;
-    [indivCTFs, pStruct] = subplot_CTF(stats,weights,cfg);
-    if ~isfield(cfg,'color')
+    [indivCTFs, pStruct] = subplot_CTF(stats,weights,cfg,cGraph);
+    if ~singleplot % ~isfield(cfg,'color')
         title(strrep(stats.condname,'_',' '));
     end
 end
 
 
 % use subfunction to do all the plotting, plots individual CTFs
-function [indivCTF, pStruct] = subplot_CTF(stats,weights,cfg)
+function [indivCTF, pStruct] = subplot_CTF(stats,weights,cfg,cGraph)
+if nargin<4
+    cGraph = 1;
+end
 pStruct = [];
 % unpack weights
 v2struct(weights);
@@ -351,7 +392,15 @@ if strcmp(plottype,'2D')
         semCTF = mean(semCTF(CTFtime,:,:),1)';
     end
     % plot
-    errorbar(CTF,semCTF/2);
+    hold on;
+    disp(['plot ' num2str(cGraph)]);
+    for cL = 1:size(CTF,2)
+        if isnumeric(line_colors{2*cGraph-2+cL})
+            errorbar(CTF(:,cL),semCTF(:,cL)/2,'Color',line_colors{2*cGraph-2+cL});
+        else
+            errorbar(CTF(:,cL),semCTF(:,cL)/2,line_colors{2*cGraph-2+cL});
+        end
+    end
     % y-axis
     if ~isempty(weightlim)
         ylim(weightlim);
@@ -364,9 +413,9 @@ if strcmp(plottype,'2D')
     set(gca,'XTickLabel',num2cell(channel_pos));
     xlabel('channel');
     % legend
-    if any(BLtime) && ~isfield(cfg,'color');
+    if any(BLtime) && ~singleplot %~isfield(cfg,'color');
         legend({'CTF', 'baseline'});
-    else ~isfield(cfg,'color');
+    elseif ~singleplot % ~isfield(cfg,'color');
         legend({'CTF'});
     end
     legend boxoff;

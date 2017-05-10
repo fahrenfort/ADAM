@@ -15,7 +15,11 @@ singleplot = false;
 plot_order = [];
 folder = '';
 startdir = '';
-line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
+if numel(stats) > 1
+    line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
+else
+    line_colors = {[0 0 0]};
+end
 v2struct(cfg);
 if any(size(stats(1).ClassOverTime)==1)
     plottype = '2D'; %  used internally in this function
@@ -28,8 +32,13 @@ if strcmpi(plottype,'3D')
     cfg.singleplot = singleplot;
 end
 if numel(line_colors)<numel(stats) || isempty(line_colors)
-    line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
+    if numel(stats) > 1
+        line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
+    else
+        line_colors = {[0 0 0]};
+    end
 end
+
 cfg.line_colors = line_colors;
 cfg.ndec = ndec; % number of decimals used when plotting accuracy tick labels
 
@@ -69,7 +78,7 @@ if numel(stats)>1
             legend_text{suborder} = regexprep(stats(cStats).condname,'_',' ');
         else
             subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),suborder);
-            map = subplot_MVPA(stats(cStats),cfg);
+            map = subplot_MVPA(stats(cStats),cfg,suborder); % all in the first color
             title(regexprep(stats(cStats).condname,'_',' '));
         end
     end
@@ -106,6 +115,7 @@ timetick = 250;
 acctick = .05;
 mpcompcor_method = 'uncorrected';
 plotsubjects = false;
+cluster_pval = .05;
 indiv_pval = .05;
 one_two_tailed = 'two';
 
@@ -283,10 +293,11 @@ if strcmpi(plottype,'2D')
     if ~isempty(pVals)
         sigdata = data;
         if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~plotsubject && ~strcmpi(mpcompcor_method,'none')
+            if ~singleplot elevate = 1; else elevate = cGraph; end
             if inverty
-                sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/100)*cGraph;
+                sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/100)*elevate;
             else
-                sigdata(1:numel(sigdata)) = min(acclim) + (diff(acclim)/100)*cGraph;
+                sigdata(1:numel(sigdata)) = min(acclim) + (diff(acclim)/100)*elevate;
             end
             sigdata(pVals>=indiv_pval) = NaN;
             if isnumeric(line_colors{cGraph})
