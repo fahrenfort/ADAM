@@ -148,7 +148,7 @@ Notice that all the noise has gone.
   
 **Cropping** - by default, export_fig crops its output to minimize the amount of empty space around the figure. If you'd prefer the figure to be uncropped, and instead have the same appearance (in terms of border width) as the on screen figure, then use the `-nocrop` option.  
   
-**Colourspace** - by default, export_fig generates files in the RGB [colourspace](http://en.wikipedia.org/wiki/Color_space). However, you can also export in greyscale or the CMYK colourspace, using the `-grey` (or `-gray`) and `-cmyk` options respectively. The CMYK option is useful for publishers who require documents in this colourspace, but the option is only supported for PDF, EPS and TIFF files.
+**Colourspace** - by default, export_fig generates files in the RGB [colourspace](https://en.wikipedia.org/wiki/Color_space). However, you can also export in greyscale or the CMYK colourspace, using the `-grey` (or `-gray`) and `-cmyk` options respectively. The CMYK option is useful for publishers who require documents in this colourspace, but the option is only supported for PDF, EPS and TIFF files.
 
 **Specifying a target directory** - you can get export_fig to save output files to any directory (for which you have write permission), simply by specifying the full or relative path in the filename. For example:
 ```Matlab
@@ -239,7 +239,7 @@ Also, when using the painters renderer, ghostscript will sometimes throw an erro
   
 **Lighting and transparency** - when using the painters renderer, transparency and lighting effects are not supported. Sorry, but this is an inherent feature of MATLAB's painters renderer. To find out more about the capabilities of each rendering method, see [here](http://www.mathworks.com/access/helpdesk/help/techdoc/creating_plots/f3-84337.html#f3-102410). You can still export transparent objects to vector format (SVG) using the excellent [plot2svg](http://www.mathworks.com/matlabcentral/fileexchange/7401) package, then convert this to PDF, for example using [Inkscape](http://inkscape.org/). However, it can't handle lighting.  
   
-**Lines in patch objects** - when exporting patch objects to PDF using the painters renderer (default), sometimes the output can appear to have lines across the middle of rectangular patches; these lines are the colour of the background, as if there is a crack in the patch, allowing you to see through. This issue is a feature of the software used to display the PDF, rather than the PDF itself. Sometimes disabling anti-aliasing in this software can get rid of the lines ([discussion](https://github.com/altmany/export_fig/issues/44)).  
+**Lines in patch objects** - when exporting patch objects to PDF using the painters renderer (default), sometimes the output can appear to have lines across the middle of rectangular patches; these lines are the colour of the background, as if there is a crack in the patch, allowing you to see through. This appears to be due to bugs in MATLAB's internal vector rendering code. These lines can often be removed from the PDF using software such as [InkScape](https://inkscape.org). Sometimes disabling anti-aliasing in the PDF-reader software can get rid of the lines ([discussion](https://github.com/altmany/export_fig/issues/44)).  
   
 **Out of memory** - if you run into memory issues when using export_fig, some ways to get round this are:  
  1. Reduce the level of anti-aliasing.
@@ -256,7 +256,7 @@ Secondly, if exporting to bitmap, do try all the renderers (i.e. try the options
 
 If this still does not help, then ensure that you are using the latest version of export_fig, which is available [here](https://github.com/altmany/export_fig/archive/master.zip).  
  
-If the figure looks correct on screen, but an error exists in the exported output (which cannot be solved using a different renderer) then please feel free to raise an [issue](https://github.com/ojwoodford/export_fig/issues). Please be sure to include the .fig file, the export_fig command you use, the output you get, and a description of what you expected. I can't promise anything, but if it's easy to fix I may indeed do it. Often I will find that the error is due to a bug in MATLAB's `print` function, in which case I will suggest you submit it as a bug to TheMathWorks, and inform me of any fix they suggest. Also, if there's a feature you'd like that isn't supported please tell me what it is and I'll consider implementing it.
+If the figure looks correct on screen, but an error exists in the exported output (which cannot be solved using a different renderer) then please feel free to raise an [issue](https://github.com/altmany/export_fig/issues). Please be sure to include the .fig file, the export_fig command you use, the output you get, and a description of what you expected. I can't promise anything, but if it's easy to fix I may indeed do it. Often I will find that the error is due to a bug in MATLAB's `print` function, in which case I will suggest you submit it as a bug to TheMathWorks, and inform me of any fix they suggest. Also, if there's a feature you'd like that isn't supported please tell me what it is and I'll consider implementing it.
 
 ### And finally...
 

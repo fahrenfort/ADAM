@@ -29,8 +29,8 @@ if strcmpi(plottype,'3D')
 end
 if numel(line_colors)<numel(stats) || isempty(line_colors)
     line_colors = {'k' 'r' 'b' 'g' 'c' 'm' 'y'};
-    cfg.line_colors = line_colors;
 end
+cfg.line_colors = line_colors;
 cfg.ndec = ndec; % number of decimals used when plotting accuracy tick labels
 
 % main routine, either plot only one or all conditions
@@ -38,14 +38,17 @@ if ~plotsubject
     title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
     title_text = title_text(1:find(title_text==filesep,1,'last')-1);
     fh = figure('name',title_text);
-    set(fh,'color','w');
-    if numel(stats)>2
-        set(fh, 'Position', get(0,'Screensize'));
-    elseif numel(stats) == 2
-        set(fh, 'Position', get(0,'Screensize')/1.5);
+    % make sure all figures have the same size regardless of nr of subplots
+    UL=[600 450];
+    po=get(fh,'position');
+    % the line below needs to be adjusted for singleplot
+    if singleplot
+        po(3:4)=UL;
     else
-        set(fh, 'Position', get(0,'Screensize')/3);
+        po(3:4)=UL.*[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
     end
+    set(fh,'position',po);
+    set(fh,'color','w');
 end
 if numel(stats)>1
     % main loop for each condition
@@ -315,6 +318,10 @@ if strcmpi(plottype,'2D')
         %set(h_legend,'FontSize',14);
     end
     ylim(acclim);
+    % little hack
+    if strcmpi(plot_model,'FEM')
+        measuremethod = 'CTF slope';
+    end
     ylabel(measuremethod);
     set(gca,'YTick',yaxis);
     if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
@@ -378,7 +385,7 @@ set(gca,'XTickLabel',num2cell(round(xaxis(indx)/roundto)*roundto));
 if plotsubject
     set(gca,'FontSize',10);
 else
-    set(gca,'FontSize',22);
+    set(gca,'FontSize',16);
 end
 set(gca,'color','none');
 axis square;

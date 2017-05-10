@@ -43,7 +43,7 @@ end
 if nargin < 5 || isempty(mask)
     mask = ones([size(data1,2) size(data1,3)]);
     disp(['using all ' num2str(numel(find(mask))) ' datapoints in cluster based permutation']);
-elseif sum([size(data1,2) size(data1,3)] == size(mask)) ~= ndims(mask) % ndims(mask) ~= ndims(data1)-1 || 
+elseif sum([size(data1,2) size(data1,3)] == [size(mask,1) size(mask,2)]) ~= ndims(mask) % ndims(mask) ~= ndims(data1)-1 || 
     error('mask does not have the same size as data1');
 else
     disp(['there are ' num2str(numel(find(mask))) ' out of ' num2str(numel(mask)) ' data points in your mask during cluster based permutation']);

@@ -58,13 +58,15 @@ if strcmp(plotfield,'CTF')
     title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
     title_text = title_text(1:find(title_text==filesep,1,'last')-1);
     fh = figure('name',title_text);
-    if numel(stats)>2
-        set(fh, 'Position', get(0,'Screensize'));
-    elseif numel(stats) == 2
-        set(fh, 'Position', get(0,'Screensize')/1.5);
+    UL=[600 450];
+    po=get(fh,'position');
+    % the line below needs to be adjusted for singleplot
+    if singleplot
+        po(3:4)=UL;
     else
-        set(fh, 'Position', get(0,'Screensize')/3);
+        po(3:4)=UL.*[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
     end
+    set(fh,'position',po);
     set(fh,'color','w');
 end
 
@@ -377,7 +379,7 @@ else
         templim = weightlim;
     end
     if flat
-        maxsig = max(templim)+.1;
+        maxsig = max(templim);
         addy = 4;
     else
         maxsig = min(templim);
@@ -492,7 +494,7 @@ else
     % colormap(brewermap([],'RdBu')); 
 end
 axis square;
-set(gca,'FontSize',22);
+set(gca,'FontSize',16);
 
 if isempty(weightlim)
     sameaxes('xyzc',gcf());
