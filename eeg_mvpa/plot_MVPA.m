@@ -21,6 +21,7 @@ else
     line_colors = {[0 0 0]};
 end
 v2struct(cfg);
+cfg.singleplot = singleplot;
 if any(size(stats(1).ClassOverTime)==1)
     plottype = '2D'; %  used internally in this function
 else

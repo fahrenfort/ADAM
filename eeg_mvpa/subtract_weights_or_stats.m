@@ -5,7 +5,7 @@ function dif_out = subtract_weights_or_stats(statsorweights1,statsorweights2)
 % 
 structfields = fieldnames(statsorweights1);
 for c = 1:numel(structfields)
-    if sum(strcmpi(structfields{c},{'chanlocs','channelpool','settings'}))>0
+    if sum(strcmpi(structfields{c},{'chanlocs','channelpool','settings','weights','cfg'}))>0
         dif_out.(structfields{c}) = statsorweights1.(structfields{c});
     elseif any(strcmpi(structfields{c},{'condname'}))
         dif_out.(structfields{c}) = [ statsorweights1.condname '-' statsorweights2.condname ];
