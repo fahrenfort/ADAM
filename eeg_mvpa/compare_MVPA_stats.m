@@ -20,18 +20,14 @@ pval(2) = cluster_pval;
 ClassTotal{1} = stats1.indivClassOverTime;
 ClassTotal{2} = stats2.indivClassOverTime;
 nSubj = size(ClassTotal{1},1);
-stats.ClassOverTime = squeeze(mean(ClassTotal{1}-ClassTotal{2}));
-stats.StdError = squeeze(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj));
+stats.ClassOverTime = squeeze(mean(ClassTotal{1}-ClassTotal{2}))';
+stats.StdError = squeeze(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj))';
 stats.condname = [stats1.condname '-' stats2.condname];
 settings = stats1.settings; % assuming these are the same!
 
 % statistical testing
 if nargin < 4
-    if strcmpi(plottype,'2D')
-        mask = eye(size(stats.ClassOverTime));
-    else
-        mask = ones(size(stats.ClassOverTime));
-    end
+	mask = ones([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
 end
     
 if strcmp(mpcompcor_method,'fdr')
@@ -42,13 +38,9 @@ if strcmp(mpcompcor_method,'fdr')
         [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'tail','right');
     end
     ClassPvals = squeeze(ClassPvals);
-    if strcmp(plottype,'2D')
-        thresh = fdr(diag(ClassPvals),pval(2));
-    else
-        thresh = fdr(ClassPvals,pval(2));
-    end
-    ClassPvals(ClassPvals>thresh) = 1;
-    pStruct = [];
+    h = fdr_bh(ClassPvals,pval(2),'pdep');
+    ClassPvals(~h) = 1;
+    pStruct = []; % still need to implement
 elseif strcmp(mpcompcor_method,'cluster_based')
     % CLUSTER BASED CORRECTION
     [ ClassPvals, pStruct ] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},gsettings,settings,mask);
@@ -61,7 +53,7 @@ elseif strcmp(mpcompcor_method,'uncorrected')
     end
     ClassPvals = squeeze(ClassPvals);
     ClassPvals(~mask) = 1;
-    pStruct = [];
+    pStruct = []; % still need to implement
 else
     % NO TESTING, PLOT ALL
     ClassPvals = zeros([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
