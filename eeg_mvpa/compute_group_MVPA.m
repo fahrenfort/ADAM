@@ -16,7 +16,7 @@ function [stats,cfg] = compute_group_MVPA(folder_name,cfg,mask)
 % cfg.indiv_pval = .05;
 % cfg.cluster_pval = .05;
 % cfg.mpcompcor_method = 'uncorrected' (default, can also be 'cluster_based', 'fdr' or 'none')
-% cfg.plot_dim = 'time_time' or 'time_freq' (default: 'time_time')
+% cfg.plot_dim = 'time_time' or 'freq_time' (default: 'time_time')
 % cfg.reduce_dims = 'diag', 'avtrain', 'avtest' or 'avfreq' or []
 % cfg.trainlim = is the time limits over which to constrain the
 % training data, in ms.
@@ -74,7 +74,14 @@ if exist('plotorder','var')
     cfg.plot_order = plot_order;
     cfg = rmfield(cfg,'plotorder');
 end
-    
+
+% check freqlimits
+if (strcmpi(plot_dim,'freq_time') && ~strcmpi(reduce_dims,'avfreq')) && (numel(freqlim) == 1 || abs(diff(freqlim)) <= 2)
+    wraptext('WARNING: your cfg.freqlim indicates a rather small range of frequencies given cfg.plot_dim ''freq_time'', use cfg.reduce_dims = ''avfreq'' if you intend to average. Now simply plotting all frequencies.');
+    freqlim = [];
+    cfg.freqlim = [];
+end
+
 % Main routine, is a folder name specified? If not, pop up selection dialog
 if isempty(folder_name)
     if ~isfield(cfg,'startdir')
@@ -124,6 +131,8 @@ exclsubj= [];
 v2struct(cfg);
 % general time limit
 if ~isempty(timelim) % timelim takes precedence
+    trainlim = timelim;
+    testlim = timelim;
     cfg.trainlim = trainlim;
     cfg.testlim = testlim;
 end
