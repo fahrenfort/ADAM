@@ -1,5 +1,5 @@
 function [stats,cfg] = compute_group_MVPA(folder_name,cfg,mask)
-% function [stats,weights,cfg] = compute_group_MVPA(folder_name,cfg,mask)
+% function [stats,cfg] = compute_group_MVPA(folder_name,cfg,mask)
 %
 % Extracts group classification data, classifier weights, forward model
 % parameters etc. Also does basic stats on the extracted conditions.
@@ -233,7 +233,7 @@ for cSubj = 1:nSubj
         else
             error('cannot find data');
         end
-               
+        
         % find limits
         if ~exist('firstchanlocs','var')
             firstchanlocs = [];

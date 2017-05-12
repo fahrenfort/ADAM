@@ -211,7 +211,7 @@ reduce_dims = 'diag'; % 'diag', 'avtrain', 'avtest', 'avfreq'
 timetick = 250;
 makeround = [];
 plotsubjects = false;
-flat = false;
+flat = true;
 indiv_pval = .05;
 cluster_pval = .05;
 iterations = 1000;
@@ -279,6 +279,7 @@ if strcmp(dimord,'freq_time')
             lowIndex = nearest(times{1},timelim(1));
             highIndex = nearest(times{1},timelim(2));
             times{1} = times{1}(lowIndex:highIndex);
+            settings.times{1} = times{1}/1000; % hack back into settings
             CTF = CTF(lowIndex:highIndex,:,:,:);
             semCTF = semCTF(lowIndex:highIndex,:,:,:);
             indivCTF = indivCTF(:,lowIndex:highIndex,:,:,:);
@@ -293,6 +294,7 @@ else
         lowIndex = nearest(times{2},testlim(1));
         highIndex = nearest(times{2},testlim(2));
         times{2} = times{2}(lowIndex:highIndex);
+        settings.times{2} = times{2}/1000; % hack back into settings
         CTF = CTF(:,lowIndex:highIndex,:,:);
         semCTF = semCTF(:,lowIndex:highIndex,:,:);
         indivCTF = indivCTF(:,:,lowIndex:highIndex,:,:);
@@ -305,15 +307,16 @@ else
         lowIndex = nearest(times{1},trainlim(1));
         highIndex = nearest(times{1},trainlim(2));
         times{1} = times{1}(lowIndex:highIndex);
+        settings.times{1} = times{1}/1000; % hack back into settings
         CTF = CTF(lowIndex:highIndex,:,:,:);
         semCTF = semCTF(lowIndex:highIndex,:,:,:);
         indivCTF = indivCTF(:,lowIndex:highIndex,:,:,:);
     end
 end
 
-% actual extraction, either diagonal or average over one of the two time lines
-xaxis=times{1};
 
+% actual extraction, either diagonal or average over one of the two time lines
+xaxis=times{1}; % default
 % extract specific train time, test time or frequency
 if strcmpi(dimord,'freq_time')
     if numel(freqs) > 1
@@ -335,13 +338,17 @@ else
         indivCTF = diagindivCTF;
     elseif strcmpi(reduce_dims, 'avtrain')
         CTF = squeeze(mean(CTF,1));
-        semCTF = squeeze(mean(semCTF,1));
+        semCTF = squeeze(mean(semCTF,1)); % WE SHOULD RECOMPUTE SEMCTF!
         indivCTF = squeeze(mean(indivCTF,2));
         xaxis=times{2};
     elseif strcmpi(reduce_dims, 'avtest')
         CTF = squeeze(mean(CTF,2));
-        semCTF = squeeze(mean(semCTF,2));
+        semCTF = squeeze(mean(semCTF,2)); % WE SHOULD RECOMPUTE SEMCTF!
         indivCTF = squeeze(mean(indivCTF,3));
+    elseif strcmpi(reduce_dims, 'avtraintest') % THIS DOES NOT WORK YET -> FIX IT!
+        CTF = squeeze(mean(squeeze(mean(CTF,1)),1));
+        semCTF = squeeze(mean(squeeze(mean(semCTF,1)),1)); % WE SHOULD RECOMPUTE SEMCTF!
+        indivCTF = squeeze(mean(squeeze(mean(indivCTF,2)),2));
     end
 end
 
@@ -365,7 +372,7 @@ end
 if strcmp(plottype,'2D')
     % fill some empties
     if isempty(CTFtime) || isempty(BLtime)
-        if strcmpi(reduce_dims, 'avtrain') || strcmpi(reduce_dims, 'diag') || strcmpi(reduce_dims, 'avfreq')
+        if strcmpi(reduce_dims, 'avtrain') || strcmpi(reduce_dims, 'diag') || strcmpi(reduce_dims, 'avfreq') || strcmpi(reduce_dims, 'avtraintest')
             CTFtime = times{1} > 0;
             BLtime = times{1} <= 0;
         else
@@ -373,7 +380,7 @@ if strcmp(plottype,'2D')
             BLtime = times{2} <= 0;            
         end
     else
-        if strcmpi(reduce_dims, 'avtrain') || strcmpi(reduce_dims, 'diag') || strcmpi(reduce_dims, 'avfreq')
+        if strcmpi(reduce_dims, 'avtrain') || strcmpi(reduce_dims, 'diag') || strcmpi(reduce_dims, 'avfreq') || strcmpi(reduce_dims, 'avtraintest')
             CTFtime = times{1} >= CTFtime(1) & times{1} <= CTFtime(2);
             BLtime = times{1} >= BLtime(1) & times{1} <= BLtime(2);
         else
@@ -383,6 +390,7 @@ if strcmp(plottype,'2D')
     end
     % save CTF as output
     indivCTF = mean(indivCTF(:,CTFtime,:,:),2);
+    
     % extract out relevant windows (one CTF and one baseline)
     if any(BLtime)
         CTF = [ mean(CTF(CTFtime,:,:),1); mean(CTF(BLtime,:,:),1)]';
@@ -391,6 +399,7 @@ if strcmp(plottype,'2D')
         CTF = mean(CTF(CTFtime,:,:),1)';
         semCTF = mean(semCTF(CTFtime,:,:),1)';
     end
+    
     % plot
     hold on;
     disp(['plot ' num2str(cGraph)]);
@@ -497,12 +506,25 @@ else
         CTFinterp = CTFinterp';
     end    
     % plot
-    surf(CTFinterp,'EdgeColor','none','LineStyle','none','FaceLighting','phong');
-    % set(gca,'YDir','reverse');
-    if ~isempty(sigline)
-        hold on;
-        H.mainLine=plot3(1:numel(sigline),ones(size(sigline))*addy,sigline,'k','LineWidth',8);
-    end    
+    if flat
+        imagesc(CTFinterp);
+        if ~isempty(sigline)
+            hold on;
+            sigline(~isnan(sigline)) = 2;
+            H.mainLine=line(1:numel(sigline),sigline,'LineWidth',8,'Color','black');
+            set(gca,'YDir','normal');
+        end
+        colorbar;
+    else
+        surf(CTFinterp,'EdgeColor','none','LineStyle','none','FaceLighting','phong');
+        if ~isempty(sigline)
+            hold on;
+            H.mainLine=plot3(1:numel(sigline),ones(size(sigline))*addy,sigline,'k','LineWidth',8);
+        end
+    end
+    if ~all(isnan((sigline)))
+        wraptext('Due to a bug in the way Matlab exports figures (the ''endcaps'' property in OpenGL is set to''on'' by default), the ''significance lines'' near the time line are not correctly plotted when saving as .eps or .pdf. The workaround is to open these plots in Illustrator, manually select these lines and select ''butt cap'' for these lines (under the ''stroke'' property).');
+    end
     % make a timeline that has 0 as zero-point and makes steps of xticks
     xticks = timetick;
     if min(xaxis) <= 0 && max(xaxis) >= 0
@@ -534,10 +556,11 @@ else
         caxis(colorlim);
     end
     % flat view?
-    if flat
-        view(2);
-        colorbar;
-    end
+%     if flat
+%         view(2);
+%         colorbar;
+%     end
+
     % color scheme
     colormap jet;
     % colormap(brewermap([],'RdBu')); 
