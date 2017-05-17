@@ -1,4 +1,5 @@
 function FT_EEG = compute_erp_on_FT_EEG(FT_EEG,condSet,field,method)
+% function FT_EEG = compute_erp_on_FT_EEG(FT_EEG,condSet,field,method)
 % Compute erp from fieldtrip standard format, necessary to compute
 % induced single trial TFR data. The data format can only contain
 % time, channel and trials. condSet can be set up as follows (example):
@@ -46,7 +47,11 @@ if strcmp(method,'indiv')
     condSet = num2cell(unique([condSet{:}]));
 end
 for cCondSet = 1:numel(condSet)
-    trialindex = find(ismember(trialinfo,[condSet{cCondSet}]));
+    thisCondSet = [condSet{cCondSet}];
+    if ischar(thisCondSet)
+        thisCondSet = string2double(thisCondSet);
+    end
+    trialindex = find(ismember(trialinfo,thisCondSet));
     oldindex{cCondSet} = trialindex;
     finaltrialinfo(cCondSet,1) = cCondSet;
     finaltrial(cCondSet,:,:) = squeeze(mean(trial(trialindex,:,:),1));

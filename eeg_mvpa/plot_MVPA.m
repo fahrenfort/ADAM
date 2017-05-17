@@ -316,6 +316,9 @@ if strcmpi(plottype,'2D')
                 H.mainLine=plot(1:numel(sigdata),sigdata,line_colors{cGraph},'LineWidth',2); % sigline on graph
             end
         end
+        if ~all(isnan((sigdata)))
+            wraptext('Due to a bug in the way Matlab exports figures (the ''endcaps'' property in OpenGL is set to''on'' by default), the ''significance lines'' near the time line are not correctly plotted when saving as .eps or .pdf. The workaround is to open these plots in Illustrator, manually select these lines and select ''butt cap'' for these lines (under the ''stroke'' property).');
+        end
         if strcmpi(one_two_tailed,'one') one_two_tailed = '1'; else  one_two_tailed = '2'; end
         if ~plotsubject
             if strcmpi(mpcompcor_method,'uncorrected')

@@ -474,22 +474,19 @@ clear FT_EEG; % clear the dataset so we don't need it in memory during analyses
 
 % create file pointer and extract some relevant info from the first two
 % files for sanity checks
-[matObj, actualfrequencies, times{1}, trialinfo{1}, chanindex] = read_mat_file(fnames{1,1},channels{1});
+[~, actualfrequencies, times{1}, trialinfo{1}, chanindex] = read_mat_file(fnames{1,1},channels{1});
 actualfrequencies = round(actualfrequencies*100)/100;
-new_channels = matObj.label';
-channels = new_channels(chanindex);
 
 % if testing and training are on different data, load a second set
 if numel(filenames) > 1
-    [matObj2, actualfrequencies2, times{2}, trialinfo{2}, chanindex2] = read_mat_file(fnames{1,2},channels{2});
+    [~, actualfrequencies2, times{2}, trialinfo{2}, chanindex2] = read_mat_file(fnames{1,2},channels{2});
     actualfrequencies2 = round(actualfrequencies2*100)/100;
-    if sum(actualfrequencies==actualfrequencies2) ~= numel(actualfrequencies)
+    if ~all(actualfrequencies==actualfrequencies2)
         disp('WARNING: there seems to be a mismatch in both datasets, they do not seem to contain the same frequencies.');
         disp(['dataset 1, ' filenames{1} ': ' num2str(actualfrequencies)]);
         disp(['dataset 2, ' filenames{2} ': ' num2str(actualfrequencies2)]);
     end
-    new_channels = matObj2.label';
-    if sum(strcmpi(channels,new_channels(chanindex2))) ~= numel(channels)
+    if ~all(chanindex==chanindex2)
         error('the (same) electrodes do not occur (in the same order) in testing and training, some coding required to fix this...');
     end
 end
@@ -509,8 +506,8 @@ for cFreq = 1:numel(frequencies)
     settrialinfo = [];
     for cFld=1:nFolds
         % create file pointers for this fold
-        [matObj, ~, times{1}, trialinfo{1}, chanindex, chandim, timedim, trialdim, freqdim ] = read_mat_file(fnames{cFld,1},channels);
-        [matObj2, ~, times{2}, trialinfo{2}, chanindex2, chandim2, timedim2, trialdim2, freqdim2 ] = read_mat_file(fnames{cFld,2},channels);
+        [matObj, ~, times{1}, trialinfo{1}, chanindex, chandim, timedim, trialdim, freqdim ] = read_mat_file(fnames{cFld,1},channels{1});
+        [matObj2, ~, times{2}, trialinfo{2}, chanindex2, chandim2, timedim2, trialdim2, freqdim2 ] = read_mat_file(fnames{cFld,2},channels{2});
         % read in data, only relevant frequency (dimension is dynamic)
         frequency = frequencies(cFreq);
         index    = cell(1,4);
