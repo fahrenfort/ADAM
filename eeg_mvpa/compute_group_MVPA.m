@@ -444,7 +444,6 @@ end
 %cfg = v2struct(name,nameOfStruct2Update);
 
 % compute weights stuff
-weights.chanlocs = chanlocs;
 if exist('WeightsOverTimeAll','var')
     weights.avWeights = squeeze(mean(WeightsOverTimeAll,1));
     weights.indivWeights = squeeze(WeightsOverTimeAll);
@@ -492,7 +491,10 @@ if ~isfield(settings,'chanlocs') % if no chanlocdata exist in settings
     [~, chanindex, dataindex] = intersect({chanlocdata(:).labels},settings.channels,'stable');
     chanlocs = chanlocdata(chanindex); % put all in the same order as imported locations
 else % otherwise just extract from settings
-    chanlocs = settings.chanlocs{1};
+    chanlocs = settings.chanlocs;
+    if iscell(chanlocs)
+        chanlocs = chanlocs{1};
+    end
     if isempty(firstchanlocs)
         firstchanlocs = chanlocs;
     end
@@ -502,6 +504,7 @@ end
 if numel(chanlocs) < numel(settings.channels)
     error('could not find location info for all channels');
 end
+settings.chanlocs = chanlocs;
 
 % continue limit operation
 % NOTE: ClassOverTime has dimensions: test_time * train_time OR freq * time

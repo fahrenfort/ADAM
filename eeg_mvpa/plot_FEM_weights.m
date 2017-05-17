@@ -1,24 +1,28 @@
-function avweightstruct = plot_FEM_weights(weights,stats,gsettings)
+function avweightstruct = plot_FEM_weights(stats,cfg)
 % plot FEM weights for a specific time range or frequency range
 %
 % J.J.Fahrenfort, VU 2016
 
 % main loop
 for c=1:numel(stats)
-    avweightstruct(c) = subplot_FEM_weights(weights(c),stats(c),gsettings);
+    avweightstruct(c) = subplot_FEM_weights(stats(c),cfg);
 end
 
 % subfunction that does plotting
-function avweightstruct = subplot_FEM_weights(weights,stats,gsettings)
+function avweightstruct = subplot_FEM_weights(stats,cfg)
 %avweightstruct = [];
 %pStruct = [];
 % get some settings
+weights = stats.weights;
 v2struct(weights);
 % now unpack settings
 nconds = 2;
 freqs = 0;
 settings = stats.settings;
 v2struct(settings);
+if iscell(chanlocs)
+    chanlocs = chanlocs{1};
+end
 
 % setting some graph defaults
 subjlim = [];
@@ -31,9 +35,9 @@ indiv_pval = .05;
 cluster_pval = .05;
 iterations = 1000;
 one_two_tailed = 'two';
-mpcompcor_method = 'cluster_based';
+mpcompcor_method = 'uncorrected';
 % then unpack graphsettings too
-v2struct(gsettings);
+v2struct(cfg);
 pval(1) = indiv_pval;
 pval(2) = cluster_pval;
 
@@ -47,6 +51,7 @@ data = indivWeights;
 % data: subj (* frequency) * time * electrode * channel_response
 % select subjects
 if ~isempty(subjlim)
+    disp(['only plotting subjects: ' vec2str(subjlim)]);
     data = data(subjlim,:,:,:,:);
 end
 
@@ -131,8 +136,8 @@ for cCond = 1:nCond
     
     % do some statistics
     if strcmpi(mpcompcor_method, 'cluster_based')
-        connectivity = get_connected_electrodes({weights(1).chanlocs(:).labels});
-        [clusterPvals, pStruct(cCond)] = cluster_based_permutation(subjweights(:,:,cCond),0,gsettings,settings,[],connectivity);
+        connectivity = get_connected_electrodes({chanlocs(:).labels});
+        [clusterPvals, pStruct(cCond)] = cluster_based_permutation(subjweights(:,:,cCond),0,cfg,settings,[],connectivity);
         % pStruct(cCond) = tempStruct;
     elseif strcmpi(mpcompcor_method, 'uncorrected')
         if strcmpi(one_two_tailed,'two')
@@ -165,7 +170,7 @@ for cCond = 1:nCond
     elseif strcmp(imgtype,'png')
         topoplot_jjf(plot_data,chanlocs','maplimits',weightlim,'style','map','electrodes','off','plotrad',.65,'hcolor','none','shading','interp','nosedir','-Y'); %
     else
-        topoplot_jjf(plot_data,chanlocs','maplimits',weightlim,'style','map','electrodes','ptslabels','plotrad',.65,'nosedir','-Y','emarker2',{elecs,'o','k',10,1});
+        topoplot_jjf(plot_data,chanlocs','maplimits',weightlim,'style','map','electrodes','ptslabels','plotrad',.65,'emarker2',{elecs,'o','k',10,1}); %'nosedir','-Y',
         cbar('vert');
     end
 end

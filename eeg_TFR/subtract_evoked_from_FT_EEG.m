@@ -1,4 +1,5 @@
-function FT_EEG = subtract_evoked_from_FT_EEG(FT_EEG,FT_EVOKED_EEG,field)
+function FT_EEG = subtract_evoked_from_FT_EEG(FT_EEG,FT_EVOKED_EEG,field,removeNoSpec)
+% function FT_EEG = subtract_evoked_from_FT_EEG(FT_EEG,FT_EVOKED_EEG,field,removeNoSpec)
 % Takes FT_EEG and FT_EVOKED_EEG (bins) as input, subtracting the
 % evoked responses from the corresponding single trials. field specifies
 % the field on which to execute the subtraction (default: 'trial'). First
@@ -6,12 +7,18 @@ function FT_EEG = subtract_evoked_from_FT_EEG(FT_EEG,FT_EVOKED_EEG,field)
 % evoked set. Then run this function to compute the induced set. After
 % this, compute TFR using compute_TFR_EEG, and finally run ft_freqbaseline
 % before doing MVPA or other. 
+% if removeNoSpec = true (default), function removes trials that do not
+% have an index number in FT_EVOKED_EEG.oldindex, otherwise leaves those
+% trials in.
 % IMPORTANT: MAKE SURE YOU BASELINE FT_EEG BEFORE RUNNING THIS FUNCTION
 %
 % J.J.Fahrenfort 2014, VU
 
 % start with a whole bunch of sanity checks
-if nargin < 3
+if nargin < 4
+    removeNoSpec = true;
+end
+if nargin < 3 || isempty(field)
     field = 'trial';
 end
 if ~isfield(FT_EVOKED_EEG,'oldindex')
@@ -54,15 +61,18 @@ for cBin=1:size(evoked,1)
     trial(index,chanindexFT,:) = trial(index,chanindexFT,:) - repmat(evoked(cBin,chanindexEVK,:),[numel(index) 1 1]);
 end
 % remove trials without an evoked response and insert new data
-index2remove = setdiff(1:size(trial,1),unique(vertcat(FT_EVOKED_EEG.oldindex{:})));
-disp(['removing ' num2str(numel(index2remove)) ' trials because they either do not belong to a complete subset or were not epoched at all']);
-trial(index2remove,:,:) = [];
-FT_EEG.(field) = trial;
-FT_EEG.trialinfo(index2remove) = []; % just keep the old trial info
-FT_EEG.dimord = 'rpt_chan_time';
-if isfield(FT_EEG,'sampleinfo');
-    FT_EEG.sampleinfo(index2remove,:) = [];
+if removeNoSpec
+    index2remove = setdiff(1:size(trial,1),unique(vertcat(FT_EVOKED_EEG.oldindex{:})));
+    disp(['removing ' num2str(numel(index2remove)) ' trials because they either do not belong to a complete subset or were not epoched at all']);
+    FT_EEG.trialinfo(index2remove) = []; % just keep the old trial info
+    trial(index2remove,:,:) = [];
+    if isfield(FT_EEG,'sampleinfo');
+        FT_EEG.sampleinfo(index2remove,:) = [];
+    end
 end
+FT_EEG.(field) = trial;
+FT_EEG.dimord = 'rpt_chan_time';
+
 
 
 

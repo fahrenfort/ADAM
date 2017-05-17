@@ -19,14 +19,7 @@ else
     trialinfo = [];
 end
 % get electrode indices
-new_channels = intersect(label,channels);
-if isempty(channels)
-    error(['cannot find any of the electrodes specified in ' channels]);
-end
-if numel(new_channels) < numel(channels)
+[new_channels,~,chanindex] = intersect(channels,label,'stable');
+if numel(new_channels) ~= numel(channels)
     warning(['could not find all of the electrodes specified in ' channels]);
-end
-chanindex = zeros(1,numel(new_channels));
-for cEl = 1:numel(new_channels)
-    chanindex(cEl) = find(strcmp(new_channels{cEl},label));
 end
