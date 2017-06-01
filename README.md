@@ -36,7 +36,7 @@ The software is currently in pre-release, meaning that it is available for downl
 
 # Cite
 When you use the decoding (BDM) scripts, please cite:<br>
-Fahrenfort, J. J., van Leeuwen, J., Olivers, C. N. L., & Hogendoorn, H. (2017). *Perceptual integration without conscious access.* Proceedings of the National Academy of Sciences, 114(14), 3744–3749. 
+Fahrenfort, J. J., van Leeuwen, J., Olivers, C. N. L., & Hogendoorn, H. (2017). Perceptual integration without conscious access. *Proceedings of the National Academy of Sciences*, 114(14), 3744–3749. 
 
 When you use the forward modeling (FEM) scripts, please cite:<br>
 Fahrenfort, J. J., Grubert, A., Olivers, C. N. L., & Eimer, M. (2017). Multivariate EEG analyses support high-resolution tracking of feature-based attentional selection. *Scientific Reports*, 7(1), 1886.
