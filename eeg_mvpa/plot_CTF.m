@@ -404,9 +404,9 @@ if strcmpi(plottype,'2D')
         semCTF = std(squeeze(mean(squeeze(mean(indivCTF(:,CTFtime,CTFtime,:),2)),2)))/sqrt(size(indivCTF,1));
         semBL = std(squeeze(mean(squeeze(mean(indivCTF(:,BLtime,BLtime,:),2)),2)))/sqrt(size(indivCTF,1));
     else
-        indivCTFmean = mean(indivCTF(:,CTFtime,:,:),2); % original
-        indivBLmean = std(squeeze(mean(indivCTF(:,BLtime,:),2)))/sqrt(size(indivCTF,1));
-        semCTF = mean(indivCTF(:,CTFtime,:,:),2); % original
+        indivCTFmean = squeeze(mean(indivCTF(:,CTFtime,:,:),2)); % original
+        indivBLmean = squeeze(mean(indivCTF(:,BLtime,:,:),2)); % original
+        semCTF = std(squeeze(mean(indivCTF(:,CTFtime,:),2)))/sqrt(size(indivCTF,1));
         semBL = std(squeeze(mean(indivCTF(:,BLtime,:),2)))/sqrt(size(indivCTF,1));
     end
     

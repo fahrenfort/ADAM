@@ -170,7 +170,7 @@ for cCond = 1:nCond
     elseif strcmp(imgtype,'png')
         topoplot_jjf(plot_data,chanlocs','maplimits',weightlim,'style','map','electrodes','off','plotrad',.65,'hcolor','none','shading','interp','nosedir','-Y'); %
     else
-        topoplot_jjf(plot_data,chanlocs','maplimits',weightlim,'style','map','electrodes','ptslabels','plotrad',.65,'emarker2',{elecs,'o','k',10,1}); %'nosedir','-Y',
+        topoplot_jjf(plot_data,chanlocs','maplimits',weightlim,'style','map','electrodes','ptslabels','plotrad',.65,'emarker2',{elecs,'o','k',10,1}); % ,'nosedir','-Y'
         cbar('vert');
     end
 end

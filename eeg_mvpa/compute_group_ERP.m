@@ -1,5 +1,5 @@
-function [stats,gsettings] = compute_group_ERP(folder_name,gsettings)
-% function [stats,weights,gsettings] = compute_group_ERP(folder_name,gsettings)
+function [stats,cfg] = compute_group_ERP(folder_name,cfg)
+% function [stats,weights,cfg] = compute_group_ERP(folder_name,cfg)
 % electrode_sets = {{'PO7'},{'PO8'}}; 
 %   - a cell array with the electrodes to be extracted and averaged { 'Oz', 'Iz', 'POz' };
 %   - a cell array of cell arrays for which the electrodes will be extracted, averaged and substracted
@@ -8,62 +8,103 @@ function [stats,gsettings] = compute_group_ERP(folder_name,gsettings)
 %     from PO7 in the 1st condition and PO7 from PO8 in the 2nd condition
 % condition_def = [1,2; 3,4 ];
 %   If only one column will extract those conditions, if
-%   gsettings.avg_conditions = true it will also average those conditions
+%   cfg.avg_conditions = true it will also average those conditions
 %   (default: false)
 %   If two columns, conditions will be substracted using column1 - column2
 %   If condition_def is not specified it will substract condition 2 from
 %   condition 1 (default).
 %   e.g. condition_def = [1;2;3;4;5]; will extract condition 1:5
-%   if gsettings.avg_conditions = true it will average them to one time
+%   if cfg.avg_conditions = true it will average them to one time
 %   series
 %   if condition_def = [1,2;3,4] it will subtract 2 from 1 and 4 from 3
 %   to create only two time series
-% gsettings specifies the time interval, also does statistics against 0
+% cfg specifies the time interval, also does statistics against 0
 % Computes group ERPs and extracts ERP averages
 % Use this as input for plot function plot_MVPA
 %
 % By J.J.Fahrenfort, VU, 2016
 
+% backwards compatibility
+v2struct(cfg);
+if exist('plotorder','var')
+    plot_order = plotorder;
+    cfg.plot_order = plot_order;
+    cfg = rmfield(cfg,'plotorder');
+end
+
 % Main routine, is a folder name specified? If not, pop up selection dialog
 if isempty(folder_name)
-    if ~isfield(gsettings,'startdir')
-        gsettings.startdir = '';
-        disp('NOTE: it is easier to run this function if you indicate a starting directory in gsettings.startdir');
+    if ~isfield(cfg,'startdir')
+        cfg.startdir = '';
+        disp('NOTE: it is easier to select a directory when you indicate a starting directory using cfg.startdir, otherwise you have to start selection from root every time...');
     end
-    folder_name = uigetdir(gsettings.startdir,'select directory to plot');
+    folder_name = uigetdir(cfg.startdir,'select directory to plot');
     if ~ischar(folder_name)
-        stats = [];
-        weights = [];
         return
     end
-    if ~isfield(gsettings,'plotorder') || isempty(gsettings.plotorder)
+    if ~exist('plot_order','var') || isempty(plot_order)
         dirz = dir(folder_name);
         dirz = {dirz([dirz(:).isdir]).name};
-        dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
-        gsettings.plotorder = dirz;
+        dirz = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
     else
-        dirz = gsettings.plotorder;
+        dirz = cfg.plot_order;
     end
+    % loop through directories
     for cdirz = 1:numel(dirz)
-        if numel(gsettings.plotorder) == 1 % getting from single folder
-            [stats, gsettings] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],gsettings);
+        if numel(cfg.plot_order) == 1 % getting from single folder
+            [stats, cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
         else % getting from multiple folders
-            [stats(cdirz), gsettings] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],gsettings);
+            [stats(cdirz), cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
         end
     end
+    cfg.folder = folder_name;
 else
-    if ~exist('folder_name','dir')
-        error([folder_name ' should refer to a full and existing folder path']);
+    if ~exist('folder_name','dir') && ~iscell(folder_name) 
+        error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
     end
-    [stats, gsettings] = subcompute_group_ERP(folder_name,gsettings);
+    [stats, cfg] = subcompute_group_ERP(folder_name,cfg);
 end
 
-% fill gsettings.plotorder in case not given by user and from single folder
-if numel(gsettings.plotorder) == 1
-    gsettings.plotorder = {stats(:).condname};
+% % Main routine, is a folder name specified? If not, pop up selection dialog
+% if isempty(folder_name)
+%     if ~isfield(cfg,'startdir')
+%         cfg.startdir = '';
+%         disp('NOTE: it is easier to run this function if you indicate a starting directory in cfg.startdir');
+%     end
+%     folder_name = uigetdir(cfg.startdir,'select directory to plot');
+%     if ~ischar(folder_name)
+%         stats = [];
+%         weights = [];
+%         return
+%     end
+%     if ~isfield(cfg,'plotorder') || isempty(cfg.plotorder)
+%         dirz = dir(folder_name);
+%         dirz = {dirz([dirz(:).isdir]).name};
+%         dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
+%         cfg.plotorder = dirz;
+%     else
+%         dirz = cfg.plotorder;
+%     end
+%     for cdirz = 1:numel(dirz)
+%         if numel(cfg.plotorder) == 1 % getting from single folder
+%             [stats, cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
+%         else % getting from multiple folders
+%             [stats(cdirz), cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
+%         end
+%     end
+% else
+%     if ~exist('folder_name','dir')
+%         error([folder_name ' should refer to a full and existing folder path']);
+%     end
+%     [stats, cfg] = subcompute_group_ERP(folder_name,cfg);
+% end
+% 
+% fill cfg.plot_order in case not given by user and from single folder
+if numel(cfg.plot_order) == 1
+    cfg.plot_order = {stats(:).condname};
 end
 
-function [stats,gsettings] = subcompute_group_ERP(folder_name,gsettings)
+function [stats,cfg] = subcompute_group_ERP(folder_name,cfg)
 % set defaults
 one_two_tailed = 'two';
 indiv_pval = .05;
@@ -71,13 +112,14 @@ cluster_pval = .05;
 plotsubjects = false;
 avg_conditions = false;
 name = [];
+reduce_dims = [];
 mpcompcor_method = 'uncorrected';
 timelim = [];
 resample_eeg = 0;
 electrode_sets = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
 % unpack graphsettings
-v2struct(gsettings);
+v2struct(cfg);
 plottype = '2D';
 channelpool = 'ALL';
 if size(condition_def,2) == 2 && size(electrode_sets,2) == 2
@@ -87,19 +129,19 @@ else
 end
 
 % pack graphsettings with defaults
-nameOfStruct2Update = 'gsettings';
-gsettings = v2struct(one_two_tailed,indiv_pval,cluster_pval,name,plottype,mpcompcor_method,timelim,electrode_sets,resample_eeg,condition_def,nameOfStruct2Update);
+nameOfStruct2Update = 'cfg';
+cfg = v2struct(one_two_tailed,reduce_dims,indiv_pval,cluster_pval,name,plottype,mpcompcor_method,timelim,electrode_sets,resample_eeg,condition_def,nameOfStruct2Update);
 
 % fill some empties
 if isempty(electrode_sets)
-    error('no electrode_set was specified in settings, set gsettings.electrode_set to some electrode, e.g. ''Oz''.');
+    error('no electrode_sets was specified in settings, set cfg.electrode_sets to some electrode, e.g. ''Oz''.');
 end
 pval(1) = indiv_pval;
 pval(2) = cluster_pval;
 
 % get filenames
 plotFreq = ''; % this is empty for now, but might be used to look at the ERPs obtained from a TF analysis
-gsettings.plotFreq = plotFreq;
+cfg.plotFreq = plotFreq;
 subjectfiles = dir([folder_name filesep channelpool plotFreq filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
 name = strsplit(folder_name,filesep);
@@ -128,8 +170,13 @@ for cSubj = 1:nSubj
         error('no ERP was computed for these data');
     end
     
+    if iscell(FT_ERP)
+        FT_ERP = FT_ERP{2};
+        disp('Extracting ERPs from testing data');
+    end
+    
     % compute electrodes and do electrode substractions
-    FT_ERP = restrict_FT_ERP(FT_ERP,gsettings);
+    FT_ERP = restrict_FT_ERP(FT_ERP,cfg);
     settings.times = {FT_ERP.time, FT_ERP.time};
     
     % now do condition subtraction
@@ -142,7 +189,7 @@ for cSubj = 1:nSubj
             end
         end
     else % not subtracting conditions, plain extraction
-        if condition_avg % average over all conditions
+        if average % average over all conditions
             trial = mean(FT_ERP.trial(condition_def,:,:),1);
         else % per condition
             trial = squeeze(FT_ERP.trial(condition_def,:,:));
@@ -176,7 +223,8 @@ for cCond = 1:size(condition_def,1) % loop over conditions
     %    condname = num2str(condition_def(cCond));
     %    channeldef = FT_ERP.channelpool{condition_def(cCond)};
     else
-        channeldef = FT_ERP.channelpool{condition_def(cCond)};
+        channeldef = FT_ERP.channelpool; %FT_ERP.channelpool{condition_def(cCond)};
+        condname = ['condition ' num2str(cCond)];
     end
     
     % get some stats
@@ -190,21 +238,21 @@ for cCond = 1:size(condition_def,1) % loop over conditions
         ClassPvals(ClassPvals>thresh) = 1;
     elseif strcmp(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
-        [ClassPvals, pStruct] = cluster_based_permutation(ClassTotal{cCond},chance,gsettings,settings);
+        [ClassPvals, pStruct] = cluster_based_permutation(ClassTotal{cCond},chance,cfg,settings);
         % compute Pstruct
     elseif strcmp(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
         [~,ClassPvals] = ttest(ClassTotal{cCond},chance,'tail',tail);
     else
         % NO TESTING, PLOT ALL
-        ClassPvals = zeros(size(ClassTotal{cCond}));
+        ClassPvals = zeros(1,size(ClassTotal{cCond},2));
     end
     
     % outputs: put it in a matrix for consistency in plot function
     settings.measuremethod = '\muV';
-    stats(cCond).ClassOverTime = diag(ClassAverage);
-    stats(cCond).StdError = diag(ClassStdErr);
-    stats(cCond).pVals = diag(ClassPvals);
+    stats(cCond).ClassOverTime = ClassAverage;
+    stats(cCond).StdError = ClassStdErr;
+    stats(cCond).pVals = ClassPvals;
     stats(cCond).settings = settings;
     stats(cCond).condname = condname;
     stats(cCond).channelpool = channeldef;
@@ -212,11 +260,11 @@ for cCond = 1:size(condition_def,1) % loop over conditions
         stats(cCond).pStruct = pStruct;
     end
 end
-gsettings = v2struct(name,nameOfStruct2Update);
+cfg = v2struct(name,nameOfStruct2Update);
 
-function [FT_EEG] = restrict_FT_ERP(FT_EEG,gsettings)
+function [FT_EEG] = restrict_FT_ERP(FT_EEG,cfg)
 % resample / restrict the ERP
-v2struct(gsettings);
+v2struct(cfg);
 % resample?
 if resample_eeg
     cfg = [];
@@ -233,9 +281,9 @@ clear channelpool;
 % subtracting electrode sets, subtracts electrode 2 from electrode 1 for each condition
 if iscell(electrode_sets{1}) 
     if size(electrode_sets,2)~=2
-        error('to subtract electrode sets, you should define two columns in gsettings.electrode_sets');
+        error('to subtract electrode sets, you should define two columns in cfg.electrode_sets');
     end
-    conds = unique(gsettings.condition_def);
+    conds = unique(cfg.condition_def);
     if size(electrode_sets,1) ~= numel(conds)
         electrode_sets = repmat(electrode_sets,[numel(conds),1]);
     end
