@@ -34,5 +34,13 @@ One of the big advantages of this toolbox is that it takes generic input formats
 # Version
 The software is currently in pre-release, meaning that it is available for download but important features are still under development. We are still streamlining the basic analysis pipeline, to make it more consistent and more usable. **If you download the software now, expect no support, but do expect unexpected changes during updates.** We foresee that a first 'official' release will become available within the next few months.
 
+# Cite
+When you use the decoding (BDM) scripts, please cite:<br>
+Fahrenfort, J. J., van Leeuwen, J., Olivers, C. N. L., & Hogendoorn, H. (2017). *Perceptual integration without conscious access.* Proceedings of the National Academy of Sciences, 114(14), 3744–3749. 
+
+When you use the forward modeling (FEM) scripts, please cite:<br>
+Fahrenfort, J. J., Grubert, A., Olivers, C. N. L., & Eimer, M. (2017). Multivariate EEG analyses support high-resolution tracking of feature-based attentional selection. *Scientific Reports*, 7(1), 1886.
+
+
 # Manual
 We are currently working to supply an up-to-date manual of the toolbox, including some easy to use wrapper functions, which will be presented at the [ICON conference](http://www.icon2017.org) 5-8 August 2017 in Amsterdam
