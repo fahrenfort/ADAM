@@ -1,4 +1,4 @@
-function [TFR, groupTFRhann, groupTFRmult] = compute_TFR(FT_EEG,sampling_rate,frequencies)
+function [TFR, groupTFR] = compute_TFR(FT_EEG,sampling_rate,frequencies)
 % function TFR = compute_TFR(FT_EEG,sampling_rate,frequencies)
 % takes standard FT input and computes single trial TFR for MVPA and
 % separate group TFRs (no single trial data) for Hanning and multitaper 
@@ -81,10 +81,12 @@ if ~isempty(cfg.foi)
     % also get condition data on group level
     for c = 1:numel(condlabels)
         cfg.keeptrials   = 'no';
-        groupTFRhann.(['cond_' num2str(condlabels(c))])  = ft_freqanalysis(cfg, FT_COND{c});
+        %groupTFRhann.(['cond_' num2str(condlabels(c))])  = ft_freqanalysis(cfg, FT_COND{c});
+        groupTFRhann{c}  = ft_freqanalysis(cfg, FT_COND{c});
     end
-else
-    groupTFRhann     = [];
+    cfg = [];
+    cfg.parameter  = 'powspctrm';
+    groupTFRhann = ft_appendfreq(cfg,groupTFRhann{:});
 end
    
 % multitaper for higher frequencies
@@ -108,10 +110,12 @@ if ~isempty(cfg.foi)
     % also get condition data on group level
     for c = 1:numel(condlabels)
         cfg.keeptrials   = 'no';
-        groupTFRmult.(['cond_' num2str(condlabels(c))])  = ft_freqanalysis(cfg, FT_COND{c});
+        % groupTFRmult.(['cond_' num2str(condlabels(c))])  = ft_freqanalysis(cfg, FT_COND{c});
+        groupTFRmult{c}  = ft_freqanalysis(cfg, FT_COND{c});
     end
-else
-    groupTFRmult = [];
+    cfg = [];
+    cfg.parameter  = 'powspctrm';
+    groupTFRmult = ft_appendfreq(cfg,groupTFRmult{:});
 end
 
 % free up memory
@@ -125,12 +129,16 @@ else
 end
 % if both exist, merge the results
 if exist('TFRhann','var') && exist('TFRmult','var')
-    TFR             = rmfield(TFR,'cfg'); % remove the cfg field
-    TFR.freq        = cat(2,TFRhann.freq,TFRmult.freq);
-    TFR.powspctrm   = cat(3,TFRhann.powspctrm,TFRmult.powspctrm);
-    TFR.cumtapcnt   = cat(2,TFRhann.cumtapcnt,TFRmult.cumtapcnt);
-    TFR.cfg.hann    = TFRhann.cfg;
-    TFR.cfg.mult    = TFRmult.cfg;
+    cfg.parameter  = 'powspctrm';
+    cfg.appenddim  = 'freq';
+    TFR = ft_appendfreq(cfg,TFRhann,TFRmult);
+    TFR.trialinfo = TFRhann.trialinfo;
+%     TFR             = rmfield(TFR,'cfg'); % remove the cfg field
+%     TFR.freq        = cat(2,TFRhann.freq,TFRmult.freq);
+%     TFR.powspctrm   = cat(3,TFRhann.powspctrm,TFRmult.powspctrm);
+%     TFR.cumtapcnt   = cat(2,TFRhann.cumtapcnt,TFRmult.cumtapcnt);
+%     TFR.cfg.hann    = TFRhann.cfg;
+%     TFR.cfg.mult    = TFRmult.cfg;
 end
 % finally cut out annoying NaNs due to padding, a bit complex due to unknown format
 dims = regexp(TFR.dimord, '_', 'split');
@@ -148,4 +156,28 @@ index{trialdim} = ':';
 TFR.powspctrm = TFR.powspctrm(index{:});
 % and also correct time
 TFR.time = TFR.time(index{timedim});
+
+% same for group
+if exist('groupTFRhann','var')
+    groupTFR             = groupTFRhann; 
+else
+    groupTFR             = groupTFRmult;
+end
+% if both exist, merge the results
+if exist('groupTFRhann','var') && exist('groupTFRmult','var')
+    cfg.parameter  = 'powspctrm';
+    cfg.appenddim  = 'freq';
+    groupTFR = ft_appendfreq(cfg,groupTFRhann,groupTFRmult);
+%     TFR             = rmfield(TFR,'cfg'); % remove the cfg field
+%     TFR.freq        = cat(2,TFRhann.freq,TFRmult.freq);
+%     TFR.powspctrm   = cat(3,TFRhann.powspctrm,TFRmult.powspctrm);
+%     TFR.cumtapcnt   = cat(2,TFRhann.cumtapcnt,TFRmult.cumtapcnt);
+%     TFR.cfg.hann    = TFRhann.cfg;
+%     TFR.cfg.mult    = TFRmult.cfg;
+end
+groupTFR.powspctrm = groupTFR.powspctrm(index{:});
+% and also correct time and add trialinfo
+groupTFR.time = groupTFR.time(index{timedim});
+groupTFR.trialinfo = condlabels;
+
 

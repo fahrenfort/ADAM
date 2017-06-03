@@ -372,6 +372,8 @@ for cSet = 1:2
     thisCondSet = get_this_condset(condSet,cSet);
     % compute ERPs (baseline corrected, resampled, and channels already selected)
     FT_ERP{cSet} = compute_erp_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','bin');
+    % also compute TFR for entire set
+    FT_TFR{cSet} = compute_TFR_from_eeglab('',FT_EEG(cSet),'',resample_eeg,[orig_method ',only_group'],tf_baseline,erp_baseline,frequencies,thisCondSet{:});
     if unbalance
         trialinfo{cSet} = FT_EEG(cSet).trialinfo;
         wraptext('Please realize that triggercodes in a class are now UNBALANCED, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have seriously undesirable effects.',80);
@@ -615,6 +617,7 @@ for cFreq = 1:numel(frequencies)
     settings.clean_window = clean_window;
     settings.detrend_eeg = detrend_eeg;
     settings.FT_ERP = FT_ERP;
+    settings.FT_TFR = FT_TFR;
     settings.BDM = do_BDM;
     settings.FEM = do_FEM;
     settings.basis_set_sigma = basis_sigma;

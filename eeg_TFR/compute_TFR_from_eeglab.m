@@ -157,7 +157,7 @@ if strcmp(method,'evoked')
     if use_splines
         FT_EVOKED = compute_spline_on_FT_EEG(FT_EVOKED);
     end
-    [TFR, groupTFRhann, groupTFRmult] = compute_TFR(FT_EVOKED,resample_to,frequencies);
+    [TFR, groupTFR] = compute_TFR(FT_EVOKED,resample_to,frequencies);
     clear FT_EVOKED;
     % TFR baseline
     if strcmpi(tf_baseline,'no')
@@ -186,7 +186,7 @@ if strcmp(method,'induced')
     FT_INDUCED = subtract_evoked_from_FT_EEG(FT_EEG,FT_EVOKED);
     clear FT_EVOKED;
     % compute the TFR
-    [TFR, groupTFRhann, groupTFRmult] = compute_TFR(FT_INDUCED,resample_to,frequencies);
+    [TFR, groupTFR] = compute_TFR(FT_INDUCED,resample_to,frequencies);
     clear FT_INDUCED;
     % TFR baseline
     if strcmpi(tf_baseline,'no')
@@ -209,7 +209,7 @@ end
 % if method is total
 if strcmp(method,'total')
     % compute the TFR
-    [TFR, groupTFRhann, groupTFRmult] = compute_TFR(FT_EEG,resample_to,frequencies);
+    [TFR, groupTFR] = compute_TFR(FT_EEG,resample_to,frequencies);
     % TFR baseline
     if strcmpi(tf_baseline,'no')
         disp('no TF baseline applied');
@@ -233,15 +233,5 @@ if ~only_group_data
     fullname = [outpath filesep fname];
     save(fullname,'-v7.3','-struct','TFR');
 else % or save the single subject condition averages for group analysis visualizations
-    fullname = [];
-        grouppath = [outpath filesep 'GROUPDATA'];
-    if ~exist(grouppath,'dir')
-        mkdir(grouppath);
-    end
-    if ~isempty(groupTFRhann)
-        save([grouppath filesep 'TFRhann_' filename],'-v7.3','-struct','groupTFRhann');
-    end
-    if ~isempty(groupTFRmult)
-        save([grouppath filesep 'TFRmult_' filename],'-v7.3','-struct','groupTFRmult');
-    end
+    fullname = compute_bins_on_FT_EEG(groupTFR,condSet,'powspctrm');
 end
