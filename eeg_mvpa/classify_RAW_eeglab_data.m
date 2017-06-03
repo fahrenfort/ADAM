@@ -551,7 +551,6 @@ settings.crossclass = crossclass;
 settings.erp_baseline = erp_baseline;
 settings.clean_window = clean_window;
 settings.detrend_eeg = detrend_eeg;
-settings.FT_ERP = FT_ERP;
 settings.BDM = do_BDM;
 settings.FEM = do_FEM;
 settings.basis_set_sigma = basis_sigma;
@@ -578,7 +577,7 @@ if randomize_labels || iterate
 else
     fullfilename = [ outpath filesep filename ];
 end
-save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
+save(fullfilename, 'FEM', 'BDM', 'FT_ERP', 'settings', '-v7.3');
 if save_labels
     if labelsonly
         save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_LabelsOverTime', FEMLabelsOverTime, 'FEM_LabelsOverTime');

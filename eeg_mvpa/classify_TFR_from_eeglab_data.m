@@ -616,8 +616,6 @@ for cFreq = 1:numel(frequencies)
     settings.tf_baseline = tf_baseline;
     settings.clean_window = clean_window;
     settings.detrend_eeg = detrend_eeg;
-    settings.FT_ERP = FT_ERP;
-    settings.FT_TFR = FT_TFR;
     settings.BDM = do_BDM;
     settings.FEM = do_FEM;
     settings.basis_set_sigma = basis_sigma;
@@ -732,7 +730,7 @@ if ~crossclass
     else
         fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
     end
-    save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
+    save(fullfilename, 'FEM', 'BDM', 'FT_ERP', 'FT_TFR', 'settings', '-v7.3');
     if save_labels
         if labelsonly
             save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_LabelsOverTime', FEMLabelsOverTime, 'FEM_LabelsOverTime');
