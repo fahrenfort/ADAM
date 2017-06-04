@@ -138,8 +138,8 @@ for cFreq=1:nFreqs
     end
 end
 if freqs 
-    FT_EEG.dimord = 'chan_time_rpt_freq';
-    FT_EEG.(field) = alldata;
+    FT_EEG.dimord = 'rpt_chan_freq_time'; % was 'chan_time_rpt_freq' but should be 'rpt_chan_freq_time' for consistency with conversion to raw format in ft_checkdata
+    FT_EEG.(field) = permute(alldata,[3 1 4 2]);
 else
     FT_EEG.dimord = 'rpt_chan_time'; % was 'chan_time_rpt' but should be 'rpt_chan_time' for consistency with conversion to raw format in ft_checkdata
     FT_EEG.(field) = permute(alldata, [3 1 2]); 

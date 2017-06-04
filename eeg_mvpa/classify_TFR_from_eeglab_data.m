@@ -356,15 +356,16 @@ if ~exist(outpath,'dir')
     mkdir(outpath);
 end
 
-% load data
+% load data and determine output name
 for cFile = 1:numel(filenames)
     % NOTE: this line is different in RAW! No resampling done here (yet)...
     [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,channelset,erp_baseline,false,do_csd,clean_muscle,clean_window,true,detrend_eeg);
 end
-
-% duplicate data for testing if only one file is available
 if numel(filenames) == 1
-    FT_EEG(2) = FT_EEG;
+    filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];
+    FT_EEG(2) = FT_EEG; % duplicate data for testing if only one file is available
+else
+    filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
 end
 
 % extract some relevant trial info, training and testing data
@@ -372,6 +373,8 @@ for cSet = 1:2
     thisCondSet = get_this_condset(condSet,cSet);
     % compute ERPs (baseline corrected, resampled, and channels already selected)
     FT_ERP{cSet} = compute_erp_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','bin');
+    % also compute TFR for entire set
+    FT_TFR{cSet} = compute_TFR_from_eeglab('',FT_EEG(cSet),'',resample_eeg,[orig_method ',only_group'],tf_baseline,erp_baseline,frequencies,thisCondSet{:});
     if unbalance
         trialinfo{cSet} = FT_EEG(cSet).trialinfo;
         wraptext('Please realize that triggercodes in a class are now UNBALANCED, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have seriously undesirable effects.',80);
@@ -386,7 +389,11 @@ for cSet = 1:2
     channels{cSet} = FT_EEG(cSet).label;
     times{cSet} = FT_EEG(cSet).time;
 end
-clear FT_EEG_BINNED;
+if ~crossclass && ~(randomize_labels || iterate)
+    fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
+    save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3'); % save ERPs and TFRs
+end
+clear FT_EEG_BINNED FT_ERP FT_TFR;
 
 % if testing and training are on different files, check consistency
 if numel(filenames) > 1 && ~all(strcmpi(channels{1},channels{2}))
@@ -598,12 +605,6 @@ for cFreq = 1:numel(frequencies)
         end
         clear FEM_*;
     end
-
-    if numel(filenames) == 1
-        filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];
-    else
-        filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
-    end
     
     % save some settings so we know wtf just happened
     settings.nconds = numel(condSet);
@@ -614,7 +615,6 @@ for cFreq = 1:numel(frequencies)
     settings.tf_baseline = tf_baseline;
     settings.clean_window = clean_window;
     settings.detrend_eeg = detrend_eeg;
-    settings.FT_ERP = FT_ERP;
     settings.BDM = do_BDM;
     settings.FEM = do_FEM;
     settings.basis_set_sigma = basis_sigma;
@@ -726,10 +726,11 @@ if ~crossclass
     % count filenames from 001 onwards if computing under permutation or iteration
     if randomize_labels || iterate
         fullfilename = find_filename([outpath filesep 'allfreqs'],filename);
+        save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
     else
         fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
+        save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3', '-append'); % this file also contains the ERPs and the TFRs, so append
     end
-    save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
     if save_labels
         if labelsonly
             save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_LabelsOverTime', FEMLabelsOverTime, 'FEM_LabelsOverTime');
