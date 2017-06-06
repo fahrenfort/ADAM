@@ -389,9 +389,12 @@ for cSet = 1:2
     channels{cSet} = FT_EEG(cSet).label;
     times{cSet} = FT_EEG(cSet).time;
 end
-if ~crossclass && ~(randomize_labels || iterate)
-    fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
-    save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3'); % save ERPs and TFRs
+if ~crossclass 
+    mkdir([outpath filesep 'allfreqs']);
+    if ~(randomize_labels || iterate)
+        fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
+        save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3'); % save ERPs and TFRs
+    end
 end
 clear FT_EEG_BINNED FT_ERP FT_TFR;
 
@@ -722,9 +725,9 @@ if ~crossclass
     end
     settings.freqs = frequencies;
     settings.dimord = 'freq_time';
-    mkdir([outpath filesep 'allfreqs']);
     % count filenames from 001 onwards if computing under permutation or iteration
     if randomize_labels || iterate
+        mkdir([outpath filesep 'allfreqs']);
         fullfilename = find_filename([outpath filesep 'allfreqs'],filename);
         save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
     else
