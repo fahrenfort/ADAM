@@ -356,16 +356,14 @@ if ~exist(outpath,'dir')
     mkdir(outpath);
 end
 
-% load data and determine output name
+% load data 
 for cFile = 1:numel(filenames)
     % NOTE: this line is different in RAW! No resampling done here (yet)...
     [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,channelset,erp_baseline,false,do_csd,clean_muscle,clean_window,true,detrend_eeg);
 end
+ % duplicate data for testing if only one file is available
 if numel(filenames) == 1
-    filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];
-    FT_EEG(2) = FT_EEG; % duplicate data for testing if only one file is available
-else
-    filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
+    FT_EEG(2) = FT_EEG;
 end
 
 % extract some relevant trial info, training and testing data
@@ -389,14 +387,6 @@ for cSet = 1:2
     channels{cSet} = FT_EEG(cSet).label;
     times{cSet} = FT_EEG(cSet).time;
 end
-if ~crossclass 
-    mkdir([outpath filesep 'allfreqs']);
-    if ~(randomize_labels || iterate)
-        fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
-        save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3'); % save ERPs and TFRs
-    end
-end
-clear FT_EEG_BINNED FT_ERP FT_TFR;
 
 % if testing and training are on different files, check consistency
 if numel(filenames) > 1 && ~all(strcmpi(channels{1},channels{2}))
@@ -411,6 +401,21 @@ end
 
 % Generate indices for folds to do training and testing
 [setindex{1}, setindex{2}, nFolds] = make_folds(trialinfo{1},trialinfo{2},condSet,nFolds,labelsonly);
+
+% create file name based on actual folds and save ERPs and TFRs
+if numel(filenames) == 1
+    filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];
+else
+    filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
+end
+if ~crossclass 
+    mkdir([outpath filesep 'allfreqs']);
+    if ~(randomize_labels || iterate)
+        fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
+        save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3'); 
+    end
+end
+clear FT_EEG_BINNED FT_ERP FT_TFR; % save memory by clearing
 
 % unpack setindex{1} and setindex{2} to get back the original index numbers
 if ~unbalance
@@ -487,7 +492,7 @@ clear FT_EEG; % clear the dataset so we don't need it in memory during analyses
 [~, actualfrequencies, times{1}, trialinfo{1}, chanindex] = read_mat_file(fnames{1,1},channels{1});
 actualfrequencies = round(actualfrequencies*100)/100;
 
-% if testing and training are on different data, load a second set
+% if testing and training are on different data, load info of second set
 if numel(filenames) > 1
     [~, actualfrequencies2, times{2}, trialinfo{2}, chanindex2] = read_mat_file(fnames{1,2},channels{2});
     actualfrequencies2 = round(actualfrequencies2*100)/100;
@@ -727,7 +732,6 @@ if ~crossclass
     settings.dimord = 'freq_time';
     % count filenames from 001 onwards if computing under permutation or iteration
     if randomize_labels || iterate
-        mkdir([outpath filesep 'allfreqs']);
         fullfilename = find_filename([outpath filesep 'allfreqs'],filename);
         save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
     else
