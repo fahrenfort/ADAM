@@ -52,7 +52,7 @@ end
 if ischar(end_epoch)
     end_epoch = string2double(end_epoch);
 end
-if ~isempty(strfind(filenames,'*')) || ~isempty(strfind(filenames,'?'))
+if ~iscell(filenames) && (~isempty(strfind(filenames,'*')) || ~isempty(strfind(filenames,'?')))
     if ~strcmp(filenames(end-3:end),'.set')
         filenames = [filenames '.set'];
     end

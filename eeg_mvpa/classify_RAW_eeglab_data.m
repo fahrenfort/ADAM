@@ -173,7 +173,7 @@ if size(erp_baselines,1) == 2
     erp_baseline{2} = erp_baselines(2,:);
 else
     erp_baseline{1} = erp_baselines;
-    erp_baseline{2} = 'no';
+    erp_baseline{2} = erp_baselines;
 end
 if isempty(erp_baseline{1}) || all(erp_baseline{1}==0) || any(isnan(erp_baseline{1}))
     erp_baseline{1} = 'no';
@@ -367,6 +367,7 @@ for cFile = 1:numel(filenames)
 end
  % duplicate data for testing if only one file is available
 if numel(filenames) == 1
+    erp_baseline{2} = erp_baseline{1};
     FT_EEG(2) = FT_EEG;
 end
 
