@@ -367,7 +367,6 @@ for cFile = 1:numel(filenames)
 end
  % duplicate data for testing if only one file is available
 if numel(filenames) == 1
-    erp_baseline{2} = erp_baseline{1};
     FT_EEG(2) = FT_EEG;
 end
 
