@@ -426,6 +426,7 @@ end
 
 % generate folds, compute some stuff on them and save them temporarily before running MVPA
 settrialinfo = [];
+settrialindex = [];
 for cFld=1:nFolds
     % select trials from each dataset
     for cSet = 1:2
@@ -460,13 +461,15 @@ for cFld=1:nFolds
         end
         % get the goodies and get rid of overhead
         trialinfo{cSet} = FT_EEG_2use.trialinfo;
+        origtrialindex{cSet} = FT_EEG(cSet).origindex(trialindex)';
         FT_EEG_2use = fix_dimord(FT_EEG_2use);
         alldata{cSet} = FT_EEG_2use.trial;
         labels{cSet} = make_group_labels(FT_EEG_2use.trialinfo, get_this_condset(condSet,cSet));
         clear FT_EEG_2use;
     end
-    % FYI
+    % FYI, store for every fold
     settrialinfo = [settrialinfo; trialinfo];
+    settrialindex = [settrialindex; origtrialindex];
     
     % temporarily save folded data
     [~,tmpf,~] = fileparts(tempname); % generates random filename
@@ -571,7 +574,7 @@ settings.frequency = 'none:_raw_eeg';
 settings.dimord = 'time_time';
 settings.measuremethod = measuremethod;
 settings.trialinfo = settrialinfo;
-settings.setindex = setindex;
+settings.trialindex = settrialindex;
 settings.condset = condSet;
 settings.csd_transform = do_csd;
 settings.bintrain = bintrain;
