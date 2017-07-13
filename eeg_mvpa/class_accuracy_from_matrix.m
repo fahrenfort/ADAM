@@ -77,7 +77,7 @@ elseif any(strcmpi(method,{'hr-far','dprime','hr','far','mr','cr'}))
     if strcmpi(method,'dprime')
         % correct for infinity using Hautus MJ (1995) Corrections for
         % extreme proportions and their biasing effects on estimated values
-        % of d?. Behavior Research Methods, Instruments, & Computers 27(1):46?51
+        % of d'. Behavior Research Methods, Instruments, & Computers 27(1):46?51
         labelMatrix = labelMatrix + .5;
     end
     nStimPresent = sum(labelMatrix(stimPresent,:));

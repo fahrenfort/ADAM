@@ -130,7 +130,10 @@ else
     end
 end
 if ~iscell(filenames)
-    filenames = regexp(filenames, ',', 'split');
+    filenames = regexp(filenames, ';|,', 'split');
+end
+if numel(filenames)>2
+    error('too many input files');
 end
 if isempty(nFolds)
     nFolds = 1;
