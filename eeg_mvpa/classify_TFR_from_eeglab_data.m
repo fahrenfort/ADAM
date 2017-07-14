@@ -427,12 +427,15 @@ end
 
 % create and save TFR for training and testing
 % do trial selection prior to TFR computation (important for induced!)
+settrialindex = [];
 for cFld = 1:nFolds
     for cSet = 1:2
         % FYI
         set_tfr_method{cSet} = tfr_method;
         % select trials belonging to this subset
         trialindex = vertcat(setindex{cSet}{cFld,:});
+        % get goodies for later
+        origtrialindex{cSet} = FT_EEG(cSet).origindex(trialindex)';
         % keep trying if running into memory issues (often temporary because all analyses are running in parallel)
         success = false; counterr = 0;
         while ~success
@@ -487,6 +490,8 @@ for cFld = 1:nFolds
         % just FYI, how big are the temporary files
         filesizes_MB(cFld,cSet) = round(sizenow/(2^20)*100)/100;
     end
+    % FYI, store for every fold
+    settrialindex = [settrialindex; origtrialindex];
 end % end folds loop in which temp files are created
 clear FT_EEG; % clear the dataset so we don't need it in memory during analyses
 
@@ -638,7 +643,7 @@ for cFreq = 1:numel(frequencies)
     settings.times = times;
     settings.measuremethod = measuremethod;
     settings.trialinfo = settrialinfo;
-    settings.setindex = setindex;
+    settings.trialindex = settrialindex;
     settings.condset = condSet;
     settings.csd_transform = do_csd;
     settings.bintrain = bintrain;
