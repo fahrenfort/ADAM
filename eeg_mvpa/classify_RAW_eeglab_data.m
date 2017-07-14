@@ -502,8 +502,16 @@ for cFld=1:nFolds
 
     % and BDM/FEM specific stuff
     if do_BDM
-        if save_labels
+        % suggested change by Joram  07/14/17
+        % folds can have unequal trial count, so single trials of each fold
+        % cannot be stored in one matrix; instead, use cell array for each
+        % fold
+        % not sure whether save_labels can occur without labelsonly, so
+        % separated them as below:
+        if save_labels && ~labelsonly
             BDM_labelMatrixOverT(cFld,:,:,:,:) = BDM.LabelsOverTime; % fld x t1 x t2 x response_matrix OR fld x trial x t1 (assigned_labels when method = 'labelsonly')
+        elseif save_labels && labelsonly
+            BDM_labelMatrixOverT{cFld} = BDM.LabelsOverTime;
         end
         if labelsonly
             BDM_ClassOverT(cFld) = NaN;
