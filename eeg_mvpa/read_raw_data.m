@@ -174,4 +174,6 @@ if shuffle_trials
     FT_EEG.trialinfo = FT_EEG.trialinfo(shuffle_order);
     FT_EEG.trial = FT_EEG.trial(shuffle_order,:,:);
     FT_EEG.origindex = shuffle_order;
+else
+    FT_EEG.origindex = 1:numel(FT_EEG.trialinfo);
 end
