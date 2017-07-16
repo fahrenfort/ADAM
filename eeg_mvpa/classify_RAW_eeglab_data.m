@@ -305,7 +305,7 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'save_labels','savelabels'}))
         save_labels = true;
     end
-    if any(strcmpi(methods{c},{'unbalance_triggers','unbalanced'}))
+    if any(strcmpi(methods{c},{'unbalance_triggers','unbalance','unbalanced'}))
         unbalance_triggers = true;
     end
     if any(strcmpi(methods{c},{'unbalance_classes'}))
@@ -353,7 +353,7 @@ end
 for cCondSet = 1:numel(condSet)
     if ~all(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && numel(filenames) == 1 && ~unbalance_triggers
         unbalance_triggers = true;
-        wraptext('WARNING: Some stimulus triggers overlap between train and test, overriding balance option');
+        wraptext('WARNING: Some stimulus triggers overlap between train and test, overriding balance triggers option');
     end
 end
 
