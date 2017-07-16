@@ -1,0 +1,46 @@
+General install instructions:
+
+You need to have Matlab 2012b or later (earlier versions may or may not work), including 
+    Image Processing Toolbox
+    Signal Processing Toolbox
+    Statistics Toolbox
+    ?? Symbolic Math Toolbox - not installed
+    ?? System Identification Toolbox - not installed
+    ?? Curve Fitting Toolbox   	installed, but necessary?
+
+STEP 1:	
+For this tutorial, we created an easy to download file which contains all required toolboxes, which you can find here:
+XXXX
+If you already have either EEGLAB, FieldTrip, or both, you can also download whatever you are missing from here:
+- A recent version of FieldTrip, we tested using:
+    ftp://ftp.fieldtriptoolbox.org/pub/fieldtrip/fieldtrip-20170711.zip
+- A recent release of EEGlab, we tested using:
+    ftp://sccn.ucsd.edu/pub/daily/eeglab14_1_1b.zip
+- The ADAM toolbox, always take the most recent version:
+    https://github.com/fahrenfort/ADAM
+
+STEP 2:
+Create a folder called 'matlab_toolboxes'. You can put that folder anywhere you want (e.g. 'C:\matlab_toolboxes' on Windows, or '/Users/accountname' on a mac), as long as you know where you put it. Next, unzip all three toolboxes into that folder. If you already have EEGLAB or FieldTrip in a different location that is fine too, as long as you know what their paths are.
+
+STEP 3:
+Next, we need to make sure that Matlab knows how to find the toolboxes. Open matlab, type 'userpath' and press enter. This will return the path of your Matlab startup directory. Check if that directory already contains a file called 'startup.m'. If it does, rename it to 'startup_old.m' or something similar. That way, you can always go back to the old startup.m after the tutorial. Next, copy over the 'startup.m' file which is located in the 'install' directory of the ADAM toolbox, e.g. 'C:\eeglab_toolboxes\ADAM_master\install' and copy it over to your matlab startup directory. Next, in Matlab, type 'edit startup.m'. If all went well, you should see a file that starts with the lines:
+%------------------------ toolboxes ------------------------%
+% path definitions
+ft_path = fullfile('C:','matlab_toolboxes','fieldtrip-20170704');
+eeglab_path = fullfile('C:','matlab_toolboxes','eeglab14_1_1b');
+adam_path = fullfile('C:','matlab_toolboxes',',ADAM-master');
+
+STEP 4
+Update the paths in startup.m to point to the three toolboxes from step 2, where folder separators are replaced by commas. So if your FieldTrip folder is at:
+'C:\Users\Johannes\My Documents\fieldtrip-20170704'
+then you should specify:
+ft_path = fullfile('C:','Users','Johannes','My Documents','matlab_toolboxes','fieldtrip-20170704');
+Note that if you are on Linux or Mac, you should start with a file separator, e.g. if your FieldTrip folder is at:
+'/Users/Johannes/matlab_toolboxes/fieldtrip-20150318'
+then you should specify:
+ft_path = fullfile(filesep,'Users','Johannes','matlab_toolboxes','fieldtrip-20150318');
+Once you have correctly specified the folder paths to all three toolboxes, save 'startup.m' and run it 'startup.m'. If all goes well, you should see:
+FIELDTRIP IS ALIVE
+EEGLAB IS ALIVE
+ADAM IS ALIVE
+after which you should be able to run the tutorial. If you are on a mac

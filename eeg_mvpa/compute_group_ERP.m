@@ -166,6 +166,8 @@ for cSubj = 1:nSubj
         FT_ERP = settings.ft_erpstruct;
     elseif isfield(settings,'FT_ERP')
         FT_ERP = settings.FT_ERP;
+    elseif ~isempty(whos(matObj,'FT_ERP'))
+        FT_ERP = matObj.FT_ERP;
     else
         error('no ERP was computed for these data');
     end

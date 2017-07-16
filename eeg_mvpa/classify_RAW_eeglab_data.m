@@ -130,7 +130,10 @@ else
     end
 end
 if ~iscell(filenames)
-    filenames = regexp(filenames, ',', 'split');
+    filenames = regexp(filenames, ';|,', 'split');
+end
+if numel(filenames)>2
+    error('too many input files');
 end
 if isempty(nFolds)
     nFolds = 1;
@@ -214,7 +217,9 @@ clean_muscle = false;
 clean_window = [];
 save_labels = false;
 basis_sigma = 1; % default width of basis set if not a delta, if this is empty, do a simple basis set (delta function)
-unbalance = false;
+unbalance_triggers = false;
+unbalance_classes = false;
+balance_classes_method = 'oversample';
 detrend_eeg = false;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
@@ -300,8 +305,20 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'save_labels','savelabels'}))
         save_labels = true;
     end
-    if any(strcmpi(methods{c},{'unbalance','unbalanced'}))
-        unbalance = true;
+    if any(strcmpi(methods{c},{'unbalance_triggers','unbalance','unbalanced'}))
+        unbalance_triggers = true;
+    end
+    if any(strcmpi(methods{c},{'unbalance_classes'}))
+        unbalance_classes = true;
+        balance_classes_method = 'none';
+    end
+    if any(strcmpi(methods{c},{'undersample'}))
+        unbalance_classes = false;
+        balance_classes_method = 'undersample';
+    end
+    if any(strcmpi(methods{c},{'oversample'}))
+        unbalance_classes = false;
+        balance_classes_method = 'oversample';
     end
     if any(strcmpi(methods{c},{'detrend','detrend_eeg'}))
         detrend_eeg = true;
@@ -332,11 +349,11 @@ if numel(filenames) == 1 && nFolds == 1
         end
     end
 end
-% check if condsets are not the same but overlapping, if so unbalance
+% check if condsets are not the same but overlapping, if so unbalance_triggers
 for cCondSet = 1:numel(condSet)
-    if ~all(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && numel(filenames) == 1 && ~unbalance
-        unbalance = true;
-        wraptext('WARNING: Some stimulus triggers overlap between train and test, overriding balance option');
+    if ~all(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && numel(filenames) == 1 && ~unbalance_triggers
+        unbalance_triggers = true;
+        wraptext('WARNING: Some stimulus triggers overlap between train and test, overriding balance triggers option');
     end
 end
 
@@ -367,7 +384,6 @@ for cFile = 1:numel(filenames)
 end
  % duplicate data for testing if only one file is available
 if numel(filenames) == 1
-    erp_baseline{2} = erp_baseline{1};
     FT_EEG(2) = FT_EEG;
 end
 
@@ -376,15 +392,13 @@ for cSet = 1:2
     thisCondSet = get_this_condset(condSet,cSet);
     % compute ERPs (baseline corrected, resampled, and channels already selected)
     FT_ERP{cSet} = compute_erp_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','bin');
-    if unbalance
+    if unbalance_triggers
         trialinfo{cSet} = FT_EEG(cSet).trialinfo;
-        wraptext('Please realize that triggercodes in a class are now UNBALANCED, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have seriously undesirable effects.',80);
     else
         % bin/balance dataset (default action, this is not to achieve actual binnning, it just balances the dataset in case separate conditions still exist in each stimulus class)
         FT_EEG_BINNED(cSet) = compute_bins_on_FT_EEG(FT_EEG(cSet),get_this_condset(condSet,cSet),'trial','original');
         trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo;
         oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;
-        wraptext('Please realize that triggercodes in a class are BALANCED by design, such that an equal number of each triggercode goes into each stimulus class. If this is undesirable behavior, specify ''unbalanced'' in your methods.',80);
     end
     % keep track of channels and time line
     channels{cSet} = FT_EEG(cSet).label;
@@ -417,19 +431,50 @@ if ~(randomize_labels || iterate)
 end
 clear FT_EEG_BINNED FT_ERP; % save memory by clearing
 
-% unpack setindex{1} and setindex{2} to get back the original index numbers
-if ~unbalance
+% balance class instances by oversampling or undersampling (only applied to training set)
+if unbalance_classes
+    wraptext('Please realize that stimulus classes are now UNBALANCED. Make sure you know what you are doing, this can have undesirable effects on classifier bias when you have unevevenly represented stimulus classes in your design.',80);
+else
+    % duplicate or eliminate stimulus classes from the training set
+    for cFld=1:nFolds
+        nEachClass = cellfun(@numel, setindex{1}(cFld,:));
+        if strcmpi(balance_classes_method,'oversample')
+            maxN = max(nEachClass);
+            disp('Balancing classes by oversampling: duplicating class instances in the training set (default).');
+        elseif strcmpi(balance_classes_method,'undersample')
+            maxN = min(nEachClass);
+            disp('Balancing classes by undersampling: eleminating class instances from the training set.');
+        end
+        for cClass = 1:numel(nEachClass);
+            elements = setindex{1}{cFld,cClass};
+            elements = repmat(elements,ceil(maxN/numel(elements)),1);
+            setindex{1}{cFld,cClass} = elements(1:maxN);
+        end
+    end
+    wraptext('Stimulus classes are now BALANCED by design, so that each stimulus class is evenly represented in the training set. If this is undesirable behavior, specify ''unbalance_classes'' in your methods.',80);
+end
+
+% balance triggers within classes
+if unbalance_triggers
+    wraptext('Please realize that triggercodes in a class are now UNBALANCED, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have undesirable effects on how you interpret your results.',80);
+else
+    % unpack setindex{1} and setindex{2} to get back the original index
     [setindex{1}, setindex{2}] = unpack_binned(setindex{1}, setindex{2}, oldindex{1}, oldindex{2});
+    wraptext('Triggercodes in a class are now BALANCED by design, such that triggercodes are evenly represented within each stimulus class. If triggercodes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_triggers'' in your methods.',80);
 end
 
 % generate folds, compute some stuff on them and save them temporarily before running MVPA
 settrialinfo = [];
+settrialindex = [];
 for cFld=1:nFolds
     % select trials from each dataset
     for cSet = 1:2
         % select trials belonging to this subset from original dataset
         trialindex = vertcat(setindex{cSet}{cFld,:});
         FT_EEG_2use = select_trials_from_FT_EEG(FT_EEG(cSet),trialindex);
+        % get some goodies
+        trialinfo{cSet} = FT_EEG_2use.trialinfo;
+        origtrialindex{cSet} = FT_EEG(cSet).origindex(trialindex)';
         % get relevant condSet for computation
         condSet_2use = get_this_condset(condSet,cSet);
         % compute induced?
@@ -457,14 +502,14 @@ for cFld=1:nFolds
             FT_EEG_2use = compute_spline_on_FT_EEG(FT_EEG_2use);
         end
         % get the goodies and get rid of overhead
-        trialinfo{cSet} = FT_EEG_2use.trialinfo;
         FT_EEG_2use = fix_dimord(FT_EEG_2use);
         alldata{cSet} = FT_EEG_2use.trial;
         labels{cSet} = make_group_labels(FT_EEG_2use.trialinfo, get_this_condset(condSet,cSet));
         clear FT_EEG_2use;
     end
-    % FYI
+    % FYI, store for every fold
     settrialinfo = [settrialinfo; trialinfo];
+    settrialindex = [settrialindex; origtrialindex];
     
     % temporarily save folded data
     [~,tmpf,~] = fileparts(tempname); % generates random filename
@@ -497,8 +542,10 @@ for cFld=1:nFolds
 
     % and BDM/FEM specific stuff
     if do_BDM
-        if save_labels
-            BDM_labelMatrixOverT(cFld,:,:,:,:) = BDM.LabelsOverTime; % fld x t1 x t2 x response_matrix OR fld x trial x t1 (assigned_labels when method = 'labelsonly')
+        if save_labels && ~labelsonly
+            BDM_labelMatrixOverT(cFld,:,:,:,:) = BDM.LabelsOverTime; % fld x t1 x t2 x response_matrix
+        elseif save_labels && labelsonly
+            BDM_labelMatrixOverT{cFld} = BDM.LabelsOverTime; % fld x trial x t1 (assigned_labels when method = 'labelsonly', nr of trials can be different for each fold)
         end
         if labelsonly
             BDM_ClassOverT(cFld) = NaN;
@@ -569,12 +616,14 @@ settings.frequency = 'none:_raw_eeg';
 settings.dimord = 'time_time';
 settings.measuremethod = measuremethod;
 settings.trialinfo = settrialinfo;
-settings.setindex = setindex;
+settings.trialindex = settrialindex;
 settings.condset = condSet;
 settings.csd_transform = do_csd;
 settings.bintrain = bintrain;
 settings.bintest = bintest;
-settings.unbalance = unbalance;
+settings.unbalance_triggers = unbalance_triggers;
+settings.unbalance_classes = unbalance_classes;
+settings.balance_classes_method = balance_classes_method;
 
 % count filenames from 001 onwards if computing under permutation or iteration
 if randomize_labels || iterate

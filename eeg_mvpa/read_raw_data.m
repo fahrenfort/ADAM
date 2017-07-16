@@ -121,25 +121,39 @@ end
 if ~strcmpi(channelset,'ALL_NOSELECTION')
     % custom function to select channel groups (can be expanded)
     [~, channels] = select_channels(FT_EEG.label,channelset);
-    disp(['We had ' num2str(numel(FT_EEG.label)) ' electrodes.']);
+    disp(['We had ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
     cfg = [];
     cfg.channel = channels;
     FT_EEG = ft_selectdata(cfg,FT_EEG);
-    disp(['Now we have ' num2str(numel(FT_EEG.label)) ' electrodes.']);
+    disp(['Now we have ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
+    if numel(FT_EEG.label) == 0
+        error('Your electrode/channel selection setting resulted in discarding all electrodes/channels. Try specifying cfg.channels = ''ALL_NOSELECTION'', or try adjusting select_channels.m for your EEG/MEG system.'); 
+    end
 end
 
 % retain eeglab chanlocs for topoplots later on
 if exist('chanlocs','var') % keep what came from eeglab
-    [~, ~, chanindex] = intersect(FT_EEG.label,{chanlocs(:).labels},'stable');
+    [~, ~, chanindex] = intersect(FT_EEG.label,{chanlocs(:).labels},'stable'); % takes FT_EEG.label as point of departure!
     chanlocs = chanlocs(chanindex);
 else % if not coming from eeglab, recreate eeglab chanlocs structure
     try
-        allchans = []; allpos = [];
         chanfields = FT_FIELDS(ismember(FT_FIELDS,{'elec','grad'}));
+        % remove field if not informative
+        index2remove = [];
+        for c = 1:numel(chanfields)
+            if sum(ismember(FT_EEG.label,FT_EEG.(chanfields{c}).label)) == 0
+                FT_EEG = rmfield(FT_EEG,chanfields{c});
+                index2remove = [index2remove c];
+            end
+        end
+        chanfields(index2remove) = [];
+        % append all fields that are informative
+        allchans = []; allpos = [];
         for c = 1:numel(chanfields)
             allchans = [allchans; FT_EEG.(chanfields{c}).label];
             allpos = [allpos; FT_EEG.(chanfields{c}).chanpos];
         end
+        % restrict only to fields that have data
         for c = 1:numel(FT_EEG.label)
             chanlocs(c).labels = FT_EEG.label{c};
             findlabel = ismember(allchans,FT_EEG.label{c});
@@ -147,9 +161,11 @@ else % if not coming from eeglab, recreate eeglab chanlocs structure
             chanlocs(c).Y = allpos(findlabel,2);
             chanlocs(c).Z = allpos(findlabel,3);
         end
-    catch
-        chanlocs = [];
     end
+    if ~exist('chanlocs','var')
+        disp('WARNING: could not find electrode or channel positions.');
+        chanlocs = [];
+    end     
 end
 
 % destroy temporal order of trials
@@ -157,4 +173,7 @@ if shuffle_trials
     shuffle_order = randperm(numel(FT_EEG.trialinfo));
     FT_EEG.trialinfo = FT_EEG.trialinfo(shuffle_order);
     FT_EEG.trial = FT_EEG.trial(shuffle_order,:,:);
+    FT_EEG.origindex = shuffle_order;
+else
+    FT_EEG.origindex = 1:numel(FT_EEG.trialinfo);
 end

@@ -186,15 +186,35 @@ for t=1:size(allTrainData,2)
     % also compute the pattern matrix from the weights by multiplying
     % the covariance matrix with the classifier weights (see Haufe et al, Neuroimage, 2014)
     % dataTrain should be defined as trial x electrode
+    
+    % suggested modification Joram 07/14/17
+    % in case of three (or more) categories, the weights used to only give
+    % the separability of the first two categories;
+    % below I loop over the possible combinations, and average the weights
+    % over these combinations; loop should also work for two categories,
+    % where it just goes over the loop once to get coeffs(1,2).Linear like
+    % in the previous code.
     if doBDM
         if ~verLessThan('matlab','8.3') % again, slightly different for more recent version of matlab
-            weights = shiftdim(coeffs(1,2).Linear); % force the correct dimension: electrode x 1
+            k=1;
+            for r=1:length(coeffs)-1
+                for c = r+1:length(coeffs)
+                    weights(:,k) = shiftdim(coeffs(r,c).Linear);
+                    k=k+1;
+                end
+            end
         else
-            weights = shiftdim(coeffs(1,2).linear);
+            k=1;
+            for r=1:length(coeffs)-1
+                for c = r+1:length(coeffs)
+                    weights(:,k) = shiftdim(coeffs(r,c).linear);
+                    k=k+1;
+                end
+            end
         end
-        BDM.WeightsOverTime(t,:) = weights; 
-        BDM.covPatternsOverTime(t,:) = cov(dataTrain)*weights;
-        BDM.corPatternsOverTime(t,:) = corr(dataTrain)*weights;
+        BDM.WeightsOverTime(t,:) = mean(weights,2); 
+        BDM.covPatternsOverTime(t,:) = cov(dataTrain)*mean(weights,2);
+        BDM.corPatternsOverTime(t,:) = corr(dataTrain)*mean(weights,2);
     end
     
 end
