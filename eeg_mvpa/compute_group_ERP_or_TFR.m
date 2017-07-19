@@ -36,7 +36,7 @@ if isempty(folder_name)
     end
     cfg.folder = folder_name;
 else
-    if ~exist('folder_name','dir') && ~iscell(folder_name) 
+    if ~exist(folder_name,'dir') && ~iscell(folder_name) 
         error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
     end
     group_FT_EEG  = subcompute_group(folder_name,cfg);
@@ -64,7 +64,7 @@ end
 cfg.plotFreq = plotFreq;
 subjectfiles = dir([folder_name filesep channelpool plotFreq filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
-name = strsplit(folder_name,filesep);
+name = regexp(folder_name,filesep,'split');
 name = name(1:end-1);
 subjectfiles = { subjectfiles(:).name };
 nSubj = numel(subjectfiles);
@@ -88,6 +88,10 @@ for cSubj = 1:nSubj
         FT_EEG = FT_EEG{2};
         disp(['Extracting ' datafield 's from testing data']);
     end
+    % little hack to prevent FT problems later on when the trigger is not
+    % centralized on 0 for time-locked analyses
+    offset = nearest(FT_EEG.time,0);
+    FT_EEG.time = FT_EEG.time - FT_EEG.time(offset);
     group_FT_EEG{cSubj} = FT_EEG;
     
 end

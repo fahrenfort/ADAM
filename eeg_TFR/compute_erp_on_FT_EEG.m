@@ -59,6 +59,11 @@ end
 FT_EEG.dimord = 'rpt_chan_time'; % should be 'rpt_chan_time' for consistency with conversion to raw format in ft_checkdata
 FT_EEG.(field) = finaltrial;
 FT_EEG.trialinfo = finaltrialinfo;
+if isfield(FT_EEG,'oldindex')
+    for c=1:numel(oldindex)
+        oldindex{c} = {FT_EEG.oldindex{oldindex{c}}};
+    end
+end
 FT_EEG.oldindex = oldindex;
 if isfield(FT_EEG,'sampleinfo');
     FT_EEG = rmfield(FT_EEG,'sampleinfo');
