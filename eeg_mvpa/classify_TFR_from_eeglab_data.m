@@ -387,18 +387,22 @@ end
 % extract some relevant trial info, training and testing data
 for cSet = 1:2
     thisCondSet = get_this_condset(condSet,cSet);
-    % compute ERPs (baseline corrected, resampled, and channels already selected)
-    FT_ERP{cSet} = compute_erp_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','bin');
-    % also compute TFR for entire set
-    FT_TFR{cSet} = compute_TFR_from_eeglab('',FT_EEG(cSet),'',resample_eeg,[orig_method ',only_group'],tf_baseline,erp_baseline,frequencies,thisCondSet{:});
     if unbalance_triggers
         trialinfo{cSet} = FT_EEG(cSet).trialinfo;
     else
         % bin/balance dataset (default action, this is not to achieve actual binnning, it just balances the dataset in case separate conditions still exist in each stimulus class)
-        FT_EEG_BINNED(cSet) = compute_bins_on_FT_EEG(FT_EEG(cSet),get_this_condset(condSet,cSet),'trial','original');
+        FT_EEG_BINNED(cSet) = compute_bins_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','original');
         trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo;
         oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;
+        % remove non-balanced trials for ERP calculation
+        tempbool = ones(size(FT_EEG(cSet).trialinfo)); tempbool([oldindex{cSet}{:}]) = 0; 
+        FT_EEG(cSet).trialinfo(logical(tempbool)) = NaN;
+        clear tempbool;
     end
+    % compute ERPs (baseline corrected, resampled, and channels already selected)
+    FT_ERP{cSet} = compute_erp_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','bin');
+    % also compute TFR for entire set
+    FT_TFR{cSet} = compute_TFR_from_eeglab('',FT_EEG(cSet),'',resample_eeg,[orig_method ',only_group'],tf_baseline,erp_baseline,frequencies,thisCondSet{:});
     % keep track of channels and time line
     channels{cSet} = FT_EEG(cSet).label;
     times{cSet} = FT_EEG(cSet).time;

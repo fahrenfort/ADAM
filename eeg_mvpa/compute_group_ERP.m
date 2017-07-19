@@ -1,6 +1,6 @@
 function [stats,cfg] = compute_group_ERP(folder_name,cfg)
 % function [stats,weights,cfg] = compute_group_ERP(folder_name,cfg)
-% electrode_sets = {{'PO7'},{'PO8'}}; 
+% cfg.electrode_sets = {{'PO7'},{'PO8'}}; 
 %   - a cell array with the electrodes to be extracted and averaged { 'Oz', 'Iz', 'POz' };
 %   - a cell array of cell arrays for which the electrodes will be extracted, averaged and substracted
 %     e.g. in definition {{'P8'},{'P7'}} substracted will be {{'P7'} - {'P8'}}
@@ -45,13 +45,14 @@ if isempty(folder_name)
     if ~exist('plot_order','var') || isempty(plot_order)
         dirz = dir(folder_name);
         dirz = {dirz([dirz(:).isdir]).name};
-        dirz = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
+        plot_order = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
+        cfg.plot_order = plot_order;
     else
         dirz = cfg.plot_order;
     end
     % loop through directories
     for cdirz = 1:numel(dirz)
-        if numel(cfg.plot_order) == 1 % getting from single folder
+        if numel(plot_order) == 1 % getting from single folder
             [stats, cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
         else % getting from multiple folders
             [stats(cdirz), cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
@@ -119,9 +120,9 @@ resample_eeg = 0;
 electrode_sets = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
 % unpack graphsettings
-v2struct(cfg);
 plottype = '2D';
 channelpool = 'ALL';
+v2struct(cfg);
 if size(condition_def,2) == 2 && size(electrode_sets,2) == 2
     average = true; % average conditions when computing average N2pcs (so comparing left and right, make sure you don't do contra - ipsi, but use same elec1 - elec2 subtraction for both hemispheres
 else
@@ -144,7 +145,7 @@ plotFreq = ''; % this is empty for now, but might be used to look at the ERPs ob
 cfg.plotFreq = plotFreq;
 subjectfiles = dir([folder_name filesep channelpool plotFreq filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
-name = strsplit(folder_name,filesep);
+name = regexp(folder_name,filesep,'split');
 name = name(1:end-1);
 subjectfiles = { subjectfiles(:).name };
 nSubj = numel(subjectfiles);
