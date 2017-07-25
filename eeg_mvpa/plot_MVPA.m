@@ -1,16 +1,16 @@
 function map = plot_MVPA(stats,cfg)
-% function plotMVPA(stats,cfg)
+% function plot_MVPA(stats,cfg)
 % draw classification accuracy based on stats produced by
 % compute_group_MVPA
 %
 % By J.J.Fahrenfort, VU, 2014, 2015, 2016, 2017
 if nargin<2
     disp('cannot plot graph without some settings, need at least 2 arguments:');
-    help plotMVPA;
+    help plot_MVPA;
     return
 end
 ndec = 2;
-plotsubject = false;
+plotsubjects = false;
 singleplot = false;
 plot_order = [];
 folder = '';
@@ -44,7 +44,7 @@ cfg.line_colors = line_colors;
 cfg.ndec = ndec; % number of decimals used when plotting accuracy tick labels
 
 % main routine, either plot only one or all conditions
-if ~plotsubject
+if ~plotsubjects
     title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
     title_text = title_text(1:find(title_text==filesep,1,'last')-1);
     fh = figure('name',title_text);
@@ -60,38 +60,40 @@ if ~plotsubject
     set(fh,'position',po);
     set(fh,'color','w');
 end
+if ~isempty(plot_order)
+    for cPlot = 1:numel(plot_order)
+        statindex = find(strncmpi(plot_order{cPlot},{stats(:).condname},numel(plot_order{cPlot})));
+        if isempty(statindex)
+            error('cannot find condition name specified in cfg.plot_order');
+        end
+        newstats(cPlot) = stats(statindex);
+    end
+    stats = newstats;
+end
 if numel(stats)>1
     % main loop for each condition
     for cStats=1:numel(stats)
-        if ~isempty(plot_order)
-            suborder = find(strcmpi(stats(cStats).condname,cfg.plot_order),1);
-            if isempty(suborder) 
-                error('cannot find condition name specified in cfg.plot_order');
-            end
-        else
-            suborder = cStats;
-        end
-        disp(['plot ' num2str(suborder)]);
+        disp(['plot ' cStats]);
         if singleplot
             hold on;
-            [map, H] = subplot_MVPA(stats(cStats),cfg,suborder);
-            legend_handle(suborder) = H.mainLine;
-            legend_text{suborder} = regexprep(stats(cStats).condname,'_',' ');
+            [map, H, cfg] = subplot_MVPA(stats(cStats),cfg,cStats);
+            legend_handle(cStats) = H.mainLine;
+            legend_text{cStats} = regexprep(stats(cStats).condname,'_',' ');
         else
-            subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),suborder);
-            map = subplot_MVPA(stats(cStats),cfg,suborder); % all in the first color
-            title(regexprep(stats(cStats).condname,'_',' '));
+            subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
+            [map, ~, cfg] = subplot_MVPA(stats(cStats),cfg,cStats); % all in the first color
+            title(regexprep(stats(cStats).condname,'_',' '),'FontSize',10);
         end
     end
     if singleplot
-        legend(legend_handle,legend_text);
+        legend(legend_handle,legend_text,'FontSize',10);
         legend boxoff;
     end
 else
     map = subplot_MVPA(stats,cfg);
 end
 
-function [map, H] = subplot_MVPA(stats,cfg,cGraph)
+function [map, H, cfg] = subplot_MVPA(stats,cfg,cGraph)
 map = [];
 if nargin<3
     cGraph = 1;
@@ -99,7 +101,7 @@ end
 
 % setting some graph defaults
 nconds = stats.settings.nconds;
-plotsubject = false;
+plotsubjects = false;
 trainlim = [];
 testlim = [];
 freqlim = [];
@@ -114,8 +116,8 @@ cent_acctick = 1/nconds;
 smoothfactor = 1;
 plotsigline_method = 'both';
 splinefreq = [];
-timetick = 250;
-acctick = .05;
+timetick = [];
+acctick = [];
 mpcompcor_method = 'uncorrected';
 plotsubjects = false;
 cluster_pval = .05;
@@ -150,20 +152,7 @@ if isempty(freqtick)
         freqtick = 10;
     end
 end
-if isempty(acctick)
-    acctick = .05;
-end
 eval(['acclim = acclim' plottype ';']);
-
-% if time tick is smaller than sample duration, increase time tick to sample duration
-if numel(times{1})>1 && timetick < (times{1}(2)-times{1}(1))*1000
-    timetick = ceil((times{1}(2)-times{1}(1))*1000);
-end
-
-% get x-axis and y-axis values
-[dims] = regexp(dimord, '_', 'split');
-ydim = dims{1};
-xdim = dims{2}; % unused
 
 % first a hack to change make sure that whatever is in time is expressed as ms
 if mean(times{1}<10)
@@ -173,8 +162,24 @@ if mean(times{1}<10)
     end
 end
 
+% determine time tick
+if isempty(timetick)
+    timetickoptions = [5,10,25,50,100,250,500,750,1000,1250,1500,2000,2500,5000];
+    timetick = timetickoptions(nearest(timetickoptions,(max(times{1}) - min(times{1}))/5));
+end
+
+% if time tick is smaller than sample duration, increase time tick to sample duration
+if numel(times{1})>1 && timetick < (times{1}(2)-times{1}(1))
+    timetick = ceil((times{1}(2)-times{1}(1)));
+end
+
+% get x-axis and y-axis values
+[dims] = regexp(dimord, '_', 'split');
+ydim = dims{1};
+xdim = dims{2}; % unused
+
 % set color-limits (z-axis) or y-limits
-if strcmpi(measuremethod,'hr-far') || strcmpi(plot_model,'FEM')
+if strcmpi(measuremethod,'hr-far') || strcmpi(plot_model,'FEM') || strcmpi(measuremethod,'\muV')
     chance = 0;
     cent_acctick = 0;
 else
@@ -182,17 +187,37 @@ else
 end
 if isempty(acclim)
     mx = max(max((ClassOverTime(:)-chance)));
+    mn = min(min((ClassOverTime(:)-chance)));
     if strcmpi(plottype,'2D') % this is a 2D plot
-        shift = mx/20;
-        acclim = [chance-shift mx+chance+shift];
+        shift = mx/5;
+        acclim = [chance+mn-shift mx+chance+shift];
     else
         acclim = [-mx mx] + chance;
     end
+    %acclim = [mn mx];
+end
+if cGraph > 1 && (firstacclim(1) < acclim(1) || firstacclim(2) > acclim(2))
+    % keep limits the same between graphs
+    acclim = firstacclim;
 end
 if numel(acclim) == 1
     acclim = [-acclim acclim];
 end
 acclim = sort(acclim);
+
+% determine acctick
+if isempty(acctick) || isempty(acctick)
+    if plotsubjects
+        mx = max(max((ClassOverTime(:))));
+        mn = min(min((ClassOverTime(:))));
+        acctick = max(abs([mx mn]));
+    else
+        acctick = round(abs(diff(acclim))/10);
+    end
+    if acctick == 0
+        acctick = .5;
+    end
+end
 
 % determine axes
 if strcmpi(reduce_dims,'avtrain') 
@@ -295,7 +320,7 @@ if strcmpi(plottype,'2D')
     % plot significant time points
     if ~isempty(pVals)
         sigdata = data;
-        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~plotsubject && ~strcmpi(mpcompcor_method,'none')
+        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~plotsubjects && ~strcmpi(mpcompcor_method,'none')
             if ~singleplot elevate = 1; else elevate = cGraph; end
             if inverty
                 sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/100)*elevate;
@@ -322,7 +347,7 @@ if strcmpi(plottype,'2D')
             wraptext('Due to a bug in the way Matlab exports figures (the ''endcaps'' property in OpenGL is set to''on'' by default), the ''significance lines'' near the time line are not correctly plotted when saving as .eps or .pdf. The workaround is to open these plots in Illustrator, manually select these lines and select ''butt cap'' for these lines (under the ''stroke'' property).');
         end
         if strcmpi(one_two_tailed,'one') one_two_tailed = '1'; else  one_two_tailed = '2'; end
-        if ~plotsubject
+        if ~plotsubjects
             if strcmpi(mpcompcor_method,'uncorrected')
                 h_legend = legend(H.mainLine,[' p < ' num2str(indiv_pval) ' (uncorrected, ' one_two_tailed '-sided)']); % ,'Location','SouthEast'
             elseif strcmpi(mpcompcor_method,'cluster_based')
@@ -335,17 +360,18 @@ if strcmpi(plottype,'2D')
         %set(h_legend,'FontSize',14);
     end
     ylim(acclim);
+    xlim([1 numel(data)]);
     % little hack
     if strcmpi(plot_model,'FEM')
         measuremethod = 'CTF slope';
     end
     ylabel(measuremethod);
     set(gca,'YTick',yaxis);
+    Ylabel = regexp(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ','split');
     if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
-        Ylabel = strsplit(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ');
         Ylabel((yaxis == chance)) = {'chance'}; % say "chance".
-        set(gca,'YTickLabel',Ylabel);
     end
+    set(gca,'YTickLabel',Ylabel);
     hold off;
 else
     % plot significant time points
@@ -372,11 +398,11 @@ else
     imagesc(data);
     caxis(acclim);
     set(gca,'YDir','normal'); % set the y-axis right
-    if ~plotsubject
+    if ~plotsubjects
         hcb=colorbar;
     end
     % set ticks on color bar
-    if ~plotsubject
+    if ~plotsubjects
         set(hcb,'YTick',zaxis);
         if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
             Ylabel = strsplit(deblank(sprintf(['%0.' num2str(ndec) 'f '],zaxis)),' ');
@@ -399,7 +425,7 @@ end
 set(gca,'XTick',indx);
 roundto = xticks;
 set(gca,'XTickLabel',num2cell(round(xaxis(indx)/roundto)*roundto));
-if plotsubject
+if plotsubjects
     set(gca,'FontSize',10);
 else
     set(gca,'FontSize',16);
@@ -409,10 +435,12 @@ axis square;
 if inverty
     set(gca,'YDir','reverse');
 end
-if (isempty(acclim2D) && strcmpi(plottype,'2D')) || (isempty(acclim3D) && strcmpi(plottype,'3D')) 
+if (isempty(acclim2D) && strcmpi(plottype,'2D')) || (isempty(acclim3D) && strcmpi(plottype,'3D'))
     sameaxes('xyzc',gcf());
 end
 % invent handle if it does not exist
 if ~exist('H')
     H = [];
 end
+
+cfg.firstacclim = acclim;

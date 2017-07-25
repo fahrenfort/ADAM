@@ -404,9 +404,9 @@ if nSubj > 1
     if strcmpi(mpcompcor_method,'fdr')
         % FDR CORRECTION
         if strcmpi(one_two_tailed,'two')
-            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','both');
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),'both');
         else
-            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','right');
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),'right');
         end
         thresh = fdr(squeeze(ClassPvals),pval(2));
         ClassPvals(ClassPvals>thresh) = 1;
@@ -416,9 +416,9 @@ if nSubj > 1
     elseif strcmpi(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
         if strcmpi(one_two_tailed,'two')
-            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','both');
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),'both');
         else
-            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'tail','right');
+            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),'right');
         end
         ClassPvals(~mask) = 1;
     else
@@ -433,6 +433,7 @@ end
 stats.ClassOverTime = ClassAverage;
 stats.StdError = ClassStdErr;
 stats.pVals = ClassPvals;
+stats.mpcompcor_method = mpcompcor_method;
 stats.indivClassOverTime = ClassOverTimeAll{1};
 stats.settings = settings;
 stats.condname = condname;

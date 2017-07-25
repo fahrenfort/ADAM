@@ -1,28 +1,59 @@
 function [stats,cfg] = compute_group_ERP(folder_name,cfg)
-% function [stats,weights,cfg] = compute_group_ERP(folder_name,cfg)
-% cfg.electrode_sets = {{'PO7'},{'PO8'}}; 
-%   - a cell array with the electrodes to be extracted and averaged { 'Oz', 'Iz', 'POz' };
-%   - a cell array of cell arrays for which the electrodes will be extracted, averaged and substracted
-%     e.g. in definition {{'P8'},{'P7'}} substracted will be {{'P7'} - {'P8'}}
-%     in definition {{'PO7'},{'PO8'};{'PO8'},{'PO7'}}; will subtract PO8
-%     from PO7 in the 1st condition and PO7 from PO8 in the 2nd condition
-% condition_def = [1,2; 3,4 ];
-%   If only one column will extract those conditions, if
-%   cfg.avg_conditions = true it will also average those conditions
-%   (default: false)
-%   If two columns, conditions will be substracted using column1 - column2
-%   If condition_def is not specified it will substract condition 2 from
-%   condition 1 (default).
-%   e.g. condition_def = [1;2;3;4;5]; will extract condition 1:5
-%   if cfg.avg_conditions = true it will average them to one time
-%   series
-%   if condition_def = [1,2;3,4] it will subtract 2 from 1 and 4 from 3
-%   to create only two time series
-% cfg specifies the time interval, also does statistics against 0
+% function [stats,cfg] = compute_group_ERP(folder_name,cfg)
 % Computes group ERPs and extracts ERP averages
-% Use this as input for plot function plot_MVPA
 %
-% By J.J.Fahrenfort, VU, 2016
+% Common use cases:
+% 	(1) get ERP difference between conditions + stats against zero for one or more results folders
+% 	(2) get raw ERPs for one or more conditions from one or more results folders and average them
+%   (3) get raw ERPs for more conditions from a given results folder without averaging
+% 	(4) get N2pc/CDA electrode subtractions for two conditions, average
+%       them, and do stats against zero (for each results folder) 
+% 
+% Use case (1):
+% specify electrodes to be extracted and averaged:
+% cfg.electrode_def = { 'Oz', 'Iz', 'POz' };
+%   - a cell array with the electrodes which will be averaged 
+% cfg.elecrode_method = 'average' (default)
+%   - averages signal over electrodes
+% cfg.condition_def = [1,2];
+% cfg.condition_methods = 'subtract' (default)
+%   - condition_def = [1,2] will subtract 2 from 1 and test them against
+%     each other -> can do this for multiple results folders at once
+%
+% Use case (2):
+% cfg.electrode_def = { 'Oz' };
+%   - a cell array with the electrodes which will be averaged (can also be
+%     a single electrode)
+% cfg.condition_def = [1,2,3,4];
+% cfg.condition_methods = 'average'
+%   - will output the average of all conditions and test against 0 
+%   -> can do this for multiple results folders at once
+%
+% Use case (3):
+% cfg.electrode_def = { 'Oz' };
+%   - a cell array with the electrodes which will be averaged (can also be
+%     a single electrode)
+% cfg.condition_def = [1,2,3,4];
+% cfg.condition_methods = 'keep'
+%   - will output those conditions
+%   -> can only do this for a single results folders
+%
+% Use case (4):
+% cfg.electrode_def = {{'PO7'},{'PO8'};{'PO8'},{'PO7'}};
+%   - a cell array with cell arrays of electrodes to be subtracted
+% cfg.electrode_method = 'subtract'
+%   - specifies subtraction method, such that for condition 1 PO8 is
+%   subtracted from P07, while for condition 2 P07 is subtracted from PO8
+% cfg.condition_def = [1,2];
+% cfg.condition_methods = 'average'
+%   - will output a stats structure for the average tested against 0
+%   -> can do this for multiple results folders at once
+%
+% cfg can also specify the time interval, and the correction method and threshold for statistics
+%
+% Use stats output from this function as input for plot function plot_MVPA
+%
+% By J.J.Fahrenfort, VU, 2016, 2017
 
 % backwards compatibility
 v2struct(cfg);
@@ -47,15 +78,13 @@ if isempty(folder_name)
         dirz = {dirz([dirz(:).isdir]).name};
         plot_order = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
         cfg.plot_order = plot_order;
-    else
-        dirz = cfg.plot_order;
     end
-    % loop through directories
-    for cdirz = 1:numel(dirz)
+    % loop through directories (results folders)
+    for cdirz = 1:numel(plot_order)
         if numel(plot_order) == 1 % getting from single folder
-            [stats, cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
+            [stats, cfg] = subcompute_group_ERP([folder_name filesep plot_order{cdirz}],cfg);
         else % getting from multiple folders
-            [stats(cdirz), cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
+            [stats(cdirz), cfg] = subcompute_group_ERP([folder_name filesep plot_order{cdirz}],cfg);
         end
     end
     cfg.folder = folder_name;
@@ -65,41 +94,6 @@ else
     end
     [stats, cfg] = subcompute_group_ERP(folder_name,cfg);
 end
-
-% % Main routine, is a folder name specified? If not, pop up selection dialog
-% if isempty(folder_name)
-%     if ~isfield(cfg,'startdir')
-%         cfg.startdir = '';
-%         disp('NOTE: it is easier to run this function if you indicate a starting directory in cfg.startdir');
-%     end
-%     folder_name = uigetdir(cfg.startdir,'select directory to plot');
-%     if ~ischar(folder_name)
-%         stats = [];
-%         weights = [];
-%         return
-%     end
-%     if ~isfield(cfg,'plotorder') || isempty(cfg.plotorder)
-%         dirz = dir(folder_name);
-%         dirz = {dirz([dirz(:).isdir]).name};
-%         dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
-%         cfg.plotorder = dirz;
-%     else
-%         dirz = cfg.plotorder;
-%     end
-%     for cdirz = 1:numel(dirz)
-%         if numel(cfg.plotorder) == 1 % getting from single folder
-%             [stats, cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
-%         else % getting from multiple folders
-%             [stats(cdirz), cfg] = subcompute_group_ERP([folder_name filesep dirz{cdirz}],cfg);
-%         end
-%     end
-% else
-%     if ~exist('folder_name','dir')
-%         error([folder_name ' should refer to a full and existing folder path']);
-%     end
-%     [stats, cfg] = subcompute_group_ERP(folder_name,cfg);
-% end
-% 
 % fill cfg.plot_order in case not given by user and from single folder
 if numel(cfg.plot_order) == 1
     cfg.plot_order = {stats(:).condname};
@@ -117,17 +111,14 @@ reduce_dims = [];
 mpcompcor_method = 'uncorrected';
 timelim = [];
 resample_eeg = 0;
-electrode_sets = [];
+electrode_def = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
+electrode_method = 'average';
+condition_method = 'subtract';
 % unpack graphsettings
 plottype = '2D';
 channelpool = 'ALL';
 v2struct(cfg);
-if size(condition_def,2) == 2 && size(electrode_sets,2) == 2
-    average = true; % average conditions when computing average N2pcs (so comparing left and right, make sure you don't do contra - ipsi, but use same elec1 - elec2 subtraction for both hemispheres
-else
-    average = false;
-end
 
 % pack graphsettings with defaults
 nameOfStruct2Update = 'cfg';
@@ -145,12 +136,17 @@ plotFreq = ''; % this is empty for now, but might be used to look at the ERPs ob
 cfg.plotFreq = plotFreq;
 subjectfiles = dir([folder_name filesep channelpool plotFreq filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
-name = regexp(folder_name,filesep,'split');
-name = name(1:end-1);
 subjectfiles = { subjectfiles(:).name };
 nSubj = numel(subjectfiles);
 if nSubj == 0
     error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq filesep]);
+end
+
+% prepare figure in case individual subjects are plotted
+if plotsubjects;
+    fh = figure('name',['individual subjects, condition: ' condname]);
+    set(fh, 'Position', get(0,'Screensize'));
+    set(fh,'color','w');
 end
 
 % do the loop, restrict time and frequency if applicable
@@ -160,7 +156,7 @@ for cSubj = 1:nSubj
     if ~isempty(whos(matObj,'settings'))
         settings = matObj.settings;
     else % BW compatibility, will become obsolete over time
-        error('Cannot find settings struct which the contains the ERP info');
+        error('Cannot find settings struct');
     end
     % OLD for backwards compatible
     if isfield(settings,'ft_erpstruct')
@@ -175,31 +171,69 @@ for cSubj = 1:nSubj
     
     if iscell(FT_ERP)
         FT_ERP = FT_ERP{2};
+        if isfield(FT_ERP,'origindex')
+            FT_ERP = rmfield(FT_ERP,'origindex');
+        end
+        if isfield(FT_ERP,'oldindex')
+            FT_ERP = rmfield(FT_ERP,'oldindex');
+        end
         disp('Extracting ERPs from testing data');
     end
     
-    % compute electrodes and do electrode substractions
+    % compute electrodes and do electrode subtractions
     FT_ERP = restrict_FT_ERP(FT_ERP,cfg);
     settings.times = {FT_ERP.time, FT_ERP.time};
     
+    % possible use cases:
+    % 	(1) get ERP difference between conditions + stats against zero for one or more results folders
+    % 	(2) get raw ERPs for one or more conditions from one or more results folders and average them
+    %   (3) get raw ERPs for more conditions from a given results folder without averaging
+    % 	(4) get N2pc/CDA electrode subtractions for two conditions, average
+    %       them, and do stats against zero (for each results folder)
+        
+    % strmpi(electrode_method,'average')
+    % strmpi(condition_method,'subtract')
+
     % now do condition subtraction
-    if size(condition_def,2) == 2 % subtracting
-        for cCond=1:size(condition_def,1)
-            if average == true
-                trial(cCond,:,:) = squeeze(FT_ERP.trial(condition_def(cCond,1),:,:) - FT_ERP.trial(condition_def(cCond,2),:,:))/2;
-            else
-                trial(cCond,:,:) = squeeze(FT_ERP.trial(condition_def(cCond,1),:,:) - FT_ERP.trial(condition_def(cCond,2),:,:));
-            end
+    clear trial;
+    if strcmpi(condition_method,'subtract')
+        if ~(size(condition_def,2)==2)
+            error('Condition_def does not contain the correct number of conditions (2) to be able to subtract.');
         end
-    else % not subtracting conditions, plain extraction
-        if average % average over all conditions
-            trial = mean(FT_ERP.trial(condition_def,:,:),1);
-        else % per condition
-            trial = squeeze(FT_ERP.trial(condition_def,:,:));
-        end
+        trial = FT_ERP.trial(FT_ERP.trialinfo==condition_def(1),:,:) - FT_ERP.trial(FT_ERP.trialinfo==condition_def(2),:,:);
+    elseif strcmpi(condition_method,'average')
+        trial = mean(FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:),1);
+    else  % not subtracting conditions, plain extraction
+        trial = FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:);
     end
     for cCond=1:size(trial,1)
+        if  all(all(all(trial<10^-3)))
+            trial = trial*10^6; % little hack to change V to muV (if applicable)
+        end
         ClassTotal{cCond}(cSubj,:) = squeeze(trial(cCond,:));
+    end
+    
+    % plot individual subjects
+    if plotsubjects
+        subplot(numSubplots(nSubj,1),numSubplots(nSubj,2),cSubj);
+        onestat.ClassOverTime = squeeze(trial);
+        onestat.StdError = [];
+        onestat.pVals = zeros(size(squeeze(trial)));
+        onestat.indivClassOverTime = [];
+        onestat.settings = settings;
+        onestat.settings.measuremethod = '\muV';
+        onestat.condname = condname;
+        onestat.channelpool = channelpool;
+        tmpcfg = cfg;
+        tmpcfg.plotsubject = true;
+        tmpcfg.acclim2D = [];
+        tmpcfg.acclim3D = [];
+        tmpcfg.acctick = [];
+        plot_MVPA(onestat,tmpcfg);
+        subjname = subjectfiles{cSubj};
+        underscores = strfind(subjname,'_');
+        subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
+        ntitle(subjname,'fontsize',10,'fontweight','bold');
     end
 end
 
@@ -212,22 +246,17 @@ else
 end
 
 % statistical testing
-for cCond = 1:size(condition_def,1) % loop over conditions
-    
-    % determine cond_name when getting single folder (condition_def is given by user)
-    if size(condition_def,2) == 2 && numel(plotorder) == 1 % subtracting
-        condname = [ num2str(condition_def(cCond,1)) '-' num2str(condition_def(cCond,2))];
-        if average
-            channeldef = ['((' FT_ERP.channelpool{condition_def(cCond,1)} ') - (' FT_ERP.channelpool{condition_def(cCond,2)} ')) / 2'];
-        else
-            channeldef = ['(' FT_ERP.channelpool{condition_def(cCond,1)} ') - (' FT_ERP.channelpool{condition_def(cCond,2)} ')'];
-        end
-    %elseif size(condition_def,2) == 1 && numel(plotorder) == 1 % not subtracting
-    %    condname = num2str(condition_def(cCond));
-    %    channeldef = FT_ERP.channelpool{condition_def(cCond)};
-    else
-        channeldef = FT_ERP.channelpool; %FT_ERP.channelpool{condition_def(cCond)};
-        condname = ['condition ' num2str(cCond)];
+for cCond = 1:numel(ClassTotal) % loop over stats
+
+    % determine condname
+    if strcmpi(electrode_method,'subtract')
+        condname =  [condname ' channel subtraction'];
+    elseif strcmpi(condition_method,'subtract')
+        condname =  [condname ' condition subtraction'];
+    elseif strcmpi(condition_method,'average')
+        condname = [condname ' condition averaging'];
+    elseif strcmpi(condition_method,'keep')
+        condname = [condname ' cond' num2str(condition_def(cCond))];
     end
     
     % get some stats
@@ -245,7 +274,7 @@ for cCond = 1:size(condition_def,1) % loop over conditions
         % compute Pstruct
     elseif strcmp(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
-        [~,ClassPvals] = ttest(ClassTotal{cCond},chance,'tail',tail);
+        [~,ClassPvals] = ttest(ClassTotal{cCond},chance,pval(1),tail);
     else
         % NO TESTING, PLOT ALL
         ClassPvals = zeros(1,size(ClassTotal{cCond},2));
@@ -256,17 +285,20 @@ for cCond = 1:size(condition_def,1) % loop over conditions
     stats(cCond).ClassOverTime = ClassAverage;
     stats(cCond).StdError = ClassStdErr;
     stats(cCond).pVals = ClassPvals;
+    stats(cCond).mpcompcor_method = mpcompcor_method;
     stats(cCond).settings = settings;
     stats(cCond).condname = condname;
-    stats(cCond).channelpool = channeldef;
+    stats(cCond).channelpool = FT_ERP.channelpool;
     if exist('pStruct','var')
         stats(cCond).pStruct = pStruct;
     end
 end
-cfg = v2struct(name,nameOfStruct2Update);
+
+%cfg = v2struct(name,nameOfStruct2Update);
 
 function [FT_EEG] = restrict_FT_ERP(FT_EEG,cfg)
 % resample / restrict the ERP
+electrode_method = 'average';
 v2struct(cfg);
 % resample?
 if resample_eeg
@@ -282,30 +314,47 @@ if ~isempty(timelim)
 end
 clear channelpool;
 % subtracting electrode sets, subtracts electrode 2 from electrode 1 for each condition
-if iscell(electrode_sets{1}) 
+if strcmpi(electrode_method,'subtract') %iscell(electrode_sets{1}) 
     if size(electrode_sets,2)~=2
         error('to subtract electrode sets, you should define two columns in cfg.electrode_sets');
     end
-    conds = unique(cfg.condition_def);
-    if size(electrode_sets,1) ~= numel(conds)
-        electrode_sets = repmat(electrode_sets,[numel(conds),1]);
+    if size(electrode_sets,1) ~= numel(condition_def)
+        electrode_sets = repmat(electrode_sets,[numel(condition_def),1]);
     end
     for cCond = 1:size(electrode_sets,1)
         for cDif=1:size(electrode_sets,2)
             cfg = [];
             cfg.channel = electrode_sets{cCond,cDif};
             cfg.avgoverchan = 'yes';
-            FT_TEMP{cDif} = ft_selectdata(cfg,FT_EEG);
+            warning off; % suppress stupid FT warnings
+            FT_TEMP(cDif) = ft_selectdata(cfg,FT_EEG);
+            warning on;
         end
-        trial(cCond,:,:) = FT_TEMP{1}.trial(cCond,:,:) - FT_TEMP{2}.trial(cCond,:,:);
-        channelpool{cCond} = [electrode_sets{cCond,1}{:} '-' electrode_sets{cCond,2}{:}];
+        trial(cCond,:,:) = FT_TEMP(1).trial(FT_TEMP(1).trialinfo==condition_def(cCond),:,:) - FT_TEMP(2).trial(FT_TEMP(2).trialinfo==condition_def(cCond),:,:);
+        channelpool{cCond} = [convert_cellarray2csv(electrode_sets{cCond,1}) '-' convert_cellarray2csv(electrode_sets{cCond,2})];
     end
     FT_EEG.trial = trial;
     FT_EEG.channelpool = channelpool;
-else % plain extraction
+elseif strcmpi(electrode_method,'average') % extract and average
+    if ~iscell(electrode_sets)
+        electrode_sets = {electrode_sets};
+    end
+    cfg = [];
     cfg.channel = electrode_sets;
+    cfg.avgoverchan = 'yes';
     FT_EEG = ft_selectdata(cfg,FT_EEG);
-    FT_EEG.channelpool = electrode_sets;
+    FT_EEG.channelpool = convert_cellarray2csv(electrode_sets);
+else
+    error('Specify cfg.electrode_method as ''average''  or ''subtract''');
+end
+if any(size(FT_EEG.trial)==0)
+    dims = regexp(FT_EEG.dimord,'_','split');
+    disp('ERROR: There are no dimensions left in these fields, change selection parameters for');
+    disp(dims(logical(size(FT_EEG.trial)==0)));
+    error('stopping');
 end
 
-    
+function electrode_sets = convert_cellarray2csv(electrode_sets)
+    tmpchans = [electrode_sets',[repmat({','},numel(electrode_sets)-1,1);{[]}]]';
+    electrode_sets = [tmpchans{:}];
+
