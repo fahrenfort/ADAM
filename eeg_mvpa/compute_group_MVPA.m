@@ -52,6 +52,8 @@ if nargin<3
     mask = [];
 end
 
+plot_order = {};
+
 % backwards compatibility
 plot_dim = 'time_time'; % default, 'time_time' or 'freq_time'
 v2struct(cfg);
@@ -90,18 +92,40 @@ if isempty(folder_name)
     end
     folder_name = uigetdir(cfg.startdir,'select directory to plot');
     if ~ischar(folder_name)
-        return
+        error('no folder was selected');
     end
-    if ~exist('plot_order','var') || isempty(plot_order)
+%     if ~exist('plot_order','var') || isempty(plot_order)
+%         dirz = dir(folder_name);
+%         dirz = {dirz([dirz(:).isdir]).name};
+%         dirz = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
+%     else
+%         dirz = cfg.plot_order;
+%     end
+%     % loop through directories
+%     for cdirz = 1:numel(dirz)
+%         [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name filesep dirz{cdirz}],cfg,mask);
+%     end
+    if isempty(plot_order)
         dirz = dir(folder_name);
         dirz = {dirz([dirz(:).isdir]).name};
-        dirz = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
-    else
-        dirz = cfg.plot_order;
+        plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
+        % determine whether to drill down or not
+        ndirs = drill2data(folder_name);
+        if ndirs == 1
+            [folder_name, plot_order] = fileparts(folder_name);
+            plot_order = {plot_order};            
+        elseif ndirs > 2
+            error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
+        end
+        cfg.plot_order = plot_order;
     end
-    % loop through directories
-    for cdirz = 1:numel(dirz)
-        [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name filesep dirz{cdirz}],cfg,mask);
+    % loop through directories (results folders)
+    for cdirz = 1:numel(plot_order)
+        if numel(plot_order) == 1 % getting from single folder
+            [stats, cfg] = subcompute_group_MVPA([folder_name filesep plot_order{cdirz}], cfg, mask);
+        else % getting from multiple folders
+            [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name filesep plot_order{cdirz}], cfg, mask);
+        end
     end
     cfg.folder = folder_name;
 else
@@ -378,6 +402,7 @@ for cSubj = 1:nSubj
         onestat.channelpool = channelpool;
         tmpcfg = cfg;
         tmpcfg.plotsubject = true;
+        tmpcfg.plot_order = {condname};
         plot_MVPA(onestat,tmpcfg);
         subjname = subjectfiles{cSubj};
         underscores = strfind(subjname,'_');
@@ -544,4 +569,25 @@ end
 settings.times = times;
 if strcmpi(dimord,'freq_time')
     settings.freqs = freqs;
+end
+
+function ndirs = drill2data(folder_name)
+% drills down until it finds data, returns the number of directories it had
+% to drill
+notfound = true;
+ndirs = 0;
+while notfound
+    dirz = dir(folder_name);
+    dirz = {dirz([dirz(:).isdir]).name};
+    nextlevel = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    if isempty(nextlevel)
+        error('cannot find data, check path settings');
+    end
+    folder_name = fullfile(folder_name,nextlevel{1});
+    ndirs = ndirs + 1;
+    containsmat = ~isempty(dir(fullfile(folder_name, '*.mat')));
+    containsfreq = ~isempty(dir(fullfile(folder_name, 'freq*'))) || ~isempty(dir(fullfile(folder_name, 'allfreqs')));
+    if containsmat || containsfreq
+        notfound = false;
+    end
 end

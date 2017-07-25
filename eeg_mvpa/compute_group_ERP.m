@@ -55,6 +55,8 @@ function [stats,cfg] = compute_group_ERP(folder_name,cfg)
 %
 % By J.J.Fahrenfort, VU, 2016, 2017
 
+plot_order = {};
+
 % backwards compatibility
 v2struct(cfg);
 if exist('plotorder','var')
@@ -71,12 +73,20 @@ if isempty(folder_name)
     end
     folder_name = uigetdir(cfg.startdir,'select directory to plot');
     if ~ischar(folder_name)
-        return
+        error('no folder was selected');
     end
-    if ~exist('plot_order','var') || isempty(plot_order)
+    if isempty(plot_order)
         dirz = dir(folder_name);
         dirz = {dirz([dirz(:).isdir]).name};
-        plot_order = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
+        plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
+        % determine whether to drill down or not
+        ndirs = drill2data(folder_name);
+        if ndirs == 1
+            [folder_name, plot_order] = fileparts(folder_name);
+            plot_order = {plot_order};            
+        elseif ndirs > 2
+            error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
+        end
         cfg.plot_order = plot_order;
     end
     % loop through directories (results folders)
@@ -344,6 +354,12 @@ elseif strcmpi(electrode_method,'average') % extract and average
     cfg.avgoverchan = 'yes';
     FT_EEG = ft_selectdata(cfg,FT_EEG);
     FT_EEG.channelpool = convert_cellarray2csv(electrode_sets);
+% elseif strcmpi(electrode_method,'keep')
+%     cfg = [];
+%     cfg.channel = electrode_sets;
+%     cfg.avgoverchan = 'no';
+%     FT_EEG = ft_selectdata(cfg,FT_EEG);
+%     FT_EEG.channelpool = convert_cellarray2csv(electrode_sets);
 else
     error('Specify cfg.electrode_method as ''average''  or ''subtract''');
 end
@@ -357,4 +373,25 @@ end
 function electrode_sets = convert_cellarray2csv(electrode_sets)
     tmpchans = [electrode_sets',[repmat({','},numel(electrode_sets)-1,1);{[]}]]';
     electrode_sets = [tmpchans{:}];
+    
+function ndirs = drill2data(folder_name)
+% drills down until it finds data, returns the number of directories it had
+% to drill
+notfound = true;
+ndirs = 0;
+while notfound
+    dirz = dir(folder_name);
+    dirz = {dirz([dirz(:).isdir]).name};
+    nextlevel = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    if isempty(nextlevel)
+        error('cannot find data, check path settings');
+    end
+    folder_name = fullfile(folder_name,nextlevel{1});
+    ndirs = ndirs + 1;
+    containsmat = ~isempty(dir(fullfile(folder_name, '*.mat')));
+    containsfreq = ~isempty(dir(fullfile(folder_name, 'freq*'))) || ~isempty(dir(fullfile(folder_name, 'allfreqs')));
+    if containsmat || containsfreq
+        notfound = false;
+    end
+end
 
