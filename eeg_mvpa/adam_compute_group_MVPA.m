@@ -1,16 +1,16 @@
-function [stats,cfg] = compute_group_MVPA(folder_name,cfg,mask)
-% function [stats,cfg] = compute_group_MVPA(folder_name,cfg,mask)
+function [stats,cfg] = adam_compute_group_MVPA(folder_name,cfg,mask)
+% function [stats,cfg] = adam_compute_group_MVPA(folder_name,cfg,mask)
 %
 % Extracts group classification data, classifier weights, forward model
 % parameters etc. Also does basic stats on the extracted conditions.
-% Use this as input for plot functions such as plot_MVPA,
-% plot_MVPA_weights, plot_CTF and plot_FEM_weights.
+% Use this as input for plot functions such as adam_plot_MVPA,
+% adam_plot_MVPA_weights, plot_CTF and plot_FEM_weights.
 % folder_name is the folder that contains the condition data.
 % If folder_name is left empty, a selection dialog will pop up for you to
 % indicate the root folder in which the folders that contain the condition
 % folders are located (use this if you want to compute more than one
 % condition at once). The conditions will be plotted in subplots by
-% plot_MVPA and plot_CTF cfg is a struct that contains some input
+% adam_plot_MVPA and plot_CTF cfg is a struct that contains some input
 % settings for compute_group_MVPA and ensueing plot functions:
 % cfg.one_two_tailed = 'two' (can also be 'one')
 % cfg.indiv_pval = .05;
@@ -94,23 +94,13 @@ if isempty(folder_name)
     if ~ischar(folder_name)
         error('no folder was selected');
     end
-%     if ~exist('plot_order','var') || isempty(plot_order)
-%         dirz = dir(folder_name);
-%         dirz = {dirz([dirz(:).isdir]).name};
-%         dirz = dirz(cellfun(@isempty,strfind(dirz,'.'))); 
-%     else
-%         dirz = cfg.plot_order;
-%     end
-%     % loop through directories
-%     for cdirz = 1:numel(dirz)
-%         [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name filesep dirz{cdirz}],cfg,mask);
-%     end
+
+    % where am I?
+    ndirs = drill2data(folder_name);
     if isempty(plot_order)
         dirz = dir(folder_name);
         dirz = {dirz([dirz(:).isdir]).name};
         plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
-        % determine whether to drill down or not
-        ndirs = drill2data(folder_name);
         if ndirs == 1
             [folder_name, plot_order] = fileparts(folder_name);
             plot_order = {plot_order};            
@@ -118,6 +108,8 @@ if isempty(folder_name)
             error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
         end
         cfg.plot_order = plot_order;
+    elseif ndirs ~= 2
+        error('You seem to be selecting a directory that is either too high or too low in the hiearchy given that you have specified cfg.plot_order. Either remove cfg.plot_order or select the appropriate level in the hierarchy.');
     end
     % loop through directories (results folders)
     for cdirz = 1:numel(plot_order)
@@ -218,7 +210,7 @@ end
 % see if data exists
 nSubj = numel(subjectfiles);
 if nSubj == 0
-    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq]);
+    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{:}]);
 end
 
 % prepare figure in case individual subjects are plotted
@@ -401,9 +393,10 @@ for cSubj = 1:nSubj
         onestat.condname = condname;
         onestat.channelpool = channelpool;
         tmpcfg = cfg;
-        tmpcfg.plotsubject = true;
+        tmpcfg.plot_model = plot_model;
+        tmpcfg.plotsubjects = true;
         tmpcfg.plot_order = {condname};
-        plot_MVPA(onestat,tmpcfg);
+        adam_plot_MVPA(onestat,tmpcfg);
         subjname = subjectfiles{cSubj};
         underscores = strfind(subjname,'_');
         subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
@@ -494,6 +487,9 @@ else
     end
 end
 stats.weights = weights;
+if isfield(cfg,'plotsubjects')
+    cfg = rmfield(cfg,'plotsubjects');
+end
 stats.cfg = cfg;
 disp('done!');
 
@@ -581,7 +577,7 @@ while notfound
     dirz = {dirz([dirz(:).isdir]).name};
     nextlevel = dirz(cellfun(@isempty,strfind(dirz,'.')));
     if isempty(nextlevel)
-        error('cannot find data, check path settings');
+        error('Cannot find data, select different location in the directory hierarchy and/or check path settings.');
     end
     folder_name = fullfile(folder_name,nextlevel{1});
     ndirs = ndirs + 1;

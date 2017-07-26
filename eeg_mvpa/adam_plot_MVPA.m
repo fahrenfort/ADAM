@@ -9,7 +9,11 @@ if nargin<2
     help plot_MVPA;
     return
 end
+
+% settting some defaults
+plot_model = 'BDM';
 ndec = 2;
+inverty = [];
 plotsubjects = false;
 singleplot = false;
 plot_order = [];
@@ -22,18 +26,42 @@ else
 end
 acclim3D = [];
 acclim2D = [];
+cent_acctick = [];
+
+% unpack config
 v2struct(cfg);
-cfg.singleplot = singleplot;
+
+% set color-limits (z-axis) or y-limits
+if isempty(cent_acctick)
+    % assuming this is the same for all graphs, cannot really be helped
+    if strcmpi(stats(1).settings.measuremethod,'hr-far') || strcmpi(stats(1).settings.measuremethod,'\muV') || strcmpi(plot_model,'FEM')
+        cent_acctick = 0;
+    else
+        cent_acctick = 1/stats(1).settings.nconds;
+    end
+end
+chance = cent_acctick;
+
+% direction of y-axis
+if isempty(inverty)
+    if strcmpi(stats(1).settings.measuremethod,'\muV')
+        inverty = true;
+    else
+        inverty = false;
+    end
+end
+
+% set plottype
 if any(size(stats(1).ClassOverTime)==1)
     plottype = '2D'; %  used internally in this function
 else
     plottype = '3D';
 end
-cfg.plottype = plottype;
 if strcmpi(plottype,'3D')
     singleplot = false;
-    cfg.singleplot = singleplot;
 end
+
+% set line colors
 if numel(line_colors)<numel(stats) || isempty(line_colors)
     if numel(stats) > 1
         line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
@@ -41,9 +69,6 @@ if numel(line_colors)<numel(stats) || isempty(line_colors)
         line_colors = {[0 0 0]};
     end
 end
-
-cfg.line_colors = line_colors;
-cfg.ndec = ndec; % number of decimals used when plotting accuracy tick labels
 
 % determine which conditions to plot
 if ~isempty(plot_order)
@@ -62,15 +87,19 @@ eval(['acclim = acclim' plottype ';']);
 if isempty(acclim)
     mx = max(max(([stats(:).ClassOverTime])));
     mn = min(min(([stats(:).ClassOverTime])));
-    shift = abs(diff([mn mx]))/10;
     if strcmpi(plottype,'2D') % this is a 2D plot
+        shift = abs(diff([mn mx]))/10;
         acclim = [mn-shift mx+shift];
     else
-        mx = max(abs([mx mn]));
-        acclim = [-mx mx];
+        shift = abs(diff([mn mx]))/20;
+        mx = max(abs([mx-chance chance-mn]));
+        acclim = [-mx-shift mx+shift]+chance;
     end
-    cfg.acclim = acclim;
 end
+
+% pack config with defaults
+nameOfStruct2Update = 'cfg';
+cfg = v2struct(inverty,acclim,chance,cent_acctick,line_colors,ndec,plottype,singleplot,nameOfStruct2Update);
 
 % make figure?
 if ~plotsubjects
@@ -79,7 +108,7 @@ if ~plotsubjects
     fh = figure('name',title_text);
     % make sure all figures have the same size regardless of nr of subplots
     % and make sure they fit on the screen
-    screensize = get(0,'screensize');
+    screensize = get(0,'screensize')-50;
     if singleplot
         UL = screensize([3 4]);
     else
@@ -102,7 +131,7 @@ end
 % main routine
 if numel(stats)>1
     for cStats=1:numel(stats)
-        disp(['plot ' cStats]);
+        disp(['plot ' num2str(cStats)]);
         if singleplot
             hold on;
             [map, H, cfg] = subplot_MVPA(stats(cStats),cfg,cStats);
@@ -129,7 +158,6 @@ if nargin<3
 end
 
 % setting some graph defaults
-nconds = stats.settings.nconds;
 plotsubjects = false;
 trainlim = [];
 testlim = [];
@@ -139,7 +167,6 @@ plot_model = [];
 reduce_dims = [];
 inverty = false;
 downsamplefactor = 1;
-cent_acctick = 1/nconds;
 smoothfactor = 1;
 plotsigline_method = 'both';
 splinefreq = [];
@@ -205,14 +232,6 @@ end
 ydim = dims{1};
 xdim = dims{2}; % unused
 
-% set color-limits (z-axis) or y-limits
-if strcmpi(measuremethod,'hr-far') || strcmpi(plot_model,'FEM') || strcmpi(measuremethod,'\muV')
-    chance = 0;
-    cent_acctick = 0;
-else
-    chance = cent_acctick;
-end
-
 if numel(acclim) == 1
     acclim = [-acclim acclim];
 end
@@ -223,12 +242,16 @@ if isempty(acctick)
     if plotsubjects
         mx = max(max((ClassOverTime(:))));
         mn = min(min((ClassOverTime(:))));
-        acctick = abs(min(abs([mx mn]))-chance);
-    else
-        if strcmpi(measuremethod,'accuracy')
-            acctick = .025;
+        if strcmpi(plottype,'3D')
+            acctick = abs(max(abs([chance-mn mx-chance])))-0.001;
         else
+            acctick = abs(min(abs([chance-mn mx-chance])));
+        end
+    else
+        if strcmpi(measuremethod,'\muV')
             acctick = 1;
+        else
+            acctick = diff(acclim)/8;
         end
     end
 end
@@ -386,7 +409,7 @@ if strcmpi(plottype,'2D')
     xlabel('time in ms','FontSize',14);
     set(gca,'YTick',yaxis);
     Ylabel = regexp(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ','split');
-    if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
+    if chance ~= 0 % create labels containing equal character counts when centered on some non-zero value
         Ylabel((yaxis == chance)) = {'chance'}; % say "chance".
     end
     set(gca,'YTickLabel',Ylabel);
@@ -416,18 +439,16 @@ else
     imagesc(data);
     caxis(acclim);
     set(gca,'YDir','normal'); % set the y-axis right
-    if ~plotsubjects
-        hcb=colorbar;
-    end
+    %if ~plotsubjects
+    
     % set ticks on color bar
-    if ~plotsubjects
-        set(hcb,'YTick',zaxis);
-        Ylabel = regexp(deblank(sprintf(['%0.' num2str(ndec) 'f '],zaxis)),' ','split');
-        if cent_acctick ~= 0 % create labels containing equal character counts when centered on some non-zero value
-            Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
-        end
-        set(hcb,'YTickLabel',Ylabel);
+    hcb=colorbar;
+    Ylabel = regexp(deblank(sprintf(['%0.' num2str(ndec) 'f '],zaxis)),' ','split');
+    if chance ~= 0 % create labels containing equal character counts when centered on some non-zero value
+        Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
     end
+    set(hcb,'YTick',zaxis,'YTickLabel',Ylabel);
+
     if strcmpi(ydim,'freq')
         ylabel('frequency in Hz','FontSize',14);
         xlabel('time in ms','FontSize',14);
@@ -454,9 +475,10 @@ if inverty
     set(gca,'YDir','reverse');
 end
 % ((isempty(acclim2D) && strcmpi(plottype,'2D')) || (isempty(acclim3D) && strcmpi(plottype,'3D'))) &&
-if plotsubjects
+if plotsubjects && strcmpi(plottype,'2D')
     sameaxes('xyzc',gcf());
 end
+
 % invent handle if it does not exist
 if ~exist('H')
     H = [];

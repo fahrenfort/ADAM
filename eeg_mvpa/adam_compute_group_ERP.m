@@ -1,5 +1,5 @@
-function [stats,cfg] = compute_group_ERP(folder_name,cfg)
-% function [stats,cfg] = compute_group_ERP(folder_name,cfg)
+function [stats,cfg] = adam_compute_group_ERP(folder_name,cfg)
+% function [stats,cfg] = adam_compute_group_ERP(folder_name,cfg)
 % Computes group ERPs and extracts ERP averages
 %
 % Common use cases:
@@ -51,7 +51,7 @@ function [stats,cfg] = compute_group_ERP(folder_name,cfg)
 %
 % cfg can also specify the time interval, and the correction method and threshold for statistics
 %
-% Use stats output from this function as input for plot function plot_MVPA
+% Use stats output from this function as input for plot function adam_plot_MVPA
 %
 % By J.J.Fahrenfort, VU, 2016, 2017
 
@@ -75,12 +75,12 @@ if isempty(folder_name)
     if ~ischar(folder_name)
         error('no folder was selected');
     end
+    % where am I?
+    ndirs = drill2data(folder_name);
     if isempty(plot_order)
         dirz = dir(folder_name);
         dirz = {dirz([dirz(:).isdir]).name};
         plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
-        % determine whether to drill down or not
-        ndirs = drill2data(folder_name);
         if ndirs == 1
             [folder_name, plot_order] = fileparts(folder_name);
             plot_order = {plot_order};            
@@ -88,6 +88,8 @@ if isempty(folder_name)
             error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
         end
         cfg.plot_order = plot_order;
+    elseif ndirs ~= 2
+        error('You seem to be selecting a directory that is either too high or too low in the hiearchy given that you have specified cfg.plot_order. Either remove cfg.plot_order or select the appropriate level in the hierarchy.');
     end
     % loop through directories (results folders)
     for cdirz = 1:numel(plot_order)
@@ -235,11 +237,13 @@ for cSubj = 1:nSubj
         onestat.condname = condname;
         onestat.channelpool = channelpool;
         tmpcfg = cfg;
-        tmpcfg.plotsubject = true;
+        tmpcfg.plot_model = plot_model;
+        tmpcfg.plotsubjects = true;
+        tmpcfg.plot_order = {condname};
         tmpcfg.acclim2D = [];
         tmpcfg.acclim3D = [];
         tmpcfg.acctick = [];
-        plot_MVPA(onestat,tmpcfg);
+        adam_plot_MVPA(onestat,tmpcfg);
         subjname = subjectfiles{cSubj};
         underscores = strfind(subjname,'_');
         subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
