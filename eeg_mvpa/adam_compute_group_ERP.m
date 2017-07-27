@@ -129,7 +129,7 @@ electrode_method = 'average';
 condition_method = 'subtract';
 % unpack graphsettings
 plottype = '2D';
-channelpool = 'ALL';
+channelpool = 'ALL_NOSELECTION';
 v2struct(cfg);
 
 % pack graphsettings with defaults
@@ -151,7 +151,7 @@ subjectfiles = dir([folder_name filesep channelpool plotFreq filesep '*.mat']);
 subjectfiles = { subjectfiles(:).name };
 nSubj = numel(subjectfiles);
 if nSubj == 0
-    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq filesep]);
+    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{:} ' maybe you should specify (a different) cfg.channelpool?']);
 end
 
 % prepare figure in case individual subjects are plotted
@@ -237,6 +237,11 @@ for cSubj = 1:nSubj
         onestat.condname = condname;
         onestat.channelpool = channelpool;
         tmpcfg = cfg;
+        if isempty(matObj.BDM)
+            plot_model = 'FEM';
+        else
+            plot_model = 'BDM';
+        end
         tmpcfg.plot_model = plot_model;
         tmpcfg.plotsubjects = true;
         tmpcfg.plot_order = {condname};
@@ -248,6 +253,7 @@ for cSubj = 1:nSubj
         underscores = strfind(subjname,'_');
         subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
         ntitle(subjname,'fontsize',10,'fontweight','bold');
+        drawnow;
     end
 end
 
@@ -307,8 +313,6 @@ for cCond = 1:numel(ClassTotal) % loop over stats
         stats(cCond).pStruct = pStruct;
     end
 end
-
-%cfg = v2struct(name,nameOfStruct2Update);
 
 function [FT_EEG] = restrict_FT_ERP(FT_EEG,cfg)
 % resample / restrict the ERP

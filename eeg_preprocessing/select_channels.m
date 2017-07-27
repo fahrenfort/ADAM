@@ -1,15 +1,27 @@
 function [channels, channelnames] = select_channels(channelnames,selectbundle)
-% function [channels, channelnames] = select_channels(channelnames,selectbundle)
-% selects channels (e.g. removes HEOG, VEOG or makes some other selection)
+% Assumes a standard 64-channel BioSemi system. Modify this file for other
+% systems, or use 'ALL_NOSELECTION' when running  your main analyses when
+% you have a different acquisition system (in this case you have to make a
+% selection manually in your EEG files prior to running your analyses, i.e.
+% removing EOG etc). This function selects channels (e.g. removes HEOG,
+% VEOG or makes some other selection) in a BioSemi and other standard 10-20
+% 64-electrode systems
+%
+% usage: 
+% [channels, channelnames] = select_channels(channelnames,selectbundle)
+%
+% inputs:
 % selectbundle determines which channels to select:
 % selectbundle = 'EEG' or 'ALL' takes all EEG channels (NO EOG!)
 % selectbundle = 'EOG' all EOG channels
 % selectbundle = 'EEG_EOG' all EEG and all EOG channels
-% selectbundle = 'OCCIP', only occipital channels etc 
+% selectbundle = 'OCCIP' only occipital, 'PARIET' only parietal, etc: 'FRONTAL' 'TEMPORAL' 'OCCIPARIET' 'CDA' 
+%
 % outputs:
 % channels are the indexnumbers of the selected channels
 % channelnames is a cell array of the channel names of the selected channels
-% J.J.Fahrenfort, VU 2016
+
+% Part of the ADAM toolbox, J.J.Fahrenfort, VU 2016, 2017
 if nargin<2
     selectbundle = 'EEG'; 
 end

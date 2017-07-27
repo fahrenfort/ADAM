@@ -1,5 +1,5 @@
-function map = plot_MVPA(stats,cfg)
-% function plot_MVPA(stats,cfg)
+function map = adam_plot_MVPA(stats,cfg)
+% function adam_plot_MVPA(stats,cfg)
 % draw classification accuracy based on stats produced by
 % compute_group_MVPA
 %
@@ -158,7 +158,6 @@ if nargin<3
 end
 
 % setting some graph defaults
-plotsubjects = false;
 trainlim = [];
 testlim = [];
 freqlim = [];

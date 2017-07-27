@@ -395,8 +395,9 @@ for cSet = 1:2
         trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo;
         oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;
         % remove non-balanced trials for ERP calculation
-        tempbool = ones(size(FT_EEG(cSet).trialinfo)); tempbool([oldindex{cSet}{:}]) = 0; 
-        FT_EEG(cSet).trialinfo(logical(tempbool)) = NaN;
+        tempbool = ones(size(FT_EEG(cSet).trialinfo)); tempbool([oldindex{cSet}{:}]) = 0;
+        notacondition = max(unique(FT_EEG(cSet).trialinfo)) + 999999; % a bit of hack to assign an unknown trigger number, assigning NaN produces an error during TFR computation
+        FT_EEG(cSet).trialinfo(logical(tempbool)) = notacondition;
         clear tempbool;
     end
     % compute ERPs (baseline corrected, resampled, and channels already selected)

@@ -135,7 +135,7 @@ indiv_pval = .05;
 cluster_pval = .05;
 plotsubjects = false;
 name = [];
-channelpool = 'ALL'; % 'ALL', 'OCCIP', 'PARIET' etc, see select_channels.m function to make adjustments
+channelpool = 'ALL_NOSELECTION'; % 'ALL', 'OCCIP', 'PARIET' etc, see select_channels.m function to make adjustments
 mpcompcor_method = 'uncorrected';
 plot_model = 'BDM'; % 'BDM' or 'FEM'
 reduce_dims = []; % 'diag' 'avtrain' 'avtest' or 'avfreq'
@@ -210,7 +210,7 @@ end
 % see if data exists
 nSubj = numel(subjectfiles);
 if nSubj == 0
-    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{:}]);
+    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{:} ' maybe you should specify (a different) cfg.channelpool?']);
 end
 
 % prepare figure in case individual subjects are plotted
@@ -401,6 +401,7 @@ for cSubj = 1:nSubj
         underscores = strfind(subjname,'_');
         subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
         ntitle(subjname,'fontsize',10,'fontweight','bold');
+        drawnow;
     end
 end
 
@@ -487,10 +488,10 @@ else
     end
 end
 stats.weights = weights;
-if isfield(cfg,'plotsubjects')
-    cfg = rmfield(cfg,'plotsubjects');
-end
 stats.cfg = cfg;
+if isfield(stats.cfg,'plotsubjects')
+     stats.cfg = rmfield(stats.cfg,'plotsubjects');
+end
 disp('done!');
 
 function [settings, cfg, lim1, lim2, dataindex, firstchanlocs] = find_limits(settings, cfg, firstchanlocs) 
