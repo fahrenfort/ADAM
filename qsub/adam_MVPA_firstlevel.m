@@ -1,7 +1,7 @@
 function adam_MVPA_firstlevel(cfg)
 % This function runs a first level analysis based on the parameters
 % specificied in the cfg struct. Unspecified parameters take on default
-% values. The following parameters can be specified:
+% values. Amongst others, the following core parameters can be specified:
 % cfg.datadir = '/path/to/the/data';
 % cfg.outputdir = '/path/to/the/results';
 % cfg.filenames = {'subject1', 'subject2);           do not use extensions, just base of filename!
@@ -71,9 +71,9 @@ else
     bintrain = '';
 end
 if strcmpi(bintest,'yes')
-    bintrain = 'bintest';
+    bintest = 'bintest';
 else
-    bintrain = '';
+    bintest = '';
 end
 if strcmpi(savelabels,'yes')
     savelabels = 'savelabels';
@@ -86,6 +86,8 @@ else
     labelsonly = '';
 end
 str_settings = sprintf('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s',class_method,class_type,model,balance_triggers,balance_classes_method,bintrain,bintest,tfr_method,savelabels,labelsonly);
+while strfind(str_settings,',,') str_settings = regexprep(str_settings,',,',','); end % remove duplicating commas
+if str_settings(end) == ',' str_settings(end) = []; end % and remove trailing comma if present
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
@@ -121,14 +123,22 @@ end
 
 
 % run analysis
-for cSubj = 1:numel(filenames)
-    %try
+if ~exist('qsub','var') %run local
+    for cSubj = 1:numel(filenames)
+        %try
         if strcmpi(raw_or_tfr,'raw')
             classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels,str_settings,crossclass_resample,erp_baseline,class_spec{:});
         elseif strcmpi(raw_or_tfr,'tfr')
             classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
         end
-    %catch ME
-    %    disp([ME.message ', skipping subject ' filenames{cSubj}]);
-    %end
+        %catch ME
+        %    disp([ME.message ', skipping subject ' filenames{cSubj}]);
+        %end
+    end
+else % or create qsub files
+    if strcmpi(raw_or_tfr,'raw')
+        create_qsub_files(qsub.functionpath,'classify_RAW_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channels,str_settings,crossclass_resample,erp_baseline,class_spec{:});
+    elseif strcmpi(raw_or_tfr,'tfr')
+        create_qsub_files(qsub.functionpath,'classify_TFR_from_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channels,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+    end
 end
