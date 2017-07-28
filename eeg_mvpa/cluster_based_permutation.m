@@ -158,9 +158,9 @@ end
 pVals = ones(size(mask));
 tVals = zeros(size(mask));
 if paired
-    [~,pVals(mask),~,stats] = ttest(maskdata1,maskdata2,'tail',tail);
+    [~,pVals(mask),~,stats] = ttest(maskdata1,maskdata2,indiv_pval,tail);
 else
-    [~,pVals(mask),~,stats] = ttest2(maskdata1,maskdata2,'tail',tail);    
+    [~,pVals(mask),~,stats] = ttest2(maskdata1,maskdata2,indiv_pval,tail);    
 end
 tVals(mask) = squeeze(stats.tstat);
 

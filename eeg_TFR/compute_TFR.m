@@ -1,9 +1,9 @@
-function [TFR, groupTFR] = compute_TFR(FT_EEG,sampling_rate,frequencies)
-% function TFR = compute_TFR(FT_EEG,sampling_rate,frequencies)
+function [TFR, groupTFR] = compute_TFR(FT_EEG,new_fsample,frequencies)
+% function TFR = compute_TFR(FT_EEG,new_fsample,frequencies)
 % takes standard FT input and computes single trial TFR for MVPA and
 % separate group TFRs (no single trial data) for Hanning and multitaper 
 % FT_EEG is standard fieldtrip struct
-% sampling_rate is the frequency to which the output should be downsampled
+% new_fsample is the frequency to which the output should be downsampled
 % (if left empty, output has the same sr as the input
 % freqs is a specification of the frequencies to include
 %
@@ -15,21 +15,25 @@ if isempty(frequencies)
     frequencies = 2:2:100;
 end
 
+% what is current sampling rate?
+fsample = round((numel(FT_EEG.time)-1)/(FT_EEG.time(end)-FT_EEG.time(1)));
+
 % downsample_factor specifies the factor by which to downsample
 if nargin < 2
-    sampling_rate = 0;
+    new_fsample = 0;
 end
-if ischar(sampling_rate)
-    sampling_rate = string2double(sampling_rate);
+if ischar(new_fsample)
+    new_fsample = string2double(new_fsample);
 end
-if sampling_rate == 0
-    sampling_rate = FT_EEG.fsample;
+if new_fsample == 0
+    new_fsample = fsample;
 end
-downsample_factor = FT_EEG.fsample/sampling_rate;
+
+downsample_factor = fsample/new_fsample;
 % check if downsample_factor is an integer
 if ~(floor(downsample_factor)==downsample_factor)
     downsample_factor = round(downsample_factor);
-    disp('WARNING: Specified resampling_rate resulted in non-integer downsample_factor: rounding off new sampling rate to prevent interpolation. Next time you better pick a sampling rate that fits.');
+    disp('WARNING: Specified new sampling frequency resulted in non-integer downsample_factor: rounding off new sampling rate to prevent interpolation. Next time you better pick a sampling rate that fits.');
 end
 % times of interest, possibly better to keep actual time points than to create new time series
 if iscell(FT_EEG.time)

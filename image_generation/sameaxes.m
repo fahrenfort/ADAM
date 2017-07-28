@@ -67,7 +67,9 @@ for hnd = HNDS(:)' % iterate over parent handles [sync parents separately!]
         end
         % get() and then set() the pooled min() & max() to all axes objects
         lims = get(axs, lim);
-        if iscell(lims), lims = [lims{:}]; end % unpack if necessary
+        if iscell(lims)
+            lims = [lims{:}];
+        end % unpack if necessary
         set(axs, lim, [min(lims) max(lims)])
     end
 end
