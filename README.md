@@ -26,9 +26,9 @@ ADAM is an open source Matlab Toolbox. It allows you to perform multivariate ana
 One of the big advantages of this toolbox is that it takes generic input formats for which many import functions are available (EEGLAB or FieldTrip), allowing researchers to do their own pre-processing any which way they like. The toolbox takes care of the intricacies of multivariate analyses (data handling), allowing a wealth of possibilities as specified above, and always has a group analysis as its endpoint. Although everything is scripted, the scripts are easy to use, doable also for novices.
 
 # Requirements
-- A recent version of Matlab including the Statistics Toolbox (>2012b, lower versions might or might not work). No special care was taken to exclude functions from other Matlab Toolboxes. Let me know if you find dependencies on other Toolboxes, I might be able to provide a workaround.
-- A recent version of [EEGLAB](https://sccn.ucsd.edu/eeglab/downloadtoolbox.php) (>13, lower versions might or might not work)
-- A recent install of [FieldTrip](http://www.fieldtriptoolbox.org/download) (>2015, lower versions might or might not work)
+- A recent version of Matlab including the Statistics Toolbox (>=2012b, lower versions might or might not work). No special care was taken to exclude functions from other Matlab Toolboxes. Let me know if you find dependencies on other Toolboxes, I might be able to provide a workaround.
+- A recent version of [EEGLAB](https://sccn.ucsd.edu/eeglab/downloadtoolbox.php) (>=13, lower versions might or might not work)
+- A recent install of [FieldTrip](http://www.fieldtriptoolbox.org/download) (>=2015, lower versions might or might not work)
 - A reasonably modern computer (>=8GB memory, enough HD space, modern processor, more is better)
 
 # Version
