@@ -32,7 +32,7 @@ bintrain = 'no';            % average across triggers within a class on the trai
 bintest = 'no';             % average across triggers witin a class on the testing side
 savelabels = 'no';          % if 'yes', also saves the classifier labels
 labelsonly = 'no';          % if 'yes', only saves the classifier labels (test set does not require labels in this case)
-tfr_method = 'total';       % computes total power, alternative is 'induced' (subtracts the erp from each trial, separately for train and test data)
+tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
 
 % unpack cfg
 v2struct(cfg);

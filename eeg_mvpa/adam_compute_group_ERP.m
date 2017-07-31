@@ -16,7 +16,7 @@ function [stats,cfg] = adam_compute_group_ERP(folder_name,cfg)
 % cfg.elecrode_method = 'average' (default)
 %   - averages signal over electrodes
 % cfg.condition_def = [1,2];
-% cfg.condition_methods = 'subtract' (default)
+% cfg.condition_methods = 'subtract'
 %   - condition_def = [1,2] will subtract 2 from 1 and test them against
 %     each other -> can do this for multiple results folders at once
 %
@@ -34,7 +34,7 @@ function [stats,cfg] = adam_compute_group_ERP(folder_name,cfg)
 %   - a cell array with the electrodes which will be averaged (can also be
 %     a single electrode)
 % cfg.condition_def = [1,2,3,4];
-% cfg.condition_methods = 'keep'
+% cfg.condition_methods = 'keep' (default)
 %   - will output those conditions
 %   -> can only do this for a single results folders
 %
@@ -75,6 +75,7 @@ if isempty(folder_name)
     if ~ischar(folder_name)
         error('no folder was selected');
     end
+    cfg.folder = folder_name;
     % where am I?
     ndirs = drill2data(folder_name);
     if isempty(plot_order)
@@ -90,6 +91,13 @@ if isempty(folder_name)
         cfg.plot_order = plot_order;
     elseif ndirs ~= 2
         error('You seem to be selecting a directory that is either too high or too low in the hiearchy given that you have specified cfg.plot_order. Either remove cfg.plot_order or select the appropriate level in the hierarchy.');
+    else
+        dirz = dir(folder_name);
+        dirz = {dirz([dirz(:).isdir]).name};
+        dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
+        if ~all(ismember(plot_order,dirz))
+            error('One or more of the folders specified in cfg.plot_order cannot be found in this results directory. Change cfg.plot_order or select a different directory for plotting.');
+        end
     end
     % loop through directories (results folders)
     for cdirz = 1:numel(plot_order)
@@ -99,7 +107,6 @@ if isempty(folder_name)
             [stats(cdirz), cfg] = subcompute_group_ERP([folder_name filesep plot_order{cdirz}],cfg);
         end
     end
-    cfg.folder = folder_name;
 else
     if ~exist('folder_name','dir') && ~iscell(folder_name) 
         error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
@@ -236,6 +243,7 @@ for cSubj = 1:nSubj
         onestat.settings.measuremethod = '\muV';
         onestat.condname = condname;
         onestat.channelpool = channelpool;
+        onestat.cfg = [];
         tmpcfg = cfg;
         if isempty(matObj.BDM)
             plot_model = 'FEM';
@@ -272,9 +280,9 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     if strcmpi(electrode_method,'subtract')
         condname =  [condname ' channel subtraction'];
     elseif strcmpi(condition_method,'subtract')
-        condname =  [condname ' condition subtraction'];
+        condname =  [condname ' subtraction'];
     elseif strcmpi(condition_method,'average')
-        condname = [condname ' condition averaging'];
+        condname = [condname ' average'];
     elseif strcmpi(condition_method,'keep')
         condname = [condname ' cond' num2str(condition_def(cCond))];
     end
@@ -312,7 +320,13 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     if exist('pStruct','var')
         stats(cCond).pStruct = pStruct;
     end
+    stats(cCond).reduce_dims = reduce_dims;
+    stats(cCond).cfg = cfg;
+    if isfield(stats(cCond).cfg,'plotsubjects')
+        stats(cCond).cfg = rmfield(stats(cCond).cfg,'plotsubjects');
+    end
 end
+disp('done!');
 
 function [FT_EEG] = restrict_FT_ERP(FT_EEG,cfg)
 % resample / restrict the ERP

@@ -53,6 +53,8 @@ if nargin<3
 end
 
 plot_order = {};
+reduce_dims = '';
+freqlim = [];
 
 % backwards compatibility
 plot_dim = 'time_time'; % default, 'time_time' or 'freq_time'
@@ -78,7 +80,7 @@ if exist('plotorder','var')
 end
 
 % check freqlimits
-if (strcmpi(plot_dim,'freq_time') && ~strcmpi(reduce_dims,'avfreq')) && (numel(freqlim) == 1 || abs(diff(freqlim)) <= 2)
+if (strcmpi(plot_dim,'freq_time') && ~strcmpi(reduce_dims,'avfreq')) && (numel(freqlim) == 1 || (~isempty(freqlim) && abs(diff(freqlim)) <= 2))
     wraptext('WARNING: your cfg.freqlim indicates a rather small range of frequencies given cfg.plot_dim ''freq_time'', use cfg.reduce_dims = ''avfreq'' if you intend to average. Now simply plotting all frequencies.');
     freqlim = [];
     cfg.freqlim = [];
@@ -94,7 +96,7 @@ if isempty(folder_name)
     if ~ischar(folder_name)
         error('no folder was selected');
     end
-
+    cfg.folder = folder_name;
     % where am I?
     ndirs = drill2data(folder_name);
     if isempty(plot_order)
@@ -107,9 +109,16 @@ if isempty(folder_name)
         elseif ndirs > 2
             error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
         end
-        cfg.plot_order = plot_order;
+        cfg.plot_order = plot_order;        
     elseif ndirs ~= 2
         error('You seem to be selecting a directory that is either too high or too low in the hiearchy given that you have specified cfg.plot_order. Either remove cfg.plot_order or select the appropriate level in the hierarchy.');
+    else
+        dirz = dir(folder_name);
+        dirz = {dirz([dirz(:).isdir]).name};
+        dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
+        if ~all(ismember(plot_order,dirz))
+            error('One or more of the folders specified in cfg.plot_order cannot be found in this results directory. Change cfg.plot_order or select a different directory for plotting.');
+        end
     end
     % loop through directories (results folders)
     for cdirz = 1:numel(plot_order)
@@ -119,12 +128,20 @@ if isempty(folder_name)
             [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name filesep plot_order{cdirz}], cfg, mask);
         end
     end
-    cfg.folder = folder_name;
 else
-    if ~exist('folder_name','dir') && ~iscell(folder_name) 
-        error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
+    if iscell(folder_name)
+        for cdirz = 1:numel(folder_name)
+            if ~exist(folder_name{cdirz},'dir')
+                error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
+            end
+            [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name{cdirz}], cfg, mask);
+        end
+    else
+        if ~exist(folder_name,'dir')
+            error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
+        end
+        [stats, cfg] = subcompute_group_MVPA(folder_name,cfg,mask);
     end
-    [stats, cfg] = subcompute_group_MVPA(folder_name,cfg,mask);
 end
 
 % subroutine for each condition
@@ -184,11 +201,20 @@ if freqfolder
             plotFreq{1} = [filesep 'freq' num2str(freqlim)];
         end
     elseif strcmpi(plot_dim,'time_time') && ~freqfolder_contains_time_time
-        disp('WARNING: time_time is not available in this folder, defaulting to cfg.plot_dim = ''freq_time''');
+        % You can comment out the error line below if you are not fond of this type of error handling :-)
+        error('You specified cfg.plot_dim = ''time_time'', but time_time is not available in this folder.');
+        disp('WARNING: You specified cfg.plot_dim = ''time_time'', but time_time is not available in this folder. Defaulting to cfg.plot_dim = ''freq_time''');
         plot_dim = 'freq_time';
         plotFreq{1} = [filesep 'allfreqs'];
     end
 else
+    % You can comment out the error lines below if you are not fond of this type of error handling :-)
+    if ~isempty(freqlim)
+        error('You indicated a frequency or frequency range to extract using cfg.freqlim, but this is not a frequency results folder! Please select a folder that contains frequency results.');
+    end
+    if strcmpi(plot_dim,'freq_time')
+         error('You indicated you wanted to plot frquency by time by specifying cfg.plot_dim = ''freq_time'', but this is not a frequency results folder! Please select a folder that contains frequency results.');
+    end
     plotFreq = {''};
     freqlim = [];
 end
@@ -392,6 +418,7 @@ for cSubj = 1:nSubj
         onestat.settings = settings;
         onestat.condname = condname;
         onestat.channelpool = channelpool;
+        onestat.cfg = [];
         tmpcfg = cfg;
         tmpcfg.plot_model = plot_model;
         tmpcfg.plotsubjects = true;
