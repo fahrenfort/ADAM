@@ -66,18 +66,17 @@ if exist('plotmodel','var')
 end
 if exist('get_dim','var')
     plot_dim = get_dim;
-    cfg.plot_dim = plot_dim;
     cfg = rmfield(cfg,'get_dim');
 end
 if strcmpi(plot_dim,'frequency_time') || strcmpi(plot_dim,'time_frequency') || strcmpi(plot_dim,'time_freq')
     plot_dim = 'freq_time';
-    cfg.plot_dim = plot_dim;
 end
 if exist('plotorder','var')
     plot_order = plotorder;
     cfg.plot_order = plot_order;
     cfg = rmfield(cfg,'plotorder');
 end
+cfg.plot_dim = plot_dim;
 
 % check freqlimits
 if (strcmpi(plot_dim,'freq_time') && ~strcmpi(reduce_dims,'avfreq')) && (numel(freqlim) == 1 || (~isempty(freqlim) && abs(diff(freqlim)) <= 2))

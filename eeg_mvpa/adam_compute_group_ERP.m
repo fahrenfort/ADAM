@@ -133,7 +133,7 @@ resample_eeg = 0;
 electrode_def = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
 electrode_method = 'average';
-condition_method = 'subtract';
+condition_method = '';
 % unpack graphsettings
 plottype = '2D';
 channelpool = 'ALL_NOSELECTION';
@@ -141,7 +141,7 @@ v2struct(cfg);
 
 % pack graphsettings with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(one_two_tailed,reduce_dims,indiv_pval,cluster_pval,name,plottype,mpcompcor_method,timelim,electrode_sets,resample_eeg,condition_def,nameOfStruct2Update);
+cfg = v2struct(one_two_tailed,reduce_dims,indiv_pval,cluster_pval,name,plottype,mpcompcor_method,electrode_def,electrode_method,condition_def,condition_method,timelim,resample_eeg,nameOfStruct2Update);
 
 % fill some empties
 if isempty(electrode_sets)
@@ -274,17 +274,18 @@ else
 end
 
 % statistical testing
+origcondname = condname;
 for cCond = 1:numel(ClassTotal) % loop over stats
-
+    
     % determine condname
     if strcmpi(electrode_method,'subtract')
-        condname =  [condname ' channel subtraction'];
+        condname =  [origcondname ' channel subtraction'];
     elseif strcmpi(condition_method,'subtract')
-        condname =  [condname ' subtraction'];
+        condname =  [origcondname ' subtraction'];
     elseif strcmpi(condition_method,'average')
-        condname = [condname ' average'];
-    elseif strcmpi(condition_method,'keep')
-        condname = [condname ' cond' num2str(condition_def(cCond))];
+        condname = [origcondname ' average'];
+    else
+        condname = ['condition ' num2str(condition_def(cCond))];
     end
     
     % get some stats
@@ -326,6 +327,8 @@ for cCond = 1:numel(ClassTotal) % loop over stats
         stats(cCond).cfg = rmfield(stats(cCond).cfg,'plotsubjects');
     end
 end
+
+
 disp('done!');
 
 function [FT_EEG] = restrict_FT_ERP(FT_EEG,cfg)
@@ -340,9 +343,7 @@ if resample_eeg
 end
 % limit time?
 if ~isempty(timelim)
-    cfg = [];
-    cfg.latency = timelim/1000; % should be in seconds
-    FT_EEG = ft_selectdata(cfg,FT_EEG);
+    FT_EEG = select_time_from_FT_EEG(FT_EEG,(FT_EEG.time>min(timelim)/1000 & FT_EEG.time<max(timelim)/1000)); % time should be in seconds in FT_EEG
 end
 clear channelpool;
 % subtracting electrode sets, subtracts electrode 2 from electrode 1 for each condition
@@ -356,14 +357,10 @@ if strcmpi(electrode_method,'subtract') %iscell(electrode_sets{1})
     for cCond = 1:size(electrode_sets,1)
         for cDif=1:size(electrode_sets,2)
             cfg = [];
-            cfg.channel = electrode_sets{cCond,cDif};
-            cfg.avgoverchan = 'yes';
-            warning off; % suppress stupid FT warnings
-            FT_TEMP(cDif) = ft_selectdata(cfg,FT_EEG);
-            warning on;
+            FT_TEMP(cDif) = select_channels_from_FT_EEG(FT_EEG,electrode_sets{cCond,cDif});
         end
         trial(cCond,:,:) = FT_TEMP(1).trial(FT_TEMP(1).trialinfo==condition_def(cCond),:,:) - FT_TEMP(2).trial(FT_TEMP(2).trialinfo==condition_def(cCond),:,:);
-        channelpool{cCond} = [convert_cellarray2csv(electrode_sets{cCond,1}) '-' convert_cellarray2csv(electrode_sets{cCond,2})];
+        channelpool{cCond} = [FT_TEMP(1).label '-' FT_TEMP(2).label];
     end
     FT_EEG.trial = trial;
     FT_EEG.channelpool = channelpool;
@@ -371,30 +368,19 @@ elseif strcmpi(electrode_method,'average') % extract and average
     if ~iscell(electrode_sets)
         electrode_sets = {electrode_sets};
     end
-    cfg = [];
-    cfg.channel = electrode_sets;
-    cfg.avgoverchan = 'yes';
-    FT_EEG = ft_selectdata(cfg,FT_EEG);
-    FT_EEG.channelpool = convert_cellarray2csv(electrode_sets);
-% elseif strcmpi(electrode_method,'keep')
-%     cfg = [];
-%     cfg.channel = electrode_sets;
-%     cfg.avgoverchan = 'no';
-%     FT_EEG = ft_selectdata(cfg,FT_EEG);
-%     FT_EEG.channelpool = convert_cellarray2csv(electrode_sets);
+    FT_EEG = select_channels_from_FT_EEG(FT_EEG,electrode_sets);
+    FT_EEG.channelpool = FT_EEG.label;
 else
     error('Specify cfg.electrode_method as ''average''  or ''subtract''');
 end
 if any(size(FT_EEG.trial)==0)
     dims = regexp(FT_EEG.dimord,'_','split');
-    disp('ERROR: There are no dimensions left in these fields, change selection parameters for');
-    disp(dims(logical(size(FT_EEG.trial)==0)));
-    error('stopping');
+    error(['There are no dimensions left in these fields, change cfg selection parameters for ''' convert_cellarray2csv(dims(logical(size(FT_EEG.trial)==0))) '''.']);
 end
 
-function electrode_sets = convert_cellarray2csv(electrode_sets)
-    tmpchans = [electrode_sets',[repmat({','},numel(electrode_sets)-1,1);{[]}]]';
-    electrode_sets = [tmpchans{:}];
+function channelnames = convert_cellarray2csv(channelnames)
+tmpchans = [channelnames',[repmat({','},numel(channelnames)-1,1);{[]}]]';
+channelnames = [tmpchans{:}];
     
 function ndirs = drill2data(folder_name)
 % drills down until it finds data, returns the number of directories it had

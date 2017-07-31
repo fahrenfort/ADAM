@@ -274,9 +274,15 @@ if isempty(acctick)
         else
             acctick = abs(min(abs([chance-mn mx-chance])));
         end
+        if acctick ==0
+            acctick = .5;
+        end
     else
         if strcmpi(measuremethod,'\muV')
-            acctick = 1;
+            acctick = round(diff(acclim)/8);
+            if acctick ==0
+                acctick = 1;
+            end
         else
             acctick = diff(acclim)/8;
         end
