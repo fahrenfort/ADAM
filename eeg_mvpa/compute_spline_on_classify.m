@@ -5,7 +5,8 @@ function outdata = compute_spline_on_classify(classify_data,time,splinefreq,rele
 % milliseconds (defaults to [50,750]).
 % The spline is fitted around the peak to prevent dilution of peak accuracy
 % Johannes Fahrenfort, VU, 2016
-samplefreq = numel(time)/max(time) - min(time);
+
+samplefreq = round((numel(time)-1)/((time(end) - time(1))/1000)); % bugfix, should be in seconds
 npadding = round(samplefreq/4); % 250 ms
 if nargin < 4 || isempty(relevant_window_in_ms)
     relevant_window_in_ms = [50 750];

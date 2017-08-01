@@ -308,7 +308,9 @@ if strcmpi(plottype,'2D')
     % some smoothing on 2D using spline
     if makespline
        data = compute_spline_on_classify(data,xaxis',splinefreq);
-       stdData = compute_spline_on_classify(stdData,xaxis',splinefreq);
+       if ~isempty(stdData)
+           stdData = compute_spline_on_classify(stdData,xaxis',splinefreq);
+       end
     end
 else
     zaxis = sort(unique([cent_acctick:-acctick:min(acclim) cent_acctick:acctick:max(acclim)]));
@@ -499,7 +501,6 @@ axis square;
 if inverty
     set(gca,'YDir','reverse');
 end
-% ((isempty(acclim2D) && strcmpi(plottype,'2D')) || (isempty(acclim3D) && strcmpi(plottype,'3D'))) &&
 if plotsubjects && strcmpi(plottype,'2D')
     sameaxes('xyzc',gcf());
 end

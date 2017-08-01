@@ -141,16 +141,6 @@ end
 if ischar(nFolds)
     nFolds = string2double(nFolds);
 end
-if ischar(channelset)
-    if any(isnan(string2double(channelset)))
-        channelset = regexprep(channelset,',','_');
-    else
-        channelset = str2num(channelset);
-    end
-end
-if isempty(channelset)
-    channelset = 1;
-end
 if isempty(method)
     method = 'linear';
 end
@@ -361,14 +351,32 @@ end
 wraptext('These are the stimulus classes. Each row contains the trigger codes that go into a single class (first row training, second row testing):',80);
 celldisp(condSet,'stimclass');
 
-% Pick a name for the channelset (if it is numeric)
-if isnumeric(channelset)
-    if channelset > 0
-        elecSetNames = {'ALL' 'OCCIP' 'PARIET' 'FRONTAL' 'TEMPORAL' 'OCCIPARIET' 'CDA' 'N2Pc_SPCN' };
-        channelset = elecSetNames{channelset};
-    else
-        channelset = 'ALL_NOSELECTION';
+% Determine electrode selection
+if isempty(channelset)
+    channelset = 1;
+end
+if ischar(channelset)
+    % channelset can be: 
+    % a series of electrodes, a bundle number or a bundle name, should be converted to:
+    % a bundle name as string (channelset) and either a bundle name as string or a cell array of electrodes (bundlename_or_bundlelabels)
+    bundlename_or_bundlelabels = regexp(channelset,',','split'); % now a cell array of strings
+    if numel(bundlename_or_bundlelabels) == 1
+        bundlename_or_bundlelabels = bundlename_or_bundlelabels{1}; % now a string
     end
+    if iscell(bundlename_or_bundlelabels) % a cell array of electrodes
+        channelset = regexprep(channelset,',','_'); % a string
+    elseif ~isnan(string2double(channelset))
+        channelset = string2double(channelset); % a number
+    end
+end
+if isnumeric(channelset) % for backward compatibility, in principle channelset should be a single string or csv of electrodes
+    if channelset > 0
+        bundlenames = {'ALL' 'OCCIP' 'PARIET' 'FRONTAL' 'TEMPORAL' 'OCCIPARIET' 'CDA' 'N2Pc_SPCN' };
+        channelset = bundlenames{channelset}; % now a string
+    else
+        channelset = 'ALL_NOSELECTION'; % now a string
+    end
+    bundlename_or_bundlelabels = channelset; % is now also a string
 end
 
 % create a folder for this electrode group
@@ -380,7 +388,7 @@ end
 % load data and determine output name
 for cFile = 1:numel(filenames)
     % NOTE: this line is different in TFR! Resampling here...
-    [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}]= read_raw_data(filepath,filenames{cFile},outpath,channelset,erp_baseline{cFile},resample_eeg,do_csd,clean_muscle,clean_window,true,detrend_eeg);
+    [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}]= read_raw_data(filepath,filenames{cFile},outpath,bundlename_or_bundlelabels,erp_baseline{cFile},resample_eeg,do_csd,clean_muscle,clean_window,true,detrend_eeg);
 end
  % duplicate data for testing if only one file is available
 if numel(filenames) == 1

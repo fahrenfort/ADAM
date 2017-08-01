@@ -375,12 +375,8 @@ else
 end
 if any(size(FT_EEG.trial)==0)
     dims = regexp(FT_EEG.dimord,'_','split');
-    error(['There are no dimensions left in these fields, change cfg selection parameters for ''' convert_cellarray2csv(dims(logical(size(FT_EEG.trial)==0))) '''.']);
+    error(['There are no dimensions left in these fields, change cfg selection parameters for ''' cellarray2csvstring(dims(logical(size(FT_EEG.trial)==0))) '''.']);
 end
-
-function channelnames = convert_cellarray2csv(channelnames)
-tmpchans = [channelnames',[repmat({','},numel(channelnames)-1,1);{[]}]]';
-channelnames = [tmpchans{:}];
     
 function ndirs = drill2data(folder_name)
 % drills down until it finds data, returns the number of directories it had

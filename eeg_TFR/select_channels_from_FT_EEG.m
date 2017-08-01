@@ -9,11 +9,7 @@ if ~strcmpi(FT_EEG.dimord,'rpt_chan_time')
 end
 chans2keep = find(ismember(FT_EEG.label,channelnames));
 if isempty(chans2keep)
-    error(['Cannot find electrodes: ' convert_cellarray2csv(channelnames)]);
+    error(['Cannot find electrodes: ' cellarray2csvstring(channelnames)]);
 end
-FT_EEG.label = convert_cellarray2csv(channelnames);
+FT_EEG.label = cellarray2csvstring(channelnames);
 FT_EEG.trial = mean(FT_EEG.trial(:,chans2keep,:),2);
-
-function channelnames = convert_cellarray2csv(channelnames)
-tmpchans = [channelnames',[repmat({','},numel(channelnames)-1,1);{[]}]]';
-channelnames = [tmpchans{:}];
