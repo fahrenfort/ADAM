@@ -136,7 +136,7 @@ electrode_method = 'average';
 condition_method = '';
 % unpack graphsettings
 plottype = '2D';
-channelpool = 'ALL_NOSELECTION';
+channelpool = '';
 v2struct(cfg);
 
 % pack graphsettings with defaults
@@ -144,11 +144,19 @@ nameOfStruct2Update = 'cfg';
 cfg = v2struct(one_two_tailed,reduce_dims,indiv_pval,cluster_pval,name,plottype,mpcompcor_method,electrode_def,electrode_method,condition_def,condition_method,timelim,resample_eeg,nameOfStruct2Update);
 
 % fill some empties
-if isempty(electrode_sets)
-    error('no electrode_sets was specified in settings, set cfg.electrode_sets to some electrode, e.g. ''Oz''.');
+if isempty(electrode_def)
+    error('no electrode_def was specified in cfg, set cfg.electrode_def to some electrode, e.g. ''Oz'', see help of this function for more info.');
 end
 pval(1) = indiv_pval;
 pval(2) = cluster_pval;
+if isempty(channelpool)
+    chandirz = dir(folder_name);
+    chandirz = {chandirz([chandirz(:).isdir]).name};
+    chandirz = sort(chandirz(cellfun(@isempty,strfind(chandirz,'.'))));
+    channelpool = chandirz{1};
+    cfg.channelpool = channelpool;
+    disp(['No cfg.channelpool specified, defaulting to channelpool ' channelpool ]);
+end
 
 % get filenames
 plotFreq = ''; % this is empty for now, but might be used to look at the ERPs obtained from a TF analysis
@@ -347,17 +355,17 @@ if ~isempty(timelim)
 end
 clear channelpool;
 % subtracting electrode sets, subtracts electrode 2 from electrode 1 for each condition
-if strcmpi(electrode_method,'subtract') %iscell(electrode_sets{1}) 
-    if size(electrode_sets,2)~=2
-        error('to subtract electrode sets, you should define two columns in cfg.electrode_sets');
+if strcmpi(electrode_method,'subtract') %iscell(electrode_def{1}) 
+    if size(electrode_def,2)~=2
+        error('to subtract electrode sets, you should define two columns in cfg.electrode_def');
     end
-    if size(electrode_sets,1) ~= numel(condition_def)
-        electrode_sets = repmat(electrode_sets,[numel(condition_def),1]);
+    if size(electrode_def,1) ~= numel(condition_def)
+        electrode_def = repmat(electrode_def,[numel(condition_def),1]);
     end
-    for cCond = 1:size(electrode_sets,1)
-        for cDif=1:size(electrode_sets,2)
+    for cCond = 1:size(electrode_def,1)
+        for cDif=1:size(electrode_def,2)
             cfg = [];
-            FT_TEMP(cDif) = select_channels_from_FT_EEG(FT_EEG,electrode_sets{cCond,cDif});
+            FT_TEMP(cDif) = select_channels_from_FT_EEG(FT_EEG,electrode_def{cCond,cDif});
         end
         trial(cCond,:,:) = FT_TEMP(1).trial(FT_TEMP(1).trialinfo==condition_def(cCond),:,:) - FT_TEMP(2).trial(FT_TEMP(2).trialinfo==condition_def(cCond),:,:);
         channelpool{cCond} = [FT_TEMP(1).label '-' FT_TEMP(2).label];
@@ -365,10 +373,10 @@ if strcmpi(electrode_method,'subtract') %iscell(electrode_sets{1})
     FT_EEG.trial = trial;
     FT_EEG.channelpool = channelpool;
 elseif strcmpi(electrode_method,'average') % extract and average
-    if ~iscell(electrode_sets)
-        electrode_sets = {electrode_sets};
+    if ~iscell(electrode_def)
+        electrode_def = {electrode_def};
     end
-    FT_EEG = select_channels_from_FT_EEG(FT_EEG,electrode_sets);
+    FT_EEG = select_channels_from_FT_EEG(FT_EEG,electrode_def);
     FT_EEG.channelpool = FT_EEG.label;
 else
     error('Specify cfg.electrode_method as ''average''  or ''subtract''');

@@ -151,7 +151,7 @@ indiv_pval = .05;
 cluster_pval = .05;
 plotsubjects = false;
 name = [];
-channelpool = 'ALL_NOSELECTION'; % 'ALL', 'OCCIP', 'PARIET' etc, see select_channels.m function to make adjustments
+channelpool = ''; 
 mpcompcor_method = 'uncorrected';
 plot_model = 'BDM'; % 'BDM' or 'FEM'
 reduce_dims = []; % 'diag' 'avtrain' 'avtest' or 'avfreq'
@@ -175,6 +175,13 @@ v2struct(cfg);
 % set defaults
 pval(1) = indiv_pval;
 pval(2) = cluster_pval;
+if isempty(channelpool)
+    chandirz = dir(folder_name);
+    chandirz = {chandirz([chandirz(:).isdir]).name};
+    chandirz = sort(chandirz(cellfun(@isempty,strfind(chandirz,'.'))));
+    channelpool = chandirz{1};
+    disp(['No cfg.channelpool specified, defaulting to channelpool ' channelpool ]);
+end
 
 % some logical checking: is this a frequency folder?
 freqfolder_contains_time_time = ~isempty(dir([folder_name filesep channelpool filesep 'freq*'])); 
