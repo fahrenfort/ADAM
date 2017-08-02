@@ -1,9 +1,9 @@
 %------------------------ toolboxes ------------------------%
 
 % path definitions
-ft_path = fullfile('C:','matlab_toolboxes','fieldtrip-20170704'); % Mac starts with file separator, example: fullfile(filesep,'Users','Johannes','matlab_toolboxes','fieldtrip-20170704');
-eeglab_path = fullfile('C:','matlab_toolboxes','eeglab14_1_1b');
-adam_path = fullfile('C:','matlab_toolboxes','ADAM-master');
+ft_path = 'C:\matlab_toolboxes\fieldtrip-20170704'; % Note Mac and Linux use forward slashes / instead of \
+eeglab_path = 'C:\matlab_toolboxes\eeglab14_1_1b'; 
+adam_path = 'C:\matlab_toolboxes\ADAM-master';
 
 % FT
 if (exist(ft_path,'dir') == 7) && (~isdeployed)
