@@ -64,6 +64,7 @@ condlabels = unique(FT_EEG.trialinfo);
 for c = 1:numel(condlabels)
     cfg              = [];
     cfg.trials       = FT_EEG.trialinfo == condlabels(c);
+    ft_warning off;
     FT_COND{c}       = ft_selectdata(cfg,FT_EEG);
 end
 
@@ -80,12 +81,14 @@ cfg.pad          = 'maxperlen';
 if ~isempty(cfg.foi)
     % single trial
     cfg.keeptrials   = 'yes';
+    ft_warning off;
     TFRhann          = ft_freqanalysis(cfg, FT_EEG);
     TFRhann.cumtapcnt = TFRhann.cumtapcnt(1,:); % remove redundant information, number of tapers is the same for each trial
     % also get condition data on group level
     for c = 1:numel(condlabels)
         cfg.keeptrials   = 'no';
         %groupTFRhann.(['cond_' num2str(condlabels(c))])  = ft_freqanalysis(cfg, FT_COND{c});
+        ft_warning off;
         groupTFRhann{c}  = ft_freqanalysis(cfg, FT_COND{c});
     end
     cfg = [];
