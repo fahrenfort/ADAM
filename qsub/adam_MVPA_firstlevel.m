@@ -32,7 +32,7 @@ bintrain = 'no';            % average across triggers within a class on the trai
 bintest = 'no';             % average across triggers witin a class on the testing side
 savelabels = 'no';          % if 'yes', also saves the classifier labels
 labelsonly = 'no';          % if 'yes', only saves the classifier labels (test set does not require labels in this case)
-tfr_method = 'total';       % computes total power, alternative is 'induced' (subtracts the erp from each trial, separately for train and test data)
+tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
 
 % unpack cfg
 v2struct(cfg);
@@ -85,9 +85,7 @@ if strcmpi(labelsonly,'yes')
 else
     labelsonly = '';
 end
-str_settings = sprintf('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s',class_method,class_type,model,balance_triggers,balance_classes_method,bintrain,bintest,tfr_method,savelabels,labelsonly);
-while strfind(str_settings,',,') str_settings = regexprep(str_settings,',,',','); end % remove duplicating commas
-if str_settings(end) == ',' str_settings(end) = []; end % and remove trailing comma if present
+str_settings = cellarray2csvstring({class_method,class_type,model,balance_triggers,balance_classes_method,bintrain,bintest,tfr_method,savelabels,labelsonly});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
@@ -112,10 +110,12 @@ elseif ~ischar(tfr_baseline)
 end
 tfr_and_erp_baseline = sprintf('%s;%s',tfr_baseline,erp_baseline);
 if isempty(frequencies)
-    frequencies = '2:2:30';
+    frequencies = '2:2:100';
 end
 if ischar(channels) && strcmpi(channels,'all')
     channels = 'ALL';
+elseif iscell(channels)
+    channels = cellarray2csvstring(channels);
 end
 if isempty(channels)
     channels = 'ALL_NOSELECTION';

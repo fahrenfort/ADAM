@@ -112,24 +112,13 @@ if resample_eeg
     FT_EEG = ft_resampledata(cfg,FT_EEG);
 end
 
-% get only relevant electrodes
-% channels = regexp(channelset,'_','split'); right now one cannot indicate
-% indivual electrodes, this has to be done by modyfing select_channels to
-% create a new channelset (which is fine for now)
-% if any(isnan(string2double(channelset)))
-% end
-if ~strcmpi(channelset,'ALL_NOSELECTION')
-    % custom function to select channel groups (can be expanded)
-    [~, channels] = select_channels(FT_EEG.label,channelset);
-    disp(['We had ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
-    cfg = [];
-    cfg.channel = channels;
-    FT_EEG = ft_selectdata(cfg,FT_EEG);
-    disp(['Now we have ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
-    if numel(FT_EEG.label) == 0
-        error('Your electrode/channel selection setting resulted in discarding all electrodes/channels. Try specifying cfg.channels = ''ALL_NOSELECTION'', or try adjusting select_channels.m for your EEG/MEG system.'); 
-    end
-end
+% custom function to select channels 
+[~, channels] = select_channels(FT_EEG.label,channelset);
+disp(['We had ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
+cfg = [];
+cfg.channel = channels;
+FT_EEG = ft_selectdata(cfg,FT_EEG);
+disp(['Now we have ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
 
 % retain eeglab chanlocs for topoplots later on
 if exist('chanlocs','var') % keep what came from eeglab

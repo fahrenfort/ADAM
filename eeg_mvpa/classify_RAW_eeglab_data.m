@@ -141,16 +141,6 @@ end
 if ischar(nFolds)
     nFolds = string2double(nFolds);
 end
-if ischar(channelset)
-    if any(isnan(string2double(channelset)))
-        channelset = regexprep(channelset,',','_');
-    else
-        channelset = str2num(channelset);
-    end
-end
-if isempty(channelset)
-    channelset = 1;
-end
 if isempty(method)
     method = 'linear';
 end
@@ -361,15 +351,8 @@ end
 wraptext('These are the stimulus classes. Each row contains the trigger codes that go into a single class (first row training, second row testing):',80);
 celldisp(condSet,'stimclass');
 
-% Pick a name for the channelset (if it is numeric)
-if isnumeric(channelset)
-    if channelset > 0
-        elecSetNames = {'ALL' 'OCCIP' 'PARIET' 'FRONTAL' 'TEMPORAL' 'OCCIPARIET' 'CDA' 'N2Pc_SPCN' };
-        channelset = elecSetNames{channelset};
-    else
-        channelset = 'ALL_NOSELECTION';
-    end
-end
+% Determine bundle name and/or electrode selection
+[channelset, bundlename_or_bundlelabels] = return_channel_bundle(channelset);
 
 % create a folder for this electrode group
 outpath = [outpath filesep channelset];
@@ -380,7 +363,7 @@ end
 % load data and determine output name
 for cFile = 1:numel(filenames)
     % NOTE: this line is different in TFR! Resampling here...
-    [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}]= read_raw_data(filepath,filenames{cFile},outpath,channelset,erp_baseline{cFile},resample_eeg,do_csd,clean_muscle,clean_window,true,detrend_eeg);
+    [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}]= read_raw_data(filepath,filenames{cFile},outpath,bundlename_or_bundlelabels,erp_baseline{cFile},resample_eeg,do_csd,clean_muscle,clean_window,true,detrend_eeg);
 end
  % duplicate data for testing if only one file is available
 if numel(filenames) == 1

@@ -31,6 +31,16 @@ cent_acctick = [];
 % unpack config
 v2struct(cfg);
 
+% where does this come from
+if isfield(stats(1),'cfg')
+    if isfield(stats(1).cfg,'startdir')
+        startdir = stats(1).cfg.startdir;
+    end
+    if isfield(stats(1).cfg,'folder')
+        folder = stats(1).cfg.folder;
+    end
+end
+
 % set color-limits (z-axis) or y-limits
 if isempty(cent_acctick)
     % assuming this is the same for all graphs, cannot really be helped
@@ -103,27 +113,29 @@ cfg = v2struct(inverty,acclim,chance,cent_acctick,line_colors,ndec,plottype,sing
 
 % make figure?
 if ~plotsubjects
-    title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
-    title_text = title_text(1:find(title_text==filesep,1,'last')-1);
+    title_text = regexprep(regexprep(regexprep(folder,'\\','/'),regexprep(startdir,'\\','/'),''),'_',' ');
+    if numel(stats) == 1
+        title_text = title_text(1:find(title_text=='/',1,'last')-1);
+    end
     fh = figure('name',title_text);
     % make sure all figures have the same size regardless of nr of subplots
     % and make sure they fit on the screen
-    screensize = get(0,'screensize')-50;
+    screensize = get(0,'screensize'); % e.g. 1920 * 1080
     if singleplot
-        UL = screensize([3 4]);
+        UL = screensize([3 4])-50; % subtract a little to be on the save side
     else
-        UL = screensize([3 4])./[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
+        UL = (screensize([3 4])-50)./[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
     end
-    if all(UL>[600 450])
-        UL=[600 450]; % take this as default
+    if all(UL>[600 400])
+        UL=[600 400]; % take this as default
     end
     po=get(fh,'position');
-    po(1:2) = [0,0];
     if singleplot
         po(3:4)=UL;
     else
         po(3:4)=UL.*[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
     end
+    po(1:2) = (screensize(3:4)-po(3:4))/2; po(logical([po(1:2)<100 0 0])) = round(po(logical([po(1:2)<100 0 0]))/4); % position in the center, push further to left / bottom if there is little space on horizontal or vertical axis axis
     set(fh,'position',po);
     set(fh,'color','w');
 end
@@ -149,6 +161,9 @@ if numel(stats)>1
     end
 else
     map = subplot_MVPA(stats,cfg);
+    if ~plotsubjects
+        title(regexprep(stats.condname,'_',' '),'FontSize',10);
+    end
 end
 
 function [map, H, cfg] = subplot_MVPA(stats,cfg,cGraph)
@@ -215,15 +230,28 @@ if mean(times{1}<10)
     end
 end
 
+% determine axes
+if strcmpi(reduce_dims,'avtrain') 
+    xaxis = times{2};
+elseif strcmpi(reduce_dims,'avtest') || strcmpi(reduce_dims,'avfreq')
+    xaxis = times{1};
+elseif strcmpi(dimord,'time_time')
+    xaxis = times{1};
+    yaxis = times{2};
+elseif strcmpi(dimord,'freq_time')
+    xaxis = times{1};
+    yaxis=round(freqs);
+end
+
 % determine time tick
 if isempty(timetick)
     timetickoptions = [5,10,25,50,100,250,500,750,1000,1250,1500,2000,2500,5000];
-    timetick = timetickoptions(nearest(timetickoptions,(max(times{1}) - min(times{1}))/5));
+    timetick = timetickoptions(nearest(timetickoptions,(max(xaxis) - min(xaxis))/5));
 end
 
 % if time tick is smaller than sample duration, increase time tick to sample duration
-if numel(times{1})>1 && timetick < (times{1}(2)-times{1}(1))
-    timetick = ceil((times{1}(2)-times{1}(1)));
+if numel(xaxis)>1 && timetick < (xaxis(2)-xaxis(1))
+    timetick = ceil((xaxis(2)-xaxis(1)));
 end
 
 % get x-axis and y-axis values
@@ -246,26 +274,19 @@ if isempty(acctick)
         else
             acctick = abs(min(abs([chance-mn mx-chance])));
         end
+        if acctick ==0
+            acctick = .5;
+        end
     else
         if strcmpi(measuremethod,'\muV')
-            acctick = 1;
+            acctick = round(diff(acclim)/8);
+            if acctick ==0
+                acctick = 1;
+            end
         else
             acctick = diff(acclim)/8;
         end
     end
-end
-
-% determine axes
-if strcmpi(reduce_dims,'avtrain') 
-    xaxis = times{2};
-elseif strcmpi(reduce_dims,'avtest') || strcmpi(reduce_dims,'avfreq')
-    xaxis = times{1};
-elseif strcmpi(dimord,'time_time')
-    xaxis = times{1};
-    yaxis = times{2};
-elseif strcmpi(dimord,'freq_time')
-    xaxis = times{1};
-    yaxis=round(freqs);
 end
 
 % stuff particular to 2D and 3D plotting
@@ -287,7 +308,9 @@ if strcmpi(plottype,'2D')
     % some smoothing on 2D using spline
     if makespline
        data = compute_spline_on_classify(data,xaxis',splinefreq);
-       stdData = compute_spline_on_classify(stdData,xaxis',splinefreq);
+       if ~isempty(stdData)
+           stdData = compute_spline_on_classify(stdData,xaxis',splinefreq);
+       end
     end
 else
     zaxis = sort(unique([cent_acctick:-acctick:min(acclim) cent_acctick:acctick:max(acclim)]));
@@ -320,7 +343,7 @@ else
 end
 indx = [];
 for tick = findticks
-    indx = [indx nearest(xaxis,tick)];        
+    indx = [indx nearest(xaxis,tick)];
 end
 
 % do the same for y-axis
@@ -339,6 +362,11 @@ for tick = findticks
 end
 
 % plot
+if plotsubjects
+    fontsize = 10;
+else
+    fontsize = 14;
+end
 if strcmpi(plottype,'2D')
     colormap('default');
     if isempty(StdError)
@@ -357,7 +385,6 @@ if strcmpi(plottype,'2D')
     if ~isempty(pVals)
         sigdata = data;
         if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~plotsubjects && ~strcmpi(mpcompcor_method,'none')
-            disp(cGraph);
             if ~singleplot elevate = 1; else elevate = cGraph-.5; end
             if inverty
                 sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/80)*elevate;
@@ -404,8 +431,14 @@ if strcmpi(plottype,'2D')
     if strcmpi(plot_model,'FEM')
         measuremethod = 'CTF slope';
     end
-    ylabel(measuremethod,'FontSize',14);
-    xlabel('time in ms','FontSize',14);
+    ylabel(measuremethod,'FontSize',fontsize);
+    if strcmpi(reduce_dims,'avtrain')
+        xlabel('test time in ms','FontSize',fontsize);
+    elseif strcmpi(reduce_dims,'avtest')
+        xlabel('train time in ms','FontSize',fontsize);
+    else
+        xlabel('time in ms','FontSize',fontsize);
+    end
     set(gca,'YTick',yaxis);
     Ylabel = regexp(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ','split');
     if chance ~= 0 % create labels containing equal character counts when centered on some non-zero value
@@ -447,33 +480,27 @@ else
         Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
     end
     set(hcb,'YTick',zaxis,'YTickLabel',Ylabel);
-
     if strcmpi(ydim,'freq')
-        ylabel('frequency in Hz','FontSize',14);
-        xlabel('time in ms','FontSize',14);
+        ylabel('frequency in Hz','FontSize',fontsize);
+        xlabel('time in ms','FontSize',fontsize);
     else
-        ylabel('testing time in ms','FontSize',14);
-        xlabel('training time in ms','FontSize',14);
+        ylabel('testing time in ms','FontSize',fontsize);
+        xlabel('training time in ms','FontSize',fontsize);
     end
     set(gca,'YTick',indy);
     roundto = yticks;
-    set(gca,'YTickLabel',num2cell(round(yaxis(indy)/roundto)*roundto));
+    set(gca,'YTickLabel',num2cell(int64(round(yaxis(indy)/roundto)*roundto))); % convert to int64 to prevent -0 at 0-axis
 end
 % set ticks on horizontal axis
 set(gca,'XTick',indx);
 roundto = xticks;
-set(gca,'XTickLabel',num2cell(round(xaxis(indx)/roundto)*roundto));
-if plotsubjects
-    set(gca,'FontSize',10);
-else
-    set(gca,'FontSize',14);
-end
+set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)/roundto)*roundto)));
+set(gca,'FontSize',fontsize);
 set(gca,'color','none');
 axis square;
 if inverty
     set(gca,'YDir','reverse');
 end
-% ((isempty(acclim2D) && strcmpi(plottype,'2D')) || (isempty(acclim3D) && strcmpi(plottype,'3D'))) &&
 if plotsubjects && strcmpi(plottype,'2D')
     sameaxes('xyzc',gcf());
 end
