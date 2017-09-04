@@ -61,7 +61,7 @@ if (exist(adam_path,'dir') == 7) && (~isdeployed)
     end
     disp('ADAM IS ALIVE');
     disp(['ADAM:   capfile is here ' findcapfile]);
-else
+elseif ~isdeployed
     disp(['WARNING, CANNOT FIND ADAM TOOLBOX AT ' adam_path ', CHECK PATHS IN startup.m']);
 end
 
