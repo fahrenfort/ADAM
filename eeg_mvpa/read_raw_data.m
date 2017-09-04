@@ -2,7 +2,7 @@ function [ FT_EEG, filename, chanlocs ]= read_raw_data(filepath,filename,outpath
 % function [ FT_EEG, filename, chanlocs ]= read_raw_data(filepath,filename,outpath,channelset,erp_baseline,resample_eeg,do_csd,clean_data,clean_window,shuffle_trials,detrend_eeg)
 % read eeglab data and transform into FT_EEG
 % perform SCD and a bunch of other stuff such as trial rejection and resampling if necessary
-% Johannes Fahrenfort, VU 2016
+% Johannes Fahrenfort, VU 2016, 2017
 if nargin<11
     detrend_eeg = false;
 end
@@ -51,24 +51,20 @@ else
     wraptext('The data needs to be stored in eeglab native format (.set extension) or in fieldtrip native format (.mat extension). The toolbox attempts to read your datafile using both extensions. If you are reading this message, both attempts have failed.');
     error(['Cannot load data, filename ''' filename ''' cannot be found at ''' filepath '''']);
 end
-    
-% double check whether all necessary fields are there and remove redundant fields
+
+% add sample info if missing
+if ~isfield(FT_EEG,'fsample')
+    FT_EEG.fsample = round((numel(FT_EEG.time)-1)/(FT_EEG.time(end)-FT_EEG.time(1)));
+end
+
+% double check whether all necessary fields are there
 FT_FIELDS = fieldnames(FT_EEG);
-reqfields = {'label', 'fsample', 'trial', 'time', 'trialinfo'};
+reqfields = {'fsample', 'label', 'trial', 'time', 'trialinfo'};
 absentfields = reqfields(~ismember(reqfields,FT_FIELDS));
 if numel(absentfields)==1
     error(['The following required field is missing from your data: ' sprintf('%s',absentfields{1})]);
 elseif numel(absentfields)>1
     error(['The following required fields are missing from your data: ' sprintf('%s, ',absentfields{1:end-1}) absentfields{end}]);
-else % remove redundant fields
-    reqfields{end+1} = 'elec';
-    reqfields{end+1} = 'grad';
-    FT_EEG = rmfield(FT_EEG,FT_FIELDS(~ismember(FT_FIELDS,reqfields)));
-    FT_FIELDS = fieldnames(FT_EEG);
-    % is there channel location info?
-    if ~any(ismember(FT_FIELDS,{'elec','grad'}))
-        error('Missing electrode location or gradiometer location info.');
-    end
 end
 
 % detrend eeg
@@ -127,28 +123,38 @@ if exist('chanlocs','var') % keep what came from eeglab
 else % if not coming from eeglab, recreate eeglab chanlocs structure
     try
         chanfields = FT_FIELDS(ismember(FT_FIELDS,{'elec','grad'}));
-        % remove field if not informative
-        index2remove = [];
-        for c = 1:numel(chanfields)
-            if sum(ismember(FT_EEG.label,FT_EEG.(chanfields{c}).label)) == 0
-                FT_EEG = rmfield(FT_EEG,chanfields{c});
-                index2remove = [index2remove c];
+        % if FT_EEG already contains chanloc data, use those data
+        if ~isempty(chanfields)
+            % remove field if not informative
+            index2remove = [];
+            for c = 1:numel(chanfields)
+                if sum(ismember(FT_EEG.label,FT_EEG.(chanfields{c}).label)) == 0
+                    FT_EEG = rmfield(FT_EEG,chanfields{c});
+                    index2remove = [index2remove c];
+                end
             end
-        end
-        chanfields(index2remove) = [];
-        % append all fields that are informative
-        allchans = []; allpos = [];
-        for c = 1:numel(chanfields)
-            allchans = [allchans; FT_EEG.(chanfields{c}).label];
-            allpos = [allpos; FT_EEG.(chanfields{c}).chanpos];
-        end
-        % restrict only to fields that have data
-        for c = 1:numel(FT_EEG.label)
-            chanlocs(c).labels = FT_EEG.label{c};
-            findlabel = ismember(allchans,FT_EEG.label{c});
-            chanlocs(c).X = allpos(findlabel,1);
-            chanlocs(c).Y = allpos(findlabel,2);
-            chanlocs(c).Z = allpos(findlabel,3);
+            chanfields(index2remove) = [];
+            % append all fields that are informative
+            allchans = []; allpos = [];
+            for c = 1:numel(chanfields)
+                allchans = [allchans; FT_EEG.(chanfields{c}).label];
+                allpos = [allpos; FT_EEG.(chanfields{c}).chanpos];
+            end
+            % restrict only to fields that have data and for which pos info exists
+            for c = 1:numel(FT_EEG.label)
+                findlabel = ismember(allchans,FT_EEG.label{c});
+                if ~isempty(findlabel)
+                    chanlocs(c).labels = FT_EEG.label{c};
+                    chanlocs(c).X = allpos(findlabel,1);
+                    chanlocs(c).Y = allpos(findlabel,2);
+                    chanlocs(c).Z = allpos(findlabel,3);
+                end
+            end
+        else
+            % if no chanlocdata exist, read them in
+            chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
+            [~, ~, chanindex] = intersect(FT_EEG.label,{chanlocdata(:).labels},'stable'); % takes FT_EEG.label as point of departure!
+            chanlocs = chanlocdata(chanindex);
         end
     end
     if ~exist('chanlocs','var')
