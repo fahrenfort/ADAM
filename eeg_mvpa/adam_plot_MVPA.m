@@ -19,6 +19,8 @@ singleplot = false;
 plot_order = [];
 folder = '';
 startdir = '';
+swapaxes = true;
+helpline_at = 0;
 if numel(stats) > 1
     line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
 else
@@ -109,7 +111,7 @@ end
 
 % pack config with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(inverty,acclim,chance,cent_acctick,line_colors,ndec,plottype,singleplot,nameOfStruct2Update);
+cfg = v2struct(inverty,acclim,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,helpline_at,nameOfStruct2Update);
 
 % make figure?
 if ~plotsubjects
@@ -379,8 +381,12 @@ if strcmpi(plottype,'2D')
     plot([1,numel(data)],[chance,chance],'k--');
     % plot vertical line on zero
     plot([nearest(xaxis,0),nearest(xaxis,0)],[acclim(1),acclim(2)],'k--');
-    % plot another help line
-    % plot([nearest(xaxis,250),nearest(xaxis,250)],[acclim(1),acclim(2)],'k--');
+    
+    % plot help line
+    if helpline_at ~= 0
+        plot([nearest(xaxis,helpline_at),nearest(xaxis,helpline_at)],[acclim(1),acclim(2)],'k--');
+    end
+    
     % plot significant time points
     if ~isempty(pVals)
         sigdata = data;
@@ -447,14 +453,14 @@ if strcmpi(plottype,'2D')
     set(gca,'YTickLabel',Ylabel);
     hold off;
 else
-    % plot significant time points
+    % determine significant time points
     %colormap('jet');
     cmap  = brewermap([],'RdBu');
     colormap(cmap(end:-1:1,:)); 
-    
     if ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none')
         [data, map] = showstatsTFR(data,pVals,acclim);
     end
+    
     % some smoothing on 3D
     if makespline
         if ndims(data) > 2 % DOUBLE CHECK WHETHER THIS IS OK
@@ -468,10 +474,20 @@ else
             data = uint8(interp2(X,Y,double(data),XX,YY));
         end
     end
+    if swapaxes
+        data = permute(data,[2 1 3]);
+    end
     imagesc(data);
     caxis(acclim);
     set(gca,'YDir','normal'); % set the y-axis right
-    %if ~plotsubjects
+    
+    % plot some help lines
+    if helpline_at ~= 0
+        hold on;
+        timeinms = helpline_at;
+        plot([nearest(xaxis,timeinms),nearest(xaxis,timeinms)],[nearest(yaxis,min(yaxis)),nearest(yaxis,max(yaxis))],'k--');
+        plot([nearest(xaxis,min(xaxis)),nearest(xaxis,max(xaxis))],[nearest(yaxis,timeinms),nearest(yaxis,timeinms)],'k--');
+    end
     
     % set ticks on color bar
     hcb=colorbar;
@@ -484,8 +500,13 @@ else
         ylabel('frequency in Hz','FontSize',fontsize);
         xlabel('time in ms','FontSize',fontsize);
     else
-        ylabel('testing time in ms','FontSize',fontsize);
-        xlabel('training time in ms','FontSize',fontsize);
+        if swapaxes
+            ylabel('training time in ms','FontSize',fontsize);
+            xlabel('testing time in ms','FontSize',fontsize);
+        else
+            ylabel('testing time in ms','FontSize',fontsize);
+            xlabel('training time in ms','FontSize',fontsize);
+        end
     end
     set(gca,'YTick',indy);
     roundto = yticks;

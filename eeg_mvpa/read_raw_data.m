@@ -152,7 +152,8 @@ else % if not coming from eeglab, recreate eeglab chanlocs structure
             end
         else
             % if no chanlocdata exist, read them in
-            chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
+            %chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
+            chanlocdata = readlocs(findcapfile,'importmode','native');
             [~, ~, chanindex] = intersect(FT_EEG.label,{chanlocdata(:).labels},'stable'); % takes FT_EEG.label as point of departure!
             chanlocs = chanlocdata(chanindex);
         end

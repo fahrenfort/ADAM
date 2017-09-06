@@ -1,18 +1,17 @@
-function stats = compare_MVPA_stats(stats1,stats2,gsettings,mask)
-% function stats = compare_MVPA_stats(stats1,stats2,gsettings,mask)
+function stats = adam_compare_MVPA_stats(stats1,stats2,cfg,mask)
+% function stats = compare_MVPA_stats(stats1,stats2,cfg,mask)
 % compares and subtracts stats for plotting: stats1 - stats2
-% gsettings determines how statistics are computed
-% gsettings.one_two_tailed = 'two' (can also be 'one')
-% gsettings.indiv_pval = .05;
-% gsettings.cluster_pval = .05;
-% gsettings.mpcompcor_method = 'uncorrected' (default, can also be 'cluster_based', 'fdr' or 'none')
-% gsettings.plottype = '2D' (default, can also be '3D'), determines whether
-% only to extract and test the diagonal, or whether to etract time_time or time_frequency
+% cfg determines how statistics are computed
+% cfg.one_two_tailed = 'two' (can also be 'one')
+% cfg.indiv_pval = .05;
+% cfg.cluster_pval = .05;
+% cfg.mpcompcor_method = 'uncorrected' (default, can also be 'cluster_based', 'fdr' or 'none')
+
 one_two_tailed = 'two';
 cluster_pval = .05;
 indiv_pval = .05;
 mpcompcor_method = 'uncorrected';
-v2struct(gsettings);
+v2struct(cfg);
 pval(1) = indiv_pval;
 pval(2) = cluster_pval;
 
@@ -43,7 +42,7 @@ if strcmp(mpcompcor_method,'fdr')
     pStruct = []; % still need to implement
 elseif strcmp(mpcompcor_method,'cluster_based')
     % CLUSTER BASED CORRECTION
-    [ ClassPvals, pStruct ] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},gsettings,settings,mask);
+    [ ClassPvals, pStruct ] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},cfg,settings,mask);
 elseif strcmp(mpcompcor_method,'uncorrected')
     % NO MP CORRECTION
     if strcmp(one_two_tailed,'two')

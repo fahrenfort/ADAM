@@ -38,7 +38,7 @@ function [stats,cfg] = adam_compute_group_MVPA(folder_name,cfg,mask)
 % (and in which order) using cfg.plot_order, as a cell array.
 %
 % Example: 
-% cfg.timelim = [0.2 1.2];
+% cfg.timelim = [200 1200]; % in ms
 % cfg.mpcompcor_method = 'cluster_based';
 % cfg.startdir = '/Volumes/backup/WM_debunk_EEG';
 % cfg.plot_order = { 'LOCATION_TASK','SEARCH_TASK'};
@@ -540,11 +540,12 @@ if numel(settings.times) == 1 && strcmpi(settings.dimord,'time_time')
 end
 
 % get the relevant electrodes and obtain the correct order for weights
-if ~isfield(settings,'chanlocs') % if no chanlocdata exist in settings
+if ~isfield(settings,'chanlocs') || isempty(settings.chanlocs{1}) % if no chanlocdata exist in settings
     if ~exist('chanlocdata','var')
-        chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
+        % chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
+        chanlocdata = readlocs(findcapfile,'importmode','native');
     end
-    [~, chanindex, dataindex] = intersect({chanlocdata(:).labels},settings.channels,'stable');
+    [~, chanindex, dataindex] = intersect({chanlocdata(:).labels},settings.channels{1},'stable');
     chanlocs = chanlocdata(chanindex); % put all in the same order as imported locations
 else % otherwise just extract from settings
     chanlocs = settings.chanlocs;
