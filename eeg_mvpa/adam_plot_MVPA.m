@@ -20,7 +20,7 @@ plot_order = [];
 folder = '';
 startdir = '';
 swapaxes = true;
-helpline_at = 0;
+referenceline = 0;   % you can plot a reference line by indicating cfg.referenceline = timepoint (in milliseconds) where it should be plotted.
 if numel(stats) > 1
     line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
 else
@@ -111,7 +111,7 @@ end
 
 % pack config with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(inverty,acclim,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,helpline_at,nameOfStruct2Update);
+cfg = v2struct(inverty,acclim,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,nameOfStruct2Update);
 
 % make figure?
 if ~plotsubjects
@@ -383,8 +383,8 @@ if strcmpi(plottype,'2D')
     plot([nearest(xaxis,0),nearest(xaxis,0)],[acclim(1),acclim(2)],'k--');
     
     % plot help line
-    if helpline_at ~= 0
-        plot([nearest(xaxis,helpline_at),nearest(xaxis,helpline_at)],[acclim(1),acclim(2)],'k--');
+    if referenceline ~= 0
+        plot([nearest(xaxis,referenceline),nearest(xaxis,referenceline)],[acclim(1),acclim(2)],'k--');
     end
     
     % plot significant time points
@@ -482,9 +482,9 @@ else
     set(gca,'YDir','normal'); % set the y-axis right
     
     % plot some help lines
-    if helpline_at ~= 0
+    if referenceline ~= 0
         hold on;
-        timeinms = helpline_at;
+        timeinms = referenceline;
         plot([nearest(xaxis,timeinms),nearest(xaxis,timeinms)],[nearest(yaxis,min(yaxis)),nearest(yaxis,max(yaxis))],'k--');
         plot([nearest(xaxis,min(xaxis)),nearest(xaxis,max(xaxis))],[nearest(yaxis,timeinms),nearest(yaxis,timeinms)],'k--');
     end
