@@ -201,6 +201,11 @@ if isfield(stats,'cfg')
     stats = rmfield(stats,'cfg');
 end
 v2struct(cfg);
+if strcmpi(plot_dim, 'freq_time')
+    swapaxes = false;
+else
+    swapaxes = true;
+end
 if isempty(splinefreq)
     makespline = false;
 else
