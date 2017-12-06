@@ -18,7 +18,7 @@ end
 if (exist(eeglab_path,'dir') == 7) && (~isdeployed)
     curdir = pwd;
     cd(eeglab_path);
-    eeglab;
+    eeglab nogui;
     cd(curdir);
     disp('EEGLAB IS ALIVE');
 elseif ~isdeployed
