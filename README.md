@@ -1,5 +1,5 @@
 
-[![ADAM](/install/ADAM_header.png)](https://github.com/fahrenfort/ADAM)
+[![ADAM](/install/ADAM_header.png)](http://www.fahrenfort.com/ADAM.htm)
 
 # Download
 If you download this toolbox, please go through [http://www.fahrenfort.com/ADAM.htm](http://www.fahrenfort.com/ADAM.htm) where you can leave your e-mail. This way I can keep track of the user base of the toolbox and inform users of serious bugs if they happen.
