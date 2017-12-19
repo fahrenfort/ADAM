@@ -1,6 +1,9 @@
 
 [![ADAM](/install/ADAM_header.png)](https://github.com/fahrenfort/ADAM)
 
+# Download
+If you download this toolbox, please go through [http://www.fahrenfort.com/ADAM.htm](http://www.fahrenfort.com/ADAM.htm) where you can leave your e-mail. This way I can keep track of the user base of the toolbox and inform users of serious bugs if they happen.
+
 # What is it?
 ADAM is an open source Matlab Toolbox. It allows you to perform multivariate analyses on your EEG and/or MEG data using backward decoding (BDM) and forward encoding models (FEM).
 
