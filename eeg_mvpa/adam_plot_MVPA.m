@@ -5,7 +5,7 @@ function map = adam_plot_MVPA(cfg,stats)
 %
 % By J.J.Fahrenfort, VU, 2014, 2015, 2016, 2017
 if nargin<2
-    disp('cannot plot graph without some settings, need at least 2 arguments:');
+    disp('cannot plot graph without stats input, need at least 2 arguments:');
     help plot_MVPA;
     return
 end
@@ -201,7 +201,7 @@ if isfield(stats,'cfg')
     stats = rmfield(stats,'cfg');
 end
 v2struct(cfg);
-if strcmpi(plot_dim, 'freq_time')
+if exist('plot_dim','var') && strcmpi(plot_dim, 'freq_time')
     swapaxes = false;
 else
     swapaxes = true;

@@ -125,9 +125,9 @@ if isempty(folder_name)
     % loop through directories (results folders)
     for cdirz = 1:numel(plot_order)
         if numel(plot_order) == 1 % getting from single folder
-            [stats, cfg] = subcompute_group_MVPA([folder_name filesep plot_order{cdirz}], cfg, mask);
+            [stats, cfg] = subcompute_group_MVPA(cfg, [folder_name filesep plot_order{cdirz}], mask);
         else % getting from multiple folders
-            [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name filesep plot_order{cdirz}], cfg, mask);
+            [stats(cdirz), cfg] = subcompute_group_MVPA(cfg, [folder_name filesep plot_order{cdirz}], mask);
         end
     end
 else
@@ -136,18 +136,18 @@ else
             if ~exist(folder_name{cdirz},'dir')
                 error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
             end
-            [stats(cdirz), cfg] = subcompute_group_MVPA([folder_name{cdirz}], cfg, mask);
+            [stats(cdirz), cfg] = subcompute_group_MVPA(cfg, [folder_name{cdirz}], mask);
         end
     else
         if ~exist(folder_name,'dir')
             error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
         end
-        [stats, cfg] = subcompute_group_MVPA(folder_name,cfg,mask);
+        [stats, cfg] = subcompute_group_MVPA(cfg, folder_name,mask);
     end
 end
 
 % subroutine for each condition
-function [stats,cfg] = subcompute_group_MVPA(folder_name,cfg,mask)
+function [stats,cfg] = subcompute_group_MVPA(cfg, folder_name,mask)
 % set defaults
 one_two_tailed = 'two';
 indiv_pval = .05;
