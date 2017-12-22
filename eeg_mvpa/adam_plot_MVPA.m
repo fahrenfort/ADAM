@@ -1,5 +1,5 @@
-function map = adam_plot_MVPA(stats,cfg)
-% function adam_plot_MVPA(stats,cfg)
+function map = adam_plot_MVPA(cfg,stats)
+% function adam_plot_MVPA(cfg,stats)
 % draw classification accuracy based on stats produced by
 % compute_group_MVPA
 %

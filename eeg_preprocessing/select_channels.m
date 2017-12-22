@@ -6,8 +6,8 @@ function [selchannelindex, selchannellabels] = select_channels(channellabels,bun
 % files prior to running your analyses if you want to remove EOG etc). 
 % This function selects channels (e.g. removes HEOG, VEOG or makes some
 % other selection) in a BioSemi and other standard 10-20 64-electrode
-% systems. It is very easy to add create other bundles, just add more
-% bundlenames in the function below, e.g.:
+% systems. It is very easy to add create other bundles, just modify this
+% function to add more bundlenames, e.g. adding a line like:
 % bundlenames.YOURBUNDLENAME = {'your' 'electrode' 'selection'};
 %
 % usage: 
@@ -26,7 +26,7 @@ function [selchannelindex, selchannellabels] = select_channels(channellabels,bun
 % outputs:
 % channels are the indexnumbers of the selected channels channellabels
 % channellabels is a cell array of the channel names of the selected channels
-
+%
 % Part of the ADAM toolbox, J.J.Fahrenfort, VU 2016, 2017
 if nargin<2
     bundlename_or_bundlelabels = 'EEG'; 
