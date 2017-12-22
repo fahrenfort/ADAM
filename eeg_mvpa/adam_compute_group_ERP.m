@@ -55,6 +55,9 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 %
 % By J.J.Fahrenfort, VU, 2016, 2017
 
+if nargin<2
+    folder_name = '';
+end
 plot_order = {};
 
 % backwards compatibility

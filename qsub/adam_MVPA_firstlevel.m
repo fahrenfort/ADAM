@@ -1,18 +1,163 @@
 function adam_MVPA_firstlevel(cfg)
-% This function runs a first level analysis based on the parameters
-% specificied in the cfg struct. Unspecified parameters take on default
-% values. Amongst others, the following core parameters can be specified:
-% cfg.datadir = '/path/to/the/data';
-% cfg.outputdir = '/path/to/the/results';
-% cfg.filenames = {'subject1', 'subject2);           do not use extensions, just base of filename!
-%                                                    for separate train and test files do: 
-% cfg.filenames = {'subject1train;subject1test', 'subject2train;subject2test'};
-% cfg.class_spec = {'1,2,3','4,5,6'};                triggers 1,2,3 are class 1, and 4,5,6 are class 2
-%                                                    for separate train and test triggers, do:
-% cfg.class_spec = {'1,2,3;11,12','4,5,6;13,14'};    trains on triggers 1,2,3 (class1) and 4,5,6 (class2),
-%                                                    but tests on triggers '11,12' (class1) and '13,14' (class2)
+% ADAM_MVPA_FIRSTLEVEL runs a first level MVPA analysis on single-subject raw EEG or MEG data.
+% Output can be used as input for ADAM_COMPUTE_GROUP_MVPA.
+% 
+% Use as:
+%   adam_MVPA_firstlevel(cfg);
+% 
+% The function accepts as data formats: raw/preprocessed files imported into EEGLAB (.set or .mat)
+% or Fieldtrip (.mat)
+% 
+% EEGLAB files should have a EEG.data structure with dimensions: channels by time by trials, and an
+% EEG.event structure containing triggers that uniquely refer to the different classes on which the
+% MVPA analysis is performed (see below). This format should be the default after running EEGLAB's
+% pop_epoch().
+% 
+% Fieldtrip files should have a data.trial cell array containing all trials, where each trial-cell
+% has dimensions: channel by time, and a data.trialinfo array containing triggers that uniquely
+% refer to the different classes on which the MVPA analysis is performed (see below). This format
+% should be the default after running Fieldtrip?s ft_preprocessing() with a proper trial definition
+% (see ft_trialfun).
+% 
+% The cfg (configuration) structure serves as input and contains all ingredients for the MVPA
+% analysis, as well as the directory where the input data is stored, the filenames (to run a batch
+% of subjects in one go), and the directory where the output data should be saved.
+% 
+% The cfg should be specified as follows:
+% 
+%       cfg.datadir                = string specifiying a directory where the raw data are located;
+%       cfg.filenames              = a N by 1 cell array with N filenames, without .mat or .set
+%                                    extension; It is also possible to train your classifier on one
+%                                    input file and test on another input file (cross-condition or
+%                                    cross-subject classification); this still requires a N by 1
+%                                    cell array, where each entry is a string with both filenames
+%                                    (without extension) separated by a semi-colon (see below for an
+%                                    example)
+%       cfg.class_spec             = a N-class cell array, each cell containing a string with the
+%                                    trigger values corresponding to that class, separated by comma
+%                                    (e.g. cfg.class_spec{1} = '1,2,3'; cfg.class_spec{2} =
+%                                    '4,5,6';). Pay attention to the balancing of your stimulus
+%                                    classes. The function COND_STRING combines integer arrays of
+%                                    triggers, according to possible multiple levels of your
+%                                    experimental design (e.g. faces/houses and
+%                                    conscious/unconscious), into the cell-array format needed for
+%                                    ADAM_MVPA_FIRSTLEVEL.
+%       cfg.balance_triggers       = 'yes' (default); balances triggers to achieve within-class
+%                                    balancing, so that each class contains an equal amount of
+%                                    trigger values (discarding leftover triggers); other option is
+%                                    'no', which will use all triggers in the data, but be sure your
+%                                    design is balanced! In general, we highly recommend the default
+%                                    'yes'. If desired, you can manually specify your own ratio of
+%                                    each trial type in your class definition, by duplicating
+%                                    trigger values: {'1,1,2,3'} {'4,4,5,6'}.
+%       cfg.balance_classes_method = 'oversample' (default; or 'undersample'); whether to
+%                                    over/undersample classes in the training set to achieve
+%                                    cross-class balancing; oversampling results in some duplicate
+%                                    trials.
+%       cfg.class_type             = 'linear' (default); classifier type, e.g. 'linear' or
+%                                    'diaglinear'; for other options see FITCDISCR (default Matlab
+%                                    discriminant analysis function, which ADAM uses at its core)
+%       cfg.class_method           = 'accuracy' (default); this the "standard" classification
+%                                    metric; other options are:
+%                                    ?hr-far','dprime','hr','far','mr','cr', in those cases make
+%                                    sure that the first class is 'signal' and the second the
+%                                    'noise'
+%       cfg.crossclass             = 'no'; (default) whether ('yes') or not ('no') to apply
+%                                    time-by-time cross-classification, yielding temporal
+%                                    generalization matrices; specifying 'no' will simply compute
+%                                    the diagonal of such a matrix (training and testing are done on
+%                                    the same time points). Note that 'yes' will drastically
+%                                    increase computation time!
+%       cfg.nfolds                 = integer specifying the number of folds for cross-validation
+%                                    (default: 10);
+%       cfg.model                  = 'BDM' (default); BDM performs a backward decoding model; FEM
+%                                    performs a forward encoding model.
+%       cfg.raw_or_tfr             = 'raw' (default); you can either perform MVPA on raw M/EEG data,
+%                                    or on single trial power of multiple frequency bands (option
+%                                    'tfr'; see below for specification of frequency bands).
+%       cfg.channels               = 'ALL_NOSELECTION'; specifying this will simply use all channels
+%                                    available; note that if you still have EOG,ECG,etc. channels in
+%                                    your data set, it will also include these, which may or may not
+%                                    be desirable. Other options exist, which currently only hold
+%                                    for data with a channel structure that contains labels
+%                                    according to the 10-05 labeling convention: 'all' (default; all
+%                                    scalp-channels, so excluding EOG,etc.), 'OCCIP' (only
+%                                    occipital), 'PARIET' (only parietal) etc; type help
+%                                    select_channels.
+%       cfg.resample               = 'no' (default); or specify an integer to downsample your data;
+%                                    this is especially recommended if you have a high sampling rate
+%                                    (e.g. >500 Hz) and you want to do perform cross-classification
+%       cfg.erp_baseline           = 'no' (default); or specify a time window according to
+%                                    [begin,end]; always in SECONDS.
+%       cfg.tfr_baseline           = 'no' (default); or specify a time window according to
+%                                    [begin,end]; always in SECONDS.
+%       cfg.frequencies            = '2:2:30' (default); takes frequencies from 2 to 30 Hz in steps
+%                                    of 2; this should be a string, and only applies when
+%                                    cfg.raw_or_tfr is set to 'tfr';
+%       cfg.tfr_method             = 'total' (default); computes total power, alternative is
+%                                    'induced' or 'evoked' ('induced' subtracts the erp from each
+%                                    trial, separately for train and test data, 'evoked' takes ERPs
+%                                    as input for TFR).
+%       cfg.bintrain               = 'no' (default); if 'yes', averages across triggers within a
+%                                    class on the training side
+%       cfg.bintest                = 'no' (default); if 'yes', averages across triggers witin a
+%                                    class on the testing side
+%       cfg.savelabels             = 'no' (default); if 'yes', also saves the classifier labels
+%       cfg.labelsonly             = 'no' (default); if 'yes', only saves the classifier labels
+%
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Example cfg with all default options used:
+%
+% cfg.datadir       = 'path/to/data/;
+% cfg.filenames     = {'subject01'
+%                      'subject02'
+%                      'subject03'
+%                      'subject04'
+%                      'subject05'};
+% cfg.class_spec{1} = '1,2,3'; % face-triggers
+% cfg.class_spec{2} = '4,5,6'; % house-triggers
+%
+% adam_MVPA_firstlevel(cfg);
+%
+% --> This analysis performs backward decoding on raw EEG data using all scalp channels assuming
+%     10-05 labels; classifier is trained on separating houses from faces; training and testing are
+%     done on the same time points (i.e. the "diagonal", no temporal generalization
+%     cross-classification), using 10-fold cross-validation, with balanced triggers and oversampled
+%     balanced classes. No baseline correction is done.
+% 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Example cfg with some custom ingredients:
+%
+% cfg.datadir       = 'path/to/data/;
+% cfg.filenames     = {'subject01_c1,subject01_c2'
+%                      'subject02_c1,subject02_c2'
+%                      'subject03_c1,subject03_c2'
+%                      'subject04_c1,subject04_c2'
+%                      'subject05_c1,subject05_c2'};
+% cfg.class_spec{1} = '1,2,3'; % face-triggers
+% cfg.class_spec{2} = '4,5,6'; % house-triggers
+% cfg.cross_class   = 'yes';
+% cfg.raw_or_tfr    = 'tfr';
+% cfg.frequencies   = '8:2:12';
+% cfg.tfr_method    = 'induced';
+% cfg.tfr_baseline  = [.5 .2];
+% cfg.channels      = 'OCCIPARIET';
+%
+% adam_MVPA_firstlevel(cfg);
+%
+% --> This analysis performs backward decoding on induced alpha power EEG data, only on 15
+%     parieto-occipital channels; the classifier is trained on separating houses from faces in one
+%     experimental condition (say, not-masked), and tested on another experimental condition (say,
+%     masked). Note that cross-condition generalization does not require cross-validation, because a
+%     different data set is used for training and testing. Training on each time point is tested on
+%     every other time-point, yielding a temporal generalization across time (GAT)  matrix. Note 
+%     that this gives 3 GAT matrices, for each frequency (8, 10 and 12). Induced power is baseline
+%     corrected using a pre-stimulus baseline from -500 to -200 ms.
 %
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017
+% 
+% See also ADAM_COMPUTE_GROUP_MVPA, POP_EPOCH, FT_PREPROCESSING, SELECT_CHANNELS, COND_STRING,
+% FITCDISCR
 
 % default values
 channels = 'all';           % in 64-electrode BioSemi this uses all electrodes except the EOG electrodes, other options: 'ALL_NOSELECTION' for other aquisition systems or MEG, or for BioSemi 'OCCIP' only occipital, 'PARIET' only parietal etc, type help select_channels

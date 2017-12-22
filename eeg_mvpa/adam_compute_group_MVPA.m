@@ -51,6 +51,9 @@ function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
 if nargin<3
     mask = [];
 end
+if nargin<2
+    folder_name = '';
+end
 
 plot_order = {};
 reduce_dims = '';
