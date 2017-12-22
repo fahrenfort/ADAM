@@ -131,18 +131,14 @@ if isempty(folder_name)
         end
     end
 else
-    if iscell(folder_name)
-        for cdirz = 1:numel(folder_name)
-            if ~exist(folder_name{cdirz},'dir')
-                error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
-            end
-            [stats(cdirz), cfg] = subcompute_group_MVPA(cfg, [folder_name{cdirz}], mask);
-        end
-    else
-        if ~exist(folder_name,'dir')
+    if ~iscell(folder_name)
+        folder_name = {folder_name};
+    end
+    for cdirz = 1:numel(folder_name)
+        if ~exist(folder_name{cdirz},'dir')
             error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
         end
-        [stats, cfg] = subcompute_group_MVPA(cfg, folder_name,mask);
+        [stats(cdirz), cfg] = subcompute_group_MVPA(cfg, [folder_name{cdirz}], mask);
     end
 end
 
