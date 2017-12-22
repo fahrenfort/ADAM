@@ -103,18 +103,21 @@ if isempty(folder_name)
         end
     end
     % loop through directories (results folders)
+    stats = [];
     for cdirz = 1:numel(plot_order)
-        if numel(plot_order) == 1 % getting from single folder
-            [stats, cfg] = subcompute_group_ERP(cfg,[folder_name filesep plot_order{cdirz}]);
-        else % getting from multiple folders
-            [stats(cdirz), cfg] = subcompute_group_ERP(cfg,[folder_name filesep plot_order{cdirz}]);
-        end
+        stats = [stats subcompute_group_ERP(cfg,[folder_name filesep plot_order{cdirz}])];
     end
 else
-    if ~exist('folder_name','dir') && ~iscell(folder_name) 
-        error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
+    if ~iscell(folder_name)
+        folder_name = {folder_name};
     end
-    [stats, cfg] = subcompute_group_ERP(cfg,folder_name);
+    stats = [];
+    for cdirz=1:numel(folder_name)
+        if ~exist(folder_name{cdirz},'dir')
+            error([folder_name{cdirz} ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
+        end
+        [stats, cfg] = [stats subcompute_group_ERP(cfg,folder_name{cdirz})];
+    end
 end
 % fill cfg.plot_order in case not given by user and from single folder
 if numel(cfg.plot_order) == 1
@@ -296,7 +299,7 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     elseif strcmpi(condition_method,'average')
         condname = [origcondname ' average'];
     else
-        condname = ['condition ' num2str(condition_def(cCond))];
+        condname = [origcondname ' erp' num2str(condition_def(cCond))];
     end
     
     % get some stats
