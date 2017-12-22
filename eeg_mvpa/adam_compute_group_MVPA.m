@@ -432,7 +432,7 @@ for cSubj = 1:nSubj
         tmpcfg.plot_model = plot_model;
         tmpcfg.plotsubjects = true;
         tmpcfg.plot_order = {condname};
-        adam_plot_MVPA(onestat,tmpcfg);
+        adam_plot_MVPA(tmpcfg,onestat);
         subjname = subjectfiles{cSubj};
         underscores = strfind(subjname,'_');
         subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
