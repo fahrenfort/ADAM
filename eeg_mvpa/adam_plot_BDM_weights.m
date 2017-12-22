@@ -1,4 +1,4 @@
-function avweightstruct = adam_plot_BDM_weights(stats,cfg)
+function avweightstruct = adam_plot_BDM_weights(cfg,stats)
 % plots BDM weights for a specific time range or frequency rannge
 % outputs average weights for that point, which can subsequently be used
 % for statistical testing weight maps against each other using

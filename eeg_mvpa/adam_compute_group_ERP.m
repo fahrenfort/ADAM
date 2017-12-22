@@ -1,5 +1,5 @@
-function [stats,cfg] = adam_compute_group_ERP(folder_name,cfg)
-% function [stats,cfg] = adam_compute_group_ERP(folder_name,cfg)
+function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
+% function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 % Computes group ERPs and extracts ERP averages
 %
 % Common use cases:

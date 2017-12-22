@@ -57,6 +57,7 @@ iterations = 1000;
 paired = true;
 tail = 'two';
 v2struct(cfg);
+tail = one_two_tailed; % jvd: added this line, otherwise it always did the default of two-tailed, also if one-tailed specified in cfg (22-12-17)
 pval = [indiv_pval, cluster_pval];
 
 % repeat data if data2 is a chance variable

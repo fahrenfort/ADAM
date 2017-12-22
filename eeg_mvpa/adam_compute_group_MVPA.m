@@ -1,5 +1,5 @@
-function [stats,cfg] = adam_compute_group_MVPA(folder_name,cfg,mask)
-% function [stats,cfg] = adam_compute_group_MVPA(folder_name,cfg,mask)
+function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
+% function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
 %
 % Extracts group classification data, classifier weights, forward model
 % parameters etc. Also does basic stats on the extracted conditions.
