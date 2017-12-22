@@ -105,23 +105,23 @@ if isempty(folder_name)
     % loop through directories (results folders)
     for cdirz = 1:numel(plot_order)
         if numel(plot_order) == 1 % getting from single folder
-            [stats, cfg] = subcompute_group_ERP([folder_name filesep plot_order{cdirz}],cfg);
+            [stats, cfg] = subcompute_group_ERP(cfg,[folder_name filesep plot_order{cdirz}]);
         else % getting from multiple folders
-            [stats(cdirz), cfg] = subcompute_group_ERP([folder_name filesep plot_order{cdirz}],cfg);
+            [stats(cdirz), cfg] = subcompute_group_ERP(cfg,[folder_name filesep plot_order{cdirz}]);
         end
     end
 else
     if ~exist('folder_name','dir') && ~iscell(folder_name) 
         error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
     end
-    [stats, cfg] = subcompute_group_ERP(folder_name,cfg);
+    [stats, cfg] = subcompute_group_ERP(cfg,folder_name);
 end
 % fill cfg.plot_order in case not given by user and from single folder
 if numel(cfg.plot_order) == 1
     cfg.plot_order = {stats(:).condname};
 end
 
-function [stats,cfg] = subcompute_group_ERP(folder_name,cfg)
+function [stats,cfg] = subcompute_group_ERP(cfg,folder_name)
 % set defaults
 one_two_tailed = 'two';
 indiv_pval = .05;

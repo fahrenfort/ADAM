@@ -5,7 +5,7 @@ function adam_MVPA_firstlevel(cfg)
 % Use as:
 %   adam_MVPA_firstlevel(cfg);
 % 
-% The function accepts as data formats: raw/preprocessed files imported into EEGLAB (.set or .mat)
+% The function accepts as data formats: raw/preprocessed files imported into EEGLAB (.set and .fdt)
 % or Fieldtrip (.mat)
 % 
 % EEGLAB files should have a EEG.data structure with dimensions: channels by time by trials, and an
