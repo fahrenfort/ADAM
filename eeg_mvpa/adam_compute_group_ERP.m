@@ -16,7 +16,7 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 % cfg.elecrode_method = 'average' (default)
 %   - averages signal over electrodes
 % cfg.condition_def = [1,2];
-% cfg.condition_methods = 'subtract'
+% cfg.condition_method = 'subtract' (default)
 %   - condition_def = [1,2] will subtract 2 from 1 and test them against
 %     each other -> can do this for multiple results folders at once
 %
@@ -25,7 +25,7 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 %   - a cell array with the electrodes which will be averaged (can also be
 %     a single electrode)
 % cfg.condition_def = [1,2,3,4];
-% cfg.condition_methods = 'average'
+% cfg.condition_method = 'average'
 %   - will output the average of all conditions and test against 0 
 %   -> can do this for multiple results folders at once
 %
@@ -34,7 +34,7 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 %   - a cell array with the electrodes which will be averaged (can also be
 %     a single electrode)
 % cfg.condition_def = [1,2,3,4];
-% cfg.condition_methods = 'keep' (default)
+% cfg.condition_method = 'keep' 
 %   - will output those conditions
 %   -> can only do this for a single results folders
 %
@@ -139,7 +139,7 @@ resample_eeg = 0;
 electrode_def = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
 electrode_method = 'average';
-condition_method = '';
+condition_method = 'subtract'; 
 % unpack graphsettings
 plottype = '2D';
 channelpool = '';
@@ -270,7 +270,7 @@ for cSubj = 1:nSubj
         tmpcfg.acclim2D = [];
         tmpcfg.acclim3D = [];
         tmpcfg.acctick = [];
-        adam_plot_MVPA(onestat,tmpcfg);
+        adam_plot_MVPA(tmpcfg,onestat);
         subjname = subjectfiles{cSubj};
         underscores = strfind(subjname,'_');
         subjname = regexprep(subjname(underscores(2)+1:underscores(end)-1),'_',' ');
