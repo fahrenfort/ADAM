@@ -379,7 +379,9 @@ if strcmpi(plottype,'2D')
     if isempty(StdError)
         H.dataLine = plot(data);
     else
-        H = shadedErrorBar(1:numel(data),data,stdData,{'Color',[.7,.7,.7],'MarkerFaceColor',[1 1 0]},.5); % [1 1 0] {'MarkerFaceColor',[.7,.7,.7]}
+        %H = shadedErrorBar(1:numel(data),data,stdData,{'Color',[.7,.7,.7],'MarkerFaceColor',[1 1 0]},.5); % [1 1 0] {'MarkerFaceColor',[.7,.7,.7]}
+        H = shadedErrorBar(1:numel(data),data,stdData,{'Color',line_colors{cGraph} + (1 - line_colors{cGraph})/2,'MarkerFaceColor',[1 1 0]},.1);
+        %H.dataLine = plot(data,'Color',line_colors{cGraph}/3,'LineWidth',1);
     end
     hold on;
     % plot horizontal line on zero
@@ -404,7 +406,7 @@ if strcmpi(plottype,'2D')
             end
             sigdata(pVals>=indiv_pval) = NaN;
             if isnumeric(line_colors{cGraph})
-                H.bottomLine=plot(1:numel(sigdata),sigdata,'Color',line_colors{cGraph},'LineWidth',2); % sigline below graph
+                H.bottomLine=plot(1:numel(sigdata),sigdata,'Color',line_colors{cGraph},'LineWidth',3); % sigline below graph
             else
                 H.bottomLine=plot(1:numel(sigdata),sigdata,line_colors{cGraph},'LineWidth',2); % sigline below graph
             end
@@ -413,9 +415,9 @@ if strcmpi(plottype,'2D')
         if ~strcmpi(plotsigline_method,'straight')
             sigdata(pVals>=indiv_pval) = NaN;
             if isnumeric(line_colors{cGraph})
-                H.mainLine=plot(1:numel(sigdata),sigdata,'Color',line_colors{cGraph},'LineWidth',2); % sigline on graph
+                H.mainLine=plot(1:numel(sigdata),sigdata,'Color',line_colors{cGraph},'LineWidth',3); % sigline on graph
             else
-                H.mainLine=plot(1:numel(sigdata),sigdata,line_colors{cGraph},'LineWidth',2); % sigline on graph
+                H.mainLine=plot(1:numel(sigdata),sigdata,line_colors{cGraph},'LineWidth',3); % sigline on graph
             end
         end
         if ~all(isnan((sigdata)))
@@ -460,8 +462,8 @@ if strcmpi(plottype,'2D')
 else
     % determine significant time points
     %colormap('jet');
-    cmap  = brewermap([],'RdBu');
-    colormap(cmap(end:-1:1,:)); 
+    %cmap  = brewermap([],'*RdBu');
+    %colormap(cmap);
     if ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none')
         [data, map] = showstatsTFR(data,pVals,acclim);
     end

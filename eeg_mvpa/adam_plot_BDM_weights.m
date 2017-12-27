@@ -63,21 +63,19 @@ if ~plotsubjects
 end
 
 % main routine
-%if numel(stats)>1
+if numel(stats)>1
     for cStats=1:numel(stats)
         disp(['plot ' num2str(cStats)]);
         subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
-        avweightstruct(cStats) = subplot_BDM_weights(stats(cStats).weights(cStats),stats(cStats),cfg);
-        %[map, ~, cfg] = subplot_MVPA(stats(cStats),cfg,cStats); % all in the first color
+        avweightstruct(cStats) = subplot_BDM_weights(cfg,stats(cStats));
         title(regexprep(stats(cStats).condname,'_',' '),'FontSize',10);
     end
-% else
-%     %map = subplot_MVPA(stats,cfg);
-%     avweightstruct = subplot_BDM_weights(weights(cCond),stats(cCond),cfg);
-%     if ~plotsubjects
-%         title(regexprep(stats.condname,'_',' '),'FontSize',10);
-%     end
-% end
+else
+    avweightstruct = subplot_BDM_weights(cfg,stats(cStats));
+    if ~plotsubjects
+        title(regexprep(stats.condname,'_',' '),'FontSize',10);
+    end
+end
 
 % get some values and give a title
 v2struct(cfg);
@@ -93,7 +91,8 @@ set(gcf,'name',title_text,'numbertitle','off');
 
 
 % subfunction that does plotting
-function avweightstruct = subplot_BDM_weights(weights,stats,cfg)
+function avweightstruct = subplot_BDM_weights(cfg,stats)
+weights = stats.weights;
 % get some settings
 clusterPvals = [];
 pStruct = [];
@@ -232,15 +231,18 @@ end
 
 % plotting weights
 set(gcf,'color','w');
-title(title_text,'FontSize', 32);
-if strcmp(imgtype,'vec')
-    topoplot_jjf(plot_data,chanlocs','maplimits',weightlim,'style','blank','electrodes','on','plotrad',.6,'nosedir','-Y','emarker',{'.','k',20,1},'emarker2',{elecs,'o','k',10,1}); %
+title(title_text,'FontSize', 12);
+if strcmp(imgtype,'vec') % chanlocs'
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','plotrad',.6,'nosedir','-Y','emarker',{'.','k',20,1},'emarker2',{elecs,'o','k',10,1}); %
 elseif strcmp(imgtype,'png')
-    topoplot_jjf(plot_data,chanlocs','maplimits',weightlim,'style','map','electrodes','off','plotrad',.6,'hcolor','none','shading','interp','nosedir','-Y'); %
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','off','shading','interp','plotrad',.6,'nosedir','+Y','hcolor','none');
 else
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','ptslabels','plotrad',.6,'nosedir','+Y','emarker2',{elecs,'o','k',10,1}); 
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','on','plotrad',.6,'nosedir','+Y','emarker2',{elecs,'o','k',10,1}); % 'electrodes','ptslabels',
     cbar('vert');
 end
+% colormap
+cmap  = brewermap([],'*RdBu');
+colormap(gcf,cmap);
 
 % return the averages
 avweightstruct.chanlocs = chanlocs;
