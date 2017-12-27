@@ -2,8 +2,8 @@ function [ blurdum, map ] = showstatsTFR(dum, prob, ZLIM)
 % showstatsTFR Take a stat map from ft and blur out nonsig parts of the TFR
 map = [];
 % right color map
-cmap  = brewermap([],'RdBu');
-colormap(cmap(end:-1:1,:));
+cmap  = brewermap([],'*RdBu');
+colormap(cmap);
 % load('colormap170613.mat');
 nsalpha=0.2;
 pval = squeeze(prob);
