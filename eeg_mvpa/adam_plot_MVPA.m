@@ -2,7 +2,7 @@ function map = adam_plot_MVPA(cfg,stats)
 % function adam_plot_MVPA(cfg,stats)
 % draw classification accuracy based on stats produced by
 % compute_group_MVPA
-%
+% one_two_tailed was changed to tail -> options: 'both', 'left', 'right'
 % By J.J.Fahrenfort, VU, 2014, 2015, 2016, 2017
 if nargin<2
     disp('cannot plot graph without stats input, need at least 2 arguments:');
@@ -32,6 +32,11 @@ cent_acctick = [];
 
 % unpack config
 v2struct(cfg);
+
+% BACKWARDS COMPATIBILITY
+if exist('one_two_tailed','var')
+    error('The cfg.one_two_tailed field has been replaced by the cfg.tail field. Please replace cfg.one_two_tailed with cfg.tail using ''both'', ''left'' or ''right''. See help for further info.');
+end
 
 % where does this come from
 if isfield(stats(1),'cfg')
@@ -192,7 +197,7 @@ mpcompcor_method = 'uncorrected';
 plotsubjects = false;
 cluster_pval = .05;
 indiv_pval = .05;
-one_two_tailed = 'two';
+tail = 'both';
 
 % then unpack cfgs to overwrite defaults, first original from stats, then the new one 
 if isfield(stats,'cfg')
@@ -423,14 +428,14 @@ if strcmpi(plottype,'2D')
         if ~all(isnan((sigdata)))
             wraptext('Due to a bug in the way Matlab exports figures (the ''endcaps'' property in OpenGL is set to''on'' by default), the ''significance lines'' near the time line are not correctly plotted when saving as .eps or .pdf. The workaround is to open these plots in Illustrator, manually select these lines and select ''butt cap'' for these lines (under the ''stroke'' property).');
         end
-        if strcmpi(one_two_tailed,'one') one_two_tailed = '1'; else  one_two_tailed = '2'; end
+        if strcmpi(tail,'both'); tail = '2'; end
         if ~plotsubjects
             if strcmpi(mpcompcor_method,'uncorrected')
-                h_legend = legend(H.mainLine,[' p < ' num2str(indiv_pval) ' (uncorrected, ' one_two_tailed '-sided)']); % ,'Location','SouthEast'
+                h_legend = legend(H.mainLine,[' p < ' num2str(indiv_pval) ' (uncorrected, ' tail '-sided)']); % ,'Location','SouthEast'
             elseif strcmpi(mpcompcor_method,'cluster_based')
-                h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (cluster based, ' one_two_tailed '-sided)']);
+                h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (cluster based, ' tail '-sided)']);
             elseif strcmpi(mpcompcor_method,'fdr')
-                h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (FDR, ' one_two_tailed '-sided)']);
+                h_legend = legend(H.mainLine,[' p < ' num2str(cluster_pval) ' (FDR, ' tail '-sided)']);
             end
             if ~strcmpi(mpcompcor_method,'none')
                 legend boxoff;

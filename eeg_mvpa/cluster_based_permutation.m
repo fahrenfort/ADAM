@@ -18,7 +18,7 @@ function [ clusterPvals, pStruct ] = cluster_based_permutation(data1,data2_or_ch
 % cfg.indiv_pval and cfg.cluster_pval respectively determine
 % the p-value used for inclusion into the cluser, and the p-value used for
 % evaluation overall cluster significance
-% cfg.paired (true or false) and cfg.tail ('one' or 'two)
+% cfg.paired (true or false) and cfg.tail (two-sided: 'both', posclusters: 'right', negclusters: 'left')
 % determine whether to apply paired t-testing and whether to apply one- or
 % two-tailed testing
 % cfg.iterations is the number of iterations in the permutation 
@@ -55,9 +55,8 @@ indiv_pval = .05; % default = .05
 cluster_pval = .05; % default = .05
 iterations = 1000;
 paired = true;
-tail = 'two';
+tail = 'both';
 v2struct(cfg);
-tail = one_two_tailed; % jvd: added this line, otherwise it always did the default of two-tailed, also if one-tailed specified in cfg (22-12-17)
 pval = [indiv_pval, cluster_pval];
 
 % repeat data if data2 is a chance variable
@@ -114,7 +113,7 @@ pPos = cPosClust / iterations;
 pNeg = cNegClust / iterations;
 
 % cut out clusters that do not cross the threshold
-if strcmp(tail,'two')
+if strcmpi(tail,'both')
     for c=1:max(unique(posLabels))
         if pPos(c) < pval(2)/2
             clusterPvals(posLabels == c) = pPos(c);
@@ -129,7 +128,7 @@ if strcmp(tail,'two')
             negLabels(negLabels == c) = 0;
         end
     end
-else
+elseif strcmpi(tail,'right')
     for c=1:max(unique(posLabels))
         if pPos(c) < pval(2)
             clusterPvals(posLabels == c) = pPos(c);
@@ -137,17 +136,20 @@ else
             posLabels(posLabels == c) = 0;
         end
     end
+elseif strcmpi(tail,'left')
+    for c=1:max(unique(negLabels))
+        if pNeg(c) < pval(2)
+            clusterPvals(negLabels == c) = pNeg(c);
+        else
+            negLabels(negLabels == c) = 0;
+        end
+    end
 end
 pStruct.posclusters = compute_pstruct(posLabels,clusterPvals,squeeze(mean(data1)-mean(data2)),cfg,settings,mask,connectivity);
 pStruct.negclusters = compute_pstruct(negLabels,clusterPvals,squeeze(mean(data2)-mean(data1)),cfg,settings,mask,connectivity);
 
-function [posSizes, negSizes, posLabels, negLabels, pVals] = compute_cluster_sizes(data1,data2,indiv_pval,one_two_tailed,mask,connectivity,paired)
+function [posSizes, negSizes, posLabels, negLabels, pVals] = compute_cluster_sizes(data1,data2,indiv_pval,tail,mask,connectivity,paired)
 % step 1, determine 'actual' p values
-if strcmpi(one_two_tailed,'two')
-    tail = 'both';
-else
-    tail = 'right';
-end
 % restrict data
 for c = 1:size(data1)
     maskdata1(c,:,:) = data1(c,mask);

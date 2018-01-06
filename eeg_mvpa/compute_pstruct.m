@@ -62,6 +62,10 @@ for c = 1:numel(clusterlist)
             end
         end
     else
+        % quick hack to take the channel set from the training data
+        if numel(channels) == 2
+            channels = channels{1};
+        end
         pstruct(c).channels = channels(logical(labels))';
     end
 end
