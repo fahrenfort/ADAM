@@ -19,6 +19,11 @@ plotsubjects = false;
 % unpack config
 v2struct(cfg);
 
+% BACKWARDS COMPATIBILITY
+if exist('one_two_tailed','var')
+    error('The cfg.one_two_tailed field has been replaced by the cfg.tail field. Please replace cfg.one_two_tailed with cfg.tail using ''both'', ''left'' or ''right''. See help for further info.');
+end
+
 % where does this come from
 if isfield(stats(1),'cfg')
     if isfield(stats(1).cfg,'startdir')
@@ -251,7 +256,3 @@ avweightstruct.indivWeights = subjweights;
 avweightstruct.timelim = timelim;
 avweightstruct.freqlim = freqlim;
 avweightstruct.pStruct = pStruct;
-
-%if isempty(weightlim)
-%    sameaxes('xyzc',gcf());
-%end

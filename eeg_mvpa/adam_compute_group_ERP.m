@@ -16,7 +16,7 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 % cfg.elecrode_method = 'average' (default)
 %   - averages signal over electrodes
 % cfg.condition_def = [1,2];
-% cfg.condition_method = 'subtract' (default)
+% cfg.condition_method = 'subtract'
 %   - condition_def = [1,2] will subtract 2 from 1 and test them against
 %     each other -> can do this for multiple results folders at once
 %
@@ -34,7 +34,7 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 %   - a cell array with the electrodes which will be averaged (can also be
 %     a single electrode)
 % cfg.condition_def = [1,2,3,4];
-% cfg.condition_method = 'keep' 
+% cfg.condition_method = 'keep' (default)
 %   - will output those conditions
 %   -> can only do this for a single results folders
 %
@@ -62,6 +62,9 @@ plot_order = {};
 
 % backwards compatibility
 v2struct(cfg);
+if exist('one_two_tailed','var')
+    error('The cfg.one_two_tailed field has been replaced by the cfg.tail field. Please replace cfg.one_two_tailed with cfg.tail using ''both'', ''left'' or ''right''. See help for further info.');
+end
 if exist('plotorder','var')
     plot_order = plotorder;
     cfg.plot_order = plot_order;
@@ -126,7 +129,7 @@ end
 
 function [stats,cfg] = subcompute_group_ERP(cfg,folder_name)
 % set defaults
-one_two_tailed = 'two';
+tail = 'both';
 indiv_pval = .05;
 cluster_pval = .05;
 plotsubjects = false;
@@ -139,7 +142,7 @@ resample_eeg = 0;
 electrode_def = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
 electrode_method = 'average';
-condition_method = 'subtract'; 
+condition_method = 'keep'; 
 % unpack graphsettings
 plottype = '2D';
 channelpool = '';
@@ -147,7 +150,7 @@ v2struct(cfg);
 
 % pack graphsettings with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(one_two_tailed,reduce_dims,indiv_pval,cluster_pval,name,plottype,mpcompcor_method,electrode_def,electrode_method,condition_def,condition_method,timelim,resample_eeg,nameOfStruct2Update);
+cfg = v2struct(tail,reduce_dims,indiv_pval,cluster_pval,name,plottype,mpcompcor_method,electrode_def,electrode_method,condition_def,condition_method,timelim,resample_eeg,nameOfStruct2Update);
 
 % fill some empties
 if isempty(electrode_def)
@@ -281,11 +284,6 @@ end
 
 % next, compute stats
 chance = 0;
-if strcmp(one_two_tailed,'two')
-    tail = 'both';
-else
-    tail = 'right';
-end
 
 % statistical testing
 origcondname = condname;
@@ -385,7 +383,7 @@ elseif strcmpi(electrode_method,'average') % extract and average
     FT_EEG = select_channels_from_FT_EEG(FT_EEG,electrode_def);
     FT_EEG.channelpool = FT_EEG.label;
 else
-    error('Specify cfg.electrode_method as ''average''  or ''subtract''');
+    error('Specify cfg.electrode_method as ''average'' (default) or ''subtract''');
 end
 if any(size(FT_EEG.trial)==0)
     dims = regexp(FT_EEG.dimord,'_','split');

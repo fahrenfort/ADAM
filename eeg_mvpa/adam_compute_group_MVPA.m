@@ -12,7 +12,7 @@ function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
 % condition at once). The conditions will be plotted in subplots by
 % adam_plot_MVPA and plot_CTF cfg is a struct that contains some input
 % settings for compute_group_MVPA and ensueing plot functions:
-% cfg.one_two_tailed = 'two' (can also be 'one')
+% cfg.tail = 'both' (can also be 'right' for positive differences or 'left' for negative differences)
 % cfg.indiv_pval = .05;
 % cfg.cluster_pval = .05;
 % cfg.mpcompcor_method = 'uncorrected' (default, can also be 'cluster_based', 'fdr' or 'none')
@@ -62,6 +62,9 @@ freqlim = [];
 % backwards compatibility
 plot_dim = 'time_time'; % default, 'time_time' or 'freq_time'
 v2struct(cfg);
+if exist('one_two_tailed','var')
+    error('The cfg.one_two_tailed field has been replaced by the cfg.tail field. Please replace cfg.one_two_tailed with cfg.tail using ''both'', ''left'' or ''right''. See help for further info.');
+end
 if exist('plotmodel','var')
     plot_model = plotmodel;
     cfg.plot_model = plot_model;
@@ -145,7 +148,7 @@ end
 % subroutine for each condition
 function [stats,cfg] = subcompute_group_MVPA(cfg, folder_name,mask)
 % set defaults
-one_two_tailed = 'two';
+tail = 'both';
 indiv_pval = .05;
 cluster_pval = .05;
 plotsubjects = false;
@@ -226,7 +229,7 @@ end
         
 % pack graphsettings with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(freqlim,plotFreq,trainlim,testlim,one_two_tailed,indiv_pval,cluster_pval,plot_model,mpcompcor_method,reduce_dims,freqlim,nameOfStruct2Update);
+cfg = v2struct(freqlim,plotFreq,trainlim,testlim,tail,indiv_pval,cluster_pval,plot_model,mpcompcor_method,reduce_dims,freqlim,nameOfStruct2Update);
 
 % get filenames
 subjectfiles = dir([folder_name filesep channelpool plotFreq{1} filesep '*.mat']);
@@ -454,11 +457,7 @@ ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 if nSubj > 1
     if strcmpi(mpcompcor_method,'fdr')
         % FDR CORRECTION
-        if strcmpi(one_two_tailed,'two')
-            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),'both');
-        else
-            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),'right');
-        end
+        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),tail);
         thresh = fdr(squeeze(ClassPvals),pval(2));
         ClassPvals(ClassPvals>thresh) = 1;
     elseif strcmpi(mpcompcor_method,'cluster_based')
@@ -466,11 +465,7 @@ if nSubj > 1
         [ClassPvals, pStruct] = cluster_based_permutation(ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings,mask);
     elseif strcmpi(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
-        if strcmpi(one_two_tailed,'two')
-            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),'both');
-        else
-            [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),'right');
-        end
+        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),tail);
         ClassPvals(~mask) = 1;
     else
         % NO TESTING, PLOT ALL
