@@ -68,19 +68,13 @@ if ~plotsubjects
 end
 
 % main routine
-if numel(stats)>1
-    for cStats=1:numel(stats)
-        disp(['plot ' num2str(cStats)]);
-        subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
-        avweightstruct(cStats) = subplot_BDM_weights(cfg,stats(cStats));
-        title(regexprep(stats(cStats).condname,'_',' '),'FontSize',10);
-    end
-else
-    avweightstruct = subplot_BDM_weights(cfg,stats(cStats));
-    if ~plotsubjects
-        title(regexprep(stats.condname,'_',' '),'FontSize',10);
-    end
+avweightstruct = [];
+for cStats=1:numel(stats)
+    disp(['plot ' num2str(cStats)]);
+    subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
+    avweightstruct = [avweightstruct subplot_BDM_weights(cfg,stats(cStats))];
 end
+
 
 % get some values and give a title
 v2struct(cfg);
@@ -106,14 +100,14 @@ v2struct(weights);
 subjlim = [];
 timelim = 250;
 freqlim = [];
-plotweights_or_pattern = 'corpattern';
-normalized = false;
+plotweights_or_pattern = 'weights';
+normalized = true;
 weightlim = 'absmax';
 imgtype = [];
 indiv_pval = .05;
 cluster_pval = .05;
 iterations = 1000;
-one_two_tailed = 'two';
+tail = 'both';
 mpcompcor_method = 'cluster_based';
 % get cfg
 v2struct(cfg);
@@ -209,13 +203,9 @@ if isempty(clusterPvals)
         connectivity = get_connected_electrodes({stats.settings.chanlocs(:).labels});
         [ clusterPvals, pStruct ] = cluster_based_permutation(subjweights,0,cfg,settings,[],connectivity);
     elseif strcmpi(mpcompcor_method, 'uncorrected')
-        if strcmpi(one_two_tailed,'two')
-            [~,clusterPvals] = ttest(subjweights,0,'tail','both');
-        else
-            [~,clusterPvals] = ttest(subjweights,0,'tail','right');
-        end
+        [~,clusterPvals] = ttest(subjweights,0,'tail',tail);
     elseif strcmpi(mpcompcor_method, 'fdr')
-        disp('fdr not yet implemented here');
+        error('fdr not yet implemented here');
         clusterPvals = [];
     else
         clusterPvals = [];
@@ -238,13 +228,22 @@ end
 set(gcf,'color','w');
 title(title_text,'FontSize', 12);
 if strcmp(imgtype,'vec') % chanlocs'
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','plotrad',.6,'nosedir','-Y','emarker',{'.','k',20,1},'emarker2',{elecs,'o','k',10,1}); %
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','nosedir','+Y','emarker',{'.','k',20,1},'emarker2',{elecs,'o','k',10,1}); %
 elseif strcmp(imgtype,'png')
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','off','shading','interp','plotrad',.6,'nosedir','+Y','hcolor','none');
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','off','shading','interp','nosedir','+Y','hcolor','none');
 else
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','on','plotrad',.6,'nosedir','+Y','emarker2',{elecs,'o','k',10,1}); % 'electrodes','ptslabels',
-    cbar('vert');
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','on','nosedir','+Y','emarker2',{elecs,'o','k',10,1}); % 'electrodes','ptslabels', 'plotrad',.7
+    h = cbar('vert');
+    set(get(h,'title'),'string',' ');
+    %h = colorbar;
+    if normalized
+        bartitle = 'spatially z-scored';
+    else
+        bartitle = 'arbitrary units';
+    end
+    ylabel(h,bartitle);
 end
+
 % colormap
 cmap  = brewermap([],'*RdBu');
 colormap(gcf,cmap);
