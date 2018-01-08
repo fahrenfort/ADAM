@@ -1,6 +1,6 @@
 function adam_MVPA_firstlevel(cfg)
 % ADAM_MVPA_FIRSTLEVEL runs a first level MVPA analysis on single-subject raw EEG or MEG data.
-% Output can be used as input for ADAM_COMPUTE_GROUP_MVPA.
+% Output can be used as input for ADAM_COMPUTE_GROUP_MVPA and ADAM_COMPUTE_GROUP_ERP.
 % 
 % Use as:
 %   adam_MVPA_firstlevel(cfg);
@@ -59,7 +59,7 @@ function adam_MVPA_firstlevel(cfg)
 %                                    discriminant analysis function, which ADAM uses at its core)
 %       cfg.class_method           = 'accuracy' (default); this the "standard" classification
 %                                    metric; other options are:
-%                                    ?hr-far','dprime','hr','far','mr','cr', in those cases make
+%                                    'hr-far','dprime','hr','far','mr','cr', in those cases make
 %                                    sure that the first class is 'signal' and the second the
 %                                    'noise'
 %       cfg.crossclass             = 'no'; (default) whether ('yes') or not ('no') to apply

@@ -1,51 +1,114 @@
 function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
-% function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
+% ADAM_COMPUTE_GROUP_MVPA extracts group-level classification data from single-subject MVPA results
+% that were given by ADAM_MVPA_FIRSTLEVEL, and if requested performs a statistical test at the group
+% level. The result is a structure that contains the group average, together with the
+% subject-specific classification data, classifier weights, and (if requested) statistical outcomes,
+% and can be used for plotting (as an input for ADAM_PLOT_MVPA and ADAM_PLOT_MVPA_weights).
 %
-% Extracts group classification data, classifier weights, forward model
-% parameters etc. Also does basic stats on the extracted conditions.
-% Use this as input for plot functions such as adam_plot_MVPA,
-% adam_plot_MVPA_weights, plot_CTF and plot_FEM_weights.
-% folder_name is the folder that contains the condition data.
-% If folder_name is left empty, a selection dialog will pop up for you to
-% indicate the root folder in which the folders that contain the condition
-% folders are located (use this if you want to compute more than one
-% condition at once). The conditions will be plotted in subplots by
-% adam_plot_MVPA and plot_CTF cfg is a struct that contains some input
-% settings for compute_group_MVPA and ensueing plot functions:
-% cfg.tail = 'both' (can also be 'right' for positive differences or 'left' for negative differences)
-% cfg.indiv_pval = .05;
-% cfg.cluster_pval = .05;
-% cfg.mpcompcor_method = 'uncorrected' (default, can also be 'cluster_based', 'fdr' or 'none')
-% cfg.plot_dim = 'time_time' or 'freq_time' (default: 'time_time')
-% cfg.reduce_dims = 'diag', 'avtrain', 'avtest' or 'avfreq' or []
-% cfg.trainlim = is the time limits over which to constrain the
-% training data, in ms.
-% cfg.testlim = the time limits over which to constrain the testing
-% data, in ms.
-% cfg.timelim constrains trainlim and testlim at once (takes precedence
-% over trainlim and testlim
-% cfg.freqlim = is the frequency limits over which to constrain the
-% frequency dimension.
-% cfg.channelpool = 'ALL' (can also be e.g. 'OCCIP', see
-% classify_RAW_eeglab_data.m and classify_TFR_from_eeglab_data.m for more 
-% options.
-% cfg.exclsubj = index numbers of subjects to skip (not including
-% these subjects in the results structs). No subjects are excluded when
-% left empty (default).
-% Specify whether to extract the BDM or the FEM data using
-% cfg.plot_model = 'BDM' (default) or 'FEM'
-% You can also (optionally) specify which conditions you want to extract
-% (and in which order) using cfg.plot_order, as a cell array.
+% Use as:
+%   stats = adam_compute_group_MVPA(cfg)
 %
-% Example: 
-% cfg.timelim = [200 1200]; % in ms
-% cfg.mpcompcor_method = 'cluster_based';
-% cfg.startdir = '/Volumes/backup/WM_debunk_EEG';
-% cfg.plot_order = { 'LOCATION_TASK','SEARCH_TASK'};
-% cfg.plot_model = 'FEM';
-% [stats, cfg] = compute_group_MVPA('',cfg);
+% The cfg (configuration) input structure should at least specify the path to the directory where
+% the results are located:
+%
+%       cfg.startdir         = string specifiying a directory where the results of 
+%                              ADAM_MVPA_FIRSTLEVEL are located; cfg.startdir can be left empty, but
+%                              this requires you to navigate from your Matlab root folder to the
+%                              desired folder every time. Even if you specifiy a directory here,
+%                              ADAM will nonetheless always generate a pop-up folder-selection
+%                              window, giving you the option to switch to another folder, or to
+%                              confirm by clicking 'Open'.
+%
+% The following options are optional:
+%
+%       cfg.mpcompcor_method = 'uncorrected' (default); string specifying the method for multiple
+%                              correction correction; other options are: 'cluster_based' for
+%                              cluster-based permutation testing, 'fdr' for false-discovery rate,
+%                              or 'none' if you don't wish to perform a statistical analysis.
+%       cfg.indiv_pval       = .05 (default); integer; the statistical threshold for each individual
+%                              time point; the fdr correction is applied on this threshold.
+%       cfg.cluster_pval     = .05 (default); integer; if mpcompcor_method is set to
+%                              'cluster_based', this is the statistical threshold for evaluating
+%                              whether a cluster of significant contiguous time points (after the
+%                              indiv_pval threshold) is larger than can be expected by chance; the
+%                              cluster_pval should never be higher than the indiv_pval.
+%       cfg.tail             = 'both' (default); string specifiying whether the t-tests are done
+%                              right- ('right') or left-tailed ('left'), or two-tailed ('both').
+%       cfg.plot_dim         = 'time_time' (default); or 'freq_time'
+%       cfg.reduce_dims      = [] (default); this will take all dimensions of the level-1 result; to 
+%                              customize, you can specify: 'diag' (only take the diagonal if the
+%                              level-1 was time-by-time generalization), 'avtrain' (average over a
+%                              time window used for training the classifier and plot every tested
+%                              time point), 'avtest' (average over a time window used for testing
+%                              the classifier and plot every trained time point) or 'avfreq'
+%                              (average over a frequency band of interest).
+%       cfg.trainlim         = [int int]; is the time limits over which to constrain the training 
+%                              data, in ms.
+%       cfg.testlim          = [int int]; is the time limits over which to constrain the testing 
+%                              data, in ms.
+%       cfg.timelim          = [int int]; constrains trainlim and testlim at once (takes precedence
+%                              over trainlim and testlim)
+%       cfg.freqlim          = [int int]; is the frequency limits over which to constrain the 
+%                              frequency dimension. NOTE: if you have time-by-time classification
+%                              for multiple frequencies, and you leave freqlim empty, ADAM will ask
+%                              you in the Command window to specify a frequency to select or a
+%                              frequency range to average over. This is because level-1 time-by-time
+%                              for a frequency range is stored in separate folder for each
+%                              frequency. If at the level-1 analysis a diagonal approach is
+%                              specified, classification is saved in one frequency-by-time matrix,
+%                              in which case leaving freqlim empty results in all frequencies
+%                              present in the data being analyzed.
+%       cfg.channelpool      = 'ALL_NOSELECTION' or other string, e.g. 'OCCIP', according to which
+%                              channelpools have been analyzed at the level-1; only one pool can be
+%                              specified per group-level analysis.
+%       cfg.plot_model       = 'BDM' (default) or 'FEM'; Specify whether to extract the backward
+%                              decoding (BDM) or forward encoding (FEM) data
+%       cfg.plot_order       = string e.g. {'cond1','cond2'} to specify which conditions you want to 
+%                              extract (and in which order).
+%       cfg.plotsubjects     = false (default); or true; if true, during importing single-subject
+%                              data, one figure with subplots is generated that displays each
+%                              single-subject classification result.
+%       cfg.exclsubj         = '' (default); index numbers of subjects to skip (not including these 
+%                              subjects in the results structs). No subjects are excluded when left
+%                              empty (default).
+%
+% The output stats structure will contain the following fields:
+%
+%       stats.ClassOverTime:        NxM matrix; group-average classification accuracy over N 
+%                                   testing time points and M training time points; note that if
+%                                   reduce_dims is specified, M will be 1, and ClassOverTime
+%                                   will be squeezed to a Nx1 matrix of classification over time.
+%       stats.indivClassOverTime:   PxNxM matrix; classificition accuracy over testing and training 
+%                                   time for P subjects 
+%       stats.StdError:             NxM matrix; standard-deviation across subjects over time-time
+%       stats.pVals:                NxM matrix; p-values of each tested time-time point
+%       stats.pStruct:              struct; cluster info, if mpcompcor_method was set to
+%                                   'cluster_based'
+%       stats.mpcompcor_method:     string; correction method ('uncorrected' is default)
+%       stats.settings:             struct; the settings grabbed from the level-1 results
+%       stats.condname:             string; name of the level-1 folder
+%       stats.channelpool:          string; the selected channel pool
+%       stats.weights:              struct; classification weights: group-average and
+%                                   subject-specific, for actual weights and the
+%                                   correlation/covariance class separability maps
+%       stats.cfg:                  struct; the cfg of the input
+%
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%
+% Example usage: 
+%
+% cfg.startdir          = '/Volumes/project1/decoding/EEG/';
+% cfg.timelim           = [-200 1000];
+% cfg.mpcompcor_method  = 'cluster_based';
+% cfg.plot_order        = { 'famous_nonfamous','famous_scrambled'};
+% cfg.reduce_dims       = 'avtrain';
+% cfg.trainlim          = [50 150];
+%
+% stats = adam_compute_group_MVPA(cfg);
 % 
-% By J.J.Fahrenfort, VU 2015, 2016, 2017
+% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
+% 
+% See also ADAM_COMPUTE_GROUP_ERP, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_BDM_WEIGHTS
 
 % First get some settings
 if nargin<3
