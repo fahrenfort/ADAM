@@ -1,59 +1,113 @@
 function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
-% function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
-% Computes group ERPs and extracts ERP averages
+% ADAM_COMPUTE_GROUP_ERP computes a group-level event-related potential (ERP) from single-subject
+% ERP results from ADAM_MVPA_FIRSTLEVEL, and if requested performs a statistical test at the group
+% level. The result is a 1xN structure for N conditions that contains the group average, together
+% with the subject-specific ERPs and (if requested) statistical outcomes, and can be used for
+% plotting (as an input for ADAM_PLOT_MVPA).
+%
+% Use as:
+%   stats = adam_compute_group_ERP(cfg)
+%
+% The cfg (configuration) input structure should specify electrode selection and statistics options,
+% as well as the path to the directory where the results are located. The following options can be
+% specified in the cfg:
+%
+%
+%       cfg.startdir         = string specifiying a directory where the results of 
+%                              ADAM_MVPA_FIRSTLEVEL are located;
+%       cfg.mpcompcor_method = 'uncorrected' (default); string specifying the method for multiple
+%                              correction correction; other options are: 'cluster_based' for
+%                              cluster-based permutation testing, 'fdr' for false-discovery rate,
+%                              or 'none' if you don't wish to perform a statistical analysis.
+%       cfg.indiv_pval       = .05 (default); integer; the statistical threshold for each individual
+%                              time point; the fdr correction is applied on this threshold.
+%       cfg.cluster_pval     = .05 (default); integer; if mpcompcor_method is set to
+%                              'cluster_based', this is the statistical threshold for evaluating
+%                              whether a cluster of significant contiguous time points (after the
+%                              indiv_pval threshold) is larger than can be expected by chance; the
+%                              cluster_pval should never be higher than the indiv_pval.
+%       cfg.tail             = 'both' (default); string specifiying whether the t-tests are done
+%                              right- ('right') or left-tailed ('left'), or two-tailed ('both').
+%       cfg.electrode_def    = string between curly brackets, e.g. {'O1','Oz','O2'}, or embedded 
+%                              curly brackets: {{'PO7'},{'PO8'};{'PO8'},{'PO7'}} for a
+%                              lateralization analysis; specifying one electrode or a group of
+%                              electrodes that are then averaged or subracted; make sure the
+%                              labeling you specify corresponds to the labels present in the raw
+%                              data that you used as input for ADAM_MVPA_FIRSTLEVEL.
+%       cfg.electrode_method = 'average' (default); string specifying what to do if multiple 
+%                              electrodes are specificied: 'average', the ERP of the average of the
+%                              specified electrodes is computed; 'subtract', two sets of electrodes
+%                              or two invidual electrodes are first averaged and then subtracted,
+%                              e.g. if you want to do a lateralization analysis (left versus right
+%                              parietal-occipital channels); with one electrode, there is obviously
+%                              nothing to average or subtract, so 'average' is the default).
+%       cfg.timelim          = [min max]; vector specifiyin a limited time range to analyze, if
+%                              desired; if not specified, the whole time range is used.
+%       cfg.condition_def    = vector of integers specifying which conditions to take and to compare
+%                              or average; e.g. [1,2,3,4].
+%       cfg.condition_method = 'keep' (default); string specifying what to do with the requested
+%                              conditions; in case of 'keep', the ERP of each condition is computed
+%                              separately and tested against baseline; other options are 'average'
+%                              wich performs a condition-average against baseline, or 'subtract' in
+%                              case of two conditions specified in condition_def, which performs a
+%                              condition-comparison: the second condition is first subtracted from
+%                              the first condition, and the result is tested against zero.
+%       cfg.plotsubjects     = false (default); or true; if true, during importing single-subject
+%                              data, one figure with subplots is generated that displays each
+%                              single-subject ERP.
+%       cfg.resample_eeg     = integer for a new down-sampled sampling rate if desired; default: 0 
+%                              (no resampling).
+%
+% The output stats structure will contain the following fields:
+%
+%       stats.ClassOverTime:    1xN matrix; group-average ERP over N time points (name ClassOverTime 
+%                               comes from MVPA nomenclature: Classification over time).
+%       stats.StdError:         1xN matrix; standard-deviation across subjects over time
+%       stats.pVals:            1xN matrix; p-values of each tested time point
+%       stats.pStruct:          struct; cluster info, if mpcompcor_method was set to
+%                               'cluster_based'
+%       stats.mpcompcor_method: string; correction method ('uncorrected' is default)
+%       stats.settings:         struct; the settings grabbed from the level-1 results
+%       stats.condname:         string; combining name of the level-1 folder and the condition_method
+%       stats.channelpool:      string; summarizing the specified electrodes
+%       stats.reduce_dims:      [] (only relevant for MVPA)
+%       stats.cfg:              struct; the cfg of the input
+%
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
 % Common use cases:
-% 	(1) get ERP difference between conditions + stats against zero for one or more results folders
-% 	(2) get raw ERPs for one or more conditions from one or more results folders and average them
-%   (3) get raw ERPs for more conditions from a given results folder without averaging
-% 	(4) get N2pc/CDA electrode subtractions for two conditions, average
-%       them, and do stats against zero (for each results folder) 
+%   (1) get ERP difference between conditions
+%   (2) get condition-average ERP and test against baseline 
+%   (3) get condition-specific ERPs and test each against baseline
+%   (4) get N2pc/CDA electrode subtractions for two conditions, average them, and test against baseline
 % 
 % Use case (1):
-% specify electrodes to be extracted and averaged:
-% cfg.electrode_def = { 'Oz', 'Iz', 'POz' };
-%   - a cell array with the electrodes which will be averaged 
-% cfg.elecrode_method = 'average' (default)
-%   - averages signal over electrodes
-% cfg.condition_def = [1,2];
+% cfg.electrode_def    = { 'Oz', 'Iz', 'POz' };
+% cfg.elecrode_method  = 'average' (default)
+% cfg.condition_def    = [1,2];
 % cfg.condition_method = 'subtract'
-%   - condition_def = [1,2] will subtract 2 from 1 and test them against
-%     each other -> can do this for multiple results folders at once
 %
 % Use case (2):
-% cfg.electrode_def = { 'Oz' };
-%   - a cell array with the electrodes which will be averaged (can also be
-%     a single electrode)
-% cfg.condition_def = [1,2,3,4];
+% cfg.electrode_def    = { 'Oz' };
+% cfg.condition_def    = [1,2,3,4];
 % cfg.condition_method = 'average'
-%   - will output the average of all conditions and test against 0 
-%   -> can do this for multiple results folders at once
 %
 % Use case (3):
-% cfg.electrode_def = { 'Oz' };
-%   - a cell array with the electrodes which will be averaged (can also be
-%     a single electrode)
-% cfg.condition_def = [1,2,3,4];
+% cfg.electrode_def    = { 'Oz' };
+% cfg.condition_def    = [1,2,3,4];
 % cfg.condition_method = 'keep' (default)
-%   - will output those conditions
-%   -> can only do this for a single results folders
 %
 % Use case (4):
-% cfg.electrode_def = {{'PO7'},{'PO8'};{'PO8'},{'PO7'}};
-%   - a cell array with cell arrays of electrodes to be subtracted
-% cfg.electrode_method = 'subtract'
-%   - specifies subtraction method, such that for condition 1 PO8 is
-%   subtracted from P07, while for condition 2 P07 is subtracted from PO8
-% cfg.condition_def = [1,2];
+% cfg.condition_def     = [1,2];
 % cfg.condition_methods = 'average'
-%   - will output a stats structure for the average tested against 0
-%   -> can do this for multiple results folders at once
+% cfg.electrode_def     = {{'PO7'},{'PO8'};{'PO8'},{'PO7'}};
+% cfg.electrode_method  = 'subtract'; --> specifies subtraction method, such that for condition 1 PO8 
+%                                        is subtracted from P07, while for condition 2 P07 is
+%                                        subtracted from PO8
 %
-% cfg can also specify the time interval, and the correction method and threshold for statistics
-%
-% Use stats output from this function as input for plot function adam_plot_MVPA
-%
-% By J.J.Fahrenfort, VU, 2016, 2017
+% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
+% 
+% See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_BDM_WEIGHTS
 
 if nargin<2
     folder_name = '';
