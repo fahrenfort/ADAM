@@ -1,14 +1,70 @@
 function avweightstruct = adam_plot_BDM_weights(cfg,stats)
-% ADAM_PLOT_BDM_WEIGHTS 
-
-
-% plots BDM weights for a specific time range or frequency rannge
-% outputs average weights for that point, which can subsequently be used
-% for statistical testing weight maps against each other using
-% compare_weights.m
-% returns avweightstruct which also contains the pStruct field (stats)
+% ADAM_PLOT_BDM_WEIGHTS generates topographical maps of classifier weights or topographical
+% class-separability correlation or covariance maps (according to Haufe et al., 2014) over a
+% specified time interval and/or frequency range. Requires as input the output of
+% ADAM_COMPUTE_GROUP_MVPA.
+% 
+% By default it performs a cluster-based permutation test over channels/sensors, highlighting
+% regions that contributed significantly to the classification performance. Note that this function
+% can only be performed if all channels/sensors were selected during ADAM_MVPA_FIRSTLEVEL (i.e.
+% channelpool = 'ALL' or 'ALL_NOSELECTION'). Besides plotting, this function also returns a stats
+% output structure which contains the statistical result of the tested topography. Note that (as the
+% name of the function already suggests), this function can only be used for backward decoding and
+% not forward encoding models. Also note that the testing time dimension is relevant here (i.e. only
+% the diagonal of a time-time generalization analysis), as this concerns the classifier weights and
+% not classifier performance.
 %
-% J.J.Fahrenfort, VU 2015, 2016, 2017
+% Use as:
+%   adam_plot_BDM_weights(cfg);
+%
+% The cfg (configuration) input structure can contain the following:
+%  
+%       cfg.plotweights_or_pattern  = 'weights' (default); this plots the raw classifier weights;
+%                                     alternative options are 'covpattern' or 'corpattern'.
+%       cfg.timelim                 = 250 (default); or other integer or [int int] range, in ms,
+%                                     specifying the desired timepoint or time window to plot
+%       cfg.freqlim                 = [int int]; default: [] empty; if you have a time-by-frequency
+%                                     diagonal matrix, you can specify a frequency range
+%       cfg.mpcompcor_method        = 'cluster_based' (default); string specifying the method for 
+%                                     multiple correction correction; other options are:
+%                                     'uncorrected', 'fdr' for false-discovery rate, or 'none' if
+%                                     you don't wish to perform a statistical analysis. note that
+%                                     'cluster_based' makes use of the Fieldtrip toolbox and its
+%                                     neighbour/connectivity functions to determine which
+%                                     channels/sensors can form clusters.
+%       cfg.indiv_pval              = .05 (default); integer; the statistical threshold for each 
+%                                     individual channel/sensor; the fdr correction is applied on
+%                                     this threshold.
+%       cfg.cluster_pval            = .05 (default); integer; if mpcompcor_method is set to
+%                                     'cluster_based', this is the statistical threshold for
+%                                     evaluating whether a cluster of significant contiguous
+%                                     channels/sensors (after the indiv_pval threshold) is larger
+%                                     than can be expected by chance; the cluster_pval should never
+%                                     be higher than the indiv_pval.
+%       cfg.normalized              = true (default); if true, a zscore is performed to have mean 
+%                                     across channels/sensors of 0; this facilitates statistical
+%                                     analysis of local clusters of classifier weights; can also be
+%                                     set to false.
+%       cfg.plot_order              = string e.g. {'cond1','cond2'} to specify which conditions you 
+%                                     want to extract (and in which order).
+%
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%
+% Example usage: 
+%
+% cfg = [];
+% cfg.plotweights_or_pattern = 'corpattern';
+% cfg.timelim                = [100 300];
+% cfg.mpcompcor_method       = 'cluster_based';
+% cfg.indiv_pval             = .05;
+% cfg.cluster_pval           = .01;
+%
+% weight_stats = adam_plot_BDM_weights(cfg,stats);
+%
+% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
+%
+% See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_COMPARE_MVPA_STATS
+
 if nargin<2
     disp('cannot plot graph without some settings, need at least 2 arguments:');
     help plot_MVPA;
