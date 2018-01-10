@@ -1,41 +1,31 @@
 function [ clusterPvals, pStruct ] = cluster_based_permutation(data1,data2_or_chance_level,cfg,settings,mask,connectivity)
-% implements Maris, E., & Oostenveld, R. (2007). Nonparametric statistical
-% testing of EEG- and MEG-data. Journal of Neuroscience Methods, 164(1),
-% 177?190. http://doi.org/10.1016/J.Jneumeth.2007.03.024
+% implements Maris, E., & Oostenveld, R. (2007). Nonparametric statistical testing of EEG- and
+% MEG-data. Journal of Neuroscience Methods, 164(1), 177?190.
+% http://doi.org/10.1016/J.Jneumeth.2007.03.024
 %
-% Note potential issues when using t-testing using accuracy measures to
-% obtain population level inferences, e.g. read:
-% Allefeld C, G?rgen K, Haynes J-D (2016) Valid population inference for
-% information-based imaging: From the second-level t-test to prevalence
-% inference. Neuroimage 141:378?392.
+% Note population level inference issues when using t-testing to evaluate accuracy measures, e.g.
+% read: Allefeld C, G?rgen K, Haynes J-D (2016) Valid population inference for information-based
+% imaging: From the second-level t-test to prevalence inference. Neuroimage 141:378?392.
 %
-% data1 is a subject x dim1 x dim2 array, dim1 and dim2 can be any type of
-% dimension (time, frequency, electrode etc) containing some dependent
-% measure (e.g. classification accuracy, power values, anything).
-% data2_or_chance either contains a data matrix of the same size as data1,
-% or contains a single value corresponding to the value against which data1
-% should be tested.
-% cfg.indiv_pval and cfg.cluster_pval respectively determine
-% the p-value used for inclusion into the cluser, and the p-value used for
-% evaluation overall cluster significance
-% cfg.paired (true or false) and cfg.tail (two-sided: 'both', posclusters: 'right', negclusters: 'left')
-% determine whether to apply paired t-testing and whether to apply one- or
-% two-tailed testing
-% cfg.iterations is the number of iterations in the permutation 
-% mask is the same size as data1 without the subjects (so dim1 x dim2), and
-% allows you to restrict the cluster based test to a specific region by
-% specifying 0 for the regions that should not be included and 1 for the
-% regions that should
-% connectivity is a matrix that outlines which dim1 points are connected to
-% which dim1 points (so size dim1 x dim1). Useful when doing a cluster
-% based permutation test across electrodes.
+% data1 is a subject x dim1 x dim2 array, dim1 and dim2 can be any type of dimension (time,
+% frequency, electrode etc) containing some dependent measure (e.g. classification accuracy, power
+% values, anything). data2_or_chance either contains a data matrix of the same size as data1, or
+% contains a single value corresponding to the value against which data1 should be tested.
+% cfg.indiv_pval and cfg.cluster_pval respectively determine the p-value used for inclusion into the
+% cluser, and the p-value used for evaluation overall cluster significance cfg.paired (true or
+% false) and cfg.tail (two-sided: 'both', posclusters: 'right', negclusters: 'left') determine
+% whether to apply paired t-testing and whether to apply one- or two-tailed testing cfg.iterations
+% is the number of iterations in the permutation mask is the same size as data1 without the subjects
+% (so dim1 x dim2), and allows you to restrict the cluster based test to a specific region by
+% specifying 0 for the regions that should not be included and 1 for the regions that should
+% connectivity is a matrix that outlines which dim1 points are connected to which dim1 points (so
+% size dim1 x dim1). Useful when doing a cluster based permutation test across electrodes.
 %
-% outputs clusterPvals with p-values < pval(2) for the significant
-% clusters and 1's for all other points and outputs pStruct that shows
-% where the clusters start and stop (either in the time domain and/or in
-% the frequency domain)
+% outputs clusterPvals with p-values < pval(2) for the significant clusters and 1's for all other
+% points and outputs pStruct that shows where the clusters start and stop (either in the time domain
+% and/or in the frequency domain)
 %
-% By J.J.Fahrenfort, VU, 2015, 2016
+% Internal function to ADAM toolbox, J.J.Fahrenfort, VU, 2015, 2016
 
 if nargin < 6
     connectivity = [];
@@ -66,7 +56,7 @@ else
     data2 = data2_or_chance_level;
 end
 
-% check whether to do paired or unpaired t-tests
+% check whether to do paired or unpaired t-tests, assumes paired when data size is equal (addmittedly a quick hack)
 if size(data2,1) ~= size(data1,1)
     paired = false;
     disp('not the same number of subjects, so doing an unpaired test');

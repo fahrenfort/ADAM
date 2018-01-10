@@ -1,22 +1,22 @@
 function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
 % ADAM_COMPARE_MVPA_STATS performs a statistical comparison between two stats structures that result
-% from ADAM_COMPUTE_GROUP_MVPA, given that the stats have the same dimensions (e.g. two time-time
-% generalization matrices of equal size and same number of participants; i.e. within-subject
-% repeated measures design).
+% from ADAM_COMPUTE_GROUP_MVPA or ADAM_COMPUTE_GROUP_ERP, given that the stats have the same
+% dimensions (e.g. two time-time generalization matrices of equal size and same number of
+% participants; i.e. within-subject repeated measures design).
 %
 % Use as:
-%   adam_compare_MVPA_stats(cfg,stats1,stats2,varargin);
+%   adam_compare_MVPA_stats(cfg,stats1,stats2,mask);
 %
 % The function effectively does a condition subtraction (stats2 - stats1) and tests against zero
-% using the same statistical procedure options as in ADAM_COMPUTE_GROUP_MVPA. Each stats structure
+% using the same statistical procedure options as in adam_compute_group_MVPA. Each stats structure
 % can be a 1xN structure array, where each corresponding element of the array is compared accross
 % the two stat structures (see example below).
 %
 % Optionally, you can provide a mask: a binary matrix (for time-time or time-frequency) or vector
 % (for ERP or MVPA with reduced_dim) to pre-select a 'region of interest' to constrain the
 % comparison. 'mask' should be the fourth input argument. You can for example base the mask on a
-% statistical outcome of ADAM_COMPUTE_GROUP_MVPA, extracted from the stats.pVals (see example
-% below).
+% statistical outcome of the adam_compute_group_ functions or, extracted from the stats.pVals (see
+% example below).
 %
 % The cfg (configuration) input structure can contain the following:
 %
@@ -31,8 +31,11 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
 %                              whether a cluster of significant contiguous time points (after the
 %                              indiv_pval threshold) is larger than can be expected by chance; the
 %                              cluster_pval should never be higher than the indiv_pval.
-%       cfg.tail             = 'both' (default); string specifiying whether the t-tests are done
-%                              right- ('right') or left-tailed ('left'), or two-tailed ('both').
+%       cfg.tail             = 'both' (default); string specifiying whether the statistical tests
+%                              are done right- ('right') left- ('left'), or two-tailed ('both').
+%                              Right-tailed tests for positive values, left-tailed tests for
+%                              negative values, two-tailed tests test for both positive and negative
+%                              values.
 %
 % The output diffstats structure will contain the following fields:
 %
@@ -41,14 +44,15 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
 %                                   reduce_dims is specified, M will be 1, and ClassOverTime
 %                                   will be squeezed to a Nx1 matrix of classification over time.
 %                                   Here, ClassOverTime will be the difference in classification
-%                                   between two conditions.
-%       stats.StdError:             NxM matrix; standard-deviation across subjects over time-time
+%                                   accuracy between two conditions.
+%       stats.StdError:             NxM matrix; standard-error across subjects over time-time
 %       stats.pVals:                NxM matrix; p-values of each tested time-time point
-%       stats.pStruct:              struct; cluster info, if mpcompcor_method was set to
-%                                   'cluster_based'
-%       stats.settings:             struct; the settings grabbed from the level-1 results
+%       stats.pStruct:              struct; cluster info, currently only appears if mpcompcor_method
+%                                   was set to 'cluster_based'
+%       stats.settings:             struct; the settings used during the level-1 (single subject)
+%                                   results
 %       stats.condname:             string; name of format 'condition1 - condition2'.
-%       stats.cfg:                  struct; the cfg of the input
+%       stats.cfg:                  struct; the cfg used to create these stats
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
@@ -57,10 +61,10 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
 % (1)
 % mask = stats1.pVals'<1; 
 %
-% --> the pVals matrix first needs to be rotated; it consists of significant p-values within 
-%     significant clusters, and 1's for all non-signficant time(-time) points; so evaluating against
-%     <1 will give a binary mask with 1's for significant, and 0's for non-significant pixels; this
-%     binary mask can be used for comparing conditions:
+% --> the pVals matrix consists of significant p-values within significant clusters, and 1's for all
+%     non-signficant time(-time) points; so evaluating against <1 will give a binary mask with 1's
+%     for significant, and 0's for non-significant pixels; this binary mask can be used for
+%     comparing conditions:
 %
 % cfg = [];
 % diffstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask);
@@ -118,8 +122,10 @@ v2struct(cfg);
 ClassTotal{1} = stats1.indivClassOverTime;
 ClassTotal{2} = stats2.indivClassOverTime;
 nSubj = size(ClassTotal{1},1);
-difstats.ClassOverTime = squeeze(mean(ClassTotal{1}-ClassTotal{2}))';
-difstats.StdError = squeeze(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj))';
+%difstats.ClassOverTime = squeeze(mean(ClassTotal{1}-ClassTotal{2}))';
+%difstats.StdError = squeeze(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj))';
+difstats.ClassOverTime = shiftdim(mean(ClassTotal{1}-ClassTotal{2}));
+difstats.StdError = shiftdim(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj));
 difstats.condname = [stats1.condname ' - ' stats2.condname];
 settings = stats1.settings; % assuming these are the same!
 settings.measuremethod = 'accuracy difference';

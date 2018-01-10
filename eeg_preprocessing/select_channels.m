@@ -1,13 +1,11 @@
 function [selchannelindex, selchannellabels] = select_channels(channellabels,bundlename_or_bundlelabels)
-% Either takes a cell array of electrodes to select, or assumes a standard
-% 64-channel BioSemi system for specific bundles. Modify this file to
-% include other systems, or use 'ALL_NOSELECTION' to refrain from selecting
-% anything (in this case you have to make a selection manually in your EEG
-% files prior to running your analyses if you want to remove EOG etc). 
-% This function selects channels (e.g. removes HEOG, VEOG or makes some
-% other selection) in a BioSemi and other standard 10-20 64-electrode
-% systems. It is very easy to add create other bundles, just modify this
-% function to add more bundlenames, e.g. adding a line like:
+% Either takes a cell array of electrodes to select, or assumes a standard 64-channel BioSemi system
+% for specific bundles. Modify this file to include other systems, or use 'ALL_NOSELECTION' to
+% refrain from selecting anything (in this case you have to make a selection manually in your EEG
+% files prior to running your analyses if you want to remove EOG etc). This function selects
+% channels (e.g. removes HEOG, VEOG or makes some other selection) in a BioSemi and other standard
+% 10-20 64-electrode systems. It is very easy to add create other bundles, just modify this function
+% to add more bundlenames, e.g. adding a line like:
 % bundlenames.YOURBUNDLENAME = {'your' 'electrode' 'selection'};
 %
 % usage: 
