@@ -12,31 +12,34 @@ function map = adam_plot_MVPA(cfg,stats)
 % The cfg (configuration) input structure can contain the following:
 %
 %   cfg.singleplot            = false (default); if stats is a 1xN structure array containing
-%                               multiple conditions, false will generate subplots for each
-%                               condition; true will plot each condition in one plot (only possible
-%                               for line plots, so with reduce_dims set to 'diag','avtrain', or
-%                               'avtest' in ADAM_COMPUTE_GROUP_MVPA, or for ERPs computed with
-%                               ADAM_COMPUTE_GROUP_ERP. By default, different colors are picked for
-%                               each line, also if singleplot set to false.
+%                               multiple comparisons, false will generate subplots for each
+%                               analysis; true will plot all comparisons in a single plot (only
+%                               possible for line plots, so with reduce_dims set to
+%                               'diag','avtrain', or 'avtest' in ADAM_COMPUTE_GROUP_MVPA, or for
+%                               ERPs computed with ADAM_COMPUTE_GROUP_ERP. By default, different
+%                               colors are picked for each line, also if singleplot set to false.
 %   cfg.plot_order            = [] (default); default setting will plot multiple conditoins in the 
 %                               order of the stats structure; you can customize the order or pick
 %                               only some conditions to plot by specifying a  cell array with
 %                               strings {'condition1','condition2'}; note that condition names need
 %                               to correspond to the names specified in stats.condname
-%   cfg.acclim3D              = [int int]; min max of the color scaling of time-time or
-%                               time-frequency plots; default will choose a min/max automatically
-%   cfg.acclim2D              = [int int]; same as 3D, but for line plots y-axis.
+%   cfg.acclim3D              = [int int]; min max of the color scaling reflecting accuracy in
+%                               time-time and time-frequency plots; default will choose a min/max
+%                               automatically.
+%   cfg.acclim2D              = [int int]; same as 3D, but for y-axis in line plots.
+%   cfg.acclim                = [int int]; works for line plots and color plots. Overrides acclim3D
+%                               and acclim2D.
 %   cfg.cent_acctick          = [] (default); or int; the chance-level accuracy level will get a 
 %                               tickmark; by default, chance-level is determined by
 %                               1/stats.settings.nconds where nconds corresponds to the number of
-%                               classes on which decoding is performed
+%                               classes on which decoding is performed.
 %   cfg.splinefreq            = [] (default); or int; for line plots, you can choose a spline
 %                               frequency for smoothing (note: statistics are done on the RAW
-%                               classificaiton results)
+%                               classificaiton results).
 %   cfg.timetick              = [] (default); or int; specifying the interval in ms between x-axis 
 %                               tick marks (line plots) or x/y-axis ticks (time-time plots)
 %   cfg.freqtick              = [] (default); or int; as in timetick, for frequency y-axis in case
-%                               of time-frequency plot
+%                               of time-frequency plot.
 %   cfg.referenceline         = 0 (default); or int in ms; you can define your own reference line if
 %                               e.g. the stimulus-class triggers were not send at time=0 ms.
 %   cfg.line_colors           = [] (default); or string cell array e.g. {'g','r'}; or 
@@ -46,8 +49,8 @@ function map = adam_plot_MVPA(cfg,stats)
 %                               plotted on the x-axis and testing time on the y-axis for time-time
 %                               plots, this is now swapped by default, but setting this to false
 %                               will plot testing on y and training x.
-%   cfg.inverty               = [] (default); for ERP plots, you can choose to reverse the y-axis to
-%                               plot negative voltage upwards (true)
+%   cfg.inverty               = [] (default, for ERP plots default is true); you can choose to plot
+%                               the voltage on the y-axis of ERP plots downward by setting to false.
 %   cfg.plotsigline_method    = 'both' (default); or 'straight'; a straight horizontal line at the 
 %                               bottom of the plot for (clusters of) significant time points in line
 %                               plots is always drawn, but the default option 'both' will also make
@@ -103,8 +106,9 @@ if numel(stats) > 1
 else
     line_colors = {[0 0 0]};
 end
-acclim3D = [];
+acclim = [];
 acclim2D = [];
+acclim3D = [];
 cent_acctick = [];
 
 % unpack config
@@ -177,17 +181,19 @@ if ~isempty(plot_order)
 end
 
 % determine accuracy limits
-eval(['acclim = acclim' plottype ';']);
 if isempty(acclim)
-    mx = max(max(([stats(:).ClassOverTime])));
-    mn = min(min(([stats(:).ClassOverTime])));
-    if strcmpi(plottype,'2D') % this is a 2D plot
-        shift = abs(diff([mn mx]))/10;
-        acclim = [mn-shift mx+shift];
-    else
-        shift = abs(diff([mn mx]))/20;
-        mx = max(abs([mx-chance chance-mn]));
-        acclim = [-mx-shift mx+shift]+chance;
+    eval(['acclim = acclim' plottype ';']);
+    if isempty(acclim)
+        mx = max(max(([stats(:).ClassOverTime])));
+        mn = min(min(([stats(:).ClassOverTime])));
+        if strcmpi(plottype,'2D') % this is a 2D plot
+            shift = abs(diff([mn mx]))/10;
+            acclim = [mn-shift mx+shift];
+        else
+            shift = abs(diff([mn mx]))/20;
+            mx = max(abs([mx-chance chance-mn]));
+            acclim = [-mx-shift mx+shift]+chance;
+        end
     end
 end
 
@@ -230,12 +236,12 @@ if numel(stats)>1
         disp(['plot ' num2str(cStats)]);
         if singleplot
             hold on;
-            [map, H, cfg] = subplot_MVPA(stats(cStats),cfg,cStats);
+            [map, H, cfg] = subplot_MVPA(cfg,stats(cStats),cStats);
             legend_handle(cStats) = H.mainLine;
             legend_text{cStats} = regexprep(stats(cStats).condname,'_',' ');
         else
             subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
-            [map, ~, cfg] = subplot_MVPA(stats(cStats),cfg,cStats); % all in the first color
+            [map, ~, cfg] = subplot_MVPA(cfg,stats(cStats),cStats); % all in the first color
             title(regexprep(stats(cStats).condname,'_',' '),'FontSize',10);
         end
     end
@@ -244,13 +250,13 @@ if numel(stats)>1
         legend boxoff;
     end
 else
-    map = subplot_MVPA(stats,cfg);
+    map = subplot_MVPA(cfg,stats);
     if ~plotsubjects
         title(regexprep(stats.condname,'_',' '),'FontSize',10);
     end
 end
 
-function [map, H, cfg] = subplot_MVPA(stats,cfg,cGraph)
+function [map, H, cfg] = subplot_MVPA(cfg,stats,cGraph)
 map = [];
 if nargin<3
     cGraph = 1;
@@ -361,7 +367,8 @@ if isempty(acctick)
         if strcmpi(plottype,'3D')
             acctick = abs(max(abs([chance-mn mx-chance])))-0.001;
         else
-            acctick = abs(min(abs([chance-mn mx-chance])));
+            acctick = abs(max(abs([chance-mn mx-chance])))/2;
+            %acctick = abs(min(abs([chance-mn mx-chance])));
         end
         if acctick ==0
             acctick = .5;

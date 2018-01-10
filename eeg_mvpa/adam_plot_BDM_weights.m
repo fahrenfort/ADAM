@@ -297,7 +297,7 @@ end
 set(gcf,'color','w');
 title(title_text,'FontSize', 12);
 if strcmp(imgtype,'vec') % chanlocs'
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','nosedir','+Y','emarker',{'.','k',20,1},'emarker2',{elecs,'o','k',10,1}); %
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','nosedir','+Y','emarker',{'.','k',5,1},'emarker2',{elecs,'.','k',15,1}); %
 elseif strcmp(imgtype,'png')
     topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','off','shading','interp','nosedir','+Y','hcolor','none');
 else
