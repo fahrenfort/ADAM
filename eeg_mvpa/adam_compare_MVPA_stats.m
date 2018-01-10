@@ -5,10 +5,12 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
 % repeated measures design).
 %
 % Use as:
-%   adam_compare_MVPA_stats(stats1,stats2,cfg,varargin);
+%   adam_compare_MVPA_stats(cfg,stats1,stats2,varargin);
 %
 % The function effectively does a condition subtraction (stats2 - stats1) and tests against zero
-% using the same statistical procedure options as in ADAM_COMPUTE_GROUP_MVPA. 
+% using the same statistical procedure options as in ADAM_COMPUTE_GROUP_MVPA. Each stats structure
+% can be a 1xN structure array, where each corresponding element of the array is compared accross
+% the two stat structures (see example below).
 %
 % Optionally, you can provide a mask: a binary matrix (for time-time or time-frequency) or vector
 % (for ERP or MVPA with reduced_dim) to pre-select a 'region of interest' to constrain the
@@ -52,13 +54,25 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
 %
 % Example usage: 
 %
-% mask = stats1.pVals'<1; --> the pVals matrix first needs to be rotated; it consists of significant
-%                             p-values within significant clusters, and 1's for all non-signficant
-%                             time(-time) points; so evaluating against <1 will give a binary mask
-%                             with 1's for significant, and 0's for non-significant pixels; this
-%                             binary mask can be used for comparing conditions:
+% (1)
+% mask = stats1.pVals'<1; 
 %
+% --> the pVals matrix first needs to be rotated; it consists of significant p-values within 
+%     significant clusters, and 1's for all non-signficant time(-time) points; so evaluating against
+%     <1 will give a binary mask with 1's for significant, and 0's for non-significant pixels; this
+%     binary mask can be used for comparing conditions:
+%
+% cfg = [];
 % diffstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask);
+%
+% (2)
+% cfg = [];
+% diffstats = adam_compare_MVPA_stats(cfg,stats1,stats2);
+%
+% --> here, stats1 and stats2 could be EEG and MEG decoding, respectively, while each stats
+%     structure has two class-comparisons (e.g. famous vs. non-famous faces and famous vs. scrambled
+%     faces); diffstats will then also be a 1x2 structure-array reflecting the contrast EEG>MEG for:
+%     famous vs non-famous, and famous vs scrambled.
 %
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
 % 
