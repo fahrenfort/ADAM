@@ -91,7 +91,7 @@ function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
 %       stats.weights:              struct; classification weights: group-average and
 %                                   subject-specific, for actual weights and the
 %                                   correlation/covariance class separability maps
-%       stats.cfg:                  struct; the cfg of the input
+%       stats.cfg:                  struct; the cfg used to create these stats
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
@@ -511,9 +511,11 @@ else
 end
 
 % compute standard errors and averages
-ClassStdErr(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1));
+%ClassStdErr(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1));
+ClassStdErr = shiftdim(std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1)));
 if sum(sum(ClassStdErr)) == 0 ClassStdErr = []; end % don't plot stderror when there is none
-ClassAverage(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = mean(ClassOverTimeAll{1},1);
+%ClassAverage(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = mean(ClassOverTimeAll{1},1);
+ClassAverage = shiftdim(mean(ClassOverTimeAll{1},1));
 ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 
 % statistical testing

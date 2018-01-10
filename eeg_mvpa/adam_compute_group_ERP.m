@@ -71,7 +71,7 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 %       stats.condname:         string; combining name of the level-1 folder and the condition_method
 %       stats.channelpool:      string; summarizing the specified electrodes
 %       stats.reduce_dims:      [] (only relevant for MVPA)
-%       stats.cfg:              struct; the cfg of the input
+%       stats.cfg:              struct; the cfg used to create these stats
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
@@ -355,8 +355,8 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     end
     
     % get some stats
-    ClassAverage = mean(ClassTotal{cCond},1);
-    ClassStdErr = std(ClassTotal{cCond},0,1)/sqrt(size(ClassTotal{cCond},1));
+    ClassAverage = shiftdim(mean(ClassTotal{cCond},1));
+    ClassStdErr = shiftdim(std(ClassTotal{cCond},0,1)/sqrt(size(ClassTotal{cCond},1)));
 
     if strcmp(mpcompcor_method,'fdr')
         % FDR CORRECTION
