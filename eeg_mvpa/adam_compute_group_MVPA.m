@@ -108,7 +108,7 @@ function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
 % 
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
 % 
-% See also ADAM_COMPUTE_GROUP_ERP, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_BDM_WEIGHTS
+% See also ADAM_COMPUTE_GROUP_ERP, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS
 
 % First get some settings
 if nargin<3

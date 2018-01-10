@@ -48,6 +48,16 @@ function avweightstruct = adam_plot_BDM_weights(cfg,stats)
 %       cfg.plot_order              = string e.g. {'cond1','cond2'} to specify which conditions you 
 %                                     want to extract (and in which order).
 %
+% The output weight_stats structure will contain the following fields:
+%
+%       weight_stats.chanlocs:      [1xN struct]; for N channels/sensors, describing location,
+%                                   label, etc.
+%       weight_stats.avWeights:     [1xN double]; group-average weights (or covpattern/corpattern)
+%       weight_stats.indivWeights:  [MxN double]; subject-specific weigths for M subjects
+%       weight_stats.timelim:       [int int]; timelim as specified in input cfg
+%       weight_stats.freqlim:       [int int]; freqlim if specified in input cfg
+%       weight_stats.pStruct:       [1x1 struct]; p-value statistics
+%
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
 % Example usage: 

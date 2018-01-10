@@ -128,7 +128,7 @@ end
 % set color-limits (z-axis) or y-limits
 if isempty(cent_acctick)
     % assuming this is the same for all graphs, cannot really be helped
-    if strcmpi(stats(1).settings.measuremethod,'hr-far') || strcmpi(stats(1).settings.measuremethod,'\muV') || strcmpi(plot_model,'FEM')
+    if strcmpi(stats(1).settings.measuremethod,'hr-far') || strcmpi(stats(1).settings.measuremethod,'\muV') || strcmpi(stats(1).settings.measuremethod,'accuracy difference') || strcmpi(plot_model,'FEM')
         cent_acctick = 0;
     else
         cent_acctick = 1/stats(1).settings.nconds;
