@@ -1,4 +1,4 @@
-function stats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
+function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
 % ADAM_COMPARE_MVPA_STATS performs a statistical comparison between two stats structures that result
 % from ADAM_COMPUTE_GROUP_MVPA, given that the stats have the same dimensions (e.g. two time-time
 % generalization matrices of equal size and same number of participants; i.e. within-subject
@@ -64,7 +64,14 @@ function stats = adam_compare_MVPA_stats(cfg,stats1,stats2,mask)
 % 
 % See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_BDM_WEIGHTS
 
+% input checking
+if numel(stats1) ~= numel(stats2)
+    error('The two stats input variables must contain the same number of elements.');
+end
 % get some defaults
+if nargin<4
+    mask = [];
+end
 reduce_dims = '';
 tail = 'both';
 cluster_pval = .05;
@@ -72,9 +79,9 @@ indiv_pval = .05;
 mpcompcor_method = 'uncorrected';
 % unpack original cfg
 if isfield(stats1,'cfg')
-    v2struct(stats1.cfg,{'fieldNames','reduce_dims','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim','reduce_dims'});
+    v2struct(stats1(1).cfg,{'fieldNames','reduce_dims','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim','reduce_dims'});
 elseif isfiled(stats2,'cfg')
-    v2struct(stats2.cfg,{'fieldNames','reduce_dims','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim','reduce_dims'});
+    v2struct(stats2(1).cfg,{'fieldNames','reduce_dims','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim','reduce_dims'});
 end
 v2struct(cfg);
 if exist('one_two_tailed','var')
@@ -85,21 +92,29 @@ end
 nameOfStruct2Update = 'cfg';
 cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,trainlim,testlim,reduce_dims,nameOfStruct2Update);
 
+difstats = [];
+for cStats = 1:numel(stats1)
+    difstats = [difstats sub_compare_MVPA_stats(cfg,stats1(cStats),stats2(cStats),mask)];
+end
+
+function difstats = sub_compare_MVPA_stats(cfg,stats1,stats2,mask)
+% unpack cfg
+v2struct(cfg);
 % compute some values
 ClassTotal{1} = stats1.indivClassOverTime;
 ClassTotal{2} = stats2.indivClassOverTime;
 nSubj = size(ClassTotal{1},1);
-stats.ClassOverTime = squeeze(mean(ClassTotal{1}-ClassTotal{2}))';
-stats.StdError = squeeze(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj))';
-stats.condname = [stats1.condname ' - ' stats2.condname];
+difstats.ClassOverTime = squeeze(mean(ClassTotal{1}-ClassTotal{2}))';
+difstats.StdError = squeeze(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj))';
+difstats.condname = [stats1.condname ' - ' stats2.condname];
 settings = stats1.settings; % assuming these are the same!
 settings.measuremethod = 'accuracy difference';
 
-% statistical testing
-if nargin < 4
+% mask size
+if isempty(mask)
 	mask = ones([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
 end
-    
+
 if strcmpi(mpcompcor_method,'fdr')
     % FDR CORRECTION
     [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,'tail',tail);
@@ -122,7 +137,7 @@ else
 end
 
 % output stats
-stats.pVals = ClassPvals;
-stats.pStruct = pStruct;
-stats.cfg = cfg;
-stats.settings = settings;
+difstats.pVals = ClassPvals;
+difstats.pStruct = pStruct;
+difstats.cfg = cfg;
+difstats.settings = settings;
