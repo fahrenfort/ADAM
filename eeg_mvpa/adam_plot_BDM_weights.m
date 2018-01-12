@@ -2,11 +2,11 @@ function avweightstruct = adam_plot_BDM_weights(cfg,stats)
 % ADAM_PLOT_BDM_WEIGHTS generates topographical maps of classifier weights or topographical
 % class-separability correlation or covariance maps (according to Haufe et al., 2014) over a
 % specified time interval and/or frequency range. Requires as input the output of
-% ADAM_COMPUTE_GROUP_MVPA.
+% adam_compute_group_MVPA.
 % 
 % By default it performs a cluster-based permutation test over channels/sensors, highlighting
 % regions that contributed significantly to the classification performance. Note that this function
-% can only be performed if all channels/sensors were selected during ADAM_MVPA_FIRSTLEVEL (i.e.
+% can only be performed if all channels/sensors were selected during adam_MVPA_firstlevel (i.e.
 % channelpool = 'ALL' or 'ALL_NOSELECTION'). Besides plotting, this function also returns a stats
 % output structure which contains the statistical result of the tested topography. Note that (as the
 % name of the function already suggests), this function can only be used for backward decoding and
