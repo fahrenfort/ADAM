@@ -1,5 +1,6 @@
 function measure = class_accuracy_from_matrix(labelMatrix,method,crossclass)
-% function measure = class_accuracy_from_matrix(labelMatrix,method,crossclass)
+% measure = class_accuracy_from_matrix(labelMatrix,method,crossclass)
+% Internal function for ADAM toolbox. 
 % Generates an accuracy measure from a confusion matrix LabelMatrix
 % (actual,classified). Labelmatrix can also be a crosscorrelation matrix of
 % LabelMatrix over time: labelMatrix(time1, time2, actual,classified)

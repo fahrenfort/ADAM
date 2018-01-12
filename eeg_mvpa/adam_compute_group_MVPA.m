@@ -1,41 +1,52 @@
-function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
-% ADAM_COMPUTE_GROUP_MVPA extracts group-level classification data from single-subject MVPA results
-% that were given by ADAM_MVPA_FIRSTLEVEL, and if requested performs a statistical test at the group
-% level. The result is a structure that contains the group average, together with the
+function stats = adam_compute_group_MVPA(cfg,folder_name)
+% ADAM_COMPUTE_GROUP_MVPA computes group-level classification data from single-subject results that
+% were computed by adam_MVPA_firstlevel. It also performs statistical tests at the group level.
+% When executing adam_compute_group_MVPA, a selection dialog will pop up. This dialog allows the
+% user to select a directory containing the single subject results (output of adam_MVPA_firstlevel)
+% for which to compute the group stats variable. The user can either select a directory referring to
+% a specific analysis (e.g. EEG_FAM_VS_NONFAMOUS), or select one directory higher up in the
+% hierarchy (e.g. RAW_EEG) which may contains several such analyses. The function creates a stats
+% output variable. This variable is a structure that contains the group average, together with the
 % subject-specific classification data, classifier weights, and (if requested) statistical outcomes,
-% and can be used for plotting (as an input for ADAM_PLOT_MVPA and ADAM_PLOT_MVPA_weights).
+% and can be used as input for the plotting functions (e.g. adam_plot_MVPA and
+% adam_plot_BDM_weights). When selecting a directory containing several analyses, the stats variable
+% will be an array of which each element contains a group analysis.
 %
 % Use as:
 %   stats = adam_compute_group_MVPA(cfg)
 %
-% The cfg (configuration) input structure should at least specify the path to the directory where
-% the results are located:
+% The cfg (configuration) input structure can contain the following optional parameters:
 %
-%       cfg.startdir         = string specifiying a directory where the results of 
-%                              ADAM_MVPA_FIRSTLEVEL are located; cfg.startdir can be left empty, but
-%                              this requires you to navigate from your Matlab root folder to the
-%                              desired folder every time. Even if you specifiy a directory here,
-%                              ADAM will nonetheless always generate a pop-up folder-selection
-%                              window, giving you the option to switch to another folder, or to
-%                              confirm by clicking 'Open'.
-%
-% The following options are optional:
-%
+%       cfg.startdir         = '' (default); ADAM will pop-up a selection dialog when running
+%                              adam_compute_group_MVPA. The cfg.startdir parameter allows you to
+%                              specify the starting directory of this selection dialog. Use this
+%                              parameter to specify where the results of all the first level
+%                              analyses are located. When you do not specify cfg.startdir, you will
+%                              be required to navigate from your Matlab root folder to the desired
+%                              results directory every time you run a group analysis.
 %       cfg.mpcompcor_method = 'uncorrected' (default); string specifying the method for multiple
 %                              correction correction; other options are: 'cluster_based' for
 %                              cluster-based permutation testing, 'fdr' for false-discovery rate,
 %                              or 'none' if you don't wish to perform a statistical analysis.
 %       cfg.indiv_pval       = .05 (default); integer; the statistical threshold for each individual
-%                              time point; the fdr correction is applied on this threshold.
+%                              time point;
 %       cfg.cluster_pval     = .05 (default); integer; if mpcompcor_method is set to
 %                              'cluster_based', this is the statistical threshold for evaluating
-%                              whether a cluster of significant contiguous time points (after the
-%                              indiv_pval threshold) is larger than can be expected by chance; the
-%                              cluster_pval should never be higher than the indiv_pval.
-%       cfg.tail             = 'both' (default); string specifiying whether the t-tests are done
-%                              right- ('right') or left-tailed ('left'), or two-tailed ('both').
-%       cfg.plot_dim         = 'time_time' (default); or 'freq_time'
-%       cfg.reduce_dims      = [] (default); this will take all dimensions of the level-1 result; to 
+%                              whether a cluster of contiguously significant time points (as
+%                              determined by indiv_pval) is significant. If if mpcompcor_method is
+%                              set to 'fdr', this is value that specifies the false discovery rate
+%                              q (see help fdr_bh for details).
+%       cfg.tail             = 'both' (default); string specifiying whether statistical tests are
+%                              done right- ('right') or left-tailed ('left'), or two-tailed
+%                              ('both'). Right-tailed tests for positive values, left-tailed tests
+%                              for negative values, two-tailed tests test for both positive and
+%                              negative values.
+%       cfg.mask            =  Optionally, you can provide a mask: a binary matrix to pre-select a
+%                              'region of interest' to constrain the comparison. You can for example
+%                              base the mask on pVals matrix in stats.pVals (beware of double
+%                              dipping).
+%       cfg.plot_dim         = 'time_time' (default); or 'freq_time' when plotting time-frequency
+%       cfg.reduce_dims      = '' (default); this will take all dimensions of the level-1 result; to 
 %                              customize, you can specify: 'diag' (only take the diagonal if the
 %                              level-1 was time-by-time generalization), 'avtrain' (average over a
 %                              time window used for training the classifier and plot every tested
@@ -58,19 +69,22 @@ function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
 %                              specified, classification is saved in one frequency-by-time matrix,
 %                              in which case leaving freqlim empty results in all frequencies
 %                              present in the data being analyzed.
-%       cfg.channelpool      = 'ALL_NOSELECTION' or other string, e.g. 'OCCIP', according to which
-%                              channelpools have been analyzed at the level-1; only one pool can be
-%                              specified per group-level analysis.
+%       cfg.channelpool      = 'ALL_NOSELECTION' or other string, e.g. 'OCCIP', according to the
+%                              electrode selection at the level-1; only one pool can be specified
+%                              per group-level analysis. See the help of adam_MVPA_firstlevel and
+%                              select_channels for details.
 %       cfg.plot_model       = 'BDM' (default) or 'FEM'; Specify whether to extract the backward
-%                              decoding (BDM) or forward encoding (FEM) data
-%       cfg.plot_order       = string e.g. {'cond1','cond2'} to specify which conditions you want to 
-%                              extract (and in which order).
-%       cfg.plotsubjects     = false (default); or true; if true, during importing single-subject
-%                              data, one figure with subplots is generated that displays each
-%                              single-subject classification result.
-%       cfg.exclsubj         = '' (default); index numbers of subjects to skip (not including these 
-%                              subjects in the results structs). No subjects are excluded when left
-%                              empty (default).
+%                              decoding (BDM) or forward encoding (FEM) results
+%       cfg.plotsubjects     = false (default); or true; if true, the individual subject
+%                              classification results of all subjects that are extracted will be
+%                              plotted in a single figure, with a separate subplot for each subject
+%                              to enable inspection of the data underlying group averages.
+%       cfg.exclsubj         = {} (default); Cell array of strings containing the names of subjects
+%                              to exclude from the group-level analysis, e.g. cfg.exclsubj =
+%                              {'S01_faces_exp', 'S02_faces_exp'};. You can also use part of a name,
+%                              e.g. it is sufficient to specify {'S01', 'S02'}; Subject names are
+%                              based on the file names that were used as input for the first-level
+%                              analysis.
 %
 % The output stats structure will contain the following fields:
 %
@@ -97,27 +111,24 @@ function [stats,cfg] = adam_compute_group_MVPA(cfg,folder_name,mask)
 %
 % Example usage: 
 %
-% cfg.startdir          = '/Volumes/project1/decoding/EEG/';
+% cfg.startdir          = '/Volumes/project1/FACE_EXPERIMENT/RAW_EEG_RESULTS/';
 % cfg.timelim           = [-200 1000];
 % cfg.mpcompcor_method  = 'cluster_based';
-% cfg.plot_order        = { 'famous_nonfamous','famous_scrambled'};
 % cfg.reduce_dims       = 'avtrain';
 % cfg.trainlim          = [50 150];
+% cfg.exclsubj          = {'S04', 'S07'};
 %
 % stats = adam_compute_group_MVPA(cfg);
 % 
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
 % 
-% See also ADAM_COMPUTE_GROUP_ERP, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS
+% See also ADAM_COMPUTE_GROUP_ERP, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
 % First get some settings
-if nargin<3
-    mask = [];
-end
 if nargin<2
     folder_name = '';
 end
-
+mask = [];
 plot_order = {};
 reduce_dims = '';
 freqlim = [];
@@ -224,7 +235,7 @@ timelim = [];
 trainlim = [];
 testlim = [];
 freqlim = [];
-exclsubj= [];
+exclsubj = [];
 v2struct(cfg);
 % general time limit
 if ~isempty(timelim) % timelim takes precedence
@@ -238,8 +249,6 @@ end
 v2struct(cfg);
 
 % set defaults
-pval(1) = indiv_pval;
-pval(2) = cluster_pval;
 if isempty(channelpool)
     chandirz = dir(folder_name);
     chandirz = {chandirz([chandirz(:).isdir]).name};
@@ -512,25 +521,26 @@ end
 
 % compute standard errors and averages
 %ClassStdErr(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1));
-ClassStdErr = shiftdim(std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1)));
+ClassStdErr = shiftdim(squeeze(std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1))));
 if sum(sum(ClassStdErr)) == 0 ClassStdErr = []; end % don't plot stderror when there is none
 %ClassAverage(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = mean(ClassOverTimeAll{1},1);
-ClassAverage = shiftdim(mean(ClassOverTimeAll{1},1));
+ClassAverage = shiftdim(squeeze(mean(ClassOverTimeAll{1},1)));
 ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 
 % statistical testing
 if nSubj > 1
     if strcmpi(mpcompcor_method,'fdr')
         % FDR CORRECTION
-        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),tail);
-        thresh = fdr(squeeze(ClassPvals),pval(2));
-        ClassPvals(ClassPvals>thresh) = 1;
+        [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail); 
+        ClassPvals = shiftdim(squeeze(ClassPvals));
+        h = fdr_bh(ClassPvals,cluster_pval);
+        ClassPvals(~h) = 1;
     elseif strcmpi(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
         [ClassPvals, pStruct] = cluster_based_permutation(ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings,mask);
     elseif strcmpi(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
-        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},pval(1),tail);
+        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail);
         ClassPvals(~mask) = 1;
     else
         % NO TESTING, PLOT ALL
@@ -539,6 +549,7 @@ if nSubj > 1
 else
     ClassPvals = zeros([size(ClassOverTimeAll{1},2) size(ClassOverTimeAll{1},3)]);
 end
+ClassPvals = shiftdim(squeeze(ClassPvals));
 
 % outputs
 stats.ClassOverTime = ClassAverage;

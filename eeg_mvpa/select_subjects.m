@@ -22,15 +22,19 @@ if iscell(subjnames_or_datastruct) % selecting names from cell array containg su
     nSubj = numel(subjnames_or_datastruct);
     if ~isempty(inclsubj)
         if ischar(inclsubj)
-            pattern = inclsubj;
-            inclsubj = [];
+            inclsubj = {inclsubj};
+        end
+        if iscell(inclsubj)
+            inclsubjIndex = [];
             for cSubj = 1:numel(subjnames_or_datastruct)
-                if ~isempty(strfind(subjnames_or_datastruct{cSubj},pattern))
-                    inclsubj = [inclsubj cSubj];
+                for cPattern = 1:numel(inclsubj)
+                    pattern = inclsubj{cPattern};
+                    if ~isempty(strfind(subjnames_or_datastruct{cSubj},pattern))
+                        inclsubjIndex = [inclsubjIndex cSubj];
+                    end
                 end
             end
-        elseif iscell(inclsubj)
-            inclsubj = find(ismember(subjnames_or_datastruct,inclsubj));
+            inclsubj = unique(inclsubjIndex);
         else
             inclsubj = find(ismember(1:nSubj,inclsubj));       
         end

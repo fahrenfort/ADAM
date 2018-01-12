@@ -1,39 +1,60 @@
-function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
+function stats = adam_compute_group_ERP(cfg,folder_name)
 % ADAM_COMPUTE_GROUP_ERP computes a group-level event-related potential (ERP) from single-subject
-% ERP results from ADAM_MVPA_FIRSTLEVEL, and if requested performs a statistical test at the group
-% level. The result is a 1xN structure for N conditions that contains the group average, together
-% with the subject-specific ERPs and (if requested) statistical outcomes, and can be used for
-% plotting (as an input for ADAM_PLOT_MVPA).
+% ERPs that were computed by adam_MVPA_firstlevel. It also performs statistical tests at the group
+% level. When executing adam_compute_group_ERP, a selection dialog will pop up. This dialog allows
+% the user to select a directory containing the single subject results (output of
+% adam_MVPA_firstlevel) for which to compute the group stats variable. The user can either select a
+% directory referring to a specific analysis (e.g. EEG_FAM_VS_NONFAMOUS), or select one directory
+% higher up in the hierarchy (e.g. RAW_EEG) which may contains several such analyses. The function
+% creates a stats output variable. This variable is a structure that contains the group average,
+% together with the single subject ERPs, and (if requested) statistical outcomes, and can be used as
+% input for the adam_plot_MVPA plotting function. When selecting a directory containing several
+% analyses, the stats variable will be an array of which each element contains a group ERP.
+% adam_compute_group_ERP has several options to extract ERPs belonging to particular conditions or
+% from particular electrodes, average or subtract signals from different electrodes etc. These
+% options are outlined below.
 %
 % Use as:
 %   stats = adam_compute_group_ERP(cfg)
 %
-% The cfg (configuration) input structure should specify electrode selection and statistics options,
-% as well as the path to the directory where the results are located. The following options can be
-% specified in the cfg:
+% The cfg (configuration) input structure should specify electrode selection and statistics options.
+% The cfg can contain the following optional parameters: 
 %
 %
-%       cfg.startdir         = string specifiying a directory where the results of 
-%                              ADAM_MVPA_FIRSTLEVEL are located;
+%       cfg.startdir         = '' (default); ADAM will pop-up a selection dialog when running
+%                              adam_compute_group_MVPA. The cfg.startdir parameter allows you to
+%                              specify the starting directory of this selection dialog. Use this
+%                              parameter to specify where the results of all the first level
+%                              analyses are located. When you do not specify cfg.startdir, you will
+%                              be required to navigate from your Matlab root folder to the desired
+%                              results directory every time you run a group analysis.
 %       cfg.mpcompcor_method = 'uncorrected' (default); string specifying the method for multiple
 %                              correction correction; other options are: 'cluster_based' for
 %                              cluster-based permutation testing, 'fdr' for false-discovery rate,
 %                              or 'none' if you don't wish to perform a statistical analysis.
 %       cfg.indiv_pval       = .05 (default); integer; the statistical threshold for each individual
-%                              time point; the fdr correction is applied on this threshold.
+%                              time point;
 %       cfg.cluster_pval     = .05 (default); integer; if mpcompcor_method is set to
 %                              'cluster_based', this is the statistical threshold for evaluating
-%                              whether a cluster of significant contiguous time points (after the
-%                              indiv_pval threshold) is larger than can be expected by chance; the
-%                              cluster_pval should never be higher than the indiv_pval.
-%       cfg.tail             = 'both' (default); string specifiying whether the t-tests are done
-%                              right- ('right') or left-tailed ('left'), or two-tailed ('both').
-%       cfg.electrode_def    = string between curly brackets, e.g. {'O1','Oz','O2'}, or embedded 
-%                              curly brackets: {{'PO7'},{'PO8'};{'PO8'},{'PO7'}} for a
-%                              lateralization analysis; specifying one electrode or a group of
+%                              whether a cluster of contiguously significant time points (as
+%                              determined by indiv_pval) is significant. If if mpcompcor_method is
+%                              set to 'fdr', this is value that specifies the false discovery rate
+%                              q (see help fdr_bh for details).
+%       cfg.tail             = 'both' (default); string specifiying whether statistical tests are
+%                              done right- ('right') or left-tailed ('left'), or two-tailed
+%                              ('both'). Right-tailed tests for positive values, left-tailed tests
+%                              for negative values, two-tailed tests test for both positive and
+%                              negative values.
+%       cfg.mask            =  Optionally, you can provide a mask: a vector to pre-select a 'region
+%                              of interest' to constrain the comparison. You can for example base
+%                              the mask on pVals matrix in stats.pVals (beware of double dipping).
+%       cfg.electrode_def    = cell array of strings specifying which electrodes to extract, e.g.
+%                              {'O1','Oz','O2'}, or a cell array of cell arrays, e.g.:
+%                              {{'PO7'},{'PO8'};{'PO8'},{'PO7'}} for a lateralization analysis
+%                              (examples below); specifying one electrode or a group of
 %                              electrodes that are then averaged or subracted; make sure the
 %                              labeling you specify corresponds to the labels present in the raw
-%                              data that you used as input for ADAM_MVPA_FIRSTLEVEL.
+%                              data that you used as input for adam_MVPA_firstlevel.
 %       cfg.electrode_method = 'average' (default); string specifying what to do if multiple 
 %                              electrodes are specificied: 'average', the ERP of the average of the
 %                              specified electrodes is computed; 'subtract', two sets of electrodes
@@ -41,20 +62,23 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 %                              e.g. if you want to do a lateralization analysis (left versus right
 %                              parietal-occipital channels); with one electrode, there is obviously
 %                              nothing to average or subtract, so 'average' is the default).
-%       cfg.timelim          = [min max]; vector specifiyin a limited time range to analyze, if
-%                              desired; if not specified, the whole time range is used.
-%       cfg.condition_def    = vector of integers specifying which conditions to take and to compare
-%                              or average; e.g. [1,2,3,4].
+%       cfg.condition_def    = vector of integers specifying which conditions (stimulus classes
+%                              that served as input to the first-level analysis) to extract,
+%                              substract (compare), or or average; e.g. [1,2,3,4].
 %       cfg.condition_method = 'keep' (default); string specifying what to do with the requested
-%                              conditions; in case of 'keep', the ERP of each condition is computed
-%                              separately and tested against baseline; other options are 'average'
-%                              wich performs a condition-average against baseline, or 'subtract' in
-%                              case of two conditions specified in condition_def, which performs a
+%                              conditions; in case of 'keep', the ERP of each condition (stimulus
+%                              class of the first-level analysis) is computed separately and tested
+%                              against zero; other options are 'average' wich performs a
+%                              condition-average against zero, or 'subtract' in case of two
+%                              conditions specified in condition_def, which performs a
 %                              condition-comparison: the second condition is first subtracted from
 %                              the first condition, and the result is tested against zero.
-%       cfg.plotsubjects     = false (default); or true; if true, during importing single-subject
-%                              data, one figure with subplots is generated that displays each
-%                              single-subject ERP.
+%       cfg.timelim          = [min max]; vector specifiyin a limited time range to analyze, if
+%                              desired; if not specified, the whole time range is used.
+%       cfg.plotsubjects     = false (default); or true; if true, the individual ERPs of all
+%                              subjects that are extracted will be plotted in a single figure, with
+%                              a separate subplot for each subject to enable inspection of the data
+%                              underlying group averages.
 %       cfg.resample_eeg     = integer for a new down-sampled sampling rate if desired; default: 0 
 %                              (no resampling).
 %
@@ -77,9 +101,9 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 %
 % Common use cases:
 %   (1) get ERP difference between conditions
-%   (2) get condition-average ERP and test against baseline 
-%   (3) get condition-specific ERPs and test each against baseline
-%   (4) get N2pc/CDA electrode subtractions for two conditions, average them, and test against baseline
+%   (2) get condition-average ERP and test against zero 
+%   (3) get condition-specific ERPs and test each against zero
+%   (4) get N2pc/CDA electrode subtractions for two conditions, average them, and test against zero
 % 
 % Use case (1):
 % cfg.electrode_def    = { 'Oz', 'Iz', 'POz' };
@@ -101,13 +125,13 @@ function [stats,cfg] = adam_compute_group_ERP(cfg,folder_name)
 % cfg.condition_def     = [1,2];
 % cfg.condition_methods = 'average'
 % cfg.electrode_def     = {{'PO7'},{'PO8'};{'PO8'},{'PO7'}};
-% cfg.electrode_method  = 'subtract'; --> specifies subtraction method, such that for condition 1 PO8 
-%                                        is subtracted from P07, while for condition 2 P07 is
-%                                        subtracted from PO8
+% cfg.electrode_method  = 'subtract'; -->   specifies subtraction method, such that for condition 1
+%                                           PO8 is subtracted from P07, while for condition 2 P07 is
+%                                           subtracted from PO8. These are subsequently averaged.
 %
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
 % 
-% See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_BDM_WEIGHTS
+% See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
 if nargin<2
     folder_name = '';
@@ -187,7 +211,6 @@ tail = 'both';
 indiv_pval = .05;
 cluster_pval = .05;
 plotsubjects = false;
-avg_conditions = false;
 name = [];
 reduce_dims = [];
 mpcompcor_method = 'uncorrected';
@@ -200,6 +223,7 @@ condition_method = 'keep';
 % unpack graphsettings
 plottype = '2D';
 channelpool = '';
+exclsubj = [];
 v2struct(cfg);
 
 % pack graphsettings with defaults
@@ -210,8 +234,6 @@ cfg = v2struct(tail,reduce_dims,indiv_pval,cluster_pval,name,plottype,mpcompcor_
 if isempty(electrode_def)
     error('no electrode_def was specified in cfg, set cfg.electrode_def to some electrode, e.g. ''Oz'', see help of this function for more info.');
 end
-pval(1) = indiv_pval;
-pval(2) = cluster_pval;
 if isempty(channelpool)
     chandirz = dir(folder_name);
     chandirz = {chandirz([chandirz(:).isdir]).name};
@@ -223,13 +245,19 @@ end
 
 % get filenames
 plotFreq = ''; % this is empty for now, but might be used to look at the ERPs obtained from a TF analysis
-cfg.plotFreq = plotFreq;
 subjectfiles = dir([folder_name filesep channelpool plotFreq filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
 subjectfiles = { subjectfiles(:).name };
+
+% limiting subjects
+if ~isempty(exclsubj)
+   subjectfiles = select_subjects(subjectfiles,exclsubj,true);
+end
+
+% see if data exists
 nSubj = numel(subjectfiles);
 if nSubj == 0
-    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{:} ' maybe you should specify (a different) cfg.channelpool?']);
+    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq ' maybe you should specify (a different) cfg.channelpool?']);
 end
 
 % prepare figure in case individual subjects are plotted
@@ -281,25 +309,30 @@ for cSubj = 1:nSubj
     % 	(4) get N2pc/CDA electrode subtractions for two conditions, average
     %       them, and do stats against zero (for each results folder)
         
-    % strmpi(electrode_method,'average')
-    % strmpi(condition_method,'subtract')
+    % strcmpi(electrode_method,'average')
+    % strcmpi(condition_method,'subtract')
 
     % now do condition subtraction
     clear trial;
+    % subtract
     if strcmpi(condition_method,'subtract')
         if ~(size(condition_def,2)==2)
             error('Condition_def does not contain the correct number of conditions (2) to be able to subtract.');
         end
         trial = FT_ERP.trial(FT_ERP.trialinfo==condition_def(1),:,:) - FT_ERP.trial(FT_ERP.trialinfo==condition_def(2),:,:);
+    % average
     elseif strcmpi(condition_method,'average')
         trial = mean(FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:),1);
-    else  % not subtracting conditions, plain extraction
+    % plain extraction
+    else  
         trial = FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:);
     end
+    % little hack to change V to muV (if applicable)
+    if  all(all(all(trial<10^-3)))
+        trial = trial*10^6; 
+    end
+    % hold on to each subject's resulting erps
     for cCond=1:size(trial,1)
-        if  all(all(all(trial<10^-3)))
-            trial = trial*10^6; % little hack to change V to muV (if applicable)
-        end
         ClassTotal{cCond}(cSubj,:) = squeeze(trial(cCond,:));
     end
     
@@ -355,25 +388,27 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     end
     
     % get some stats
-    ClassAverage = shiftdim(mean(ClassTotal{cCond},1));
-    ClassStdErr = shiftdim(std(ClassTotal{cCond},0,1)/sqrt(size(ClassTotal{cCond},1)));
-
+    ClassAverage = shiftdim(squeeze(mean(ClassTotal{cCond},1)));
+    ClassStdErr = shiftdim(squeeze(std(ClassTotal{cCond},0,1)/sqrt(size(ClassTotal{cCond},1))));
+    
     if strcmp(mpcompcor_method,'fdr')
         % FDR CORRECTION
-        [~,ClassPvals] = ttest(ClassTotal{cCond},chance,'tail',tail);
-        thresh = fdr(squeeze(ClassPvals{cCond}),pval(2));
-        ClassPvals(ClassPvals>thresh) = 1;
+        [~,ClassPvals] = ttest(ClassTotal{cCond},chance,indiv_pval,tail);
+        ClassPvals = shiftdim(squeeze(ClassPvals));
+        h = fdr_bh(squeeze(ClassPvals),cluster_pval);
+        ClassPvals(~h) = 1;
     elseif strcmp(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
         [ClassPvals, pStruct] = cluster_based_permutation(ClassTotal{cCond},chance,cfg,settings);
         % compute Pstruct
     elseif strcmp(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
-        [~,ClassPvals] = ttest(ClassTotal{cCond},chance,pval(1),tail);
+        [~,ClassPvals] = ttest(ClassTotal{cCond},chance,indiv_pval,tail);
     else
         % NO TESTING, PLOT ALL
         ClassPvals = zeros(1,size(ClassTotal{cCond},2));
     end
+    ClassPvals = shiftdim(squeeze(ClassPvals));
     
     % outputs: put it in a matrix for consistency in plot function
     settings.measuremethod = '\muV';

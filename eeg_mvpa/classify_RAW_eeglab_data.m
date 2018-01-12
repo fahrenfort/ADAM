@@ -1,34 +1,26 @@
 function classify_RAW_eeglab_data(filepath,filenames,outpath,nFolds,channelset,method,crossclass_and_or_resample,erp_baselines,varargin)
-% function classify_RAW_eeglab_data(filepath,filenames,outpath,nFolds,channelset,method,crossclass_and_or_resample,erp_baselines,varargin)
-% Loads eeglab data (no time frequency decomposition) and performs a
-% multivariate classification procedure.
-% Filenames either contains a single filename for testing and training, or
-% two filenames separated by a comma (the first for training, second for
-% testing).
-% outpath contains the folder where results should be stored (if empty
-% defaults to filepath).
-% nFolds is the number of cohorts in which the data is split up for
-% the leave-one-out procedure (only when the same data are used for
-% training and testing of course). When nFolds > 1, the algorithm divides
-% trials over the folds such that each fold uses a fraction of
-% (nFolds-1)/nFolds of all trials for training, and uses a fraction of
-% 1/nFolds of all trials for testing. The training and testing procedure is
-% applied to each fold separately, and the results of each of the folds is
-% averaged at the end, ensuring that all data is tested once, without ever
-% using the same data for training and testing. If some - but not all -
-% trial labels are the same in the training and testing set
-% (e.g. when some labels are used for training and testing, but other
-% labels are unique to the training and/or testing set), the same
-% procedure of splitting up trials for testing and training is followed
-% separately for trials that are common to training and testing and the
-% ones that are unique to training and testing, ensuring that their
-% relative contribution during testing and training remains the same as it
-% is in the original dataset. If you are using the same  dataset for
-% training and testing, only set nFolds to 1 if training and testing labels
-% are completely independent in the dataset. If there are separate sets for
-% testing and training, nFolds defaults to 1.
-% channelset determines the electrode subset that is used for testing. This
-% can be done either numerically (assumes a 64 channel 10-20 system):
+% classify_RAW_eeglab_data(filepath,filenames,outpath,nFolds,channelset,method,crossclass_and_or_resample,erp_baselines,varargin)
+% Internal function for ADAM toolbox. Loads eeglab data (no time frequency decomposition) and
+% performs a multivariate classification procedure.
+% Filenames either contains a single filename for testing and training, or two filenames separated
+% by a semi-colon or comma (the first for training, second for testing). outpath contains the folder
+% where results should be stored (if empty defaults to filepath). nFolds is the number of cohorts in
+% which the data is split up for the leave-one-out procedure (only when the same data are used for
+% training and testing of course). When nFolds > 1, the algorithm divides trials over the folds such
+% that each fold uses a fraction of (nFolds-1)/nFolds of all trials for training, and uses a
+% fraction of 1/nFolds of all trials for testing. The training and testing procedure is applied to
+% each fold separately, and the results of each of the folds is averaged at the end, ensuring that
+% all data is tested once, without ever using the same data for training and testing. If some - but
+% not all - trial labels are the same in the training and testing set (e.g. when some labels are
+% used for training and testing, but other labels are unique to the training and/or testing set),
+% the same procedure of splitting up trials for testing and training is followed separately for
+% trials that are common to training and testing and the ones that are unique to training and
+% testing, ensuring that their relative contribution during testing and training remains the same as
+% it is in the original dataset. If you are using the same  dataset for training and testing, only
+% set nFolds to 1 if training and testing labels are completely independent in the dataset. If there
+% are separate sets for testing and training, nFolds defaults to 1. channelset determines the
+% electrode subset that is used for testing. This can be done either numerically (assumes a 64
+% channel 10-20 system):
 % 1 (uses all electrodes)
 % 2 (uses occipital electrodes)
 % 3 (uses parietal electrodes)
