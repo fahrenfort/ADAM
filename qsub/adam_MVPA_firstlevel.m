@@ -123,6 +123,14 @@ function adam_MVPA_firstlevel(cfg)
 %                                    directly specify the electrodes to include using a comma
 %                                    separated list (e.g. cfg.channels = 'O1,O2,Iz,Oz';). type help
 %                                    select_channels for more details.
+%       cfg.clean_window           = [int int]; to remove muscle artefacts prior to decoding.
+%                                    Specify a time window to inspect for muscle artefacts using
+%                                    [begin,end]; always in SECONDS, e.g. cfg.clean_window =
+%                                    [.25,1]; removes trials containing muscle artifacts between 250
+%                                    and 1000 ms. For each subject, a .txt file and a .png graphic
+%                                    will be saved in its results folder, showing a graphical
+%                                    depiction of the artefacts that were removed (.png), as well as
+%                                    a list of the trial numbers that were removed (.txt).
 %       cfg.resample               = 'no' (default); or specify an integer to which to downsample
 %                                    your data; this is recommended if you have a high sampling rate
 %                                    (e.g. >250 Hz) and you want to do perform cross-classification
@@ -283,22 +291,23 @@ bintest = 'no';             % average across triggers witin a class on the testi
 savelabels = 'no';          % if 'yes', also saves the classifier labels
 labelsonly = 'no';          % if 'yes', only saves the classifier labels (test set does not require labels in this case)
 tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
+clean_window = [];
 
 % unpack cfg
 v2struct(cfg);
 
 % do some checking
 if ~exist('datadir','var')
-    error('You need to specify the directory where the data are located');
+    error('You need to specify in cfg.datadir where the data are located');
 end
 if ~exist('outputdir','var')
-    error('You need to specify the directory where the results should be stored');
+    error('You need to specify in cfg.outputdir where the results should be stored');
 end
 if ~exist('filenames','var')
-    error('You need to specify a cell array containing the filenames containing the data of each subject');
+    error('You need to specify a cell array in cfg.filenames containing the filenames containing the data of each subject');
 end
 if ~exist('class_spec','var')
-    error('You need to specify the trigger values that go into each stimulus class used for training/testing');
+    error('You need to specify in cfg.class_spec which trigger values go into which stimulus class used for training/testing');
 end
 
 % re-structure parameters to work with lower-level API
@@ -335,7 +344,10 @@ if strcmpi(labelsonly,'yes')
 else
     labelsonly = '';
 end
-str_settings = cellarray2csvstring({class_method,class_type,model,balance_triggers,balance_classes_method,bintrain,bintest,tfr_method,savelabels,labelsonly});
+if ~isempty(clean_window)
+    clean_window = ['clean' num2str(clean_window)];
+end
+str_settings = cellarray2csvstring({class_method,class_type,model,balance_triggers,balance_classes_method,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
@@ -370,7 +382,6 @@ end
 if isempty(channels)
     channels = 'ALL_NOSELECTION';
 end
-
 
 % run analysis
 if ~exist('qsub','var') %run local

@@ -327,14 +327,13 @@ if plotsubjects;
 end
 
 % do the loop, restrict time and frequency if applicable
-firstchanlocs = [];
 for cSubj = 1:nSubj
     fprintf(1,'loading subject %d of %d\n', cSubj, nSubj);
     
     % initialize subject
     clear ClassOverTimeAv WeightsOverTimeAv covPatternsOverTimeAv corPatternsOverTimeAv C2_averageAv C2_perconditionAv;
 
-    % loop over frequencies (if no frequencies exist, it simply loads raw)
+    % loop over frequencies (if no frequencies exist, it loads raw data)
     for cFreq = 1:numel(plotFreq)
         
         % locate data
@@ -353,14 +352,33 @@ for cSubj = 1:nSubj
         elseif ~isempty(whos(matObj,'FEM')) && strcmpi(plot_model,'FEM')
             v2struct(matObj.FEM); % unpack 
         else
-            error('cannot find data');
+            try % backward compatibility, can be removed in later version
+                disp(wraptext('WARNING: These seem to be analyses that were performed using ancient scripts. Unless this is pure replication, it is recommended to run the first levels again.'));
+                matObj = load([folder_name filesep channelpool plotFreq{cFreq} filesep subjectfiles{cSubj}]);
+                v2struct(matObj);
+                if ~exist('covPatternsOverTime', 'var')
+                    try
+                        covPatternsOverTime = PatternsOverTime;
+                        corPatternsOverTime = PatternsOverTime;
+                    catch
+                        covPatternsOverTime = [];
+                        corPatternsOverTime = [];
+                    end
+                end
+                clear matObj PatternsOverTime;
+            catch
+                error('cannot find data');
+            end
         end
         
-        % find limits
+        % initialize chanlocs
         if ~exist('firstchanlocs','var')
             firstchanlocs = [];
+            %chanlocdata.labels = 'BLA';
+            chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
         end
-        [settings, cfg, lim1, lim2, dataindex, firstchanlocs] = find_limits(settings, cfg, firstchanlocs);
+        % find limits
+        [settings, cfg, lim1, lim2, dataindex, firstchanlocs, chanlocdata] = find_limits(settings, cfg, firstchanlocs, chanlocdata);
         v2struct(cfg);
         
         % limit ClassOverTime
@@ -597,41 +615,62 @@ if isfield(stats.cfg,'plotsubjects')
 end
 disp('done!');
 
-function [settings, cfg, lim1, lim2, dataindex, firstchanlocs] = find_limits(settings, cfg, firstchanlocs) 
+function [settings, cfg, lim1, lim2, dataindex, firstchanlocs, chanlocdata] = find_limits(settings, cfg, firstchanlocs, chanlocdata) 
 % find limits within which to constrain ClassOverTime
+times = []; % need to initialize this, because times also happens to be a variable
 v2struct(cfg); % unpack cfg
 v2struct(settings); % unpack settings
 if strcmpi(dimord,'freq_time') 
     freqs = settings.freqs; % to fix that freqs is also a function and v2struct can't deal with that
 end
 
-if numel(settings.times) == 1 && strcmpi(settings.dimord,'time_time')
-    times{2} = times{1};
+% some backwards compatibility
+if numel(times) == 1 && strcmpi(settings.dimord,'time_time')
+    if iscell(times)
+        times{2} = times{1};
+    elseif isfield(times,'self')
+        clear times;
+        times{1} = settings.times.self;
+        try
+            times{2} = settings.times.other;
+        catch
+            times{2} = times{1};
+        end
+    end
 end
 
 % get the relevant electrodes and obtain the correct order for weights
-if ~isfield(settings,'chanlocs') || isempty(settings.chanlocs{1}) % if no chanlocdata exist in settings
-    if ~exist('chanlocdata','var')
-        % chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
-        chanlocdata = readlocs(findcapfile,'importmode','native');
-    end
-    [~, chanindex, dataindex] = intersect({chanlocdata(:).labels},settings.channels{1},'stable');
-    chanlocs = chanlocdata(chanindex); % put all in the same order as imported locations
-else % otherwise just extract from settings
+% if ~isfield(settings,'chanlocs') || isempty(settings.chanlocs{1}) % if no chanlocdata exist in settings
+
+if numel(settings.channels) == 2
+    settings.channels = settings.channels{1}; % take the training channel list
+end
+[~, chanindex, dataindex] = intersect({chanlocdata(:).labels},settings.channels,'stable');
+chanlocs = chanlocdata(chanindex); % put all in the same order as imported locations
+chanlocdata = chanlocs;
+if isempty(firstchanlocs)
+    firstchanlocs = chanlocs;
+end
+
+ % if this fails, try to extract the channel locations from settings
+if numel(chanlocs) < numel(settings.channels) && isfield(settings,'chanlocs')
     chanlocs = settings.chanlocs;
     if iscell(chanlocs)
         chanlocs = chanlocs{1};
     end
     if isempty(firstchanlocs)
+        disp(wraptext('WARNING: using electrode positions that are native to the data set. Therefore, the direction of the nose in topoplots cannot be ascertained with certainty. If needed, you can adjust the cfg.nosedir property prior to plotting (see help adam_plot_BDM_weights).',80));
         firstchanlocs = chanlocs;
     end
     [~, ~, dataindex] = intersect({firstchanlocs(:).labels},{chanlocs(:).labels},'stable');
     chanlocs = firstchanlocs;
 end
-if numel(chanlocs) < numel(settings.channels)
-    error('could not find location info for all channels');
-end
 settings.chanlocs = chanlocs;
+
+if numel(chanlocs) < numel(settings.channels)
+    chanlocs = [];
+    disp('WARNING: could not find (all) electrode positions, it is not possible to generate topoplots without electrode positions.');
+end
 
 % continue limit operation
 % NOTE: ClassOverTime has dimensions: test_time * train_time OR freq * time

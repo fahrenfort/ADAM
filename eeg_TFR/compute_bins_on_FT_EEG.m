@@ -157,3 +157,6 @@ FT_EEG.oldindex = oldindex;
 if isfield(FT_EEG,'sampleinfo');
     FT_EEG = rmfield(FT_EEG,'sampleinfo');
 end
+if isfield(FT_EEG,'cfg');
+    FT_EEG = rmfield(FT_EEG,'cfg');
+end

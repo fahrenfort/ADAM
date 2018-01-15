@@ -26,13 +26,9 @@ if iscell(subjnames_or_datastruct) % selecting names from cell array containg su
         end
         if iscell(inclsubj)
             inclsubjIndex = [];
-            for cSubj = 1:numel(subjnames_or_datastruct)
-                for cPattern = 1:numel(inclsubj)
-                    pattern = inclsubj{cPattern};
-                    if ~isempty(strfind(subjnames_or_datastruct{cSubj},pattern))
-                        inclsubjIndex = [inclsubjIndex cSubj];
-                    end
-                end
+            for cPattern = 1:numel(inclsubj)
+                subjIndex = strfind(subjnames_or_datastruct,inclsubj{cPattern});
+                inclsubjIndex = [inclsubjIndex find(not(cellfun('isempty', subjIndex)))];
             end
             inclsubj = unique(inclsubjIndex);
         else

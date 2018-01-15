@@ -1,9 +1,9 @@
 %------------------------ toolboxes ------------------------%
 
 % path definitions
-ft_path = 'C:\matlab_toolboxes\fieldtrip-20170704'; % Note Mac and Linux use forward slashes / instead of \
-eeglab_path = 'C:\matlab_toolboxes\eeglab14_1_1b'; 
-adam_path = 'C:\matlab_toolboxes\ADAM-master';
+ft_path = 'C:\TOOLBOXES\fieldtrip-20170704'; % Note Mac and Linux use forward slashes / instead of \
+eeglab_path = 'C:\TOOLBOXES\eeglab14_1_1b'; 
+adam_path = 'C:\TOOLBOXES\ADAM-master';
 
 % FT
 if (exist(ft_path,'dir') == 7) && (~isdeployed)
@@ -65,6 +65,7 @@ elseif ~isdeployed
     disp(['WARNING, CANNOT FIND ADAM TOOLBOX AT ' adam_path ', CHECK PATHS IN startup.m']);
 end
 
+disp('The latest and greatest of the ADAM toolbox can be downloaded from <a href = "http://www.fahrenfort.com/ADAM.htm">http://www.fahrenfort.com/ADAM.htm</a>');
+
 % clear rubish
-close;
 clear;
