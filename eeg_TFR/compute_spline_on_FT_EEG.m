@@ -68,3 +68,6 @@ FT_EEG_SPLINE.(field) = outdata;
 if isfield(FT_EEG_SPLINE,'sampleinfo');
     FT_EEG_SPLINE = rmfield(FT_EEG_SPLINE,'sampleinfo');
 end
+if isfield(FT_EEG_SPLINE,'cfg');
+    FT_EEG_SPLINE = rmfield(FT_EEG_SPLINE,'cfg');
+end

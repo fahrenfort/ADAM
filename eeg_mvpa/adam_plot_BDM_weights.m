@@ -47,6 +47,7 @@ function avweightstruct = adam_plot_BDM_weights(cfg,stats)
 %                                     set to false.
 %       cfg.plot_order              = string e.g. {'cond1','cond2'} to specify which conditions you 
 %                                     want to extract (and in which order).
+%       cfg.nosedir                 = ['+X'|'-X'|'+Y'|'-Y'] direction of nose (default: '+X').
 %
 % The output weight_stats structure will contain the following fields:
 %
@@ -126,8 +127,8 @@ if ~plotsubjects
     % and make sure they fit on the screen
     screensize = get(0,'screensize'); % e.g. 1920 * 1080
     UL = (screensize([3 4])-50)./[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
-    if all(UL>[600 400])
-        UL=[600 400]; % take this as default
+    if all(UL>[400 400])
+        UL=[400 400]; % take this as default
     end
     po=get(fh,'position');
     po(3:4)=UL.*[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
@@ -178,6 +179,7 @@ cluster_pval = .05;
 iterations = 1000;
 tail = 'both';
 mpcompcor_method = 'cluster_based';
+nosedir = '+X';
 % get cfg
 v2struct(cfg);
 pval(1) = indiv_pval;
@@ -296,12 +298,12 @@ end
 % plotting weights
 set(gcf,'color','w');
 title(title_text,'FontSize', 12);
-if strcmp(imgtype,'vec') % chanlocs'
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','nosedir','+Y','emarker',{'.','k',5,1},'emarker2',{elecs,'.','k',15,1}); %
+if strcmp(imgtype,'vec') % chanlocs' +Y
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','nosedir',nosedir,'emarker',{'.','k',5,1},'emarker2',{elecs,'.','k',15,1}); %
 elseif strcmp(imgtype,'png')
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','off','shading','interp','nosedir','+Y','hcolor','none');
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','off','shading','interp','nosedir',nosedir,'hcolor','none');
 else
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','on','nosedir','+Y','emarker2',{elecs,'o','k',10,1}); % 'electrodes','ptslabels', 'plotrad',.7
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','on','nosedir',nosedir,'emarker2',{elecs,'o','k',10,1}); % 'electrodes','ptslabels', 'plotrad',.7
     h = cbar('vert');
     set(get(h,'title'),'string',' ');
     %h = colorbar;
