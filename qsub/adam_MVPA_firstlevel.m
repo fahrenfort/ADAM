@@ -32,6 +32,8 @@ function adam_MVPA_firstlevel(cfg)
 % 
 %       cfg.datadir                = string specifiying the directory where the input files are
 %                                    located; 
+%       cfg.outputdir              = string specifying the directory where the results should be
+%                                    saved. Choose an informative name for the analysis.
 %       cfg.filenames              = N by 1 cell array containing N strings, in which each string
 %                                    contains the base of a filename (e.g. cfg.filenames =
 %                                    {'subject1' 'subject2'};). Do not add a file extension to the
@@ -204,7 +206,8 @@ function adam_MVPA_firstlevel(cfg)
 % Example cfg with all default options used:
 %
 % cfg = [];
-% cfg.datadir       = 'path/to/data/;
+% cfg.datadir       = 'path/to/data';
+% cfg.outputdir     = 'path/to/specific/analysis_name';
 % cfg.filenames     = {'subject01'
 %                      'subject02'
 %                      'subject03'
@@ -226,6 +229,7 @@ function adam_MVPA_firstlevel(cfg)
 %
 % cfg = [];
 % cfg.datadir       = 'path/to/data/;
+% cfg.outputdir     = 'path/to/specific/analysis_name';
 % cfg.filenames     = {'subject01_c1,subject01_c2'
 %                      'subject02_c1,subject02_c2'
 %                      'subject03_c1,subject03_c2'
