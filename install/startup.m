@@ -18,7 +18,7 @@ end
 if (exist(eeglab_path,'dir') == 7) && (~isdeployed)
     curdir = pwd;
     cd(eeglab_path);
-    eeglab nogui;
+    eeglab;
     cd(curdir);
     disp('EEGLAB IS ALIVE');
 elseif ~isdeployed
@@ -68,4 +68,5 @@ end
 disp('The latest and greatest of the ADAM toolbox can be downloaded from <a href = "http://www.fahrenfort.com/ADAM.htm">http://www.fahrenfort.com/ADAM.htm</a>');
 
 % clear rubish
+close;
 clear;
