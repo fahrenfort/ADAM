@@ -202,6 +202,7 @@ unbalance_triggers = false;
 unbalance_classes = false;
 detrend_eeg = false;
 whiten = true;
+whiten_test_using_train = false;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
         method = methods{c};
@@ -444,7 +445,7 @@ for cFld=1:nFolds
         if whiten
             if cSet == 1 || nFolds == 1 % given this is the training set in k-fold, or when separate data is used for training and testing
                 [FT_EEG_2use, FT_IE] = whiten_FT_EEG(FT_EEG_2use,condSet_2use);
-            else % use train covariance to pre-whiten
+            elseif cSet == 2 % use train covariance to pre-whiten
                 [FT_EEG_2use] = whiten_FT_EEG(FT_EEG_2use,condSet_2use,FT_IE);
                 whiten_test_using_train = true;
             end
