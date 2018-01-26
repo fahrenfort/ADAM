@@ -80,13 +80,19 @@ function adam_MVPA_firstlevel(cfg)
 %       cfg.class_method           = 'accuracy' (default); this the standard classification
 %                                    metric which computes balanced accuracy (first computing
 %                                    accuracy for each classs, and then averaging across classes);
-%                                    other options are:  'hr-far' (hit rate minus false alarm
+%                                    'AUC'; this computes the Area Under the Curve (above .5 implies
+%                                    above chance accuracy. AUC also works for multi-class problems,
+%                                    using Hand, D. J., & Till, R. J. (2001). A Simple
+%                                    Generalisation of the Area Under the ROC Curve for Multiple
+%                                    Class Classification Problems. Machine Learning, 45(2),
+%                                    171?186. http://doi.org/10.1023/A:1010920819831.
+%                                    Other options are:  'hr-far' (hit rate minus false alarm
 %                                    rate),'dprime' (d'),'hr' (hit rate),'far' (false alarm
 %                                    rate),'mr' (miss rate),'cr' (correct rejection rate), in those
 %                                    cases ADAM assumes that that the first class contains the
 %                                    'signal' stimulus and the second class contains the 'noise'
-%                                    stimulus. In the near future other measures will be
-%                                    implemented, such as AUC and information prevalence.
+%                                    stimulus. In the near future information prevalence will be
+%                                    implemented.
 %       cfg.crossclass             = 'no'; (default) whether ('yes') or not ('no') to apply
 %                                    time-by-time cross-classification, yielding temporal
 %                                    generalization matrices; specifying 'no' will simply compute
@@ -274,7 +280,7 @@ function adam_MVPA_firstlevel(cfg)
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017
 % 
 % See also POP_EPOCH, FT_DATATYPE_TIMELOCK, FT_DATATYPE_RAW, SELECT_CHANNELS, COND_STRING,
-% FITCDISCR, ADAM_COMPUTE_GROUP_MVPA
+% FITCDISCR, SCOREAUC, ADAM_COMPUTE_GROUP_MVPA
 
 % default values
 channels = 'all';           % in 64-electrode BioSemi this uses all electrodes except the EOG electrodes, other options: 'ALL_NOSELECTION' for other aquisition systems or MEG, or for BioSemi 'OCCIP' only occipital, 'PARIET' only parietal etc, type help select_channels
@@ -349,7 +355,7 @@ else
     labelsonly = '';
 end
 if ~isempty(clean_window)
-    clean_window = ['clean' num2str(clean_window)];
+    clean_window = sprintf('clean%.4f %.4f',clean_window);
 end
 str_settings = cellarray2csvstring({class_method,class_type,model,balance_triggers,balance_classes_method,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
 % other settings

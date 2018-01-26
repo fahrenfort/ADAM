@@ -1,0 +1,23 @@
+Current processing pipeline:
+
+[RAW]
+* compute_bins_on_FT_EEG -> makes sure that conditions are balanced within classes -> discards leftover trials
+	alt -> Could be replaced using method in which conditions are split into nfolds. Data are kept in unbalanced state until actually folding begins. 
+	alt -> During folding, training data could be balanced within classes through duplication. Testing data would be left untouched.
+
+* make_folds creates index numbers for training and testing (takes all when train and test sets are independent). make_folds does not enforce (or depend on) between class balancing, but may require that triggers are balanced within classes? -> problem for alt pipeline suggested above
+
+* save ERPs based on actual folds (no oversampling/undersampling yet)
+
+* once the folds are created, the pipeline oversamples or undersamples stimulus classes from the training set to enforce balancing (this is currently only done in the index numbers of the folds)
+	alt: -> move this to the folds step!
+
+* next, the script creates a loop over the folds (1:nFolds) and train/test sets (1:2) and for each of those it
+	alt: -> normalize (z-score) NOT NECESSARY 
+	alt: -> apply MVNN
+	alt: -> duplicate training trials using ADASYN
+
+	THEN:
+	(1) if compute_induces == true, induced using 'subtr_bin' (class) or 'subtr_indiv' (condition) -> this should be documentend 
+	(2) bins data if bintrain or bintest
+

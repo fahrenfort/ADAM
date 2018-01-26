@@ -111,6 +111,7 @@ for t=1:size(allTrainData,2)
     % get BDM weights, use fitcdiscr from R2014a onwards
     if doBDM && ~verLessThan('matlab','8.3')
         class_obj = compact(fitcdiscr(dataTrain,labelsOfTrainSet,'DiscrimType',method));
+        coeffs = class_obj.Coeffs;
     end
     % test loop (or diagonal)
     if ~crossclass
@@ -125,10 +126,25 @@ for t=1:size(allTrainData,2)
             % this is much more efficient when not "re-training" for every new test set
             % use fitcdiscr from R2014a onwards:
             if ~verLessThan('matlab','8.3')
-                assignedLabels = predict(class_obj,dataTest);
-                coeffs = class_obj.Coeffs;
+                [assignedLabels,scores,~]  = predict(class_obj,dataTest);
             else
-                [assignedLabels,~,~,~,coeffs] = classify(dataTest,dataTrain,labelsOfTrainSet,method);
+                [assignedLabels,~,scores,~,coeffs] = classify(dataTest,dataTrain,labelsOfTrainSet,method);
+            end
+            if strcmpi(measuremethod,'AUC')
+                %[~,~,~,AUC] = perfcurve(labelsOfTestSet,scores(:,1),1); % THIS IS SLOW!
+                % solve this for multi-class, and do it fast
+                pairs = nchoosek(1:size(scores,2),2); % pair-wise combinations of classes
+                AUC = zeros(1,size(pairs,1));
+                for c=1:size(pairs,1)
+                    % grab all scores of the pair, the first one is always poslabel
+                    ind2use = ismember(labelsOfTestSet,pairs(c,:));     % grab only two classes
+                    boollabels = false(size(labelsOfTestSet));          % set all labels to false
+                    boollabels(labelsOfTestSet==pairs(c,1)) =  true;    % set only positive class to true
+                    labels2use = boollabels(ind2use);           % select pairwise labels
+                    scores2use = scores(ind2use,pairs(c,1));    % select pairwise scores
+                    AUC(c) = scoreAUC(labels2use,scores2use);   % compute AUC, much FASTER! :-)
+                end
+                AUC = mean(AUC);
             end
             if ~exist('coeffs','var') || isempty(coeffs)
                 error('Classify is not returning coefficients, maybe you are not using the matlab native classify function. Check whether you have the biosig plugin installed in eeglab: this toolbox contains a classify function that you should not be using -> remove it or remove the path that leads to it.');
@@ -136,13 +152,17 @@ for t=1:size(allTrainData,2)
             if labelsonly % just returning labels, only the diagonal, no cross corr (or we will run out of memory)
                 BDM.LabelsOverTime(:,t) = assignedLabels;
             else % or the response matrix
-                labelMatrix = zeros(nCond,nCond);
-                for cActualLabel=1:nCond
-                    for cClassifierLabel=1:nCond
-                        labelMatrix(cActualLabel,cClassifierLabel) = numel(find(labelsOfTestSet==cActualLabel & assignedLabels==cClassifierLabel));
+                if strcmpi(measuremethod,'AUC')
+                    BDM.AUC(t2,t) = AUC;
+                else
+                    labelMatrix = zeros(nCond,nCond);
+                    for cActualLabel=1:nCond
+                        for cClassifierLabel=1:nCond
+                            labelMatrix(cActualLabel,cClassifierLabel) = numel(find(labelsOfTestSet==cActualLabel & assignedLabels==cClassifierLabel));
+                        end
                     end
+                    BDM.LabelsOverTime(t2,t,:,:) = labelMatrix; % time * time * cond * cond confusion matrix
                 end
-                BDM.LabelsOverTime(t2,t,:,:) = labelMatrix; % time * time * cond * cond confusion matrix
             end
         end
         

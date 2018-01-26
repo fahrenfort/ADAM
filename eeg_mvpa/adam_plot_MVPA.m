@@ -602,6 +602,8 @@ else
         Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
     end
     set(hcb,'YTick',zaxis,'YTickLabel',Ylabel);
+    ylabel(hcb,regexprep(measuremethod,'_',' ')); % add measuremethod to colorbar
+    %title(hcb,regexprep(measuremethod,'_',' ')); % you can also put it above the color bar if you prefer
     if strcmpi(ydim,'freq')
         ylabel('frequency in Hz','FontSize',fontsize);
         xlabel('time in ms','FontSize',fontsize);

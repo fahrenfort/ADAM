@@ -191,7 +191,6 @@ bintest = false;
 bintrain = false;
 labelsonly = false;
 do_csd = false;
-use_splines = false;
 compute_induced = false;
 do_FEM = false;
 do_BDM = false;
@@ -201,8 +200,8 @@ save_labels = false;
 basis_sigma = 1; % default width of basis set if not a delta, if this is empty, do a simple basis set (delta function)
 unbalance_triggers = false;
 unbalance_classes = false;
-balance_classes_method = 'oversample';
 detrend_eeg = false;
+whiten = true;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
         method = methods{c};
@@ -235,13 +234,13 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'subtr_bin', 'subtr_indiv'})) == 1
         subtr_method = methods{c};
     end
-    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr'}))
+    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr','AUC'}))
         measuremethod = methods{c};
-        if numel(condSet) ~= 2
-            disp('Number of stimulus classes is unequal to 2, defaulting back to computing accuracy rather than hr-far');
+        if numel(condSet) ~= 2 && ~strcmpi(measuremethod,'AUC')
+            disp('Number of stimulus classes is unequal to 2, defaulting back to computing accuracy');
             measuremethod = 'accuracy'; % defaulting back to accuracy
-        else
-            disp('computing sdt measure, assuming the first condition is target (signal) and second is non-target (noise)');
+        elseif numel(condSet) == 2
+            disp('When computing SDT measure: assuming the first condition is target (signal) and second is non-target (noise)');
         end
     end
     if any(strcmpi(methods{c},{'labelsonly','onlylabels','labels_only'}))
@@ -254,9 +253,6 @@ for c=1:numel(methods)
     end
     if any(strcmpi(methods{c},{'csd','scd'}))
         do_csd = true;
-    end
-    if any(strcmpi(methods{c},{'splines','spline'}))
-        use_splines = true;
     end
     if any(strcmpi(methods{c},{'FEM','do_FEM','forward'})) && ~labelsonly
         do_FEM = true;
@@ -292,29 +288,25 @@ for c=1:numel(methods)
     end
     if any(strcmpi(methods{c},{'unbalance_classes'}))
         unbalance_classes = true;
-        balance_classes_method = 'none';
     end
     if any(strcmpi(methods{c},{'undersample'}))
+        disp('WARNING: between-class undersampling has become obsolete, always oversampling using ADASYN');
         unbalance_classes = false;
-        balance_classes_method = 'undersample';
     end
     if any(strcmpi(methods{c},{'oversample'}))
         unbalance_classes = false;
-        balance_classes_method = 'oversample';
     end
     if any(strcmpi(methods{c},{'detrend','detrend_eeg'}))
         detrend_eeg = true;
+    end
+    if any(strcmpi(methods{c},{'nowhiten'}))
+        whiten = false;
     end
 end
 if ~do_FEM && ~do_BDM
     do_BDM = true;
 end
-
-% check nFolds and condSet
-if numel(filenames) > 1 && nFolds > 1
-    disp('WARNING: You specified different filenames for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
-    nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
-end
+% check condset
 if isempty(condSet)
     error('Cannot find usable trigger specification.');
 end
@@ -322,21 +314,32 @@ end
 if size(condSet{1},1) == 1
     condSet = put_this_condset(condSet,condSet,2);
 end
-% if using same triggers for training and testing, increase nFolds
-if numel(filenames) == 1 && nFolds == 1
-    for cCondSet = 1:numel(condSet)
-        if any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && nFolds == 1
-            nFolds = 10;
-            wraptext('WARNING: You dirty double dipper! You are using the same data for testing and training without a leave-one-out procedure. Defaulting nFolds to 10 for crossvalidation.',80);
-        end
+% are train and test condsets overlapping?
+overlapping = false;
+for cCondSet = 1:numel(condSet)
+    if any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:)))
+        overlapping = true;
     end
 end
-% check if condsets are not the same but overlapping, if so unbalance_triggers
-for cCondSet = 1:numel(condSet)
-    if ~all(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && numel(filenames) == 1 && ~unbalance_triggers
-        unbalance_triggers = true;
-        wraptext('WARNING: Some stimulus triggers overlap between train and test, overriding balance triggers option');
-    end
+% check nFolds
+if numel(filenames) > 1 && nFolds > 1
+    disp('WARNING: You specified different filenames for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
+    nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
+end
+% check if condsets are non-overlapping while nFolds > 1, if so lower nFolds to 1
+if numel(filenames) == 1 && nFolds > 1 && ~overlapping
+    disp('WARNING: You specified non-overlapping trigger codes for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
+    nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
+end
+% if using same triggers for training and testing, increase nFolds
+if numel(filenames) == 1 && nFolds == 1 && overlapping
+    nFolds = 10;
+    wraptext('WARNING: You dirty double dipper! You are using the same data for testing and training without a leave-one-out procedure. Defaulting nFolds to 10 for crossvalidation.',80);
+end
+% check if condsets are not the same but overlapping while triggers are balanced, if so unbalance_triggers
+if numel(filenames) == 1 && ~unbalance_triggers && overlapping
+    unbalance_triggers = true;
+    wraptext('WARNING: Some stimulus triggers overlap between train and test, within class balancing has now been turned OFF');
 end
 
 % display stimulus classes
@@ -368,7 +371,7 @@ for cSet = 1:2
     if unbalance_triggers
         trialinfo{cSet} = FT_EEG(cSet).trialinfo;
     else
-        % bin/balance dataset (default action, this is not to achieve actual binnning, it just balances the dataset in case separate conditions still exist in each stimulus class)
+        % bin/balance dataset (default action, this is not to achieve actual binnning, it just applies within-class balancing of conditions)
         FT_EEG_BINNED(cSet) = compute_bins_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','original');
         trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo;
         oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;
@@ -410,36 +413,19 @@ if ~(randomize_labels || iterate)
 end
 clear FT_EEG_BINNED FT_ERP; % save memory by clearing
 
-% balance class instances by oversampling or undersampling (only applied to training set)
+% between-class balancing: balance class instances by oversampling (only applied to training set)
 if unbalance_classes
-    wraptext('Please realize that stimulus classes are now UNBALANCED. Make sure you know what you are doing, this can have undesirable effects on classifier bias when you have unevevenly represented stimulus classes in your design.',80);
+    wraptext('Between-class balancing is OFF. Make sure you know what you are doing, this can have undesirable effects on classifier bias when you have unevevenly represented stimulus classes in your design.',80);
 else
-    % duplicate or eliminate stimulus classes from the training set
-    for cFld=1:nFolds
-        nEachClass = cellfun(@numel, setindex{1}(cFld,:));
-        if strcmpi(balance_classes_method,'oversample')
-            maxN = max(nEachClass);
-            disp('Balancing classes by oversampling: duplicating class instances in the training set (default).');
-        elseif strcmpi(balance_classes_method,'undersample')
-            maxN = min(nEachClass);
-            disp('Balancing classes by undersampling: eleminating class instances from the training set.');
-        end
-        for cClass = 1:numel(nEachClass);
-            elements = setindex{1}{cFld,cClass};
-            elements = repmat(elements,ceil(maxN/numel(elements)),1);
-            setindex{1}{cFld,cClass} = elements(1:maxN);
-        end
-    end
-    wraptext('Stimulus classes are now BALANCED by design, so that each stimulus class is evenly represented in the training set. If this is undesirable behavior, specify ''unbalance_classes'' in your methods.',80);
+    wraptext('Between-class balancing is ON, so that each stimulus class is evenly represented in the training set. If this is undesirable behavior, specify ''unbalance_classes'' in your methods.',80);
 end
 
-% balance triggers within classes
+% within-class balancing: balance triggers within classes
 if unbalance_triggers
-    wraptext('Please realize that triggercodes in a class are now UNBALANCED, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have undesirable effects on how you interpret your results.',80);
+    wraptext('Within-class balancing is OFF, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have undesirable effects on how you interpret your results.',80);
 else
-    % unpack setindex{1} and setindex{2} to get back the original index
-    [setindex{1}, setindex{2}] = unpack_binned(setindex{1}, setindex{2}, oldindex{1}, oldindex{2});
-    wraptext('Triggercodes in a class are now BALANCED by design, such that triggercodes are evenly represented within each stimulus class. If triggercodes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_triggers'' in your methods.',80);
+    [setindex{1}, setindex{2}] = unpack_binned(setindex{1}, setindex{2}, oldindex{1}, oldindex{2}); % unpack setindex{1} and setindex{2} to get back the original index
+    wraptext('Within-class balancing is ON, such that triggercodes are evenly represented within each stimulus class. If triggercodes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_triggers'' in your methods.',80);
 end
 
 % generate folds, compute some stuff on them and save them temporarily before running MVPA
@@ -447,15 +433,31 @@ settrialinfo = [];
 settrialindex = [];
 for cFld=1:nFolds
     % select trials from each dataset
+    FT_IE = [];
     for cSet = 1:2
+        % get relevant condSet for computation
+        condSet_2use = get_this_condset(condSet,cSet);
         % select trials belonging to this subset from original dataset
         trialindex = vertcat(setindex{cSet}{cFld,:});
         FT_EEG_2use = select_trials_from_FT_EEG(FT_EEG(cSet),trialindex);
+        % (1) whiten the data
+        if whiten
+            if cSet == 1 || nFolds == 1 % given this is the training set in k-fold, or when separate data is used for training and testing
+                [FT_EEG_2use, FT_IE] = whiten_FT_EEG(FT_EEG_2use,condSet_2use);
+            else % use train covariance to pre-whiten
+                [FT_EEG_2use] = whiten_FT_EEG(FT_EEG_2use,condSet_2use,FT_IE);
+                whiten_test_using_train = true;
+            end
+        end
+        % (2) between-class oversampling: duplicate trials using ADASYN/SMOTE
+        if ~unbalance_classes
+            if cSet == 1 % only balance training data
+                FT_EEG_2use = balance_FT_EEG(FT_EEG_2use,condSet_2use);
+            end
+        end
         % get some goodies
         trialinfo{cSet} = FT_EEG_2use.trialinfo;
         origtrialindex{cSet} = FT_EEG(cSet).origindex(trialindex)';
-        % get relevant condSet for computation
-        condSet_2use = get_this_condset(condSet,cSet);
         % compute induced?
         if compute_induced
             if strcmpi(subtr_method,'subtr_bin')
@@ -464,7 +466,7 @@ for cFld=1:nFolds
                 % subtracts the erp from each condition in a condSet
                 FT_EVOKED = compute_erp_on_FT_EEG(FT_EEG_2use,condSet_2use,'trial','indiv');
             end
-            if numel(trialindex) < (25*numel(condSet_2use)) % default action if there are not enough trials in test
+            if numel(trialindex) < (25*numel(condSet_2use)) % default action if there are not enough trials in the set to compute reliable ERPs
                 disp('WARNING: fewer than 25 trials to compute an ERP for subtraction, using spline ERP for subtraction to be safe.');
                 FT_EVOKED = compute_spline_on_FT_EEG(FT_EVOKED);
             end
@@ -475,10 +477,6 @@ for cFld=1:nFolds
         % do binning if needed
         if (bintrain && cSet == 1) || (bintest && cSet == 2)
             FT_EEG_2use = compute_bins_on_FT_EEG(FT_EEG_2use,condSet_2use,'trial','original');
-        end
-        % compute splines if specified
-        if use_splines
-            FT_EEG_2use = compute_spline_on_FT_EEG(FT_EEG_2use);
         end
         % get the goodies and get rid of overhead
         FT_EEG_2use = fix_dimord(FT_EEG_2use);
@@ -506,6 +504,7 @@ for cFld=1:nFolds
     % settings for backward and/or forward modelling
     msettings.crossclass = crossclass;
     msettings.method = method;
+    msettings.measuremethod= measuremethod;
     msettings.labelsonly = labelsonly;
     msettings.doBDM = do_BDM;
     msettings.doFEM = do_FEM;
@@ -529,7 +528,11 @@ for cFld=1:nFolds
         if labelsonly
             BDM_ClassOverT(cFld) = NaN;
         else
-            BDM_ClassOverT(cFld,:,:) = class_accuracy_from_matrix(BDM.LabelsOverTime,measuremethod,crossclass); % fld x t1 x t2
+            if strcmpi(measuremethod,'AUC')
+                BDM_ClassOverT(cFld,:,:) = BDM.AUC;
+            else
+                BDM_ClassOverT(cFld,:,:) = class_accuracy_from_matrix(BDM.LabelsOverTime,measuremethod,crossclass); % fld x t1 x t2
+            end
         end
         BDM_WeightsOverT(cFld,:,:) = BDM.WeightsOverTime; % fld x time x elec
         BDM_covPatternsOverT(cFld,:,:) = BDM.covPatternsOverTime; % fld x time x elec
@@ -586,7 +589,6 @@ settings.BDM = do_BDM;
 settings.FEM = do_FEM;
 settings.basis_set_sigma = basis_sigma;
 settings.method_string = setmethod;
-settings.use_splines = use_splines;
 settings.channelset = channelset;
 settings.channels = channels;
 settings.chanlocs = chanlocs;
@@ -602,7 +604,8 @@ settings.bintrain = bintrain;
 settings.bintest = bintest;
 settings.unbalance_triggers = unbalance_triggers;
 settings.unbalance_classes = unbalance_classes;
-settings.balance_classes_method = balance_classes_method;
+settings.whiten = whiten;
+settings.whiten_test_using_train = whiten_test_using_train;
 
 % count filenames from 001 onwards if computing under permutation or iteration
 if randomize_labels || iterate
