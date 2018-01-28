@@ -1,4 +1,4 @@
-function fullname = compute_TFR_from_eeglab(filepath,filename,outpath,resample_to,method,tf_baseline,erp_baseline,frequencies,varargin)
+function TFR = compute_TFR_from_eeglab(filepath,filename,outpath,resample_to,method,tf_baseline,erp_baseline,frequencies,varargin)
 % function compute_TFR_from_eeglab(filepath,filename,outpath,resample_to,method,tf_baseline,erp_baseline,frequencies,condSet)
 % computes time frequency representation (TFR) from eeglab data
 % filepath is path where to find EEG lab set file
@@ -34,7 +34,7 @@ function fullname = compute_TFR_from_eeglab(filepath,filename,outpath,resample_t
 % baseline correction will also be applied according the subtr_indiv
 % method, either correcting the TFR baseline per newly defined stimulus
 % class, or per original condition label.
-% The following names will be prepended to each file, depending on the
+% The following names will be added to the TFR in the field fname, depending on the
 % settings used to compute it:
 % TOT_SINGLE: Computed individual total power values (computing power for each trial, no binning, but recoding condition values to new condition numbers in case bins were specified in the condition set)
 % TOT_BIN: Computed binned power values (averaging bins after power power computation)
@@ -228,10 +228,9 @@ if strcmp(method,'total')
     end
 end
 
-% save TFR data
-if ~only_group_data
-    fullname = [outpath filesep fname];
-    save(fullname,'-v7.3','-struct','TFR');
-else % or save the single subject condition averages for group analysis visualizations
-    fullname = compute_bins_on_FT_EEG(groupTFR,condSet,'powspctrm');
+% return the single subject condition averages for group analysis visualizations
+fullname = [outpath filesep fname]; % return a file name
+TFR.fname = fname;
+if only_group_data  
+    TFR = compute_bins_on_FT_EEG(groupTFR,condSet,'powspctrm'); % return the averaged data
 end

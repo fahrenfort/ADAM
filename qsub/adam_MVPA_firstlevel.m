@@ -283,6 +283,7 @@ function adam_MVPA_firstlevel(cfg)
 % FITCDISCR, SCOREAUC, ADAM_COMPUTE_GROUP_MVPA
 
 % default values
+ft_warning off;
 channels = 'all';           % in 64-electrode BioSemi this uses all electrodes except the EOG electrodes, other options: 'ALL_NOSELECTION' for other aquisition systems or MEG, or for BioSemi 'OCCIP' only occipital, 'PARIET' only parietal etc, type help select_channels
 nfolds = 10;                % trains on 90% (9/10) and tests on 10% (1/10)
 crossclass = 'no';          % only trains and tests on the same time points

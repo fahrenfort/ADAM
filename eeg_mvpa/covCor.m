@@ -56,7 +56,7 @@ rBar=(sum(sum(sample./(sqrtvar(:,ones(n,1)).*sqrtvar(:,ones(n,1))')))-n)/(n*(n-1
 prior=rBar*sqrtvar(:,ones(n,1)).*sqrtvar(:,ones(n,1))';
 prior(logical(eye(n)))=var;
 
-if (nargin < 2 | shrink == -1) % compute shrinkage parameters and constant
+if (nargin < 2 || shrink == -1) % compute shrinkage parameters and constant
 			       
   % what we call pi-hat
   y=x.^2;

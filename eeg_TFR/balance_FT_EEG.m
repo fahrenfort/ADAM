@@ -1,4 +1,4 @@
-function [FT_EEG] = balance_FT_EEG(FT_EEG,condSet,field)
+function FT_EEG = balance_FT_EEG(FT_EEG,condSet,whitened,field)
 % balance_FT_EEG balances the EEG data contained in an FT_EEG struct by oversampling stimulus
 % classes using the ADASYN algorithm
 %
@@ -10,16 +10,11 @@ function [FT_EEG] = balance_FT_EEG(FT_EEG,condSet,field)
 %
 % see also: ADASYN, adam_MVPA_firstlevel
 
-if nargin < 3
+if nargin < 4
     field = 'trial';
 end
 if ~isfield(FT_EEG,'dimord')
     error('the input dataset is not in the required standard fieldtrip format. you might want to run ft_timelockbaseline on FT_EEG to resolve this.');
-else
-    dims = regexp(FT_EEG.dimord, '_', 'split');
-    chandim = find(strcmp(dims,'chan'));
-    timedim = find(strcmp(dims,'time'));
-    trialdim = find(strcmp(dims,'rpt'));
 end
 
 % check whether field is there
@@ -27,13 +22,8 @@ if ~isfield(FT_EEG,field)
     error([field ' should contain the data, but ' field ' is not a field of FT_EEG']);
 end
 
-% setting it to the correct dimensions
-if isempty(chandim | timedim | trialdim) || numel(dims) > 3
-    error('incorrect dimensions: should have time, channel and trial');
-else
-    FT_EEG.dimord = 'rpt_chan_time'; % should be 'rpt_chan_time' for consistency with conversion to raw format in ft_checkdata
-    FT_EEG.(field) = permute(FT_EEG.(field),[trialdim chandim timedim]);
-end
+% dimord should be 'rpt_chan_time' in this function, could rewrite to make sure input format does not change to save memory
+FT_EEG = fix_dimord(FT_EEG,'rpt_chan_time',field); 
 
 % get trial info
 trialinfo = FT_EEG.trialinfo;
@@ -65,7 +55,7 @@ for c=1:numel(minIndices)
     nReq = nEachClass(majIndex)-nEachClass(minIndex); % how many duplications are required for this class
     in_labels = [zeros(sum(ismember(bintrialinfo,majClass)),1); ones(sum(ismember(bintrialinfo,minClass)),1)];
     in_data = [data(ismember(bintrialinfo,majClass),:,:); data(ismember(bintrialinfo,minClass),:,:)];
-    out_data = ADASYN_time_series(in_data, in_labels, nReq);
+    out_data = ADASYN_time_series(in_data, in_labels, nReq, [], [], whitened);
     if ~isempty(out_data)
         FT_EEG.trial = [FT_EEG.trial; out_data];
         FT_EEG.trialinfo = [FT_EEG.trialinfo; repmat(minClass',[nReq/numel(minClass) 1])];

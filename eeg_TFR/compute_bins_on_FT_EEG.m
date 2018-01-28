@@ -1,33 +1,29 @@
 function [ FT_EEG, newCondSet ] = compute_bins_on_FT_EEG(FT_EEG,condSet,field,labeltype)
-% Compute binned data from fieldtrip standard format, necessary to compute
-% evoked and induced single trial TFR data, but also to increase signal to
-% noise ratio for subsequent MVPA analyses. The data format can contain 
-% either time, channel and trials, but may also include frequency (for TFR
-% data). condSet can be set up as follows (example): 
+% compute_bins_on_FT_EEG computes binned data from fieldtrip standard format, necessary to compute
+% evoked and induced single trial TFR data, but also to increase signal to noise ratio for
+% subsequent MVPA analyses. The data format can contain either time, channel and trials, but may
+% also include frequency (for TFR data). condSet can be set up as follows (example):
 % condSet{1} = [ 1, 2, 3];
 % condSet{2} = [ 4, 5, 6];
-% averages single instances from condition 1,2 and 3 into a 'new' instance
-% of condition 1, and averages single instances from condition 4, 5 and 6
-% into a single new instance of condition 2. 'Leftover' trials are
-% discarded, e.g. if there are 8 instances of 1, 5 instance of condition 2
-% and 7 instances of condition 3, then the 'new' condition 1 will contain 5
-% trials, the leftover trials (3 'old' condition 1 and 2 'old' condition 3)
-% are discarded. The new stimulus classes are either given new condition
-% labels, counting from 1 to the number of bins (labeltype = 'newlabel',
-% default), or are re-labeled using the first condition label from each bin
-% (specify labeltype = 'original'), in which case the trials containing the
-% averages from condSet{1} would get label 1, but the trials containing the
-% average from condSet{2} in the above example would get label 4.
-% You can also bin multiple trials from the same condition together: 
+% averages single instances from condition 1,2 and 3 into a 'new' instance of condition 1, and
+% averages single instances from condition 4, 5 and 6 into a single new instance of condition 2.
+% 'Leftover' trials are discarded, e.g. if there are 8 instances of 1, 5 instance of condition 2 and
+% 7 instances of condition 3, then the 'new' condition 1 will contain 5 trials, the leftover trials
+% (3 'old' condition 1 and 2 'old' condition 3) are discarded. The new stimulus classes are either
+% given new condition labels, counting from 1 to the number of bins (labeltype = 'newlabel',
+% default), or are re-labeled using the first condition label from each bin (specify labeltype =
+% 'original'), in which case the trials containing the averages from condSet{1} would get label 1,
+% but the trials containing the average from condSet{2} in the above example would get label 4. You
+% can also bin multiple trials from the same condition together:
 % condSet{1} = [ 1, 1, 1];
 % condSet{2} = [ 2, 2, 2];
-% averages 3 instances from condition 1 together into a single instance and
-% averages 3 instances from condition 2 together into a single instance
-% Again, leftover trials are discarded (if there were 10 trials of
-% condition 1, the new set will contain 3 trial averaged instances of
-% condition 1, and 1 'old' trial will be discarded.
+% averages 3 instances from condition 1 together into a single instance and averages 3 instances
+% from condition 2 together into a single instance Again, leftover trials are discarded (if there
+% were 10 trials of condition 1, the new set will contain 3 trial averaged instances of condition 1,
+% and 1 'old' trial will be discarded.
 %
-% By J.J.Fahrenfort, VU 2014, 2015
+% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015
+% See also: classify_RAW_eeglab_data, classify_TFR_from_eeglab_data, compute_TFR_from_FT_EEG
 
 if nargin < 4
     labeltype = 'newlabel';

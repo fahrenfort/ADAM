@@ -105,6 +105,7 @@ end
 if resample_eeg
     cfg = [];
     cfg.resamplefs = resample_eeg;
+    ft_warning off;
     FT_EEG = ft_resampledata(cfg,FT_EEG);
 end
 

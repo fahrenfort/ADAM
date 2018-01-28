@@ -24,15 +24,6 @@ end
 
 if ~isfield(FT_EEG,'dimord')
     error('the input dataset is not in the required standard fieldtrip format. you might want to run ft_timelockbaseline on FT_EEG to resolve this.');
-else
-    dims = regexp(FT_EEG.dimord, '_', 'split');
-    chandim = find(strcmp(dims,'chan'));
-    timedim = find(strcmp(dims,'time'));
-    trialdim = find(strcmp(dims,'rpt'));
-end
-
-if isempty(chandim | timedim | trialdim) || numel(dims) > 3
-    error('incorrect dimensions: should have time, channel and trial');
 end
 if ~isfield(FT_EEG,field)
     error([field ' should contain the data, but ' field ' is not a field of FT_EEG']);
@@ -40,8 +31,10 @@ end
 
 % get trial info
 trialinfo = FT_EEG.trialinfo;
-% data
-data = permute(FT_EEG.(field),[trialdim chandim timedim]);
+
+% dimord should be 'rpt_chan_time' in this function, could rewrite to make sure input format does not change to save memory
+FT_EEG = fix_dimord(FT_EEG,'rpt_chan_time');
+data = FT_EEG.(field);
 [~, nChannels, nTime] = size(data);
 nConds = numel(condSet);
 
@@ -75,6 +68,4 @@ for cT = 1:nTime
         data_new(cTrial,:,cT)=W; % whitened across channels, for each condition and time point
     end
 end
-
-FT_EEG.dimord = 'rpt_chan_time'; % should be 'rpt_chan_time' for consistency with conversion to raw format in ft_checkdata
 FT_EEG.(field) = data_new; % whitened data
