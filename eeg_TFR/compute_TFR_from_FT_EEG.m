@@ -51,8 +51,10 @@ function [TFR, groupTFR] = compute_TFR_from_FT_EEG(FT_EEG,condSet,resample_to,me
 % Averages single instances from condition 1,2 and 3 into a 'new' instance of condition 1, and
 % averages single instances from condition 4, 5 and 6 into a single new instance of condition 2.
 % 'Leftover' trials are discarded. See compute_bins_on_FT_EEG for more details.
+%
 % Internal function of the ADAM toolbox by J.J.Fahrenfort, VU, 2015, 2016, 2018
-% See also: compute_TFR, classify_TFR_from_eeglab_data, compute_bins_on_FT_EEG, adam_MVPA_firstlevel
+%
+% See also: ADAM_MVPA_FIRSTLEVEL, CLASSIFY_TFR_FROM_EEGLAB_DATA, COMPUTE_TFR, COMPUTE_BINS_ON_FT_EEG
 
 % bunch of sanity checks
 if nargin < 7

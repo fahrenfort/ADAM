@@ -28,8 +28,9 @@ function [BDM, FEM] = BDM_and_FEM_FT_EEG(train_FT_EEG,test_FT_EEG,train_condSet,
 % the weights multiplied by the covariance matrix to produce patterns that can be used for source
 % localization Function can do both backward decoding (BDM) and forward encoding modeling (FEM).
 %
-% Part of the ADAM toolbox by J.J.Fahrenfort, VU 2015, 2016, 2018
-% See also: CLASSIFY_RAW_EEGLAB_DATA, CLASSIFY_TFR_FROM_EEGLAB_DATA
+% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2015, 2016, 2018
+% 
+% See also: ADAM_MVPA_FIRSTLEVEL, CLASSIFY_RAW_EEGLAB_DATA, CLASSIFY_TFR_FROM_EEGLAB_DATA
 
 % default parameters
 doFEM = true;

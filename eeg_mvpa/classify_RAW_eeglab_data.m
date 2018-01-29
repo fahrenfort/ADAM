@@ -87,7 +87,8 @@ function classify_RAW_eeglab_data(filepath,filenames,outpath,nFolds,channelset,m
 % classify_RAW_data('/home/eeg/TFR','subject1data','home/eeg/mvpa/TFR',4,2,'linear',0,0,'1;3','2;4')
 %
 % Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015, 2018
-% See also: adam_MVPA_firstlevel
+%
+% See also: ADAM_MVPA_FIRSTLEVEL
 
 % first some sanity checks and initializations
 warning('off','all')
@@ -198,16 +199,11 @@ for c=1:numel(methods)
         bintest = true;
     end
     if strcmpi(methods{c},'randperm')
+        iterate = true;
         randomize_labels = true;
-        % create a folder for random permutation
-        outpath = [outpath filesep 'randperm'];
-        mkdir(outpath);
     end
     if strcmpi(methods{c},'iterate')
         iterate = true;
-        % create a folder for iterations
-        outpath = [outpath filesep 'iterations'];
-        mkdir(outpath);
     end
     if any(strcmpi(methods{c},{'induced','compute_induced'})) == 1
         compute_induced = true;
@@ -334,8 +330,17 @@ celldisp(condSet,'stimclass');
 % Determine bundle name and/or electrode selection
 [channelset, bundlename_or_bundlelabels] = return_channel_bundle(channelset);
 
-% create a folder for this electrode group
-outpath = [outpath filesep channelset];
+% a results folder for this electrode group
+outpath = fullfile(outpath, channelset);
+
+% a results folder for iterations / random permutations
+if iterate && randomize_labels
+    outpath = fullfile(outpath, 'randperm');
+elseif iterate
+    outpath = fullfile(outpath, 'iterations');
+end
+
+% create folder if it does not exist
 if ~exist(outpath,'dir')
     mkdir(outpath);
 end
@@ -390,7 +395,7 @@ if numel(filenames) == 1
 else
     filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
 end
-if ~(randomize_labels || iterate) % do not save FT_ERP for every iteration, or the size of the results would balloon
+if ~iterate % only save FT_ERP for standard analyses, for iterations the size of the results would balloon
     fullfilename = [ outpath filesep filename ];
     save(fullfilename, 'FT_ERP','-v7.3');
 end
@@ -416,7 +421,6 @@ settrialinfo = [];
 settrialindex = [];
 for cFld=1:nFolds
     % select trials from each dataset
-    FT_IE = [];
     for cSet = 1:2
         % get relevant condSet for computation
         condSet_2use = get_this_condset(condSet,cSet);
@@ -447,7 +451,7 @@ for cFld=1:nFolds
             FT_EEG_2use = compute_bins_on_FT_EEG(FT_EEG_2use,condSet_2use,'trial','original');
         end
         % get the goodies and get rid of overhead
-        FT_EEG_foldsave{cSet} = fix_dimord(FT_EEG_2use,'rpt_chan_time');;
+        FT_EEG_foldsave{cSet} = fix_dimord(FT_EEG_2use,'rpt_chan_time');
         clear FT_EEG_2use;
     end
     % FYI, store for every fold
@@ -464,6 +468,8 @@ clear FT_EEG; % clear the dataset as we don't need it in memory during analyses
 
 % and run models, with as little overhead as possible
 for cFld=1:nFolds
+    
+    % FYI
     fprintf(1,['fold: ' num2str(cFld) '\n']);
     
     % load data, clear memory and delete obsolete files. Note that Matlab does not copy a matrix
@@ -605,11 +611,11 @@ settings.whiten = whiten;
 settings.whiten_test_using_train = whiten_test_using_train;
 
 % count filenames from 001 onwards if computing under permutation or iteration
-if randomize_labels || iterate
+if iterate
     fullfilename = find_filename(outpath,filename);
     save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
 else
-    fullfilename = [ outpath filesep filename ];
+    fullfilename = fullfile(outpath, filename);
     save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3', '-append'); % this file also contains the ERPs, so append
 end
 if save_labels
@@ -621,10 +627,10 @@ if save_labels
 end
 warning('on','all')
 
-function fullfile = find_filename(path,filename)
+function findfile = find_filename(path,filename)
 c = 1;
-fullfile = sprintf([path filesep filename '_PERM%03d'], c);
-while numel(dir([fullfile '.*']))>0
+findfile = fullfile(path, sprintf([filename '_PERM%04d'], c));
+while numel(dir([findfile '.*']))>0
     c = c + 1;
-    fullfile = sprintf([path filesep filename '_PERM%03d'], c);
+    findfile = fullfile(path, sprintf([filename '_PERM%04d'], c));
 end

@@ -25,7 +25,10 @@ function [selchannelindex, selchannellabels] = select_channels(channellabels,bun
 % channels are the indexnumbers of the selected channels channellabels
 % channellabels is a cell array of the channel names of the selected channels
 %
-% Part of the ADAM toolbox, J.J.Fahrenfort, VU 2016, 2017
+% Internal function of the ADAM toolbox, by J.J.Fahrenfort, 2018
+%
+% See also: ADAM_MVPA_FIRSTLEVEL
+
 if nargin<2
     bundlename_or_bundlelabels = 'EEG'; 
 end

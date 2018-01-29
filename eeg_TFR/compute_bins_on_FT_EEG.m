@@ -23,7 +23,9 @@ function [ FT_EEG, newCondSet ] = compute_bins_on_FT_EEG(FT_EEG,condSet,field,la
 % and 1 'old' trial will be discarded.
 %
 % Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015
-% See also: classify_RAW_eeglab_data, classify_TFR_from_eeglab_data, compute_TFR_from_FT_EEG
+%
+% See also: ADAM_MVPA_FIRSTLEVEL, CLASSIFY_RAW_EEGLAB_DATA, CLASSIFY_TFR_FROM_EEGLAB_DATA,
+% COMPUTE_TFR_FROM_FT_EEG
 
 if nargin < 4
     labeltype = 'newlabel';

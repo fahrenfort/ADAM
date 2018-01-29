@@ -1,5 +1,5 @@
 function output = cond_string(varargin)
-% COND_STRING creates a comma separated string from the intersection of integers input arrays.
+% cond_string creates a comma separated string from the intersection of integers input arrays.
 % Useful to convert trigger definitions from the experimental design to class specifications.
 %
 % Use as:
@@ -25,7 +25,9 @@ function output = cond_string(varargin)
 % class_spec{1} = cond_string(nonfamous_faces,immediate_repeat);  % the first stimulus class
 % class_spec{2} = cond_string(scrambled_faces,immediate_repeat);  % the second stimulus class
 %
-% By J.J.Fahrenfort, VU, 2015
+% User function of the ADAM toolbox, by J.J.Fahrenfort, VU, 2015
+%
+% See also: ADAM_MVPA_FIRSTLEVEL
 
 output = varargin{1};
 for c = 2:numel(varargin)

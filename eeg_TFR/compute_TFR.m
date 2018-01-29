@@ -7,7 +7,8 @@ function [TFR, groupTFR] = compute_TFR(FT_EEG,new_fsample,frequencies)
 % parameters to compute the TFRs.
 %
 % Internal function of the ADAM toolbox by J.J.Fahrenfort, 2015, 2016, 2018
-% See also: compute_TFR_from_FT_EEG, classify_TFR_from_eeglab_data, adam_MVPA_firstlevel
+%
+% See also: ADAM_MVPA_FIRSTLEVEL, CLASSIFY_TFR_FROM_EEGLAB_DATA, COMPUTE_TFR_FROM_FT_EEG
 
 if nargin<3
     frequencies = 2:2:100;

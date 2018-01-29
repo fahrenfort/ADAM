@@ -1,9 +1,7 @@
 function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
-% function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
-% creates qsub file to submit to all subjects
-% path_on_lisa contains the path where the function is on lisa e.g.
-% '$HOME/Dropbox/mvpa_scripts'
-% function_name contains the function name, e.g. 'classify_eeg'
+% create_qsub_files creates qsub file to submit to all subjects path_on_lisa contains the path where
+% the function is on lisa e.g. '$HOME/Dropbox/mvpa_scripts' function_name contains the function
+% name, e.g. 'classify_eeg'
 %
 % qsettings contains a bunch of info about how to run the job:
 % qsettings.walltime -> how long the job may run
@@ -11,61 +9,54 @@ function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
 % qsettings.maxcores -> maximum number of cores the script may use (default: 15)
 % qsettings.cores -> number of cores the node should have (default: 16)
 % qsettings.qsubdir -> where to write the qsub job
-%       special value: if qsettings.qsubdir exists, the function uses the
-%       path specified in varargin(3), where it replaces $HOME by that the
-%       path in qsubdir)
-% qsettings.keep_together -> true/false (default: false): determines whether
-% multi-element arguments are enumerated together, or whether they are
-% exhaustively combined. This is useful when for example different subjects
-% have different condition labels. In that case you can make equally sized
-% cell arrays of input files and a cell arrays of condition labels for
-% training/testing.
+%       special value: if qsettings.qsubdir exists, the function uses the path specified in
+%       varargin(3), where it replaces $HOME by that the path in qsubdir)
+% qsettings.keep_together -> true/false (default: false): determines whether multi-element arguments
+% are enumerated together, or whether they are exhaustively combined. This is useful when for
+% example different subjects have different condition labels. In that case you can make equally
+% sized cell arrays of input files and a cell arrays of condition labels for training/testing.
 % qsettings.memory -> memory required (default: none)
-% qsettings.repeat -> specify how often each combination of arguments should
-% be repeated, this can be useful when running random permutations. By
-% default, each combination of arguments is executed only once.
-% qsettings.use_scratch = true (default) -> specify whether to copy files over to
-% the scratch disk or not
-% qsettings.send_mail = true (default: false) -> the system will forward an
-% e-mail to the e-mail set in the $HOME/.forward file when the job starts
-% and finishes 
+% qsettings.repeat -> specify how often each combination of arguments should be repeated, this can
+% be useful when running (random permutations). By default, each combination of arguments is
+% executed only once.
+% qsettings.use_scratch = true (default) -> specify whether to copy files over to the scratch disk
+% or not
+% qsettings.send_mail = true (default: false) -> the system will forward an e-mail to the e-mail set
+% in the $HOME/.forward file when the job starts and finishes
 %
-% Sometimes Matlab produces errors of compiled versions of the functions
-% during runtime due to the fact that some libraries cannot be loaded
-% dynamically. In this case you may get an error like:
-% "Can't load '/sara/sw/mcr-r2016a/v901/bin/glnxa64/libmwosgserver.so':
-% dlopen: cannot load any more object with static TLS"
-% This can be solved by manually adding the library before runtime. The
-% qsub script can take care of this for you by setting:
-% qsettings.preload = '/sara/sw/mcr-r2016a/v901/bin/glnxa64/libmwosgserver.so'
+% Sometimes Matlab produces errors of compiled versions of the functions during runtime due to the
+% fact that some libraries cannot be loaded dynamically. In this case you may get an error like:
+% "Can't load '/sara/sw/mcr-r2016a/v901/bin/glnxa64/libmwosgserver.so': dlopen: cannot load any more
+% object with static TLS" This can be solved by manually adding the library before runtime. The qsub
+% script can take care of this for you by setting: qsettings.preload =
+% '/sara/sw/mcr-r2016a/v901/bin/glnxa64/libmwosgserver.so'
 % 
-% varargin is a series of arguments the function may take
-% each element can be a cell array. All combinations of elements are
-% combined, such that each combination becomes a seperate line in your qsub
-% file.
+% varargin is a series of arguments the function may take each element can be a cell array. All
+% combinations of elements are combined, such that each combination becomes a seperate line in your
+% qsub file.
 %
-% By default, if the first first and third arguments of varargin are
-% strings and the second argument is a cell array of strings, the script
-% assumes that these contain (1) the input directory on the home folder,
-% (2) the input file name(s), and (3) the output directory on the home
-% folder (in that order). It will use these to copy the files that the
-% function uses to the scratch space and copy the results back to the home
-% folder when done. If the input filenames (2) is specified as a cell array
-% of names of files (or combinations of files). If just single files,
-% wildcards * and ? can be used, e.g. varargin{2} = '*.set' will 
-% try to locate all the .set files and fill up the filenames with all .set
-% files found in the input directory.
+% By default, if the first first and third arguments of varargin are strings and the second argument
+% is a cell array of strings, the script assumes that these contain (1) the input directory on the
+% home folder, (2) the input file name(s), and (3) the output directory on the home folder (in that
+% order). It will use these to copy the files that the function uses to the scratch space and copy
+% the results back to the home folder when done. If the input filenames (2) is specified as a cell
+% array of names of files (or combinations of files). If just single files, wildcards * and ? can be
+% used, e.g. varargin{2} = '*.set' will try to locate all the .set files and fill up the filenames
+% with all .set files found in the input directory.
 %
 % Example usage:
 % create_qsub_files('$HOME/Dropbox/matlab_scripts/eeg_mvpa','classify_RAW_FT_data',qsettings,'/My_experiment/EEGLAB_DATA',{'subj1' 'subj2' 'subj3'},'/My_experiment/MVPA_RESULTS',4,1:4,'linear',true,'1,2,3','4,5,6','7,8,9','10,11,12');
-% J.J.Fahrenfort, VU, 2014, 2015, 2016
+%
+% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU, 2014, 2015, 2016
+%
+% See also: adam_MVPA_firstlevel
 
 % some default settings
 walltime = '23:59:59';
 lnodes = '1';
 mem = '64gb';
 cores = 16;
-repeat = [];
+repeat = 1;
 use_scratch = true;
 keep_together = false;
 send_mail = false;
@@ -154,14 +145,12 @@ else
 end
 
 % multiply the set by repeat (e.g. when doing many random permutations)
-if ~isempty(repeat)
-    combMat = repmat(combMat,repeat,1);
-end
+combMat = repmat(combMat,repeat,1);
     
 % create qsub job for each subject and a bash file for all jobs
 qsubfiles = {};
 for cQsubs = 1:size(combMat,1)
-    if mod(cQsubs,maxcores) == 1 || maxcores == 1
+    if (mod(cQsubs,maxcores) == 1 && repeat == 1) || maxcores == 1 || cQsubs == 1
         % initialize
         copyin = [];
         copyout = [];
@@ -185,10 +174,6 @@ for cQsubs = 1:size(combMat,1)
         fprintf(fout,['module load mcr' mcr_version '\n']);
         if mcr_set_cache
             fprintf(fout,'export MCR_CACHE_ROOT=`mktemp -d "$TMPDIR"/mcr.XXXXXXXXXX`\n');
-%             % copy out eeglab_options files, if they exist
-%             if ~isempty(dir([strrep(path_on_lisa,'$HOME',qsubdir) filesep 'eeg_options*']))
-%                 fprintf(fout,['cp -u ' path_on_lisa filesep 'eeg_options* $MCR_CACHE_ROOT\n']);
-%             end
         end
         if mcr_cache_verbose
             fprintf(fout,'export MCR_CACHE_VERBOSE=true\n');
@@ -224,7 +209,7 @@ for cQsubs = 1:size(combMat,1)
     end
     line = [line ' &\n'];
     % close qsub file once all cores are used or all commands have been issued
-    if mod(cQsubs,maxcores) == 0 || cQsubs == size(combMat,1)
+    if (mod(cQsubs,maxcores) == 0 && repeat == 1) || cQsubs == size(combMat,1)
         % copy to scratch
         if use_scratch
             copyin = [copyin 'wait\n'];
@@ -245,6 +230,10 @@ for cQsubs = 1:size(combMat,1)
         end
         fclose(fout);
         fclose('all');
+    elseif (mod(cQsubs,maxcores) == 0 && repeat > 1)
+        % pause till all is done
+        line = [line 'wait\n'];
+        fprintf(fout,line);
     end
 end
 

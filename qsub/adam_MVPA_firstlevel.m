@@ -5,8 +5,8 @@ function adam_MVPA_firstlevel(cfg)
 % Use as:
 %   adam_MVPA_firstlevel(cfg);
 % 
-% The function accepts as data formats: epoched raw/preprocessed files imported into EEGLAB (.set
-% and .fdt) or Fieldtrip (.mat)
+% The function accepts as data formats: epoched raw/preprocessed files in EEGLAB format (.set and
+% .fdt) or Fieldtrip format (.mat)
 % 
 % EEGLAB input files should be saved in EEGLAB native format (.set and .fdt) and contain an epoched
 % EEGLAB data structure containing trials, channels and time. The events should contain triggers
@@ -16,13 +16,13 @@ function adam_MVPA_firstlevel(cfg)
 % trigger values that adam_MVPA_firstlevel uses for trial selection.
 % 
 % Fieldtrip input files should be saved in Matlab native format (.mat) and contain epoched Fieldtrip
-% raw (see ft_datatype_raw) or timelock data (see ft_datatype_timelock), as long as they containing
-% dimensions trial, time and channel, as well as a trialinfo array containing numerical trigger values that
-% specify the condition of each trial. The fields that occur in a Fieldtrip data structure can
-% either be saved as separate variables in the Matlab file (e.g. as happens when using the Matlab
-% save command to save a data structure using the '-struct' keyword), or contain the struct variable
-% itself (as when saving the data structure without the '-struct' keyword). In the latter case, the
-% struct can have any name.
+% raw data (see ft_datatype_raw) or timelock data (see ft_datatype_timelock), as long as they
+% containing dimensions trial, time and channel, as well as a trialinfo array containing numerical
+% trigger values that specify the condition of each trial. The fields that occur in a Fieldtrip data
+% structure can either be saved as separate variables in the Matlab file (e.g. as happens when using
+% the Matlab save command to save a data structure using the '-struct' keyword), or contain the
+% struct variable itself (as when saving the data structure without the '-struct' keyword). In the
+% latter case, the struct can have any name.
 % 
 % The cfg (configuration) variable serves to specify all required parameters for the MVPA
 % analysis, including the directory where the input data is stored, the filenames (to run a batch of
@@ -70,10 +70,13 @@ function adam_MVPA_firstlevel(cfg)
 %                                    each trial type in your class definition, by duplicating
 %                                    trigger values: cfg.class_spec{1} = {'1,1,2,3'};
 %                                    cfg.class_spec{2} = {'4,4,5,6'}.
-%       cfg.balance_classes_method = 'oversample' (default; or 'undersample'); whether to
-%                                    over/undersample classes in the training set to achieve
-%                                    cross-class balancing; oversampling duplicates trials in the
-%                                    training set.
+%       cfg.balance_classes        = 'yes' (default; or 'no'); whether to over/undersample classes
+%                                    in the training set to achieve cross-class balancing;
+%                                    oversampling duplicates trials in the training set using the
+%                                    ADASYN algorithm to create synthetical copies of the minority
+%                                    class(es): H. He, Y. Bai, E.A. Garcia, and S. Li, "ADASYN:
+%                                    Adaptive Synthetic Sampling Approach for Imbalanced Learning",
+%                                    Proc. Int'l. J. Conf. Neural Networks, pp. 1322--1328, (2008).
 %       cfg.class_type             = 'linear' (default); classifier type, e.g. 'linear' or
 %                                    'diaglinear'; for other options see FITCDISCR (default Matlab
 %                                    discriminant analysis function, which ADAM uses at its core)
@@ -97,7 +100,9 @@ function adam_MVPA_firstlevel(cfg)
 %                                    time-by-time cross-classification, yielding temporal
 %                                    generalization matrices; specifying 'no' will simply compute
 %                                    the diagonal of such a matrix (training and testing are done on
-%                                    the same time points). Note that 'yes' will drastically
+%                                    the same time points), which results in 2D line graphs with
+%                                    accuracy on the y-axis rather than 3D time-by-time plots with
+%                                    accuracy denoted by color. Note that 'yes' will drastically
 %                                    increase computation time, for exploratory analyses it may be
 %                                    wise to down-sample prior to classification (see cfg.resample
 %                                    below).
@@ -179,6 +184,48 @@ function adam_MVPA_firstlevel(cfg)
 %                                    class on the testing side (for TFR data this only happens after
 %                                    TF decomposition, do not use binning for 'evoked', which
 %                                    averages prior to TF decomposition).
+%       cfg.whiten                 = 'yes' (default), can be turned off using 'no'; performs
+%                                    'whitening' of the data using Mahalanobis / ZCA whitening,
+%                                    decorrelating the features and normalizing the data to unit
+%                                    variance. Also see
+%                                    https://en.wikipedia.org/wiki/Whitening_transformation.
+%                                    Whitening is also called sphering, or Multivariate Noise
+%                                    Normalization (MNN) and greatly improves decoding accuracy,
+%                                    also see:
+%                                    https://www.biorxiv.org/content/early/2017/08/06/172619.
+%                                    ADAM first computes the covariance matrix per time point and
+%                                    per stimulus class and subsequently averages these covariance
+%                                    matrices using across time points and across stimulus classes
+%                                    prior to inverting the matrix in service of the whitening
+%                                    operation. Averaging across classes ensures the whitening
+%                                    operation itself is independent of stimulus class, and thus
+%                                    does not drive decoding directly.
+%       cfg.iterations             = [int]; iterations can be used to run a specified number of
+%                                    iterations of the analysis, which are stored in a folder called
+%                                    'iterations'. Each iteration (analysis) is appended with the
+%                                    name '_PERM0001', '_PERM0002' etc. Note that the toolbox will
+%                                    apply exactly the same analysis to each iteration. The only
+%                                    difference between iterations is that the the order of the
+%                                    trials is shuffled at the onset of every analysis. This should
+%                                    produce (nearly) identical results if the analysis uses
+%                                    different data sets for training and testing, because exactly
+%                                    the same trials will go into training and testing for every
+%                                    iteration (regardless of the order of these trials in training
+%                                    and/or testing). Only when the analysis applies a k-fold
+%                                    train-test scheme, each iteration may yield slightly different
+%                                    results because the shuffling operation will lead to a
+%                                    different partitioning of the trials into folds.
+%       cfg.randompermutations     = [int]; Similar to cfg.iterations, cfg.randompermutations can be
+%                                    used to run a specified number of iterations of the analysis.
+%                                    It stores results in a folder called 'randperm', in which each
+%                                    analysis is appended with the name '_PERM0001', '_PERM0002'
+%                                    etc. However, when using cfg.randompermutations, the condition
+%                                    labels of the trials in the training set are randomly permuted
+%                                    prior to each analysis. As a consequence, all permutations
+%                                    together produce a subject-specific empirical distribution of
+%                                    null-results under random permutation, which can subsequently
+%                                    be used as input for single subject random-permutation
+%                                    fixed-effects tests.
 %       cfg.qsub                   = Struct that allows running these analyses on a Linux computing
 %                                    cluster. When specifying this variable, the analysis will not
 %                                    run locally but attempt to generate qsub files to be submitted
@@ -277,13 +324,16 @@ function adam_MVPA_firstlevel(cfg)
 %     cross-condition generalization does not require cross-validation (so setting nfolds to 1),
 %     because a different data set is used for training and testing.
 %
-% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017
+% User function of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017
 % 
-% See also POP_EPOCH, FT_DATATYPE_TIMELOCK, FT_DATATYPE_RAW, SELECT_CHANNELS, COND_STRING,
-% FITCDISCR, SCOREAUC, ADAM_COMPUTE_GROUP_MVPA
+% See also: ADAM_COMPUTE_GROUP_MVPA, COND_STRING, SELECT_CHANNELS, WHITEN_FT_EEG, BALANCE_FT_EEG,
+% POP_EPOCH, FT_DATATYPE_TIMELOCK, FT_DATATYPE_RAW, FITCDISCR, SCOREAUC
 
 % default values
-ft_warning off;
+repeat = 1;                 % by default, the analysis is ran only once
+iterations = 0;             % no iterations by default
+randompermutations = 0;     % no random permutations by default
+iterate_method = '';        % iteration/permutation method is empty by default (this is set internally if cfg.iterations or cfg.randompermutations is above 0)
 channels = 'all';           % in 64-electrode BioSemi this uses all electrodes except the EOG electrodes, other options: 'ALL_NOSELECTION' for other aquisition systems or MEG, or for BioSemi 'OCCIP' only occipital, 'PARIET' only parietal etc, type help select_channels
 nfolds = 10;                % trains on 90% (9/10) and tests on 10% (1/10)
 crossclass = 'no';          % only trains and tests on the same time points
@@ -295,14 +345,15 @@ class_method = 'accuracy';  % computes classification accuracy (other options, e
 class_type = 'linear';      % classifier type, e.g. 'linear' or 'diaglinear'
 model = 'BDM';              % performs decoding rather than a forward encoding model
 raw_or_tfr = 'raw';         % performs the analysis on the raw data rather than the time-frequeny data
-balance_triggers = 'yes';   % balances triggers within each stimulus class, so that each class contains an equal amount of trigger values (discarding leftover triggers)
-balance_classes_method = 'oversample'; % whether to oversample or undersample classes in the training set to achieve balancing
+balance_triggers = 'yes';   % within-class balancing: balances triggers within each stimulus class using undersampling, so that each class contains an equal amount of trigger values (discarding leftover triggers)
+balance_classes = 'yes';    % between class balancaing: balances training set using oversampling so that each class in the training set contains an equal number of instances 
 bintrain = 'no';            % average across triggers within a class on the training side
 bintest = 'no';             % average across triggers witin a class on the testing side
 savelabels = 'no';          % if 'yes', also saves the classifier labels
 labelsonly = 'no';          % if 'yes', only saves the classifier labels (test set does not require labels in this case)
 tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
-clean_window = [];
+clean_window = [];          % specifies the window used to reject muscle artifacts
+whiten = 'yes';             % specifies whether to apply pre-whitening to the data (MVNN)
 
 % unpack cfg
 v2struct(cfg);
@@ -321,19 +372,29 @@ if ~exist('class_spec','var')
     error('You need to specify in cfg.class_spec which trigger values go into which stimulus class used for training/testing');
 end
 
-% re-structure parameters to work with lower-level API
-% settings string
+% re-structure parameters to work with lower-level API settings string in the classify_ and create_qsub_ functions
+if iterations > 0
+    repeat = iterations;
+    iterate_method = 'iterate';
+end
+if randompermutations > 0
+    repeat = randompermutations;
+    iterate_method = 'randperm';
+end
+if strcmpi(whiten,'no')
+    whiten = 'nowhiten';
+else
+    whiten = '';
+end
 if strcmpi(balance_triggers,'no')
     balance_triggers = 'unbalance_triggers';
 else
     balance_triggers = '';
 end
-if strcmpi(balance_classes_method,'undersample')
-    balance_classes_method = 'undersample';
-elseif strcmpi(balance_classes_method,'oversample')
-    balance_classes_method = 'oversample';
-elseif strcmpi(balance_classes_method,'none')
-    balance_classes_method = 'unbalance_classes';
+if strcmpi(balance_classes,'no')
+    balance_classes = 'unbalance_classes';
+else
+    balance_classes = '';
 end
 if strcmpi(bintrain,'yes')
     bintrain = 'bintrain';
@@ -358,7 +419,7 @@ end
 if ~isempty(clean_window)
     clean_window = sprintf('clean%.4f %.4f',clean_window);
 end
-str_settings = cellarray2csvstring({class_method,class_type,model,balance_triggers,balance_classes_method,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
+str_settings = cellarray2csvstring({class_method,class_type,model,iterate_method,whiten,balance_triggers,balance_classes,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
@@ -383,7 +444,7 @@ elseif ~ischar(tfr_baseline)
 end
 tfr_and_erp_baseline = sprintf('%s;%s',tfr_baseline,erp_baseline);
 if isempty(frequencies)
-    frequencies = '2:2:100';
+    frequencies = '2:2:30';
 end
 if ischar(channels) && strcmpi(channels,'all')
     channels = 'ALL';
@@ -397,17 +458,16 @@ end
 % run analysis
 if ~exist('qsub','var') %run local
     for cSubj = 1:numel(filenames)
-        %try
-        if strcmpi(raw_or_tfr,'raw')
-            classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels,str_settings,crossclass_resample,erp_baseline,class_spec{:});
-        elseif strcmpi(raw_or_tfr,'tfr')
-            classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+        for cRepeat = 1:repeat
+            if strcmpi(raw_or_tfr,'raw')
+                classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels,str_settings,crossclass_resample,erp_baseline,class_spec{:});
+            elseif strcmpi(raw_or_tfr,'tfr')
+                classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+            end
         end
-        %catch ME
-        %    disp([ME.message ', skipping subject ' filenames{cSubj}]);
-        %end
     end
 else % or create qsub files
+    qsub.repeat = repeat; % repeat by the number of times specified in cfg.iterations or cfg.randpermutations
     if strcmpi(raw_or_tfr,'raw')
         create_qsub_files(qsub.functionpath,'classify_RAW_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channels,str_settings,crossclass_resample,erp_baseline,class_spec{:});
     elseif strcmpi(raw_or_tfr,'tfr')

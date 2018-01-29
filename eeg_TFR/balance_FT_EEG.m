@@ -1,14 +1,14 @@
 function FT_EEG = balance_FT_EEG(FT_EEG,condSet,whitened,field)
-% balance_FT_EEG balances the EEG data contained in an FT_EEG struct by oversampling stimulus
-% classes using the ADASYN algorithm
+% balance_FT_EEG achieves between-class balancing of EEG data contained in an FT_EEG struct by
+% oversampling stimulus classes using the ADASYN algorithm
 %
 % First averages instances across trigger codes to create within-class balanced instances,
 % subsequently uses those instances to generate new instances using the ADASYN algorithm. See ADASYN
 % for more details.
 %
-% Part of the ADAM toolbox, by J.J.Fahrenfort, 2018
+% Internal function of the ADAM toolbox, by J.J.Fahrenfort, 2018
 %
-% see also: ADASYN, adam_MVPA_firstlevel
+% See also: ADAM_MVPA_FIRSTLEVEL, ADASYN_TIME_SERIES
 
 if nargin < 4
     field = 'trial';

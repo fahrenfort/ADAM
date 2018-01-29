@@ -78,7 +78,8 @@ function classify_TFR_from_eeglab_data(filepath,filenames,outpath,nFolds,channel
 % J.J.Fahrenfort, VU 2014, 2016, 2018
 % 
 % Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015, 2018
-% See also: adam_MVPA_firstlevel
+%
+% See also: ADAM_MVPA_FIRSTLEVEL
 
 % sanity checking and parameter extraction
 warning('off','all')
@@ -200,16 +201,11 @@ for c=1:numel(methods)
         bintest = true;
     end
     if strcmpi(methods{c},'randperm')
+        iterate = true;
         randomize_labels = true;
-        % create a folder for random permutation
-        outpath = [outpath filesep 'randperm'];
-        mkdir(outpath);
     end
     if strcmpi(methods{c},'iterate')
         iterate = true;
-        % create a folder for iterations
-        outpath = [outpath filesep 'iterations'];
-        mkdir(outpath);
     end
     if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr','AUC'}))
         measuremethod = methods{c};
@@ -393,9 +389,11 @@ else
     filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
 end
 if ~crossclass % do not turn this on when doing cross classification (only on for the allfreqsf folder), otherwise every frequency would contain and FT_ERP and FT_TFR
-    mkdir([outpath filesep 'allfreqs']);
-    if ~(randomize_labels || iterate)
-        fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
+    % a folder for time by frequency
+    fullpath = fullfile(outpath, 'allfreqs');
+    mkdir(fullpath);
+    if ~iterate
+        fullfilename = fullfile(fullpath, filename);
         save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3'); 
     end
 end
@@ -469,9 +467,7 @@ for cFld = 1:nFolds
         save(fnames{cFld,cSet},'-v7.3','-struct','TFR_foldsave');
         clear FT_EEG_2use TFR_foldsave;
         % this is a check to make sure that the file has written to disk before continueing, which seemed to cause problems
-        while ~exist(fnames{cFld,cSet},'file')
-        end
-        filesize = 0; sizenow = 1000;
+        while ~exist(fnames{cFld,cSet},'file'); end; filesize = 0; sizenow = 1000;
         while filesize ~= sizenow 
             info = dir(fnames{cFld,cSet});
             filesize = info.bytes;
@@ -486,6 +482,7 @@ for cFld = 1:nFolds
     % FYI, store for every fold
     settrialindex = [settrialindex; origtrialindex];
 end % end folds loop in which temp files are created
+
 clear FT_EEG; % clear the dataset so we don't need it in memory during analyses
 
 % create file pointer and extract some relevant info from the first two files for sanity checks
@@ -516,7 +513,7 @@ end
 % now loop over frequencies
 for cFreq = 1:numel(frequencies)
           
-    % Run classification
+    % and run models, with as little overhead as possible
     clear BDM_* FEM_*;
     settrialinfo = [];
     for cFld=1:nFolds
@@ -536,6 +533,7 @@ for cFreq = 1:numel(frequencies)
                 error(['error, cannot find a matching frequency for frequency ' num2str(frequency) ', giving up now']);
             end
         end
+        
         % FYI
         fprintf(1,['fold: ' num2str(cFld) ', frequency: ' num2str(frequency) '\n']);
         
@@ -690,14 +688,31 @@ for cFreq = 1:numel(frequencies)
     if crossclass
         settings.frequency = frequency;
         settings.dimord = 'time_time';
-        mkdir([outpath filesep 'freq' num2str(frequency)]);
-        % count filenames from 001 onwards if computing under random permutation or iteration
-        if randomize_labels || iterate
-            fullfilename = find_filename([outpath filesep 'freq' num2str(frequency)],filename);
+        
+        % a folder for this frequency
+        fullpath = fullfile(outpath, ['freq' num2str(frequency)]);
+        
+        % count filenames from 0001 onwards if computing under random permutation or iteration
+        % create a folder for iterations / random permutations
+        if iterate && randomize_labels
+            fullpath = fullfile(fullpath, 'randperm');
+        elseif iterate
+            fullpath = fullfile(fullpath, 'iterations');
+        end
+
+        % create folder if it does not exist
+        if ~exist(fullpath,'dir')
+            mkdir(fullpath);
+        end
+        
+        % determine filename and save
+        if iterate
+            fullfilename = find_filename(fullpath,filename);
         else
-            fullfilename = [ outpath filesep 'freq' num2str(frequency) filesep filename ];
+            fullfilename = fullfile(fullpath,filename);
         end
         save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
+        
         if save_labels
             if labelsonly
                 save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_LabelsOverTime', FEMLabelsOverTime, 'FEM_LabelsOverTime');
@@ -773,14 +788,30 @@ if ~crossclass
     end
     settings.freqs = frequencies;
     settings.dimord = 'freq_time';
-    % count filenames from 001 onwards if computing under permutation or iteration
-    if randomize_labels || iterate
-        fullfilename = find_filename([outpath filesep 'allfreqs'],filename);
+    
+    % a folder for time by frequency
+    fullpath = fullfile(outpath, 'allfreqs');
+        
+    % count filenames from 0001 onwards if computing under random permutation or iteration
+    % create a folder for iterations / random permutations
+    if iterate && randomize_labels
+        fullpath = fullfile(fullpath, 'randperm');
+    elseif iterate
+        fullpath = fullfile(fullpath, 'iterations');
+    end
+    % create folder if it does not exist
+    if ~exist(fullpath,'dir')
+        mkdir(fullpath);
+    end
+    % determine filename and save
+    if iterate
+        fullfilename = find_filename(fullpath,filename);
         save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
     else
-        fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
+        fullfilename = fullfile(fullpath,filename);
         save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3', '-append'); % this file also contains the ERPs and the TFRs, so append
     end
+    
     if save_labels
         if labelsonly
             save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_LabelsOverTime', FEMLabelsOverTime, 'FEM_LabelsOverTime');
@@ -793,10 +824,10 @@ end
 % turn warnings back on
 warning('on','all')
 
-function fullfile = find_filename(path,filename)
+function findfile = find_filename(path,filename)
 c = 1;
-fullfile = sprintf([path filesep filename '_PERM%03d'], c);
-while numel(dir([fullfile '.*']))>0
+findfile = fullfile(path, sprintf([filename '_PERM%04d'], c));
+while numel(dir([findfile '.*']))>0
     c = c + 1;
-    fullfile = sprintf([path filesep filename '_PERM%03d'], c);
+    findfile = fullfile(path, sprintf([filename '_PERM%04d'], c));
 end

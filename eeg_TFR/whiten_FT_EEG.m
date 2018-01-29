@@ -11,9 +11,9 @@ function [FT_EEG, IE] = whiten_FT_EEG(FT_EEG,condSet,IE,field)
 % supplied when calling this function, in this case the data will be whitened using the supplied
 % matrix.
 %
-% Part of the ADAM toolbox, by J.J. Fahrenfort, 2018
+% Internal function of the ADAM toolbox, by J.J.Fahrenfort, 2018
 %
-% see also: covCor
+% See also: ADAM_MVPA_FIRSTLEVEL, COVCOR
 
 if nargin < 4
     field = 'trial';
