@@ -113,7 +113,7 @@ startdir = '';
 swapaxes = true;
 referenceline = [];   % you can plot a reference line by indicating cfg.referenceline = timepoint (in milliseconds) where it should be plotted.
 if numel(stats) > 1
-    line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
+    line_colors = {[.5 0 0] [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
 else
     line_colors = {[0 0 0]};
 end
@@ -173,7 +173,7 @@ end
 % set line colors
 if numel(line_colors)<numel(stats) || isempty(line_colors)
     if numel(stats) > 1
-        line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
+        line_colors = {[.5 0 0] [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
     else
         line_colors = {[0 0 0]};
     end
@@ -187,8 +187,10 @@ if ~isempty(plot_order)
             error('cannot find condition name specified in cfg.plot_order');
         end
         newstats(cPlot) = stats(statindex);
+        new_line_colors{cPlot} = line_colors{statindex};
     end
     stats = newstats;
+    line_colors = new_line_colors;
 end
 
 % determine accuracy limits
