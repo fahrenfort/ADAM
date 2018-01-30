@@ -50,8 +50,9 @@ function map = adam_plot_MVPA(cfg,stats)
 %                               tick marks (line plots) or x/y-axis ticks (time-time plots)
 %   cfg.freqtick              = [] (default); or int; as in timetick, for frequency y-axis in case
 %                               of time-frequency plot.
-%   cfg.referenceline         = 0 (default); or int in ms; you can define your own reference line if
-%                               e.g. the stimulus-class triggers were not send at time=0 ms.
+%   cfg.referenceline         = [int] in ms; you can plot a reference line
+%                               e.g. if the stimulus-class triggers were sent at 100 ms, define
+%                               cfg.referenceline = 100;
 %   cfg.line_colors           = [] (default); or string cell array e.g. {'g','r'}; or 
 %                               {[R G B],[R G B]} with integers between [0 1] for RGB values; this
 %                               overrides the default colors for line plots.
@@ -110,7 +111,7 @@ plot_order = [];
 folder = '';
 startdir = '';
 swapaxes = true;
-referenceline = 0;   % you can plot a reference line by indicating cfg.referenceline = timepoint (in milliseconds) where it should be plotted.
+referenceline = [];   % you can plot a reference line by indicating cfg.referenceline = timepoint (in milliseconds) where it should be plotted.
 if numel(stats) > 1
     line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
 else
@@ -489,7 +490,7 @@ if strcmpi(plottype,'2D')
     plot([nearest(xaxis,0),nearest(xaxis,0)],[acclim(1),acclim(2)],'k--');
     
     % plot help line
-    if referenceline ~= 0
+    if ~isempty(referenceline)
         plot([nearest(xaxis,referenceline),nearest(xaxis,referenceline)],[acclim(1),acclim(2)],'k--');
     end
     
@@ -588,11 +589,12 @@ else
     set(gca,'YDir','normal'); % set the y-axis right
     
     % plot some help lines
-    if referenceline ~= 0
+    if ~isempty(referenceline)
         hold on;
         timeinms = referenceline;
         plot([nearest(xaxis,timeinms),nearest(xaxis,timeinms)],[nearest(yaxis,min(yaxis)),nearest(yaxis,max(yaxis))],'k--');
         plot([nearest(xaxis,min(xaxis)),nearest(xaxis,max(xaxis))],[nearest(yaxis,timeinms),nearest(yaxis,timeinms)],'k--');
+        plot([nearest(xaxis,min(xaxis)),nearest(xaxis,max(xaxis))],[nearest(yaxis,min(yaxis)),nearest(yaxis,max(yaxis))],'k--');
     end
     
     % set ticks on color bar
@@ -602,6 +604,8 @@ else
         Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
     end
     set(hcb,'YTick',zaxis,'YTickLabel',Ylabel);
+    ylabel(hcb,regexprep(measuremethod,'_',' ')); % add measuremethod to colorbar
+    %title(hcb,regexprep(measuremethod,'_',' ')); % you can also put it above the color bar if you prefer
     if strcmpi(ydim,'freq')
         ylabel('frequency in Hz','FontSize',fontsize);
         xlabel('time in ms','FontSize',fontsize);

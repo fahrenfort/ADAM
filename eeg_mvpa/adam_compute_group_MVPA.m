@@ -122,7 +122,7 @@ function stats = adam_compute_group_MVPA(cfg,folder_name)
 % 
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
 % 
-% See also ADAM_COMPUTE_GROUP_ERP, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
+% See also: ADAM_MVPA_FIRSTLEVEL, ADAM_COMPUTE_GROUP_ERP, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
 % First get some settings
 if nargin<2
@@ -374,8 +374,11 @@ for cSubj = 1:nSubj
         % initialize chanlocs
         if ~exist('firstchanlocs','var')
             firstchanlocs = [];
-            %chanlocdata.labels = 'BLA';
-            chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
+            if exist('1005chanlocdata.mat','file')
+                load('1005chanlocdata.mat');
+            else
+                chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
+            end
         end
         % find limits
         [settings, cfg, lim1, lim2, dataindex, firstchanlocs, chanlocdata] = find_limits(settings, cfg, firstchanlocs, chanlocdata);
@@ -531,8 +534,10 @@ for cSubj = 1:nSubj
 end
 
 % determine chance level
-if strcmpi(settings.measuremethod,'hr-far') || strcmpi(plot_model,'FEM')
+if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(plot_model,'FEM')
     chance = 0;
+elseif strcmpi(settings.measuremethod,'AUC')
+    chance = .5;
 else
     chance = 1/settings.nconds;
 end

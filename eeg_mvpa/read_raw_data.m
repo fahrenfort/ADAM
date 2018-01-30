@@ -40,7 +40,7 @@ if exist(fullfile(filepath,[filename '.set']),'file')
     FT_EEG = eeglab2ft(EEG); % convert to internally used FT_EEG format
     chanlocs = EEG.chanlocs;
     clear EEG;
-% next, attempt to load fieldtrip data in .mat format in case this fails
+    % next, attempt to load fieldtrip data in .mat format in case this fails
 elseif exist(fullfile(filepath,[filename '.mat']),'file')
     FT_EEG = load(fullfile(filepath,[filename '.mat']));
     FT_FIELDS = fieldnames(FT_EEG); % convert to internally used FT_EEG format
@@ -72,13 +72,21 @@ if detrend_eeg
     FT_EEG = detrend_FT_EEG(FT_EEG);
 end
 
+% turn off annoying FT warnings
+if exist('ft_warning','file') == 2
+    ft_warning off;
+end
+
 % baseline correction
 cfg = [];
 cfg.baseline = erp_baseline;
 cfg.channel = 'all';
 cfg.parameter = 'trial';
+% turn off annoying FT warnings
+if exist('ft_warning','file') == 2
+    ft_warning off;
+end
 FT_EEG = ft_timelockbaseline(cfg,FT_EEG);
-
 if clean_data % muscle artifact detection
     FT_EEG = muscle_removal(FT_EEG,[outpath filesep filename],clean_window);
 end
@@ -87,6 +95,10 @@ end
 if do_csd
     cfg = [];
     cfg.channel = 'EEG';
+    % turn off annoying FT warnings
+    if exist('ft_warning','file') == 2
+        ft_warning off;
+    end
     FT_EEG = ft_selectdata(cfg,FT_EEG);
     % fix elec, which ft_selectdata should have done
     if isfield(FT_EEG,'elec')
@@ -105,14 +117,22 @@ end
 if resample_eeg
     cfg = [];
     cfg.resamplefs = resample_eeg;
+    % turn off annoying FT warnings
+    if exist('ft_warning','file') == 2
+        ft_warning off;
+    end
     FT_EEG = ft_resampledata(cfg,FT_EEG);
 end
 
-% custom function to select channels 
+% custom function to select channels
 [~, channels] = select_channels(FT_EEG.label,channelset);
 disp(['We had ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
 cfg = [];
 cfg.channel = channels;
+% turn off annoying FT warnings
+if exist('ft_warning','file') == 2
+    ft_warning off;
+end
 FT_EEG = ft_selectdata(cfg,FT_EEG);
 disp(['Now we have ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
 
@@ -161,7 +181,7 @@ else % if not coming from eeglab, recreate eeglab chanlocs structure
     if ~exist('chanlocs','var')
         disp('WARNING: could not find electrode or channel positions.');
         chanlocs = [];
-    end     
+    end
 end
 
 % destroy temporal order of trials

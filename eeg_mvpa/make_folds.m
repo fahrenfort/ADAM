@@ -7,7 +7,7 @@ function [ trainIndx, testIndx, nFolds ] = make_folds(trialinfo1,trialinfo2,cond
 %
 % J.J.Fahrenfort, VU, 2015, 2016
 
-if nargin<6
+if nargin<5
     labelsOnly = false;
 end
 

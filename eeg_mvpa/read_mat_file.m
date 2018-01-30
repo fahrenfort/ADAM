@@ -7,7 +7,7 @@ timedim = find(strcmp(dims,'time'));
 trialdim = find(strcmp(dims,'rpt'));
 freqdim = find(strcmp(dims,'freq'));
 if isempty(chandim | timedim | trialdim | freqdim) || numel(dims) ~= 4
-    error('incorrect dimensions: should have time, channel, trial, and frequency. Either first compute TFRs or use classify_RAW_FT_data.');
+    error('incorrect dimensions: should have time, channel, trial, and frequency.');
 end
 freq = matObj.freq;
 label = matObj.label;

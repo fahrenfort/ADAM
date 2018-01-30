@@ -131,7 +131,7 @@ function stats = adam_compute_group_ERP(cfg,folder_name)
 %
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
 % 
-% See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
+% See also ADAM_MVPA_FIRSTLEVEL, ADAM_COMPUTE_GROUP_MVPA, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
 if nargin<2
     folder_name = '';

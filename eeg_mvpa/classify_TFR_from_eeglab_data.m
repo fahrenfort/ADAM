@@ -1,117 +1,85 @@
 function classify_TFR_from_eeglab_data(filepath,filenames,outpath,nFolds,channelset,method,crossclass_and_or_resample,tf_and_erp_baseline,frequencies,varargin)
-% function classify_TFR_from_eeglab_data(filepath,filenames,outpath,nFolds,channelset,method,crossclass_and_or_resample,tf_and_erp_baseline,frequencies,varargin)
-% Wrapper function to do TFR extraction and MVPA classification in one
-% step, replacing the function classify_TFR_data_from_eeglab.m and
-% classify_TFR_data.m which contained flaws when doing classification on
-% induced data. This function references compute_TFR_from_eeglab.m See help
-% for this  function to learn more about the TFR input parameters to method
-% (which can also contain values like 'total', 'induced' or 'evoked').
-% filenames either contains a single filename for testing and training, or
-% two filenames separated by a comma (the first for training, second for
-% testing)
-% outpath contains the folder where results should be stored (if empty
-% defaults to filepath)
-% nFolds is the number of cohorts in which the data is split up for
-% the leave-one-out procedure (only when the same data are used for
-% training and testing). If there are separate sets for testing and
-% training, nFolds defaults to 1. In that case, testing and training
-% need to contain the same trigger codes, or you need to specify separate
-% trigger codes for the testing set by separating by a semicolon (see
-% below).
-% channelset determines the electrode subset that is used for testing. This
-% can be done either numerically (assumes a 64 channel 10-20 system):
-% 1 (uses all electrodes)
-% 2 (uses occipital electrodes)
-% 3 (uses parietal electrodes)
-% 4 (uses frontal electrodes)
-% 5 (uses temporal electrodes)
-% 6 (uses occipitoparietal electrodes)
-%
-% method specifies the method used for classification. Default is 'linear'
-% for linear discriminant analysis. Other options are: 'diagLinear',
-% 'mahalanobis' or 'quadratic'.
-% The dependent classification measure can be specified in method,
-% either using 'accuracy' (default), 'hr-far' or 'dprime' (last two only
-% work when two categories are present, the first category is assumed to be
-% the target present category, the second the target absent category. If
-% more than two categories are present, the script defaults back to
-% accuracy. If you want to output the individual labels that were assigned
-% by the classifier to each of the trials rather than computing accuracy,
-% specify 'labelsonly'. In this case, the algorithm goes through the entire
-% training set and outputs a label for each trial. No accuracy scores will
-% be computed in this case.
-% Specify by adding to method, e.g. like this:
-% method = 'linear,hr-far'
-% If you want to output the individual labels that were assigned
-% by the classifier to each of the trials rather than computing accuracy,
-% specify 'labelsonly'. If no conditions are specified for the testing set,
-% the algorithm goes through the entire testing set and outputs a label for
-% each time point in each trial. No accuracy scores will be computed in
-% this case. If conditions are specified for the test set, only conditions
-% fitting this specification are labeled.
-% In method you can also specify that the training labels should be
-% permuted under random permutation by adding 'randperm', separated by a
-% comma, like this: method = 'linear,randperm'. The results of computing
-% under random permutation are stored in a folder called 'randperm' and can
-% subsequently be used for hypothesis testing.
-% Similarly, you can also run another complete iteration of the same data
-% (all folds) without randomly permuting the labels, by specificying
-% method = 'iterate'. The results of computing another iteration are stored
-% in a folder called 'iterations' and can subsequently be used for
-% averaging to get a cleaner result.
-% You can specify the number of times you want to execute a permutation or
-% iteration through the create_qsub_files function, by setting the number
-% of repeats using settings.repeat as an argument to that function.
-% In method, you can also specify whether the trial labels that are
-% specified for each condition should be binned (averaged) to generate new
-% trials, or not. This is done by adding 'bin' to the method,
-% separated by comma's, like this:
-% method = 'linear,bin'; 
-% If left out, no binning is applied (default). One can also specify
-% 'bintrain' or 'bintest' if binning should only take place on the training
-% or on the testing side.
-% Other options for method are to specify whether to compute the Scalp
-% Current Density (SCD) prior to classification. This is done by either
-% specifying 'csd' or 'scd' (e.g. method = 'linear,csd') using the finite
-% method from ft_scalpcurrentdensity from the fieldtrip toolbox.
-% You can specify the number of times you want to execute a permutation or
-% iteration through the create_qsub_files function, by setting the number
-% of repeats using settings.repeat as an argument to that function.
-% crossclass_and_or_resample specifies whether a cross-classification is
-% performed over time, in which each time point is used to classify all
-% other time points. This is very time consuming, better set to 0 for first
-% analysis, but set to 1 if you want to get a better feel of the data. You
-% can speed up cross classification by downsampling the data. This is done
-% by specifying the new sampling rate, separating the value for whether or
-% not to cross classify from the new sampling rate using a semicolon, like
-% this:
-% crossclass_and_or_resample = '1;128'; meaning that cross classification
-% will be performed and that all data will be resampled to 128 Hz. If no
-% value is specified to resample to, the data is left at the original
-% sampling rate.
-% frequencies allows you to select for which frequencies you want to
-% compute classification accuracy. This can be specified as an array, as a
-% list of comma separated values, or as a single value. If left empty or
-% set to 0, all frequencies are classified.
-% varargin is a variable set of conditions to select from, by which each
-% main condition is specified as string with comma separated values: 
+% classify_TFR_from_eeglab_data is an internal function of the ADAM toolbox to do TFR extraction and
+% MVPA classification in one step, replacing the function classify_TFR_data_from_eeglab.m and
+% classify_TFR_data.m which contained flaws when doing classification on induced data. This function
+% references compute_TFR_from_eeglab.m See help for this  function to learn more about the TFR input
+% parameters to method (which can also contain values like 'total', 'induced' or 'evoked').
+% filenames either contains a single filename for testing and training, or two filenames separated
+% by a comma (the first for training, second for testing) outpath contains the folder where results
+% should be stored (if empty defaults to filepath) nFolds is the number of cohorts in which the data
+% is split up for the leave-one-out procedure (only when the same data are used for training and
+% testing). If there are separate sets for testing and training, nFolds defaults to 1. In that case,
+% testing and training need to contain the same trigger codes, or you need to specify separate
+% trigger codes for the testing set by separating by a semicolon (see below). channelset determines
+% the electrode subset that is used for testing. This can be done either numerically (assumes a 64
+% channel 10-20 system):
+% 1 ALL (uses all electrodes)
+% 2 OCCIP (uses occipital electrodes)
+% 3 PARIET (uses parietal electrodes)
+% 4 FRONTAL (uses frontal electrodes)
+% 5 TEMPORAL (uses temporal electrodes)
+% 6 OCCIPARIET (uses occipitoparietal electrodes)
+% method specifies the method used for classification. Default is 'linear' for linear discriminant
+% analysis. Other options are: 'diagLinear', 'mahalanobis' or 'quadratic'. The dependent
+% classification measure can be specified in method, either using 'accuracy' (default), 'hr-far' or
+% 'dprime' (last two only work when two categories are present, the first category is assumed to be
+% the target present category, the second the target absent category. If more than two categories
+% are present, the script defaults back to accuracy. If you want to output the individual labels
+% that were assigned by the classifier to each of the trials rather than computing accuracy, specify
+% 'labelsonly'. In this case, the algorithm goes through the entire training set and outputs a label
+% for each trial. No accuracy scores will be computed in this case. Specify by adding to method,
+% e.g. like this: method = 'linear,hr-far' If you want to output the individual labels that were
+% assigned by the classifier to each of the trials rather than computing accuracy, specify
+% 'labelsonly'. If no conditions are specified for the testing set, the algorithm goes through the
+% entire testing set and outputs a label for each time point in each trial. No accuracy scores will
+% be computed in this case. If conditions are specified for the test set, only conditions fitting
+% this specification are labeled. In method you can also specify that the training labels should be
+% permuted under random permutation by adding 'randperm', separated by a comma, like this: method =
+% 'linear,randperm'. The results of computing under random permutation are stored in a folder called
+% 'randperm' and can subsequently be used for hypothesis testing. Similarly, you can also run
+% another complete iteration of the same data (all folds) without randomly permuting the labels, by
+% specificying method = 'iterate'. The results of computing another iteration are stored in a folder
+% called 'iterations' and can subsequently be used for averaging to get a cleaner result. You can
+% specify the number of times you want to execute a permutation or iteration through the
+% create_qsub_files function, by setting the number of repeats using settings.repeat as an argument
+% to that function. In method, you can also specify whether the trial labels that are specified for
+% each condition should be binned (averaged) to generate new trials, or not. This is done by adding
+% 'bin' to the method, separated by comma's, like this: method = 'linear,bin'; If left out, no
+% binning is applied (default). One can also specify 'bintrain' or 'bintest' if binning should only
+% take place on the training or on the testing side. Other options for method are to specify whether
+% to compute the Scalp Current Density (SCD) prior to classification. This is done by either
+% specifying 'csd' or 'scd' (e.g. method = 'linear,csd') using the finite method from
+% ft_scalpcurrentdensity from the fieldtrip toolbox. You can specify the number of times you want to
+% execute a permutation or iteration through the create_qsub_files function, by setting the number
+% of repeats using settings.repeat as an argument to that function. crossclass_and_or_resample
+% specifies whether a cross-classification is performed over time, in which each time point is used
+% to classify all other time points. This is very time consuming, better set to 0 for first
+% analysis, but set to 1 if you want to get a better feel of the data. You can speed up cross
+% classification by downsampling the data. This is done by specifying the new sampling rate,
+% separating the value for whether or not to cross classify from the new sampling rate using a
+% semicolon, like this: crossclass_and_or_resample = '1;128'; meaning that cross classification will
+% be performed and that all data will be resampled to 128 Hz. If no value is specified to resample
+% to, the data is left at the original sampling rate. frequencies allows you to select for which
+% frequencies you want to compute classification accuracy. This can be specified as an array, as a
+% list of comma separated values, or as a single value. If left empty or set to 0, all frequencies
+% are classified. varargin is a variable set of conditions to select from, by which each main
+% condition is specified as string with comma separated values:
 % cond1 = '1,2,3';
 % cond2 = '4,5,6';
-% In that setup, all trials containing either a trigger code 1, 2 or 3 will
-% be trained and tested as category 1, while all trials containing a 4, 5
-% and 6 will be trained and tested as category 2.
-% If different condition nrs are used in training versus testing, separate
-% the condition specificiation by a semicolon (can only be used when using
-% different sets for testing and training):
+% In that setup, all trials containing either a trigger code 1, 2 or 3 will be trained and tested as
+% category 1, while all trials containing a 4, 5 and 6 will be trained and tested as category 2. If
+% different condition nrs are used in training versus testing, separate the condition specificiation
+% by a semicolon (can only be used when using different sets for testing and training):
 % cond1 = '1,2;8,9';
 % cond2 = '3;10';
-% here 1, 2 (the first) would be for training and 8,9 (the second) for
-% testing category 1, while 3 would be training category 2 and 10 for
-% testing category 2.
-% Usage examples:
-% TO BE DONE!
+% here 1, 2 (the first) would be for training and 8,9 (the second) for testing category 1, while 3
+% would be training category 2 and 10 for testing category 2.
 %
-% J.J.Fahrenfort, VU 2014, 2016
+% J.J.Fahrenfort, VU 2014, 2016, 2018
+% 
+% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015, 2018
+%
+% See also: ADAM_MVPA_FIRSTLEVEL
 
 % sanity checking and parameter extraction
 warning('off','all')
@@ -207,11 +175,11 @@ clean_muscle = false;
 clean_window = [];
 save_labels = false;
 basis_sigma = 1; % default width of basis set if not a delta, if this is empty, do a simple basis set (delta function)
-detrend_eeg = false;
 unbalance_triggers = false;
 unbalance_classes = false;
-balance_classes_method = 'oversample';
 detrend_eeg = false;
+whiten = true;
+whiten_test_using_train = false;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'})) == 1
         method = methods{c};
@@ -233,24 +201,19 @@ for c=1:numel(methods)
         bintest = true;
     end
     if strcmpi(methods{c},'randperm')
+        iterate = true;
         randomize_labels = true;
-        % create a folder for random permutation
-        outpath = [outpath filesep 'randperm'];
-        mkdir(outpath);
     end
     if strcmpi(methods{c},'iterate')
         iterate = true;
-        % create a folder for iterations
-        outpath = [outpath filesep 'iterations'];
-        mkdir(outpath);
     end
-    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr'}))
+    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr','AUC'}))
         measuremethod = methods{c};
-        if numel(condSet) ~= 2
-            disp('WARNING: number of stimulus classes is unequal to 2, defaulting back to computing accuracy rather than hr-far');
+        if numel(condSet) ~= 2 && ~strcmpi(measuremethod,'AUC')
+            disp('Number of stimulus classes is unequal to 2, defaulting back to computing accuracy');
             measuremethod = 'accuracy'; % defaulting back to accuracy
-        else
-            disp('computing sdt measure, assuming the first condition is target (signal) and second is non-target (noise)');
+        elseif numel(condSet) == 2
+            disp('When computing SDT measure: assuming the first condition is target (signal) and second is non-target (noise)');
         end
     end
     if any(strcmpi(methods{c},{'labelsonly','onlylabels'}))
@@ -301,29 +264,26 @@ for c=1:numel(methods)
     end
     if any(strcmpi(methods{c},{'unbalance_classes'}))
         unbalance_classes = true;
-        balance_classes_method = 'none';
     end
     if any(strcmpi(methods{c},{'undersample'}))
+        disp('WARNING: between-class undersampling has become obsolete, always oversampling using ADASYN');
         unbalance_classes = false;
-        balance_classes_method = 'undersample';
     end
     if any(strcmpi(methods{c},{'oversample'}))
         unbalance_classes = false;
-        balance_classes_method = 'oversample';
     end
     if any(strcmpi(methods{c},{'detrend','detrend_eeg'}))
         detrend_eeg = true;
+    end
+    if any(strcmpi(methods{c},{'nowhiten'}))
+        whiten = false;
     end
 end
 if ~do_FEM && ~do_BDM
     do_BDM = true;
 end
 
-% check nFolds and condSet
-if numel(filenames) > 1 && nFolds > 1
-    disp('WARNING: You specified different filenames for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
-    nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
-end
+% check condset
 if isempty(condSet)
     error('Cannot find usable trigger specification.');
 end
@@ -331,22 +291,41 @@ end
 if size(condSet{1},1) == 1
     condSet = put_this_condset(condSet,condSet,2);
 end
-% if using same triggers for training and testing, increase nFolds
-if numel(filenames) == 1 && nFolds == 1
-    for cCondSet = 1:numel(condSet)
-        if any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && nFolds == 1
-            nFolds = 10;
-            wraptext('WARNING: You dirty double dipper! You are using the same data for testing and training without a leave-one-out procedure. Defaulting nFolds to 10 for crossvalidation.',80);
-        end
-    end
-end
-% check if condsets are not the same but overlapping, if so unbalance
+% are train and test condsets overlapping?
+overlapping = false;
+allthesame = true;
 for cCondSet = 1:numel(condSet)
-    if ~all(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:))) && numel(filenames) == 1 && ~unbalance_triggers
-        unbalance_triggers = true;
-        wraptext('WARNING: Some stimulus triggers overlap between train and test, overriding balance triggers option');
+    if any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:)))
+        overlapping = true;
+    end
+    if ~all(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:)))
+        allthesame = false;
     end
 end
+% check nFolds
+if numel(filenames) > 1 && nFolds > 1
+    disp('WARNING: You specified different filenames for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
+    nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
+end
+% check if condsets are non-overlapping while nFolds > 1, if so lower nFolds to 1
+if numel(filenames) == 1 && nFolds > 1 && ~overlapping
+    disp('WARNING: You specified non-overlapping trigger codes for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
+    nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
+end
+% if using same triggers for training and testing, increase nFolds
+if numel(filenames) == 1 && nFolds == 1 && overlapping
+    nFolds = 10;
+    wraptext('WARNING: You dirty double dipper! You are using the same data for testing and training without a leave-one-out procedure. Defaulting nFolds to 10 for crossvalidation.',80);
+end
+% check if condsets are not the same but overlapping while triggers are balanced, if so unbalance_triggers
+if numel(filenames) == 1 && ~unbalance_triggers && ~allthesame && overlapping
+    unbalance_triggers = true;
+    wraptext('WARNING: Some stimulus triggers overlap between train and test, within class balancing has now been turned OFF');
+end
+
+% display stimulus classes
+wraptext('These are the stimulus classes. Each row contains the trigger codes that go into a single class (first row training, second row testing):',80);
+celldisp(condSet,'stimclass');
 
 % Determine bundle name and/or electrode selection
 [channelset, bundlename_or_bundlelabels] = return_channel_bundle(channelset);
@@ -377,16 +356,13 @@ for cSet = 1:2
         FT_EEG_BINNED(cSet) = compute_bins_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','original');
         trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo;
         oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;
-        % remove non-balanced trials for ERP calculation
-        tempbool = ones(size(FT_EEG(cSet).trialinfo)); tempbool([oldindex{cSet}{:}]) = 0;
-        notacondition = max(unique(FT_EEG(cSet).trialinfo)) + 999999; % a bit of hack to assign an unknown trigger number, assigning NaN produces an error during TFR computation
-        FT_EEG(cSet).trialinfo(logical(tempbool)) = notacondition;
-        clear tempbool;
+        % a bit of hack to assign an unknown trigger number to discarded trials
+        FT_EEG(cSet).trialinfo(setdiff(1:numel(FT_EEG(cSet).trialinfo),[oldindex{cSet}{:}])) = -99; 
     end
     % compute ERPs (baseline corrected, resampled, and channels already selected)
     FT_ERP{cSet} = compute_erp_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','bin');
     % also compute TFR for entire set
-    FT_TFR{cSet} = compute_TFR_from_eeglab('',FT_EEG(cSet),'',resample_eeg,[orig_method ',only_group'],tf_baseline,erp_baseline,frequencies,thisCondSet{:});
+    [~, FT_TFR{cSet}] = compute_TFR_from_FT_EEG(FT_EEG(cSet),thisCondSet,resample_eeg,orig_method,tf_baseline,erp_baseline,frequencies);
     % keep track of channels and time line
     channels{cSet} = FT_EEG(cSet).label;
     times{cSet} = FT_EEG(cSet).time;
@@ -397,8 +373,8 @@ if numel(filenames) > 1 && ~all(strcmpi(channels{1},channels{2}))
     error('The electrodes do not occur in the same order in testing and training, some coding required to fix this...');
 end
 
-% randomize labels if desired. NOTE: permuting all labels of the input set,
-% regardless of whether there is a separate testing set or not
+% randomize labels if desired. NOTE: permuting all labels of the input set, regardless of whether
+% there is a separate testing set or not
 if randomize_labels
     trialinfo{1} = trialinfo{1}(randperm(numel(trialinfo{1})));
 end
@@ -412,49 +388,34 @@ if numel(filenames) == 1
 else
     filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
 end
-if ~crossclass 
-    mkdir([outpath filesep 'allfreqs']);
-    if ~(randomize_labels || iterate)
-        fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
+if ~crossclass % do not turn this on when doing cross classification (only on for the allfreqsf folder), otherwise every frequency would contain and FT_ERP and FT_TFR
+    % a folder for time by frequency
+    fullpath = fullfile(outpath, 'allfreqs');
+    mkdir(fullpath);
+    if ~iterate
+        fullfilename = fullfile(fullpath, filename);
         save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3'); 
     end
 end
 clear FT_EEG_BINNED FT_ERP FT_TFR; % save memory by clearing
 
-% balance class instances by oversampling or undersampling (only applied to training set)
+% between-class balancing: balance class instances by oversampling (only applied to training set)
 if unbalance_classes
-    wraptext('Please realize that stimulus classes are now UNBALANCED. Make sure you know what you are doing, this can have undesirable effects on classifier bias when you have unevevenly represented stimulus classes in your design.',80);
+    wraptext('Between-class balancing is OFF. Make sure you know what you are doing, this can have undesirable effects on classifier bias when you have unevevenly represented stimulus classes in your design.',80);
 else
-    % duplicate or eliminate stimulus classes from the training set
-    for cFld=1:nFolds
-        nEachClass = cellfun(@numel, setindex{1}(cFld,:));
-        if strcmpi(balance_classes_method,'oversample')
-            maxN = max(nEachClass);
-            disp('Balancing classes by oversampling: duplicating class instances in the training set (default).');
-        elseif strcmpi(balance_classes_method,'undersample')
-            maxN = min(nEachClass);
-            disp('Balancing classes by undersampling: eleminating class instances from the training set.');
-        end
-        for cClass = 1:numel(nEachClass);
-            elements = setindex{1}{cFld,cClass};
-            elements = repmat(elements,ceil(maxN/numel(elements)),1);
-            setindex{1}{cFld,cClass} = elements(1:maxN);
-        end
-    end
-    wraptext('Stimulus classes are now BALANCED by design, so that each stimulus class is evenly represented in the training set. If this is undesirable behavior, specify ''unbalance_classes'' in your methods.',80);
+    wraptext('Between-class balancing is ON, so that each stimulus class is evenly represented in the training set. If this is undesirable behavior, specify ''unbalance_classes'' in your methods.',80);
 end
 
-% balance triggers within classes
+% within-class balancing: balance triggers within classes
 if unbalance_triggers
-    wraptext('Please realize that triggercodes in a class are now UNBALANCED, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have undesirable effects on how you interpret your results.',80);
+    wraptext('Within-class balancing is OFF, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have undesirable effects on how you interpret your results.',80);
 else
-    % unpack setindex{1} and setindex{2} to get back the original index
-    [setindex{1}, setindex{2}] = unpack_binned(setindex{1}, setindex{2}, oldindex{1}, oldindex{2});
-    wraptext('Triggercodes in a class are now BALANCED by design, such that triggercodes are evenly represented within each stimulus class. If triggercodes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_triggers'' in your methods.',80);
+    [setindex{1}, setindex{2}] = unpack_binned(setindex{1}, setindex{2}, oldindex{1}, oldindex{2}); % unpack setindex{1} and setindex{2} to get back the original index
+    wraptext('Within-class balancing is ON, such that triggercodes are evenly represented within each stimulus class. If triggercodes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_triggers'' in your methods.',80);
 end
 
-% create and save TFR for training and testing
-% do trial selection prior to TFR computation (important for induced!)
+% create and save TFR for training and testing do trial selection prior to TFR computation
+% (important for induced!)
 settrialindex = [];
 for cFld = 1:nFolds
     for cSet = 1:2
@@ -477,9 +438,8 @@ for cFld = 1:nFolds
         method_2use = orig_method;
         % FYI
         set_use_splines(cFld,cSet) = use_splines;
-        % if test_total is true, refrain from using induced during test,
-        % otherwise check trial numbers, if too few subtract splines rather
-        % than average ERP (default)
+        % if test_total is true, refrain from using induced during test, otherwise check trial
+        % numbers, if too few subtract splines rather than average ERP (default)
         if strcmpi(tfr_method,'induced') && cSet == 2 && test_total
             disp('Using total power instead of induced power for testing, useful when there are too few trials in test to compute quality ERPs.');
             method_2use = strrep(orig_method,'induced','total');
@@ -496,23 +456,24 @@ for cFld = 1:nFolds
         success = false; counterr = 0;
         while ~success
             try
-                fnames{cFld,cSet} = compute_TFR_from_eeglab('',FT_EEG_2use,[filepath filesep '..' ],resample_eeg,method_2use,tf_baseline,erp_baseline,frequencies,condSet_2use{:});
+                TFR_foldsave = compute_TFR_from_FT_EEG(FT_EEG_2use,condSet_2use,resample_eeg,method_2use,tf_baseline,erp_baseline,frequencies);
                 success = true;
             catch ME
                 disp(ME); disp('Memory problem? Let''s wait a bit before trying again.'); counterr = counterr + 1; if counterr > 10; error('errrrr, tried 10 times, giving up now...'); end; pause(600); 
             end
         end
-        clear FT_EEG_2use; % clear the dataset so we don't need it in memory during analyses
-        % wait for file to complete writing, seems to work
-        while ~exist([fnames{cFld,cSet} '.mat'],'file')
-        end
-        filesize = 0; sizenow = 1000;
-        while filesize ~= sizenow
-            info = dir([fnames{cFld,cSet} '.mat']);
+        [~,tmpf,~] = fileparts(tempname); % generates random filename
+        fnames{cFld,cSet} = [filepath filesep '..' filesep TFR_foldsave.fname '_' filenames{1} '_fold' num2str(cFld) '_' num2str(cSet) '_' tmpf  '.mat'];
+        save(fnames{cFld,cSet},'-v7.3','-struct','TFR_foldsave');
+        clear FT_EEG_2use TFR_foldsave;
+        % this is a check to make sure that the file has written to disk before continueing, which seemed to cause problems
+        while ~exist(fnames{cFld,cSet},'file'); end; filesize = 0; sizenow = 1000;
+        while filesize ~= sizenow 
+            info = dir(fnames{cFld,cSet});
             filesize = info.bytes;
             disp(['file is ' num2str(filesize) ' bytes...']);
             pause(.5);
-            info = dir([fnames{cFld,cSet} '.mat']);
+            info = dir(fnames{cFld,cSet});
             sizenow = info.bytes;
         end
         % just FYI, how big are the temporary files
@@ -521,10 +482,10 @@ for cFld = 1:nFolds
     % FYI, store for every fold
     settrialindex = [settrialindex; origtrialindex];
 end % end folds loop in which temp files are created
+
 clear FT_EEG; % clear the dataset so we don't need it in memory during analyses
 
-% create file pointer and extract some relevant info from the first two
-% files for sanity checks
+% create file pointer and extract some relevant info from the first two files for sanity checks
 [~, actualfrequencies, times{1}, trialinfo{1}, chanindex] = read_mat_file(fnames{1,1},channels{1});
 actualfrequencies = round(actualfrequencies*100)/100;
 
@@ -552,13 +513,14 @@ end
 % now loop over frequencies
 for cFreq = 1:numel(frequencies)
           
-    % Run classification
+    % and run models, with as little overhead as possible
     clear BDM_* FEM_*;
     settrialinfo = [];
     for cFld=1:nFolds
         % create file pointers for this fold
-        [matObj, ~, times{1}, trialinfo{1}, chanindex, chandim, timedim, trialdim, freqdim ] = read_mat_file(fnames{cFld,1},channels{1});
-        [matObj2, ~, times{2}, trialinfo{2}, chanindex2, chandim2, timedim2, trialdim2, freqdim2 ] = read_mat_file(fnames{cFld,2},channels{2});
+        [matObj, ~, times{1}, trialinfo{1}, chanindex, ~, ~, ~, freqdim ] = read_mat_file(fnames{cFld,1},channels{1});
+        [matObj2, ~, times{2}, trialinfo{2}, chanindex2, ~, ~, ~, ~ ] = read_mat_file(fnames{cFld,2},channels{2});
+        
         % read in data, only relevant frequency (dimension is dynamic)
         frequency = frequencies(cFreq);
         index    = cell(1,4);
@@ -571,30 +533,66 @@ for cFreq = 1:numel(frequencies)
                 error(['error, cannot find a matching frequency for frequency ' num2str(frequency) ', giving up now']);
             end
         end
+        
         % FYI
-        fprintf(1,['fold: ' num2str(cFld) ', frequency: ' num2str(frequency) '\n']);       
-        % load data, alldata = elec * time * trial, remove obsolete electrodes
-        alldata{1} = matObj.powspctrm(index{:});
-        alldata{1} = permute(alldata{1},[chandim timedim trialdim freqdim]); % should be  elec * time * trial, also remove channels
-        alldata{1} = alldata{1}(chanindex,:,:); 
-        labels{1} = make_group_labels(trialinfo{1}, get_this_condset(condSet,1));
-        alldata{2} = matObj2.powspctrm(index{:});
-        alldata{2} = permute(alldata{2},[chandim2 timedim2 trialdim2 freqdim2]); % should be channel x time x trial, also remove irrelevant channels
-        alldata{2} = alldata{2}(chanindex2,:,:);
-        labels{2} = make_group_labels(trialinfo{2}, get_this_condset(condSet,2));
+        fprintf(1,['fold: ' num2str(cFld) ', frequency: ' num2str(frequency) '\n']);
+        
+        % load data, alldata = channel * time * trial (*freq but that one disappears), remove
+        % obsolete electrodes, put in correct format for BDM_and_FEM_FT_EEG
+        train_FT_EEG.trial = matObj.powspctrm(index{:});
+        train_FT_EEG.trial = train_FT_EEG.trial(chanindex,:,:);
+        train_FT_EEG.dimord = 'chan_time_rpt';
+        train_FT_EEG.trialinfo = trialinfo{1};
+        train_condSet = get_this_condset(condSet,1);
+        
+        test_FT_EEG.trial = matObj2.powspctrm(index{:});
+        test_FT_EEG.trial = test_FT_EEG.trial(chanindex2,:,:);
+        test_FT_EEG.dimord = 'chan_time_rpt';
+        test_FT_EEG.trialinfo = trialinfo{2};
+        test_condSet = get_this_condset(condSet,2);    
+        
+        % fix dimord for whiten_FT_EEG and balance_FT_EEG functions, could be standardized to save memory peaks
+        train_FT_EEG = fix_dimord(train_FT_EEG,'rpt_chan_time'); % should be trial * channel * time
+        test_FT_EEG = fix_dimord(test_FT_EEG,'rpt_chan_time'); % should be trial * channel * time
+        
+        % (1) whiten train and test data
+        if whiten
+            [train_FT_EEG, FT_IE] = whiten_FT_EEG(train_FT_EEG,train_condSet);
+            if nFolds <= 4 % re-compute covariance matrix if test data is fully independent or at least 25% of the total data
+                FT_IE = [];
+            else
+                whiten_test_using_train = true; % to keep track in settings
+            end
+            % otherwise use train covariance to pre-whiten test data
+            [test_FT_EEG] = whiten_FT_EEG(test_FT_EEG,test_condSet,FT_IE);
+        end
+        % (2) between-class balance train by oversampling minority class using ADASYN/SMOTE
+        % STILL NEED TO CHECK INSIDE balance_FT_EEG IF FT_EEG IS NOT ALREADY BINNED:
+        if ~unbalance_classes
+            train_FT_EEG = balance_FT_EEG(train_FT_EEG,train_condSet,whiten);
+        end
+        
+        % fix dimord for BDM_and_FEM_FT_EEG function, could be standardized to save memory peaks
+        train_FT_EEG = fix_dimord(train_FT_EEG,'chan_time_rpt'); % should be channel * time * trial
+        test_FT_EEG = fix_dimord(test_FT_EEG,'chan_time_rpt'); % should be channel * time * trial
+
         % settings for backward and/or forward modelling
         msettings.crossclass = crossclass;
         msettings.method = method;
+        msettings.measuremethod= measuremethod;
         msettings.labelsonly = labelsonly;
         msettings.doBDM = do_BDM;
         msettings.doFEM = do_FEM;
         msettings.basis_sigma = basis_sigma;
-        % run analysis, clear memory afterwards
-        % note that Matlab does not copy a matrix that is passed into a  function when that matrix 
-        % is not modified inside that function. Rather, it creates a pointer to save memory :-)
-        [BDM, FEM] = EEG_backward_and_forward_matrix(alldata{2},alldata{1},labels{2},labels{1},msettings);
+        msettings.whiten = whiten;
+        msettings.unbalance_classes = unbalance_classes;
+        
+        % run BDM and FEM
+        [BDM, FEM] = BDM_and_FEM_FT_EEG(train_FT_EEG,test_FT_EEG,train_condSet,test_condSet,msettings);
+        
         % clear obsolete data 
-        clear alldata labels;
+        clear train_FT_EEG test_FT_EEG train_condSet test_condSet
+        
         % some BDM and FEM specific stuff
         if do_BDM
             if save_labels
@@ -603,7 +601,11 @@ for cFreq = 1:numel(frequencies)
             if labelsonly
                 BDM_ClassOverT(cFld) = NaN;
             else
-                BDM_ClassOverT(cFld,:,:) = class_accuracy_from_matrix(BDM.LabelsOverTime,measuremethod,crossclass); % fld x t1 x t2
+                if strcmpi(measuremethod,'AUC')
+                    BDM_ClassOverT(cFld,:,:) = BDM.AUC;
+                else
+                    BDM_ClassOverT(cFld,:,:) = class_accuracy_from_matrix(BDM.LabelsOverTime,measuremethod,crossclass); % fld x t1 x t2
+                end
             end
             BDM_WeightsOverT(cFld,:,:) = BDM.WeightsOverTime; % fld x time x elec
             BDM_covPatternsOverT(cFld,:,:) = BDM.covPatternsOverTime; % fld x time x elec
@@ -678,21 +680,39 @@ for cFreq = 1:numel(frequencies)
     settings.bintest = bintest;
     settings.unbalance_triggers = unbalance_triggers;
     settings.unbalance_classes = unbalance_classes;
-    settings.balance_classes_method = balance_classes_method;
     settings.filesizes_MB = filesizes_MB;
+    settings.whiten = whiten;
+    settings.whiten_test_using_train = whiten_test_using_train;
     
     % if crossclass is true, save crossclassification result PER FREQUENCY
     if crossclass
         settings.frequency = frequency;
         settings.dimord = 'time_time';
-        mkdir([outpath filesep 'freq' num2str(frequency)]);
-        % count filenames from 001 onwards if computing under random permutation or iteration
-        if randomize_labels || iterate
-            fullfilename = find_filename([outpath filesep 'freq' num2str(frequency)],filename);
+        
+        % a folder for this frequency
+        fullpath = fullfile(outpath, ['freq' num2str(frequency)]);
+        
+        % count filenames from 0001 onwards if computing under random permutation or iteration
+        % create a folder for iterations / random permutations
+        if iterate && randomize_labels
+            fullpath = fullfile(fullpath, 'randperm');
+        elseif iterate
+            fullpath = fullfile(fullpath, 'iterations');
+        end
+
+        % create folder if it does not exist
+        if ~exist(fullpath,'dir')
+            mkdir(fullpath);
+        end
+        
+        % determine filename and save
+        if iterate
+            fullfilename = find_filename(fullpath,filename);
         else
-            fullfilename = [ outpath filesep 'freq' num2str(frequency) filesep filename ];
+            fullfilename = fullfile(fullpath,filename);
         end
         save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
+        
         if save_labels
             if labelsonly
                 save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_LabelsOverTime', FEMLabelsOverTime, 'FEM_LabelsOverTime');
@@ -768,14 +788,30 @@ if ~crossclass
     end
     settings.freqs = frequencies;
     settings.dimord = 'freq_time';
-    % count filenames from 001 onwards if computing under permutation or iteration
-    if randomize_labels || iterate
-        fullfilename = find_filename([outpath filesep 'allfreqs'],filename);
+    
+    % a folder for time by frequency
+    fullpath = fullfile(outpath, 'allfreqs');
+        
+    % count filenames from 0001 onwards if computing under random permutation or iteration
+    % create a folder for iterations / random permutations
+    if iterate && randomize_labels
+        fullpath = fullfile(fullpath, 'randperm');
+    elseif iterate
+        fullpath = fullfile(fullpath, 'iterations');
+    end
+    % create folder if it does not exist
+    if ~exist(fullpath,'dir')
+        mkdir(fullpath);
+    end
+    % determine filename and save
+    if iterate
+        fullfilename = find_filename(fullpath,filename);
         save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
     else
-        fullfilename = [ outpath filesep 'allfreqs' filesep filename ];
+        fullfilename = fullfile(fullpath,filename);
         save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3', '-append'); % this file also contains the ERPs and the TFRs, so append
     end
+    
     if save_labels
         if labelsonly
             save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_LabelsOverTime', FEMLabelsOverTime, 'FEM_LabelsOverTime');
@@ -788,10 +824,10 @@ end
 % turn warnings back on
 warning('on','all')
 
-function fullfile = find_filename(path,filename)
+function findfile = find_filename(path,filename)
 c = 1;
-fullfile = sprintf([path filesep filename '_PERM%03d'], c);
-while numel(dir([fullfile '.*']))>0
+findfile = fullfile(path, sprintf([filename '_PERM%04d'], c));
+while numel(dir([findfile '.*']))>0
     c = c + 1;
-    fullfile = sprintf([path filesep filename '_PERM%03d'], c);
+    findfile = fullfile(path, sprintf([filename '_PERM%04d'], c));
 end
