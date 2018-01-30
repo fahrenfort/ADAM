@@ -531,8 +531,10 @@ for cSubj = 1:nSubj
 end
 
 % determine chance level
-if strcmpi(settings.measuremethod,'hr-far') || strcmpi(plot_model,'FEM')
+if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(plot_model,'FEM')
     chance = 0;
+elseif strcmpi(settings.measuremethod,'AUC')
+    chance = .5;
 else
     chance = 1/settings.nconds;
 end

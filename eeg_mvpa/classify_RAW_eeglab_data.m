@@ -380,8 +380,8 @@ if numel(filenames) > 1 && ~all(strcmpi(channels{1},channels{2}))
     error('The electrodes do not occur in the same order in testing and training, some coding required to fix this...');
 end
 
-% randomize labels if desired. NOTE: permuting all labels of the input set,
-% regardless of whether there is a separate testing set or not
+% randomize labels if desired. NOTE: permuting all labels of the input set, regardless of whether
+% there is a separate testing set or not
 if randomize_labels
     trialinfo{1} = trialinfo{1}(randperm(numel(trialinfo{1})));
 end
