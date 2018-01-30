@@ -374,8 +374,11 @@ for cSubj = 1:nSubj
         % initialize chanlocs
         if ~exist('firstchanlocs','var')
             firstchanlocs = [];
-            %chanlocdata.labels = 'BLA';
-            chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
+            if exist('1005chanlocdata.mat','file')
+                load('1005chanlocdata.mat');
+            else
+                chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
+            end
         end
         % find limits
         [settings, cfg, lim1, lim2, dataindex, firstchanlocs, chanlocdata] = find_limits(settings, cfg, firstchanlocs, chanlocdata);
