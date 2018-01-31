@@ -74,9 +74,11 @@ function adam_MVPA_firstlevel(cfg)
 %                                    in the training set to achieve cross-class balancing;
 %                                    oversampling duplicates trials in the training set using the
 %                                    ADASYN algorithm to create synthetical copies of the minority
-%                                    class(es): H. He, Y. Bai, E.A. Garcia, and S. Li, "ADASYN:
-%                                    Adaptive Synthetic Sampling Approach for Imbalanced Learning",
-%                                    Proc. Int'l. J. Conf. Neural Networks, pp. 1322--1328, (2008).
+%                                    class(es): Haibo He, Yang Bai, Garcia, E. A., & Shutao Li.
+%                                    (2008). ADASYN: Adaptive synthetic sampling approach for
+%                                    imbalanced learning (pp. 1322?1328). Presented at the 2008 IEEE
+%                                    International Joint Conference on Neural Networks (IJCNN 2008 -
+%                                    Hong Kong), IEEE. http://doi.org/10.1109/IJCNN.2008.4633969
 %       cfg.class_type             = 'linear' (default); classifier type, e.g. 'linear' or
 %                                    'diaglinear'; for other options see FITCDISCR (default Matlab
 %                                    discriminant analysis function, which ADAM uses at its core)
@@ -114,6 +116,17 @@ function adam_MVPA_firstlevel(cfg)
 %                                    'BDM,FEM';). It is only sensible to run a FEM when the classes
 %                                    are thought to form a continuum, such as positions on a circle,
 %                                    colors on a color wheel, or orientation.
+%       cfg.sigma_basis_set        = 1; (default). Specifies the width of the basis set when running
+%                                    a forward encoding model (FEM). When setting
+%                                    cfg.sigma_basis_set = 0; the basis set is a simple box-car
+%                                    (also called delta function) with an 'on' (1) predictor for the
+%                                    current class and 'off' predictors (0) for all the other
+%                                    classes. For other values of sigma_basis_set, the basis set is
+%                                    a gaussian with width sigma. For example, see Fahrenfort, J.
+%                                    J., Grubert, A., Olivers, C. N. L., & Eimer, M. (2017).
+%                                    Multivariate EEG analyses support high-resolution tracking of
+%                                    feature-based attentional selection. Scientific Reports, 7(1),
+%                                    1886. http://doi.org/10.1038/s41598-017-01911-0.
 %       cfg.raw_or_tfr             = 'raw' (default); you can either perform MVPA on raw EEG/MEG
 %                                    data, or on time frequency representations of the data
 %                                    (cfg.raw_or_tfr = 'tfr';) When 'tfr' is specified, ADAM first
@@ -122,20 +135,24 @@ function adam_MVPA_firstlevel(cfg)
 %                                    single trial power values of each of these frequency bands. See
 %                                    below for specification of frequency bands.
 %       cfg.channels               = 'ALL_NOSELECTION'; (default) will use all channels/electrodes
-%                                    in the data; note that if you still have EOG,ECG,etc. channels in
-%                                    your data set, it will also include these, which may or may not
-%                                    be desirable. If this is not desirable you can either remove
-%                                    these channes from the input files prior to running ADAM, or
-%                                    specify which channels/electrodes to include. There are two
-%                                    ways of doing that. The first is using one of the default
-%                                    electrode selections, e.g.: 'OCCIP', 'TEMPORAL', 'PARIET' or
-%                                    'FRONTAL' (e.g. cfg.channels = 'OCCIP';). However, these will
-%                                    only include electrodes from a standard 64-electrode BioSemi
-%                                    10-20 system. It is easy to create your own selection by
-%                                    modifying the select_channels function. The second method is to
-%                                    directly specify the electrodes to include using a comma
-%                                    separated list (e.g. cfg.channels = 'O1,O2,Iz,Oz';). type help
-%                                    select_channels for more details.
+%                                    in the data; note that if you still have EOG,ECG,etc. channels
+%                                    in your data set, it will also include these, which may or may
+%                                    not be desirable. If this is not desirable you can either
+%                                    remove these channels from the input files prior to running
+%                                    ADAM, or specify which channels/electrodes to include. There
+%                                    are two ways of doing that. The first is using one of the
+%                                    default electrode selections, e.g.: 'OCCIP', 'TEMPORAL',
+%                                    'PARIET' or 'FRONTAL' (e.g. cfg.channels = 'OCCIP';). You can
+%                                    also specify two selections at once in a single cell array,
+%                                    like this: cfg.channels = {'ALL' 'OCCIP'}; In this case, ADAM
+%                                    will run both electrode selections. The predefined electrode
+%                                    selections will only include electrodes from a standard
+%                                    64-electrode BioSemi 10-20 system. It is easy to create your
+%                                    own pre-defined selections by modifying the select_channels
+%                                    function. The second method is to directly specify the
+%                                    electrodes to include using a comma separated list (e.g.
+%                                    cfg.channels = 'O1,O2,Iz,Oz';). Type help select_channels for
+%                                    more details.
 %       cfg.clean_window           = [int int]; to remove muscle artefacts prior to decoding.
 %                                    Specify a time window to inspect for muscle artefacts using
 %                                    [begin,end]; always in SECONDS, e.g. cfg.clean_window =
@@ -354,6 +371,7 @@ labelsonly = 'no';          % if 'yes', only saves the classifier labels (test s
 tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
 clean_window = [];          % specifies the window used to reject muscle artifacts
 whiten = 'yes';             % specifies whether to apply pre-whitening to the data (MVNN)
+sigma_basis_set = [];       % specifies the width of the basis set (0 means box-car)
 
 % unpack cfg
 v2struct(cfg);
@@ -419,7 +437,10 @@ end
 if ~isempty(clean_window)
     clean_window = sprintf('clean%.4f %.4f',clean_window);
 end
-str_settings = cellarray2csvstring({class_method,class_type,model,iterate_method,whiten,balance_triggers,balance_classes,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
+if ~isempty(sigma_basis_set)
+    sigma_basis_set = sprintf('sigma%f',sigma_basis_set);
+end
+str_settings = cellarray2csvstring({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_triggers,balance_classes,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
@@ -448,21 +469,24 @@ if isempty(frequencies)
 end
 if ischar(channels) && strcmpi(channels,'all')
     channels = 'ALL';
-elseif iscell(channels)
-    channels = cellarray2csvstring(channels);
 end
 if isempty(channels)
     channels = 'ALL_NOSELECTION';
 end
+if ~iscell(channels)
+    channels = {channels};
+end
 
 % run analysis
-if ~exist('qsub','var') %run local
-    for cSubj = 1:numel(filenames)
-        for cRepeat = 1:repeat
-            if strcmpi(raw_or_tfr,'raw')
-                classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels,str_settings,crossclass_resample,erp_baseline,class_spec{:});
-            elseif strcmpi(raw_or_tfr,'tfr')
-                classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+if ~exist('qsub','var') || isempty(qsub) % run local
+    for cChannels = 1:numel(channels) % 
+        for cSubj = 1:numel(filenames)
+            for cRepeat = 1:repeat
+                if strcmpi(raw_or_tfr,'raw')
+                    classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels{cChannels},str_settings,crossclass_resample,erp_baseline,class_spec{:});
+                elseif strcmpi(raw_or_tfr,'tfr')
+                    classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels{cChannels},str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+                end
             end
         end
     end

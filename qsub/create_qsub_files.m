@@ -128,11 +128,14 @@ if ischar(file) && isempty(strfind(file,','))
 end
 
 % copy input files to scratch space
+timeout = '';
 indir =  varargin{1};
 outdir = varargin{3};
 if use_scratch
+    timeout = 'timeout $timetorun ';
     scratchindir = '"$TMPDIR"/input';
     scratchoutdir = '"$TMPDIR"/output';
+    scratchlogdir = '"$TMPDIR"/matlablogdir';
     varargin{1} = scratchindir;
     varargin{3} = scratchoutdir;
 end
@@ -171,6 +174,11 @@ for cQsubs = 1:size(combMat,1)
         else
             fprintf(fout,'echo "Job $PBS_JOBID started at `date`"\n');
         end
+        % build in some time to copy output back by breaking off jobs before the end
+        if use_scratch 
+            fprintf(fout,'module load sara-batch-resources\n');
+        end
+        % load matlab runtime
         fprintf(fout,['module load mcr' mcr_version '\n']);
         if mcr_set_cache
             fprintf(fout,'export MCR_CACHE_ROOT=`mktemp -d "$TMPDIR"/mcr.XXXXXXXXXX`\n');
@@ -185,6 +193,9 @@ for cQsubs = 1:size(combMat,1)
         if use_scratch
             fprintf(fout,['mkdir -p ' scratchindir ' &\n']);
             fprintf(fout,['mkdir -p ' scratchoutdir ' &\n']);
+            fprintf(fout,['mkdir -p ' scratchlogdir ' &\n']);
+            fprintf(fout,'export MCR_CACHE_VERBOSE=true\n');
+            fprintf(fout,['export MATLAB_LOG_DIR=' scratchlogdir '\n']);
         end
         fprintf(fout,['mkdir -p ' outdir ' &\nwait\n']);
     end
@@ -203,7 +214,7 @@ for cQsubs = 1:size(combMat,1)
         end
     end
     % commands to issue in qsub file
-    line = [ line path_on_lisa '/' function_name];
+    line = [ line timeout path_on_lisa '/' function_name];
     for cArgs = 1:size(combMat,2)
         line = [line ' "' combMat{cQsubs,cArgs} '" '];
     end
