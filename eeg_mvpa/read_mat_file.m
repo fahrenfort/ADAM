@@ -18,8 +18,9 @@ if ismember('trialinfo', {vars.name})
 else
     trialinfo = [];
 end
-% get electrode indices
-[new_channels,~,chanindex] = intersect(channels,label,'stable');
+% get electrode indices: chanindex returns the indices for which the order of the channels in
+% matObj.data(chanindex) is the same as in the input parameter 'channels'
+[new_channels,~,chanindex] = intersect(channels,label,'stable'); 
 if numel(new_channels) ~= numel(channels)
-    warning(['could not find all of the electrodes specified in ' channels]);
+    disp(['WARNING: could not find all of the electrodes specified in ' cellarray2csvstring(channels)]);
 end

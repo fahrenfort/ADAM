@@ -72,11 +72,6 @@ if detrend_eeg
     FT_EEG = detrend_FT_EEG(FT_EEG);
 end
 
-% turn off annoying FT warnings
-if exist('ft_warning','file') == 2
-    ft_warning off;
-end
-
 % baseline correction
 cfg = [];
 cfg.baseline = erp_baseline;

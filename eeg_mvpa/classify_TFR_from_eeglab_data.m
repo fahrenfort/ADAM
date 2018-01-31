@@ -489,17 +489,14 @@ clear FT_EEG; % clear the dataset so we don't need it in memory during analyses
 [~, actualfrequencies, times{1}, trialinfo{1}, chanindex] = read_mat_file(fnames{1,1},channels{1});
 actualfrequencies = round(actualfrequencies*100)/100;
 
-% if testing and training are on different data, load info of second set
+% if testing and training are on different data, load info of second set to double check frequencies
 if numel(filenames) > 1
     [~, actualfrequencies2, times{2}, trialinfo{2}, chanindex2] = read_mat_file(fnames{1,2},channels{2});
     actualfrequencies2 = round(actualfrequencies2*100)/100;
     if ~all(actualfrequencies==actualfrequencies2)
-        disp('WARNING: there seems to be a mismatch in both datasets, they do not seem to contain the same frequencies.');
-        disp(['dataset 1, ' filenames{1} ': ' num2str(actualfrequencies)]);
-        disp(['dataset 2, ' filenames{2} ': ' num2str(actualfrequencies2)]);
-    end
-    if ~all(chanindex==chanindex2)
-        error('the (same) electrodes do not occur (in the same order) in testing and training, some coding required to fix this...');
+        disp(['Train data file ''' filenames{1} ''' contains frequencies: ' num2str(actualfrequencies)]);
+        disp(['Test data file ''' filenames{2} ''' contains frequencies: ' num2str(actualfrequencies2)]);
+        error('The train and test dataset do not seem to contain the same frequencies in the same order.');
     end
 end
 
@@ -518,7 +515,7 @@ for cFreq = 1:numel(frequencies)
     settrialinfo = [];
     for cFld=1:nFolds
         % create file pointers for this fold
-        [matObj, ~, times{1}, trialinfo{1}, chanindex, ~, ~, ~, freqdim ] = read_mat_file(fnames{cFld,1},channels{1});
+        [matObj, ~, times{1}, trialinfo{1}, chanindex, chandim, ~, ~, freqdim ] = read_mat_file(fnames{cFld,1},channels{1});
         [matObj2, ~, times{2}, trialinfo{2}, chanindex2, ~, ~, ~, ~ ] = read_mat_file(fnames{cFld,2},channels{2});
         
         % read in data, only relevant frequency (dimension is dynamic)
@@ -537,21 +534,20 @@ for cFreq = 1:numel(frequencies)
         % FYI
         fprintf(1,['fold: ' num2str(cFld) ', frequency: ' num2str(frequency) '\n']);
         
-        % load data, alldata = channel * time * trial (*freq but that one disappears), remove
-        % obsolete electrodes, put in correct format for BDM_and_FEM_FT_EEG
-        train_FT_EEG.trial = matObj.powspctrm(index{:});
-        train_FT_EEG.trial = train_FT_EEG.trial(chanindex,:,:);
-        train_FT_EEG.dimord = 'chan_time_rpt';
+        % load data and put in correct format for BDM_and_FEM_FT_EEG, put channels in correct order to be sure
+        index{chandim} = chanindex; % channels in correct order (same as channels{1})
+        train_FT_EEG.trial = squeeze(matObj.powspctrm(index{:}));
+        train_FT_EEG.dimord = regexprep(matObj.dimord,{'freq_', '_freq'},''); % keep original dimord but cut out frequency
         train_FT_EEG.trialinfo = trialinfo{1};
         train_condSet = get_this_condset(condSet,1);
-        
-        test_FT_EEG.trial = matObj2.powspctrm(index{:});
-        test_FT_EEG.trial = test_FT_EEG.trial(chanindex2,:,:);
-        test_FT_EEG.dimord = 'chan_time_rpt';
+        % also for testing
+        index{chandim} = chanindex2; % channels in correct order (same as channels{2})
+        test_FT_EEG.trial = squeeze(matObj2.powspctrm(index{:}));
+        test_FT_EEG.dimord = regexprep(matObj2.dimord,{'freq_', '_freq'},'');
         test_FT_EEG.trialinfo = trialinfo{2};
-        test_condSet = get_this_condset(condSet,2);    
-        
-        % fix dimord for whiten_FT_EEG and balance_FT_EEG functions, could be standardized to save memory peaks
+        test_condSet = get_this_condset(condSet,2);
+
+        % fix dimord for whiten_FT_EEG and balance_FT_EEG functions to be sure (seem correct already)
         train_FT_EEG = fix_dimord(train_FT_EEG,'rpt_chan_time'); % should be trial * channel * time
         test_FT_EEG = fix_dimord(test_FT_EEG,'rpt_chan_time'); % should be trial * channel * time
         
@@ -572,7 +568,7 @@ for cFreq = 1:numel(frequencies)
             train_FT_EEG = balance_FT_EEG(train_FT_EEG,train_condSet,whiten);
         end
         
-        % fix dimord for BDM_and_FEM_FT_EEG function, could be standardized to save memory peaks
+        % fix dimord for BDM_and_FEM_FT_EEG function, could be standardized to save memory peaks, but no biggie
         train_FT_EEG = fix_dimord(train_FT_EEG,'chan_time_rpt'); % should be channel * time * trial
         test_FT_EEG = fix_dimord(test_FT_EEG,'chan_time_rpt'); % should be channel * time * trial
 

@@ -127,12 +127,15 @@ if ischar(file) && isempty(strfind(file,','))
     end
 end
 
-% copy input files to scratch space
+% specify input/output on scratch space
+timeout = '';
 indir =  varargin{1};
 outdir = varargin{3};
 if use_scratch
+    timeout = 'timeout $timetorun ';
     scratchindir = '"$TMPDIR"/input';
     scratchoutdir = '"$TMPDIR"/output';
+    scratchlogdir = '"$TMPDIR"/matlablogdir';
     varargin{1} = scratchindir;
     varargin{3} = scratchoutdir;
 end
@@ -146,94 +149,116 @@ end
 
 % multiply the set by repeat (e.g. when doing many random permutations)
 combMat = repmat(combMat,repeat,1);
-    
-% create qsub job for each subject and a bash file for all jobs
+
+% when doing iterations, create a separate qsub file for every subject
+if repeat > 1
+    allfiles = combMat(:,2);
+    uniquefiles = unique(allfiles);
+    allMat = cell(size(uniquefiles));
+    for cFiles = 1:numel(uniquefiles)
+        allMat{cFiles} = combMat(strcmp(uniquefiles{cFiles},allfiles),:);
+    end
+else % or run as normal
+    allMat = {combMat};
+end
+
+% create qsub job for each subject and a bash file for all jobs 
 qsubfiles = {};
-for cQsubs = 1:size(combMat,1)
-    if (mod(cQsubs,maxcores) == 1 && repeat == 1) || maxcores == 1 || cQsubs == 1
-        % initialize
-        copyin = [];
-        copyout = [];
-        line = [];
-        % create qsub file to submit all subjects, add trailing nr if it already exists
-        c = 1;
-        qsubfile = sprintf([home filesep 'qsub_' bashfilename '_%03d'], c);
-        while exist(qsubfile,'file')
-            c = c + 1;
+for cMat = 1:numel(allMat)
+    combMat = allMat{cMat};
+    for cQsubs = 1:size(combMat,1)
+        if (mod(cQsubs,maxcores) == 1 && repeat == 1) || maxcores == 1 || cQsubs == 1
+            % initialize
+            copyin = [];
+            copyout = [];
+            line = [];
+            % create qsub file to submit all subjects, add trailing nr if it already exists
+            c = 1;
             qsubfile = sprintf([home filesep 'qsub_' bashfilename '_%03d'], c);
-        end
-        qsubfiles{end+1} = qsubfile;
-        fout = fopen(qsubfile,'w');
-        fprintf(fout,'#PBS -S /bin/bash\n');
-        fprintf(fout,['#PBS -lnodes=' lnodes corestxt ppn mem ' -lwalltime=' walltime '\n']);
-        if send_mail
-            fprintf(fout,'echo "Job $PBS_JOBID started at `date`" | mail $USER -s "Job $PBS_JOBID"\n');
-        else
-            fprintf(fout,'echo "Job $PBS_JOBID started at `date`"\n');
-        end
-        fprintf(fout,['module load mcr' mcr_version '\n']);
-        if mcr_set_cache
-            fprintf(fout,'export MCR_CACHE_ROOT=`mktemp -d "$TMPDIR"/mcr.XXXXXXXXXX`\n');
-        end
-        if mcr_cache_verbose
-            fprintf(fout,'export MCR_CACHE_VERBOSE=true\n');
-        end
-        if ~isempty(preload)
-            fprintf(fout,['export LD_PRELOAD=' preload  '\n']);
-        end
-        % make sure directories exists
-        if use_scratch
-            fprintf(fout,['mkdir -p ' scratchindir ' &\n']);
-            fprintf(fout,['mkdir -p ' scratchoutdir ' &\n']);
-        end
-        fprintf(fout,['mkdir -p ' outdir ' &\nwait\n']);
-    end
-    % copy all the files to and from scratch
-    if use_scratch
-        filename = combMat{cQsubs,2};
-        filenames = regexp(filename,',','split');
-        for c = 1:numel(filenames)
-            filename = filenames{c};
-            if regexp(filename(end-3:end),'\....') == 1
-                filename = filename(1:end-4);
+            while exist(qsubfile,'file')
+                c = c + 1;
+                qsubfile = sprintf([home filesep 'qsub_' bashfilename '_%03d'], c);
             end
-            if isempty(strfind(copyin,['cp -u ' indir '/' filename '.* ' scratchindir]))
-                copyin = [copyin 'cp -u ' indir '/' filename '.* ' scratchindir ' &\n'];
+            qsubfiles{end+1} = qsubfile;
+            fout = fopen(qsubfile,'w');
+            fprintf(fout,'#PBS -S /bin/bash\n');
+            fprintf(fout,['#PBS -lnodes=' lnodes corestxt ppn mem ' -lwalltime=' walltime '\n']);
+            if send_mail
+                fprintf(fout,'echo "Job $PBS_JOBID started at `date`" | mail $USER -s "Job $PBS_JOBID"\n');
+            else
+                fprintf(fout,'echo "Job $PBS_JOBID started at `date`"\n');
+            end
+            if use_scratch
+                % build in some time to copy output back by breaking off jobs before the end
+                fprintf(fout,'module load sara-batch-resources\n');
+                % make sure directories exists
+                fprintf(fout,['mkdir -p ' scratchindir ' &\n']);
+                fprintf(fout,['mkdir -p ' scratchoutdir ' &\n']);
+                fprintf(fout,['mkdir -p ' scratchlogdir ' &\n']);
+                % build in some time to copy output back by breaking off jobs before the end
+                fprintf(fout,'(( timetorun = $SARA_BATCH_WALLTIME - 600 ))\n');
+            end
+            % load matlab runtime
+            fprintf(fout,['module load mcr' mcr_version '\n']);
+            if mcr_set_cache
+                fprintf(fout,'export MCR_CACHE_ROOT=`mktemp -d "$TMPDIR"/mcr.XXXXXXXXXX`\n');
+            end
+            if mcr_cache_verbose
+                fprintf(fout,'export MCR_CACHE_VERBOSE=true\n');
+            end
+            if ~isempty(preload)
+                fprintf(fout,['export LD_PRELOAD=' preload  '\n']);
+            end
+            fprintf(fout,['export MATLAB_LOG_DIR=' scratchlogdir '\n']);
+            % make sure directories exists
+            fprintf(fout,['mkdir -p ' outdir ' &\nwait\n']);
+        end
+        % copy all the files to and from scratch
+        if use_scratch
+            filename = combMat{cQsubs,2};
+            filenames = regexp(filename,',','split');
+            for c = 1:numel(filenames)
+                filename = filenames{c};
+                if regexp(filename(end-3:end),'\....') == 1
+                    filename = filename(1:end-4);
+                end
+                if isempty(strfind(copyin,['cp -u ' indir '/' filename '.* ' scratchindir]))
+                    copyin = [copyin 'cp -u ' indir '/' filename '.* ' scratchindir ' &\n'];
+                end
             end
         end
-    end
-    % commands to issue in qsub file
-    line = [ line path_on_lisa '/' function_name];
-    for cArgs = 1:size(combMat,2)
-        line = [line ' "' combMat{cQsubs,cArgs} '" '];
-    end
-    line = [line ' &\n'];
-    % close qsub file once all cores are used or all commands have been issued
-    if (mod(cQsubs,maxcores) == 0 && repeat == 1) || cQsubs == size(combMat,1)
-        % copy to scratch
-        if use_scratch
-            copyin = [copyin 'wait\n'];
-            fprintf(fout,copyin);
+        % commands to issue in qsub file
+        line = [ line timeout path_on_lisa '/' function_name];
+        for cArgs = 1:size(combMat,2)
+            line = [line ' "' combMat{cQsubs,cArgs} '" '];
         end
-        % write individual commands to qsub job
-        line = [line 'wait\n'];
-        fprintf(fout,line);
-        % copy back to home
-        if use_scratch
-            copyout = ['cp -u -r ' scratchoutdir '/* ' outdir ' &\nwait\n'];
-            fprintf(fout,copyout);
+        line = [line ' &\n'];
+        % close qsub file once all cores are used or all commands have been issued
+        if (mod(cQsubs,maxcores) == 0 && repeat > 1)
+            % pause till all previous are done
+            line = [line 'wait\n'];
+        elseif (mod(cQsubs,maxcores) == 0 && repeat == 1) || maxcores == 1 || cQsubs == size(combMat,1)
+            % copy to scratch
+            if use_scratch
+                copyin = [copyin 'wait\n'];
+                fprintf(fout,copyin);
+            end
+            % write individual commands to qsub job
+            line = [line 'wait\n'];
+            fprintf(fout,line);
+            % copy back to home
+            if use_scratch
+                copyout = ['cp -u -r ' scratchoutdir '/* ' outdir ' &\nwait\n'];
+                fprintf(fout,copyout);
+            end
+            if send_mail
+                fprintf(fout,'echo "Job $PBS_JOBID finished at `date`" | mail $USER -s "Job $PBS_JOBID"\n');
+            else
+                fprintf(fout,'echo "Job $PBS_JOBID finished at `date`"\n');
+            end
+            fclose(fout);
+            fclose('all');
         end
-        if send_mail
-            fprintf(fout,'echo "Job $PBS_JOBID finished at `date`" | mail $USER -s "Job $PBS_JOBID"\n');
-        else
-            fprintf(fout,'echo "Job $PBS_JOBID finished at `date`"\n');
-        end
-        fclose(fout);
-        fclose('all');
-    elseif (mod(cQsubs,maxcores) == 0 && repeat > 1)
-        % pause till all is done
-        line = [line 'wait\n'];
-        fprintf(fout,line);
     end
 end
 
