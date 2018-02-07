@@ -382,7 +382,7 @@ for cSubj = 1:nSubj
         end
         
         % find permutations and load them
-        compute_1stlevel_permutations = true;
+        compute_1stlevel_permutations = false;
         permfolder = [folder_name filesep channelpool plotFreq{cFreq} filesep 'randperm'];
         if compute_1stlevel_permutations && exist(permfolder,'dir')
             subjectpermutes = dir([permfolder filesep subjectfiles{cSubj}(1:end-4) '_PERM*.mat']);
@@ -410,7 +410,7 @@ for cSubj = 1:nSubj
         
         % limit ClassOverTime
         ClassOverTime = ClassOverTime(lim1,lim2);
-        countP = countP(lim1,lim2);
+        %countP = countP(lim1,lim2);
         
         
         % limit weights too
