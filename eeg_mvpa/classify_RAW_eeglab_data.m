@@ -349,8 +349,14 @@ end
 for cFile = 1:numel(filenames)
     % NOTE: this line is different in TFR! Resampling here...
     [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}]= read_raw_data(filepath,filenames{cFile},outpath,bundlename_or_bundlelabels,erp_baseline{cFile},resample_eeg,do_csd,clean_muscle,clean_window,true,detrend_eeg);
+    % randomize labels for first level random permutation testing. NOTE: permuting all observations/labels regardless of the conditions in the experiment
+    if randomize_labels
+        rng('shuffle'); % random every time
+        FT_EEG(cFile).trialinfo = FT_EEG(cFile).trialinfo(randperm(numel(FT_EEG(cFile).trialinfo)));
+    end
 end
- % duplicate data for testing if only one file is available
+
+% duplicate data for testing if only one file is available
 if numel(filenames) == 1
     FT_EEG(2) = FT_EEG;
 end
@@ -378,12 +384,6 @@ end
 % if testing and training are on different files, check consistency
 if numel(filenames) > 1 && ~all(strcmpi(channels{1},channels{2}))
     error('The electrodes do not occur in the same order in testing and training, some coding required to fix this...');
-end
-
-% randomize labels if desired. NOTE: permuting all labels of the input set, regardless of whether
-% there is a separate testing set or not
-if randomize_labels
-    trialinfo{1} = trialinfo{1}(randperm(numel(trialinfo{1})));
 end
 
 % Generate indices for folds to do training and testing

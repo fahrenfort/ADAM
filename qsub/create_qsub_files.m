@@ -162,7 +162,7 @@ else % or run as normal
     allMat = {combMat};
 end
 
-% create qsub job for each subject and a bash file for all jobs 
+% create qsub job for each subject (in case repeat > 1) and a bash file for all jobs 
 qsubfiles = {};
 for cMat = 1:numel(allMat)
     combMat = allMat{cMat};
@@ -183,11 +183,11 @@ for cMat = 1:numel(allMat)
             fout = fopen(qsubfile,'w');
             fprintf(fout,'#PBS -S /bin/bash\n');
             fprintf(fout,['#PBS -lnodes=' lnodes corestxt ppn mem ' -lwalltime=' walltime '\n']);
+            fprintf(fout,'echo "Job $PBS_JOBID started at `date`"');
             if send_mail
-                fprintf(fout,'echo "Job $PBS_JOBID started at `date`" | mail $USER -s "Job $PBS_JOBID"\n');
-            else
-                fprintf(fout,'echo "Job $PBS_JOBID started at `date`"\n');
+                fprintf(fout,' | mail $USER -s "Job $PBS_JOBID"');
             end
+            fprintf(fout,'\n');
             if use_scratch
                 % build in some time to copy output back by breaking off jobs before the end
                 fprintf(fout,'module load sara-batch-resources\n');
@@ -209,7 +209,9 @@ for cMat = 1:numel(allMat)
             if ~isempty(preload)
                 fprintf(fout,['export LD_PRELOAD=' preload  '\n']);
             end
-            fprintf(fout,['export MATLAB_LOG_DIR=' scratchlogdir '\n']);
+            if use_scratch
+                fprintf(fout,['export MATLAB_LOG_DIR=' scratchlogdir '\n']);
+            end
             % make sure directories exists
             fprintf(fout,['mkdir -p ' outdir ' &\nwait\n']);
         end

@@ -13,11 +13,9 @@ Current processing pipeline:
 	alt: -> move this to the folds step!
 
 * next, the script creates a loop over the folds (1:nFolds) and train/test sets (1:2) and for each of those it
-	alt: -> normalize (z-score) NOT NECESSARY 
 	alt: -> apply MVNN
 	alt: -> duplicate training trials using ADASYN
 
 	THEN:
 	(1) if compute_induces == true, induced using 'subtr_bin' (class) or 'subtr_indiv' (condition) -> this should be documentend 
 	(2) bins data if bintrain or bintest
-

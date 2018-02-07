@@ -1,5 +1,5 @@
 %% read files into EEGLAB and save the result
-function EEG = readbdf_into_eeglab(filename)
+function EEG = readbdf_into_eeglab_vu(filename)
 % read in data, subtract EOG, replace trigger values as needed, look up or
 % insert channel info
 
@@ -10,12 +10,12 @@ horchannels = {'EXG3' 'EXG4'}; % verchannels = {'VEOGsT' 'VEOGsT'};
 % EOG left / right
 verchannels = {'EXG2' 'EXG1' }; % horchannels = {'HEOGsL' 'HEOGsR'}; 
 % eeglab path
-eeglab_path = [getenv('HOME') filesep 'Documents/matlab_toolboxes/eeglab13_4_4b'];
+% eeglab_path = [getenv('HOME') filesep 'Documents/matlab_toolboxes/eeglab13_4_4b'];
 
 % add eeglab path
-if (~isdeployed)
-    addpath(eeglab_path);
-end
+% if (~isdeployed)
+%     addpath(eeglab_path);
+% end
 
 % load triggers
 datapath = filename(1:max(strfind(filename,filesep))-1);
@@ -40,16 +40,16 @@ else
     error([datapath filesep filename ' does not seem to exist']);
 end
 
-% determine reference channels
+% determine reference channels and occular channels
 ref = [find(strcmpi(refchannels{1},{EEG.chanlocs.labels})) find(strcmpi(refchannels{2},{EEG.chanlocs.labels}))];
 if numel(ref) ~= 2
     error('could not find specified reference channels');
 end
-
-% re-reference
-EEG = pop_reref(EEG, ref, 'refstate','averef');
 ver = [ find(strcmpi(verchannels{1},{EEG.chanlocs.labels})) find(strcmpi(verchannels{2},{EEG.chanlocs.labels}))];
 hor = [ find(strcmpi(horchannels{1},{EEG.chanlocs.labels})) find(strcmpi(horchannels{2},{EEG.chanlocs.labels}))];
+
+% re-reference
+EEG = pop_reref(EEG, ref, 'refstate','averef','exclude',[hor ver]);
 
 % fix labels
 if exist([datapath filesep '68ChanLocsBiosemi.mat'],'file')
@@ -60,8 +60,6 @@ if exist([datapath filesep '68ChanLocsBiosemi.mat'],'file')
 else
     error('I could not read the external channel files. These should be placed in the source directory together with the BDFs.');
 end
-
-
 
 % fix triggers if needed
 % EEG.event(x).type = condition

@@ -432,7 +432,7 @@ if strcmpi(plottype,'2D')
     if ~isempty(weightlim)
         ylim(weightlim);
         % y-axis
-        yticks = .05; % hardcoded for now, fix later
+        yticks = .1; % hardcoded for now, fix later
         if min(weightlim) < 0 && max(weightlim) > 0
             yaxis = sort(unique([0:-yticks:min(weightlim) 0:yticks:max(weightlim)]));
         else

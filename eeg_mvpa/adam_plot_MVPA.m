@@ -97,7 +97,7 @@ function map = adam_plot_MVPA(cfg,stats)
 
 if nargin<2
     disp('cannot plot graph without stats input, need at least 2 arguments:');
-    help plot_MVPA;
+    help adam_plot_MVPA;
     return
 end
 
@@ -143,8 +143,10 @@ end
 % set color-limits (z-axis) or y-limits
 if isempty(cent_acctick)
     % assuming this is the same for all graphs, cannot really be helped
-    if strcmpi(stats(1).settings.measuremethod,'hr-far') || strcmpi(stats(1).settings.measuremethod,'\muV') || strcmpi(stats(1).settings.measuremethod,'accuracy difference') || strcmpi(plot_model,'FEM')
+    if any(strcmpi(stats(1).settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(stats(1).settings.measuremethod,'\muV') || strcmpi(stats(1).settings.measuremethod,'accuracy difference') || strcmpi(plot_model,'FEM')
         cent_acctick = 0;
+    elseif strcmpi(stats(1).settings.measuremethod,'AUC')
+        cent_acctick = .5;
     else
         cent_acctick = 1/stats(1).settings.nconds;
     end

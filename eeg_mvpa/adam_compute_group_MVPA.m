@@ -380,12 +380,38 @@ for cSubj = 1:nSubj
                 chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
             end
         end
+        
+        % find permutations and load them
+        compute_1stlevel_permutations = true;
+        permfolder = [folder_name filesep channelpool plotFreq{cFreq} filesep 'randperm'];
+        if compute_1stlevel_permutations && exist(permfolder,'dir')
+            subjectpermutes = dir([permfolder filesep subjectfiles{cSubj}(1:end-4) '_PERM*.mat']);
+            subjectpermutes = {subjectpermutes(:).name};
+            countP = zeros(size(ClassOverTime));
+            for cPerm=1:numel(subjectpermutes)
+                if ~mod(cPerm,round(numel(subjectpermutes)/10))
+                    fprintf(1,'reading random permutation %d of %d\n', cPerm, numel(subjectpermutes));
+                end
+                % matPermObj = matfile([permfolder filesep subjectpermutes{cPerm}]);
+                if strcmpi(plot_model,'BDM')
+                    load([permfolder filesep subjectpermutes{cPerm}],'BDM');
+                    countP = countP + (BDM.ClassOverTime > ClassOverTime);
+                elseif strcmpi(plot_model,'FEM')
+                    load([permfolder filesep subjectpermutes{cPerm}],'FEM');
+                    countP = countP + (FEM.ClassOverTime > ClassOverTime);
+                end
+            end
+            countP = countP / numel(subjectpermutes);
+        end
+        
         % find limits
         [settings, cfg, lim1, lim2, dataindex, firstchanlocs, chanlocdata] = find_limits(settings, cfg, firstchanlocs, chanlocdata);
         v2struct(cfg);
         
         % limit ClassOverTime
         ClassOverTime = ClassOverTime(lim1,lim2);
+        countP = countP(lim1,lim2);
+        
         
         % limit weights too
         if strcmpi(dimord,'freq_time')
@@ -543,10 +569,8 @@ else
 end
 
 % compute standard errors and averages
-%ClassStdErr(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1));
 ClassStdErr = shiftdim(squeeze(std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1))));
 if sum(sum(ClassStdErr)) == 0 ClassStdErr = []; end % don't plot stderror when there is none
-%ClassAverage(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3)) = mean(ClassOverTimeAll{1},1);
 ClassAverage = shiftdim(squeeze(mean(ClassOverTimeAll{1},1)));
 ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 

@@ -167,8 +167,11 @@ else % if not coming from eeglab, recreate eeglab chanlocs structure
             end
         else
             % if no chanlocdata exist, read them in
-            %chanlocdata = readlocs('plotting_1005.sfp','importmode','native');
-            chanlocdata = readlocs(findcapfile,'importmode','native');
+            if exist('1005chanlocdata.mat','file')
+                load('1005chanlocdata.mat');
+            else
+                chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
+            end
             [~, ~, chanindex] = intersect(FT_EEG.label,{chanlocdata(:).labels},'stable'); % takes FT_EEG.label as point of departure!
             chanlocs = chanlocdata(chanindex);
         end
@@ -181,6 +184,7 @@ end
 
 % destroy temporal order of trials
 if shuffle_trials
+    rng('shuffle');
     shuffle_order = randperm(numel(FT_EEG.trialinfo));
     FT_EEG.trialinfo = FT_EEG.trialinfo(shuffle_order);
     FT_EEG.trial = FT_EEG.trial(shuffle_order,:,:);
