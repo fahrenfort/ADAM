@@ -390,7 +390,7 @@ if ~exist('class_spec','var')
 end
 
 % re-structure parameters to work with lower-level API settings string in the classify_ and create_qsub_ functions
-if iterations > 0
+if iterations > 1
     repeat = iterations;
     iterate_method = 'iterate';
 end

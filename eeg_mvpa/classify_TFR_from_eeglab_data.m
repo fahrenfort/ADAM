@@ -21,10 +21,10 @@ function classify_TFR_from_eeglab_data(filepath,filenames,outpath,nFolds,channel
 % 6 OCCIPARIET (uses occipitoparietal electrodes)
 % method specifies the method used for classification. Default is 'linear' for linear discriminant
 % analysis. Other options are: 'diagLinear', 'mahalanobis' or 'quadratic'. The dependent
-% classification measure can be specified in method, either using 'accuracy' (default), 'hr-far' or
-% 'dprime' (last two only work when two categories are present, the first category is assumed to be
+% classification measure can be specified in method, either using 'AUC' (default), 'accuracy',
+% and various SDT measures (only work when two categories are present, the first category is assumed to be
 % the target present category, the second the target absent category. If more than two categories
-% are present, the script defaults back to accuracy. If you want to output the individual labels
+% are present, the script defaults back to AUC. If you want to output the individual labels
 % that were assigned by the classifier to each of the trials rather than computing accuracy, specify
 % 'labelsonly'. In this case, the algorithm goes through the entire training set and outputs a label
 % for each trial. No accuracy scores will be computed in this case. Specify by adding to method,
@@ -159,7 +159,7 @@ orig_method = method;
 setmethod = method;
 methods = regexp(method,',','split');
 method = 'linear';
-measuremethod = 'accuracy';
+measuremethod = 'AUC';
 randomize_labels = false;
 iterate = false;
 bintest = false;
@@ -207,11 +207,11 @@ for c=1:numel(methods)
     if strcmpi(methods{c},'iterate')
         iterate = true;
     end
-    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr','AUC'}))
+    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr'}))
         measuremethod = methods{c};
-        if numel(condSet) ~= 2 && ~strcmpi(measuremethod,'AUC')
-            disp('Number of stimulus classes is unequal to 2, defaulting back to computing accuracy');
-            measuremethod = 'accuracy'; % defaulting back to accuracy
+        if numel(condSet) ~= 2
+            disp('Number of stimulus classes is unequal to 2, defaulting back to computing AUC');
+            measuremethod = 'AUC'; % defaulting back to AUC
         elseif numel(condSet) == 2
             disp('When computing SDT measure: assuming the first condition is target (signal) and second is non-target (noise)');
         end
@@ -462,6 +462,7 @@ for cFld = 1:nFolds
                 disp(ME); disp('Memory problem? Let''s wait a bit before trying again.'); counterr = counterr + 1; if counterr > 10; error('errrrr, tried 10 times, giving up now...'); end; pause(600); 
             end
         end
+        % temporarily save folded data
         [~,tmpf,~] = fileparts(tempname); % generates random filename
         fnames{cFld,cSet} = [filepath filesep '..' filesep TFR_foldsave.fname '_' filenames{1} '_fold' num2str(cFld) '_' num2str(cSet) '_' tmpf  '.mat'];
         save(fnames{cFld,cSet},'-v7.3','-struct','TFR_foldsave');
@@ -485,27 +486,12 @@ end % end folds loop in which temp files are created
 
 clear FT_EEG; % clear the dataset so we don't need it in memory during analyses
 
-% create file pointer and extract some relevant info from the first two files for sanity checks
-[~, actualfrequencies, times{1}, trialinfo{1}, chanindex] = read_mat_file(fnames{1,1},channels{1});
-actualfrequencies = round(actualfrequencies*100)/100;
-
-% if testing and training are on different data, load info of second set to double check frequencies
-if numel(filenames) > 1
-    [~, actualfrequencies2, times{2}, trialinfo{2}, chanindex2] = read_mat_file(fnames{1,2},channels{2});
-    actualfrequencies2 = round(actualfrequencies2*100)/100;
-    if ~all(actualfrequencies==actualfrequencies2)
-        disp(['Train data file ''' filenames{1} ''' contains frequencies: ' num2str(actualfrequencies)]);
-        disp(['Test data file ''' filenames{2} ''' contains frequencies: ' num2str(actualfrequencies2)]);
-        error('The train and test dataset do not seem to contain the same frequencies in the same order.');
-    end
-end
-
 % if no frequencies are specified, or if this is not a crossclassification, compute all frequencies
 if isempty(frequencies) || sum(frequencies) == 0 || ~crossclass
-    frequencies = actualfrequencies;
-else
-    frequencies = round(frequencies*100)/100;
+    matObj1 = matfile(fnames{1,1});
+    frequencies = matObj1.freq;
 end
+frequencies = round(frequencies*100)/100;
 
 % now loop over frequencies
 for cFreq = 1:numel(frequencies)
@@ -515,38 +501,25 @@ for cFreq = 1:numel(frequencies)
     settrialinfo = [];
     for cFld=1:nFolds
         % create file pointers for this fold
-        [matObj, ~, times{1}, trialinfo{1}, chanindex, chandim, ~, ~, freqdim ] = read_mat_file(fnames{cFld,1},channels{1});
-        [matObj2, ~, times{2}, trialinfo{2}, chanindex2, ~, ~, ~, ~ ] = read_mat_file(fnames{cFld,2},channels{2});
-        
-        % read in data, only relevant frequency (dimension is dynamic)
         frequency = frequencies(cFreq);
-        index    = cell(1,4);
-        index(:) = {':'};
-        index{freqdim} = find(frequency==actualfrequencies);
-        if isempty(index{freqdim})
-            disp('WARNING: cannot find an exact match for that frequency, attempting to find the closest match');
-            index{freqdim} = nearest(actualfrequencies,frequency);
-            if isempty(index{freqdim})
-                error(['error, cannot find a matching frequency for frequency ' num2str(frequency) ', giving up now']);
-            end
-        end
-        
+        [matObj1, dim_params1] = read_mat_file(fnames{cFld,1},channels{1},frequency);
+        [matObj2, dim_params2] = read_mat_file(fnames{cFld,2},channels{2},frequency);
+               
         % FYI
         fprintf(1,['fold: ' num2str(cFld) ', frequency: ' num2str(frequency) '\n']);
         
         % load data and put in correct format for BDM_and_FEM_FT_EEG, put channels in correct order to be sure
-        index{chandim} = chanindex; % channels in correct order (same as channels{1})
-        train_FT_EEG.trial = squeeze(matObj.powspctrm(index{:}));
-        train_FT_EEG.dimord = regexprep(matObj.dimord,{'freq_', '_freq'},''); % keep original dimord but cut out frequency
-        train_FT_EEG.trialinfo = trialinfo{1};
+        train_FT_EEG.trial = squeeze(matObj1.powspctrm(dim_params1.index{:}));
+        train_FT_EEG.dimord = regexprep(matObj1.dimord,{'freq_', '_freq'},''); % keep original dimord but cut out frequency
+        train_FT_EEG.trialinfo = matObj1.trialinfo;
         train_condSet = get_this_condset(condSet,1);
+        
         % also for testing
-        index{chandim} = chanindex2; % channels in correct order (same as channels{2})
-        test_FT_EEG.trial = squeeze(matObj2.powspctrm(index{:}));
+        test_FT_EEG.trial = squeeze(matObj2.powspctrm(dim_params2.index{:}));
         test_FT_EEG.dimord = regexprep(matObj2.dimord,{'freq_', '_freq'},'');
-        test_FT_EEG.trialinfo = trialinfo{2};
+        test_FT_EEG.trialinfo = matObj2.trialinfo;
         test_condSet = get_this_condset(condSet,2);
-
+        
         % fix dimord for whiten_FT_EEG and balance_FT_EEG functions to be sure (seem correct already)
         train_FT_EEG = fix_dimord(train_FT_EEG,'rpt_chan_time'); % should be trial * channel * time
         test_FT_EEG = fix_dimord(test_FT_EEG,'rpt_chan_time'); % should be trial * channel * time
@@ -582,6 +555,8 @@ for cFreq = 1:numel(frequencies)
         msettings.basis_sigma = basis_sigma;
         msettings.whiten = whiten;
         msettings.unbalance_classes = unbalance_classes;
+        msettings.fname = fnames{cFld,1}; % trainfile to read in raw data for covpatterns
+        msettings.dim_params = dim_params1; % plus relevant info
         
         % run BDM and FEM
         [BDM, FEM] = BDM_and_FEM_FT_EEG(train_FT_EEG,test_FT_EEG,train_condSet,test_condSet,msettings);
@@ -752,7 +727,7 @@ end % end frequency loop
 % all frequencies done, delete obsolete files
 for cFld = 1:nFolds
     for cSet = 1:2
-        delete([fnames{cFld,cSet} '.mat']);
+        delete(fnames{cFld,cSet});
     end
 end
 

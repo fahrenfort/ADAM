@@ -28,10 +28,11 @@ function classify_RAW_eeglab_data(filepath,filenames,outpath,nFolds,channelset,m
 % 6 OCCIPARIET (uses occipitoparietal electrodes)
 % method specifies the method used for classification. Default is 'linear' for linear discriminant
 % analysis. Other options are: 'diagLinear', 'mahalanobis' or 'quadratic'.
-% The dependent classification measure can be specified in method, either using 'accuracy'
-% (default), 'hr-far' or 'dprime' (last two only work when two categories are present, the first
+% The dependent classification measure can be specified in method, either using 'AUC' (default),
+% 'accuracy', or various SDT measures (which only work when two categories are present, the first
 % category is assumed to be the target present category, the second the target absent category. If
-% more than two categories are present, the script defaults back to accuracy.
+% more than two categories are present when computing an SDT measure, the script defaults back to
+% computing AUC.
 % Specify by adding to method, e.g. like this: method = 'linear,hr-far'
 % If you want to output the individual labels that were assigned by the classifier to each of the
 % trials rather than computing accuracy, specify 'labelsonly'. If no conditions are specified for
@@ -165,7 +166,7 @@ setmethod = method;
 methods = regexp(method,',','split');
 method = 'linear';
 subtr_method = 'subtr_bin';
-measuremethod = 'accuracy';
+measuremethod = 'AUC';
 randomize_labels = false;
 iterate = false;
 bintest = false;
@@ -211,11 +212,11 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'subtr_bin', 'subtr_indiv'})) == 1
         subtr_method = methods{c};
     end
-    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr','AUC'}))
+    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr'}))
         measuremethod = methods{c};
-        if numel(condSet) ~= 2 && ~strcmpi(measuremethod,'AUC')
-            disp('Number of stimulus classes is unequal to 2, defaulting back to computing accuracy');
-            measuremethod = 'accuracy'; % defaulting back to accuracy
+        if numel(condSet) ~= 2
+            disp('Number of stimulus classes is unequal to 2, defaulting back to computing AUC');
+            measuremethod = 'AUC'; % defaulting back to accuracy
         elseif numel(condSet) == 2
             disp('When computing SDT measure: assuming the first condition is target (signal) and second is non-target (noise)');
         end
@@ -451,17 +452,16 @@ for cFld=1:nFolds
             FT_EEG_2use = compute_bins_on_FT_EEG(FT_EEG_2use,condSet_2use,'trial','original');
         end
         % get the goodies and get rid of overhead
-        FT_EEG_foldsave{cSet} = fix_dimord(FT_EEG_2use,'rpt_chan_time');
+        FT_EEG_2use = fix_dimord(FT_EEG_2use,'rpt_chan_time');
+        % temporarily save fold data
+        [~,tmpf,~] = fileparts(tempname); % generates random filename
+        fnames{cFld,cSet} = [filepath filesep '..' filesep 'RAW_EEG_' filenames{1} '_fold' num2str(cFld) '_' num2str(cSet) '_' tmpf  '.mat'];
+        save(fnames{cFld,cSet},'-v7.3','-struct','FT_EEG_2use');
         clear FT_EEG_2use;
     end
     % FYI, store for every fold
     settrialinfo = [settrialinfo; trialinfo];
     settrialindex = [settrialindex; origtrialindex];
-    % temporarily save folded data
-    [~,tmpf,~] = fileparts(tempname); % generates random filename
-    tempfilename{cFld} = [filepath filesep '..' filesep 'RAW_EEG_' filenames{1} '_fold' num2str(cFld) '_' tmpf  '.mat'];
-    save(tempfilename{cFld},'FT_EEG_foldsave','-v7.3');
-    clear FT_EEG_foldsave;
 end % end folds loop in which temp files are created
 
 clear FT_EEG; % clear the dataset as we don't need it in memory during analyses
@@ -472,11 +472,10 @@ for cFld=1:nFolds
     % FYI
     fprintf(1,['fold: ' num2str(cFld) '\n']);
     
-    % load data, clear memory and delete obsolete files. Note that Matlab does not copy a matrix
-    % that is passed into a function, but rather creates a pointer to save memory :-)
-    load(tempfilename{cFld}); % FT_EEG_foldsave.trial = trial * channel * time
-    train_FT_EEG = FT_EEG_foldsave{1};
-    test_FT_EEG = FT_EEG_foldsave{2};
+    % load data, clear memory and delete obsolete files.
+    train_FT_EEG = load(fnames{cFld,1}); % FT_EEG.trial = trial * channel * time
+    test_FT_EEG = load(fnames{cFld,2});
+    
     train_condSet = get_this_condset(condSet,1);
     test_condSet = get_this_condset(condSet,2);
     clear FT_EEG_foldsave;
@@ -514,13 +513,15 @@ for cFld=1:nFolds
     msettings.doBDM = do_BDM;
     msettings.doFEM = do_FEM;
     msettings.basis_sigma = basis_sigma;
+    msettings.fname = fnames{cFld,1};
     
     % run BDM and FEM
     [BDM, FEM] = BDM_and_FEM_FT_EEG(train_FT_EEG,test_FT_EEG,train_condSet,test_condSet,msettings);
     
     % delete obsolete data and files
     clear train_FT_EEG test_FT_EEG train_condSet test_condSet
-    delete(tempfilename{cFld});
+    delete(fnames{cFld,1});
+    delete(fnames{cFld,2});
 
     % some BDM/FEM specific stuff
     if do_BDM

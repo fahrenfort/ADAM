@@ -562,6 +562,7 @@ if strcmpi(plottype,'2D')
         Ylabel((yaxis == chance)) = {'chance'}; % say "chance".
     end
     set(gca,'YTickLabel',Ylabel);
+    % set(gca,'TickLabelInterpreter', 'latex')
     hold off;
 else
     % determine significant time points
