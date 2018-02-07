@@ -63,9 +63,14 @@ for c = 1:numel(clusterlist)
         end
     else
         % quick hack to take the channel set from the training data
-        if numel(channels) == 2
-            channels = channels{1};
-        end
-        pstruct(c).channels = channels(logical(labels))';
+%         if numel(channels) == 2
+%             channels = channels{1};
+%         end
+        % joram 7-2-18: found a bug here, where "channels" has a different label order than
+        % chanlocs.labels; the "labels" variable containing the marked channels belonging to a
+        % significant cluster are based on the latter, so finding their labels from the "channels"
+        % variable resulted in incorrect channel labels in the pStruct (e.g. P7,P5 and PO7 were
+        % marked as FC2, FCz and CP2)
+        pstruct(c).channels = {chanlocs(logical(labels)).labels};
     end
 end
