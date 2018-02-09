@@ -54,7 +54,7 @@ function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
 % some default settings
 walltime = '23:59:59';
 lnodes = '1';
-mem = '64gb';
+mem = [];
 cores = 16;
 repeat = 1;
 use_scratch = true;
@@ -76,8 +76,9 @@ if ~isempty(mem)
     mem = [':mem' mem];
 end
 if isempty(cores)
-    maxcores = 11; % maximum nr of jobs to start, always take one less than the number of cores on the node (or even less if you require more memory)
-elseif isempty(maxcores)
+    cores = 12; % maximum nr of jobs to start, always take one less than the number of cores on the node (or even less if you require more memory)
+end
+if isempty(maxcores)
     maxcores = cores - 1;
 end
 
@@ -106,7 +107,7 @@ end
 
 % create job settings
 corestxt = [':cores' num2str(cores)];
-ppn = [':ppn=' num2str(cores-1)];
+ppn = [':ppn=' num2str(maxcores)];
 
 % obtain filenames if not already supplied as argument
 file = varargin{2};

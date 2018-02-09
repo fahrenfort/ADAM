@@ -214,7 +214,7 @@ for t=1:size(allTrainData,2)
             FEM.LabelsOverTime(t2,t,:,:) = FEM_labelMatrix; % time * time * cond * cond confusion matrix
         end
         
-    end
+    end % end t2 loop
     
     % Compute weights for backward model (note that weights depend on training set only) also
     % compute the pattern matrix from the weights by multiplying the covariance matrix with the
@@ -269,5 +269,6 @@ for t=1:size(allTrainData,2)
         clear realData;
     end
     
-end
+end % end t1 loop
+
 fprintf(1,'\n');
