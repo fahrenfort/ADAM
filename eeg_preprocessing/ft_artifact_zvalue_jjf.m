@@ -539,8 +539,10 @@ setappdata(h, 'opt', opt);
 artval_cb(h);
 
 redraw_cb(h);
-[path,filename,~] = fileparts(cfg.saveoutput);
-saveas(h,[path filesep filename '.png'], 'png');
+if isfield(cfg,'saveoutput')
+    [path,filename,~] = fileparts(cfg.saveoutput);
+    saveas(h,[path filesep filename '.png'], 'png');
+end
   
 %end
 
