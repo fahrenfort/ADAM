@@ -214,7 +214,7 @@ for t=1:size(allTrainData,2)
             FEM.LabelsOverTime(t2,t,:,:) = FEM_labelMatrix; % time * time * cond * cond confusion matrix
         end
         
-    end
+    end % end t2 loop
     
     % Compute weights for backward model (note that weights depend on training set only) also
     % compute the pattern matrix from the weights by multiplying the covariance matrix with the
@@ -247,10 +247,28 @@ for t=1:size(allTrainData,2)
                 end
             end
         end
-        BDM.WeightsOverTime(t,:) = mean(weights,2); 
-        BDM.covPatternsOverTime(t,:) = cov(dataTrain)*mean(weights,2);
-        BDM.corPatternsOverTime(t,:) = corr(dataTrain)*mean(weights,2);
+        BDM.WeightsOverTime(t,:) = mean(weights,2);
+        
+        % to compute activation patterns we need the covariance of the original (unwhitened) data
+        if ~exist('matObj','var')
+            matObj = matfile(fname);
+        end
+        % slightly different for frequency or raw data
+        if exist('dim_params','var'); % frequency data
+            dim_params.index{dim_params.timedim} = t; % only read for the current time point
+            realData = squeeze(matObj.powspctrm(dim_params.index{:}));
+            if dim_params.trialdim > dim_params.chandim
+                realData = realData'; % transpose to make realData have trial x chan
+            end
+        else % raw data
+            realData = squeeze(matObj.trial(:,:,t)); % realData is trial x chan
+        end
+        % finally compute activation pattern according to Haufe
+        BDM.covPatternsOverTime(t,:) = cov(realData)*mean(weights,2);
+        BDM.corPatternsOverTime(t,:) = corr(realData)*mean(weights,2);
+        clear realData;
     end
     
-end
+end % end t1 loop
+
 fprintf(1,'\n');

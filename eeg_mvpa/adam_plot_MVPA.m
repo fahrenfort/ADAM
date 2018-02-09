@@ -97,7 +97,7 @@ function map = adam_plot_MVPA(cfg,stats)
 
 if nargin<2
     disp('cannot plot graph without stats input, need at least 2 arguments:');
-    help plot_MVPA;
+    help adam_plot_MVPA;
     return
 end
 
@@ -143,8 +143,10 @@ end
 % set color-limits (z-axis) or y-limits
 if isempty(cent_acctick)
     % assuming this is the same for all graphs, cannot really be helped
-    if strcmpi(stats(1).settings.measuremethod,'hr-far') || strcmpi(stats(1).settings.measuremethod,'\muV') || strcmpi(stats(1).settings.measuremethod,'accuracy difference') || strcmpi(plot_model,'FEM')
+    if any(strcmpi(stats(1).settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(stats(1).settings.measuremethod,'\muV') || ~isempty(strfind(stats(1).settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
         cent_acctick = 0;
+    elseif strcmpi(stats(1).settings.measuremethod,'AUC')
+        cent_acctick = .5;
     else
         cent_acctick = 1/stats(1).settings.nconds;
     end
@@ -393,7 +395,7 @@ if isempty(acctick)
                 acctick = 1;
             end
         else
-            acctick = diff(acclim)/8;
+            acctick = round(diff(acclim)/8,2);
         end
     end
 end
@@ -560,6 +562,7 @@ if strcmpi(plottype,'2D')
         Ylabel((yaxis == chance)) = {'chance'}; % say "chance".
     end
     set(gca,'YTickLabel',Ylabel);
+    % set(gca,'TickLabelInterpreter', 'latex')
     hold off;
 else
     % determine significant time points
@@ -606,8 +609,8 @@ else
         Ylabel((zaxis == chance)) = {'chance'}; % say "chance".
     end
     set(hcb,'YTick',zaxis,'YTickLabel',Ylabel);
-    ylabel(hcb,regexprep(measuremethod,'_',' ')); % add measuremethod to colorbar
-    %title(hcb,regexprep(measuremethod,'_',' ')); % you can also put it above the color bar if you prefer
+    %ylabel(hcb,regexprep(measuremethod,'_',' ')); % add measuremethod to colorbar
+    title(hcb,regexprep(measuremethod,'_',' '),'FontSize',10); % you can also put it above the color bar if you prefer
     if strcmpi(ydim,'freq')
         ylabel('frequency in Hz','FontSize',fontsize);
         xlabel('time in ms','FontSize',fontsize);

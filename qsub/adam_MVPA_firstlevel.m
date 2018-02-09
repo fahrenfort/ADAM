@@ -82,22 +82,21 @@ function adam_MVPA_firstlevel(cfg)
 %       cfg.class_type             = 'linear' (default); classifier type, e.g. 'linear' or
 %                                    'diaglinear'; for other options see FITCDISCR (default Matlab
 %                                    discriminant analysis function, which ADAM uses at its core)
-%       cfg.class_method           = 'accuracy' (default); this the standard classification
-%                                    metric which computes balanced accuracy (first computing
-%                                    accuracy for each classs, and then averaging across classes);
-%                                    'AUC'; this computes the Area Under the Curve (above .5 implies
-%                                    above chance accuracy. AUC also works for multi-class problems,
-%                                    using Hand, D. J., & Till, R. J. (2001). A Simple
+%       cfg.class_method           = 'AUC' (default); computes the Area Under the Curve (above .5
+%                                    implies above chance accuracy. AUC also works for multi-class
+%                                    problems, using Hand, D. J., & Till, R. J. (2001). A Simple
 %                                    Generalisation of the Area Under the ROC Curve for Multiple
 %                                    Class Classification Problems. Machine Learning, 45(2),
-%                                    171?186. http://doi.org/10.1023/A:1010920819831.
-%                                    Other options are:  'hr-far' (hit rate minus false alarm
-%                                    rate),'dprime' (d'),'hr' (hit rate),'far' (false alarm
-%                                    rate),'mr' (miss rate),'cr' (correct rejection rate), in those
-%                                    cases ADAM assumes that that the first class contains the
-%                                    'signal' stimulus and the second class contains the 'noise'
-%                                    stimulus. In the near future information prevalence will be
-%                                    implemented.
+%                                    171?186. http://doi.org/10.1023/A:1010920819831. Other options
+%                                    are:  'accuracy' this a classification accuracy metric which
+%                                    computes balanced accuracy (first computing accuracy for each
+%                                    classs, and then averaging across classes); 'hr-far' (hit rate
+%                                    minus false alarm rate),'dprime' (d'),'hr' (hit rate),'far'
+%                                    (false alarm rate),'mr' (miss rate),'cr' (correct rejection
+%                                    rate), in those cases ADAM assumes that that the first class
+%                                    contains the 'signal' stimulus and the second class contains
+%                                    the 'noise' stimulus. In the near future information prevalence
+%                                    will be implemented.
 %       cfg.crossclass             = 'no'; (default) whether ('yes') or not ('no') to apply
 %                                    time-by-time cross-classification, yielding temporal
 %                                    generalization matrices; specifying 'no' will simply compute
@@ -358,7 +357,7 @@ resample = 'no';            % does not resample the data
 erp_baseline = 'no';        % [-.1,0] baselines from -100 to 0 ms
 tfr_baseline = 'no';        % [-.5,-.1] baselines from -500 to -100 ms
 frequencies = '2:2:30';     % '2:2:30' takes frequencies from 2 to 30 Hz in steps of 2
-class_method = 'accuracy';  % computes classification accuracy (other options, e.g.: 'hr-far','dprime','hr','far','mr','cr', in those cases make sure that the first class is 'signal' and the second the 'noise')
+class_method = 'AUC';       % computes Area Under the Curve, a balanced metric that runs from .5 onwards. Other options, e.g.: 'accuracy', 'hr-far','dprime','hr','far','mr','cr', in those cases make sure that the first class is 'signal' and the second the 'noise')
 class_type = 'linear';      % classifier type, e.g. 'linear' or 'diaglinear'
 model = 'BDM';              % performs decoding rather than a forward encoding model
 raw_or_tfr = 'raw';         % performs the analysis on the raw data rather than the time-frequeny data
@@ -391,7 +390,10 @@ if ~exist('class_spec','var')
 end
 
 % re-structure parameters to work with lower-level API settings string in the classify_ and create_qsub_ functions
-if iterations > 0
+if strcmpi(raw_or_tfr,'raw');
+    tfr_method = '';       % don't need this for raw
+end
+if iterations > 1
     repeat = iterations;
     iterate_method = 'iterate';
 end

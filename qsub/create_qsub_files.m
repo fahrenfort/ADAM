@@ -54,7 +54,7 @@ function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
 % some default settings
 walltime = '23:59:59';
 lnodes = '1';
-mem = '64gb';
+mem = [];
 cores = 16;
 repeat = 1;
 use_scratch = true;
@@ -76,8 +76,9 @@ if ~isempty(mem)
     mem = [':mem' mem];
 end
 if isempty(cores)
-    maxcores = 11; % maximum nr of jobs to start, always take one less than the number of cores on the node (or even less if you require more memory)
-elseif isempty(maxcores)
+    cores = 12; % maximum nr of jobs to start, always take one less than the number of cores on the node (or even less if you require more memory)
+end
+if isempty(maxcores)
     maxcores = cores - 1;
 end
 
@@ -106,7 +107,7 @@ end
 
 % create job settings
 corestxt = [':cores' num2str(cores)];
-ppn = [':ppn=' num2str(cores-1)];
+ppn = [':ppn=' num2str(maxcores)];
 
 % obtain filenames if not already supplied as argument
 file = varargin{2};
@@ -162,7 +163,7 @@ else % or run as normal
     allMat = {combMat};
 end
 
-% create qsub job for each subject and a bash file for all jobs 
+% create qsub job for each subject (in case repeat > 1) and a bash file for all jobs 
 qsubfiles = {};
 for cMat = 1:numel(allMat)
     combMat = allMat{cMat};
@@ -183,11 +184,11 @@ for cMat = 1:numel(allMat)
             fout = fopen(qsubfile,'w');
             fprintf(fout,'#PBS -S /bin/bash\n');
             fprintf(fout,['#PBS -lnodes=' lnodes corestxt ppn mem ' -lwalltime=' walltime '\n']);
+            fprintf(fout,'echo "Job $PBS_JOBID started at `date`"');
             if send_mail
-                fprintf(fout,'echo "Job $PBS_JOBID started at `date`" | mail $USER -s "Job $PBS_JOBID"\n');
-            else
-                fprintf(fout,'echo "Job $PBS_JOBID started at `date`"\n');
+                fprintf(fout,' | mail $USER -s "Job $PBS_JOBID"');
             end
+            fprintf(fout,'\n');
             if use_scratch
                 % build in some time to copy output back by breaking off jobs before the end
                 fprintf(fout,'module load sara-batch-resources\n');
@@ -209,7 +210,9 @@ for cMat = 1:numel(allMat)
             if ~isempty(preload)
                 fprintf(fout,['export LD_PRELOAD=' preload  '\n']);
             end
-            fprintf(fout,['export MATLAB_LOG_DIR=' scratchlogdir '\n']);
+            if use_scratch
+                fprintf(fout,['export MATLAB_LOG_DIR=' scratchlogdir '\n']);
+            end
             % make sure directories exists
             fprintf(fout,['mkdir -p ' outdir ' &\nwait\n']);
         end
