@@ -3,8 +3,6 @@
 ## Roadmap
 ###Planned features
 
-* better implementation of class balancing using SMOTE (Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P. (n.d.). SMOTE: Synthetic Minority Over-sampling Technique. Journal of Artificial Intelligence Research, 16, 321–357.)
-* implement AUC (Area Under the Curve) as a dependent measure (right now we have mean accuracy, d' and hr-far, but AUC might be more sensitive).
 * update core FEM functions to have a consistent API
 * improved topomap plotting
 * FEM tutorial
@@ -14,8 +12,10 @@
 
 ##Prior releases
 
-###V1.0
+###V0.0.0
 
+* better implementation of class balancing using ADASYN/SMOTE (Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P. (n.d.). SMOTE: Synthetic Minority Over-sampling Technique. Journal of Artificial Intelligence Research, 16, 321–357.)
+* implement AUC (Area Under the Curve) as a dependent measure (right now we have mean accuracy, d' and hr-far, but AUC might be more sensitive).
 * updated all core BDM functions to have a (more or less) consistent API
 * all core functions are now pre-pended with adam_
 * BDM tutorial (1st level, 2nd level, plotting) with example data   
