@@ -65,8 +65,8 @@ try
     cfg             = [];
     cfg.continuous  = 'no';
     % select only EEG electrodes
-    [~, electrodes] = select_channels(FT_EEG.label,'EEG');
-    cfg.artfctdef.zvalue.channel    = electrodes;
+    % [~, electrodes] = select_channels(FT_EEG.label,'EEG');
+    cfg.artfctdef.zvalue.channel    = FT_EEG.label; % all channels
     cfg.artfctdef.zvalue.cutoff     = cutoff; % was 15
     cfg.artfctdef.zvalue.trlpadding = -padding; % exclude parts of the trial on both ends
     cfg.artfctdef.zvalue.fltpadding = 0; % this setting does not always work with every bdf, then set to 0

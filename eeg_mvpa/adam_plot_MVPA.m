@@ -481,11 +481,10 @@ end
 if strcmpi(plottype,'2D')
     colormap('default');
     if isempty(StdError)
-        H.dataLine = plot(data);
+        H.dataLine = plot(data,'Color',line_colors{cGraph});
     else
-        %H = shadedErrorBar(1:numel(data),data,stdData,{'Color',[.7,.7,.7],'MarkerFaceColor',[1 1 0]},.5); % [1 1 0] {'MarkerFaceColor',[.7,.7,.7]}
+        % slightly lighter version of the original color
         H = shadedErrorBar(1:numel(data),data,stdData,{'Color',line_colors{cGraph} + (1 - line_colors{cGraph})/2,'MarkerFaceColor',[1 1 0]},.1);
-        %H.dataLine = plot(data,'Color',line_colors{cGraph}/3,'LineWidth',1);
     end
     hold on;
     % plot horizontal line on zero
@@ -501,7 +500,7 @@ if strcmpi(plottype,'2D')
     % plot significant time points
     if ~isempty(pVals)
         sigdata = data;
-        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~plotsubjects && ~strcmpi(mpcompcor_method,'none')
+        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none')
             if ~singleplot elevate = 1; else elevate = cGraph-.5; end
             if inverty
                 sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/80)*elevate;
@@ -542,7 +541,9 @@ if strcmpi(plottype,'2D')
             end
         end
     end
-    ylim(acclim);
+    if ~all(acclim==unique(acclim))
+        ylim(acclim);
+    end
     xlim([1 numel(data)]);
     % little hack
     if strcmpi(plot_model,'FEM')

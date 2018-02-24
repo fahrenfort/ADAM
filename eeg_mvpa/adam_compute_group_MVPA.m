@@ -172,51 +172,39 @@ if isempty(folder_name)
         disp('NOTE: it is easier to select a directory when you indicate a starting directory using cfg.startdir, otherwise you have to start selection from root every time...');
     end
     folder_name = uigetdir(cfg.startdir,'select directory to plot');
-    if ~ischar(folder_name)
-        error('no folder was selected');
+end
+if ~exist(folder_name,'dir')
+    error('no folder was selected or the specified folder does not exist');
+end
+cfg.folder = folder_name;
+
+% where am I?
+ndirs = drill2data(folder_name);
+if isempty(plot_order)
+    dirz = dir(folder_name);
+    dirz = {dirz([dirz(:).isdir]).name};
+    plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    if ndirs == 1
+        [folder_name, plot_order] = fileparts(folder_name);
+        plot_order = {plot_order};
+    elseif ndirs > 2
+        error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
     end
-    cfg.folder = folder_name;
-    % where am I?
-    ndirs = drill2data(folder_name);
-    if isempty(plot_order)
-        dirz = dir(folder_name);
-        dirz = {dirz([dirz(:).isdir]).name};
-        plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
-        if ndirs == 1
-            [folder_name, plot_order] = fileparts(folder_name);
-            plot_order = {plot_order};            
-        elseif ndirs > 2
-            error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
-        end
-        cfg.plot_order = plot_order;        
-    elseif ndirs ~= 2
-        error('You seem to be selecting a directory that is either too high or too low in the hiearchy given that you have specified cfg.plot_order. Either remove cfg.plot_order or select the appropriate level in the hierarchy.');
-    else
-        dirz = dir(folder_name);
-        dirz = {dirz([dirz(:).isdir]).name};
-        dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
-        if ~all(ismember(plot_order,dirz))
-            error('One or more of the folders specified in cfg.plot_order cannot be found in this results directory. Change cfg.plot_order or select a different directory for plotting.');
-        end
-    end
-    % loop through directories (results folders)
-    for cdirz = 1:numel(plot_order)
-        if numel(plot_order) == 1 % getting from single folder
-            [stats, cfg] = subcompute_group_MVPA(cfg, [folder_name filesep plot_order{cdirz}], mask);
-        else % getting from multiple folders
-            [stats(cdirz), cfg] = subcompute_group_MVPA(cfg, [folder_name filesep plot_order{cdirz}], mask);
-        end
-    end
+    cfg.plot_order = plot_order;
+elseif ndirs ~= 2
+    error('You seem to be selecting a directory that is either too high or too low in the hiearchy given that you have specified cfg.plot_order. Either remove cfg.plot_order or select the appropriate level in the hierarchy.');
 else
-    if ~iscell(folder_name)
-        folder_name = {folder_name};
+    dirz = dir(folder_name);
+    dirz = {dirz([dirz(:).isdir]).name};
+    dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    if ~all(ismember(plot_order,dirz))
+        error('One or more of the folders specified in cfg.plot_order cannot be found in this results directory. Change cfg.plot_order or select a different directory for plotting.');
     end
-    for cdirz = 1:numel(folder_name)
-        if ~exist(folder_name{cdirz},'dir')
-            error([folder_name ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
-        end
-        [stats(cdirz), cfg] = subcompute_group_MVPA(cfg, [folder_name{cdirz}], mask);
-    end
+end
+
+% loop through directories (results folders)
+for cdirz = 1:numel(plot_order)
+    [stats(cdirz), cfg] = subcompute_group_MVPA(cfg, [folder_name filesep plot_order{cdirz}], mask);
 end
 
 % subroutine for each condition
@@ -236,6 +224,7 @@ trainlim = [];
 testlim = [];
 freqlim = [];
 exclsubj = [];
+compute_randperm = false;
 v2struct(cfg);
 % general time limit
 if ~isempty(timelim) % timelim takes precedence
@@ -321,7 +310,7 @@ end
 
 % prepare figure in case individual subjects are plotted
 if plotsubjects;
-    fh = figure('name',['individual subjects, condition: ' condname]);
+    fh = figure('name',['individual subjects: ' condname]);
     set(fh, 'Position', get(0,'Screensize'));
     set(fh,'color','w');
 end
@@ -382,26 +371,30 @@ for cSubj = 1:nSubj
         end
         
         % find permutations and load them
-        compute_1stlevel_permutations = false;
         permfolder = [folder_name filesep channelpool plotFreq{cFreq} filesep 'randperm'];
-        if compute_1stlevel_permutations && exist(permfolder,'dir')
+        if compute_randperm && exist(permfolder,'dir')
             subjectpermutes = dir([permfolder filesep subjectfiles{cSubj}(1:end-4) '_PERM*.mat']);
             subjectpermutes = {subjectpermutes(:).name};
             countP = zeros(size(ClassOverTime));
+            failed = 0;
             for cPerm=1:numel(subjectpermutes)
                 if ~mod(cPerm,round(numel(subjectpermutes)/10))
                     fprintf(1,'reading random permutation %d of %d\n', cPerm, numel(subjectpermutes));
                 end
-                % matPermObj = matfile([permfolder filesep subjectpermutes{cPerm}]);
-                if strcmpi(plot_model,'BDM')
-                    load([permfolder filesep subjectpermutes{cPerm}],'BDM');
-                    countP = countP + (BDM.ClassOverTime > ClassOverTime);
-                elseif strcmpi(plot_model,'FEM')
-                    load([permfolder filesep subjectpermutes{cPerm}],'FEM');
-                    countP = countP + (FEM.ClassOverTime > ClassOverTime);
+                try
+                    if strcmpi(plot_model,'BDM')
+                        load([permfolder filesep subjectpermutes{cPerm}],'BDM');
+                        countP = countP + (BDM.ClassOverTime >= ClassOverTime);
+                    elseif strcmpi(plot_model,'FEM')
+                        load([permfolder filesep subjectpermutes{cPerm}],'FEM');
+                        countP = countP + (FEM.ClassOverTime >= ClassOverTime);
+                    end
+                catch ME
+                    disp(ME.message);
+                    failed = failed + 1;
                 end
             end
-            countP = countP / numel(subjectpermutes);
+            pVals = countP / (numel(subjectpermutes)-failed);
         end
         
         % find limits
@@ -410,8 +403,38 @@ for cSubj = 1:nSubj
         
         % limit ClassOverTime
         ClassOverTime = ClassOverTime(lim1,lim2);
-        %countP = countP(lim1,lim2);
         
+        % hack to compute onset latencies for first level random permutations
+        if compute_randperm && exist(permfolder,'dir')
+            pVals = pVals(lim1,lim2);
+            pVals = diag(pVals);
+            
+            % compute actual
+            [obsPosSizes, obsNegSizes, posLabels, negLabels] = compute_clusters(diag(ClassOverTime),pVals,indiv_pval);
+
+            % mask containing significant points
+            sigMatrix = zeros(size(pVals));
+            sigMatrix(pVals < indiv_pval) = 1;
+            
+            % iterate to find max clusters under random permutation
+            % IMPLEMENT LATER WHEN I HAVE TIME
+            
+            % cut out insignificant points
+            randSizes = 5; % quick hack to identify max clusters without iteration, simply cut off at 5
+            labels = 1:max(unique(posLabels));
+            sizes2rm = find(obsPosSizes < max(randSizes));
+            for c = 1:numel(sizes2rm)
+                sigMatrix(posLabels==labels(sizes2rm(c))) = 0;
+                posLabels(posLabels==labels(sizes2rm(c))) = 0;
+            end
+            pVals = ~sigMatrix;
+            pStruct.posclusters = compute_pstruct(posLabels,pVals,diag(ClassOverTime),cfg,settings);
+            if ~isempty(pStruct.posclusters)
+                onsetTimes(cSubj) = min([ pStruct.posclusters(:).start_time ]);
+            else
+                onsetTimes(cSubj) = nan;
+            end
+        end
         
         % limit weights too
         if strcmpi(dimord,'freq_time')
@@ -540,7 +563,11 @@ for cSubj = 1:nSubj
         subplot(numSubplots(nSubj,1),numSubplots(nSubj,2),cSubj);
         onestat.ClassOverTime = ClassOverTime;
         onestat.StdError = [];
-        onestat.pVals = zeros(size(ClassOverTime));
+        if exist('pVals','var')
+            onestat.pVals = pVals;
+        else
+            onestat.pVals = [];
+        end
         onestat.indivClassOverTime = [];
         onestat.settings = settings;
         onestat.condname = condname;
@@ -549,6 +576,7 @@ for cSubj = 1:nSubj
         tmpcfg = cfg;
         tmpcfg.plot_model = plot_model;
         tmpcfg.plotsubjects = true;
+        tmpcfg.plotsigline_method = 'both';
         tmpcfg.plot_order = {condname};
         adam_plot_MVPA(tmpcfg,onestat);
         subjname = subjectfiles{cSubj};
@@ -580,7 +608,7 @@ if nSubj > 1
         % FDR CORRECTION
         [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail); 
         ClassPvals = shiftdim(squeeze(ClassPvals));
-        h = fdr_bh(ClassPvals,cluster_pval);
+        h = fdr_bh(ClassPvals,cluster_pval,'dep');
         ClassPvals(~h) = 1;
     elseif strcmpi(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
@@ -610,6 +638,9 @@ stats.filenames = subjectfiles;
 stats.channelpool = channelpool;
 if exist('pStruct','var')
     stats.pStruct = pStruct;
+end
+if exist('onsetTimes')
+    stats.onsetTimes = onsetTimes;
 end
 %cfg = v2struct(name,nameOfStruct2Update);
 

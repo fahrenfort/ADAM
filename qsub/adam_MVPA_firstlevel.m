@@ -9,16 +9,16 @@ function adam_MVPA_firstlevel(cfg)
 % .fdt) or Fieldtrip format (.mat)
 % 
 % EEGLAB input files should be saved in EEGLAB native format (.set and .fdt) and contain an epoched
-% EEGLAB data structure containing trials, channels and time. The events should contain triggers
+% EEGLAB data structure containing trials, channels and time. The events should contain events
 % that uniquely refer to the conditions in the experiment. This format should be the default after
-% running EEGLAB's pop_epoch(). ADAM extracts numerical trigger values that occur at timepoint 0 in
-% the EEG.event.type field (so the triggers around which the trial was epoched). These are the
-% trigger values that adam_MVPA_firstlevel uses for trial selection.
+% running EEGLAB's pop_epoch(). ADAM extracts numerical event values that occur at timepoint 0 in
+% the EEG.event.type field (so the events around which the trial was epoched). These are the
+% event values that adam_MVPA_firstlevel uses for trial selection.
 % 
 % Fieldtrip input files should be saved in Matlab native format (.mat) and contain epoched Fieldtrip
 % raw data (see ft_datatype_raw) or timelock data (see ft_datatype_timelock), as long as they
 % containing dimensions trial, time and channel, as well as a trialinfo array containing numerical
-% trigger values that specify the condition of each trial. The fields that occur in a Fieldtrip data
+% event values that specify the condition of each trial. The fields that occur in a Fieldtrip data
 % structure can either be saved as separate variables in the Matlab file (e.g. as happens when using
 % the Matlab save command to save a data structure using the '-struct' keyword), or contain the
 % struct variable itself (as when saving the data structure without the '-struct' keyword). In the
@@ -48,27 +48,27 @@ function adam_MVPA_firstlevel(cfg)
 %                                    in this example the classifier trains on the files that end in
 %                                    _1  and tests on the files that end in _2)
 %       cfg.class_spec             = N-class cell array, each cell containing a string with the
-%                                    trigger values that are contained in that class, separated by
+%                                    event values that are contained in that class, separated by
 %                                    comma (e.g. cfg.class_spec{1} = '1,2,3'; cfg.class_spec{2} =
 %                                    '4,5,6';). The function cond_string allows easy specification
-%                                    of trigger values into the string format required for
+%                                    of event values into the string format required for
 %                                    adam_MVPA_firstlevel using variables containing integer arrays
 %                                    (e.g. cfg.class_spec{1} = cond_string(faces); cfg.class_spec{2}
 %                                    = cond_string(houses);). See cond_string for details. It is
-%                                    also possible to define different triggers for training and
-%                                    testing. In this case, train and test triggers need to be
+%                                    also possible to define different events for training and
+%                                    testing. In this case, train and test events need to be
 %                                    separated by a semi-colon (e.g. cfg.class_spec{1} = '1,2;3,4';
 %                                    cfg.class_spec{2} = '5,6;7,8'; in this example the classifier
-%                                    trains on triggers (1,2) for class 1 and (5,6) for class 2,
+%                                    trains on events (1,2) for class 1 and (5,6) for class 2,
 %                                    while testing on (3,4) for class 1 and (7,8) for class 2).
-%       cfg.balance_triggers       = 'yes' (default); balances triggers to achieve within-class
-%                                    balancing, so that each class contains an equal amount of
-%                                    trigger values (discarding leftover triggers); other option is
-%                                    'no', which will use all triggers in the data, but be sure your
-%                                    design is balanced! In general, we strongly recommend the default
-%                                    'yes'. If desired, you can manually specify your own ratio of
-%                                    each trial type in your class definition, by duplicating
-%                                    trigger values: cfg.class_spec{1} = {'1,1,2,3'};
+%       cfg.balance_events         = 'yes' (default); balances event codes within classes to achieve
+%                                    within-class balancing, so that each class contains an equal
+%                                    amount of event values (discarding leftover events); The other
+%                                    option is 'no', which will use all events in the data, but be
+%                                    sure your design is balanced! In general, we strongly recommend
+%                                    the default 'yes'. If desired, you can manually specify your
+%                                    own ratio of each trial type in your class definition, by
+%                                    duplicating event values: cfg.class_spec{1} = {'1,1,2,3'};
 %                                    cfg.class_spec{2} = {'4,4,5,6'}.
 %       cfg.balance_classes        = 'yes' (default; or 'no'); whether to over/undersample classes
 %                                    in the training set to achieve cross-class balancing;
@@ -187,16 +187,16 @@ function adam_MVPA_firstlevel(cfg)
 %                                    power. The averages are computed according to the class
 %                                    definitions. E.g. if cfg.class_spec = '1,2,3'; it will compute
 %                                    time frequency representations on the average of a triplet of
-%                                    trials that have trigger codes 1, 2 and 3. One can increase the
+%                                    trials that have event codes 1, 2 and 3. One can increase the
 %                                    number of trials that go into such an evoked average using the
 %                                    class definition, e.g. when using cfg.class_spec{1} =
 %                                    '1,1,1,2,2,2,3,3,3'; then each average on which power is
 %                                    computed for class 1 will contain 9 rather than 3 trials.
-%       cfg.bintrain               = 'no' (default); if 'yes', averages across triggers within a
+%       cfg.bintrain               = 'no' (default); if 'yes', averages across events within a
 %                                    class on the training side (for TFR data this only happens
 %                                    after TF decomposition, do not use binning for 'evoked', which
 %                                    averages prior to TF decomposition)
-%       cfg.bintest                = 'no' (default); if 'yes', averages across triggers witin a
+%       cfg.bintest                = 'no' (default); if 'yes', averages across events witin a
 %                                    class on the testing side (for TFR data this only happens after
 %                                    TF decomposition, do not use binning for 'evoked', which
 %                                    averages prior to TF decomposition).
@@ -282,15 +282,15 @@ function adam_MVPA_firstlevel(cfg)
 %                      'subject03'
 %                      'subject04'
 %                      'subject05'};
-% cfg.class_spec{1} = '1,2,3'; % face-triggers
-% cfg.class_spec{2} = '4,5,6'; % house-triggers
+% cfg.class_spec{1} = '1,2,3'; % face events
+% cfg.class_spec{2} = '4,5,6'; % house events
 %
 % adam_MVPA_firstlevel(cfg);
 %
 % --> This analysis performs backward decoding on raw EEG data using all scalp channels assuming
 %     10-05 labels; classifier is trained on separating houses from faces; training and testing are
 %     done on the same time points (i.e. the "diagonal", no temporal generalization /
-%     cross-classification), using 10-fold cross-validation, with balanced triggers and oversampled
+%     cross-classification), using 10-fold cross-validation, with balanced events and oversampled
 %     balanced classes. No baseline correction is done.
 % 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -309,8 +309,8 @@ function adam_MVPA_firstlevel(cfg)
 % masked = [1 4];
 % unmasked = [2 5]
 % scrambled = [3 6]
-% cfg.class_spec{1} = cond_string(masked,faces);   % masked face-triggers
-% cfg.class_spec{2} = cond_string(masked,houses);  % masked house-triggers
+% cfg.class_spec{1} = cond_string(masked,faces);   % masked face events
+% cfg.class_spec{2} = cond_string(masked,houses);  % masked house events
 % cfg.cross_class   = 'yes';
 % cfg.raw_or_tfr    = 'tfr';
 % cfg.frequencies   = '8:2:12';
@@ -361,10 +361,10 @@ class_method = 'AUC';       % computes Area Under the Curve, a balanced metric t
 class_type = 'linear';      % classifier type, e.g. 'linear' or 'diaglinear'
 model = 'BDM';              % performs decoding rather than a forward encoding model
 raw_or_tfr = 'raw';         % performs the analysis on the raw data rather than the time-frequeny data
-balance_triggers = 'yes';   % within-class balancing: balances triggers within each stimulus class using undersampling, so that each class contains an equal amount of trigger values (discarding leftover triggers)
+balance_events = 'yes';     % within-class balancing: balances events within each stimulus class using undersampling, so that each class contains an equal amount of event values (discarding leftover events)
 balance_classes = 'yes';    % between class balancaing: balances training set using oversampling so that each class in the training set contains an equal number of instances 
-bintrain = 'no';            % average across triggers within a class on the training side
-bintest = 'no';             % average across triggers witin a class on the testing side
+bintrain = 'no';            % average across events within a class on the training side
+bintest = 'no';             % average across events witin a class on the testing side
 savelabels = 'no';          % if 'yes', also saves the classifier labels
 labelsonly = 'no';          % if 'yes', only saves the classifier labels (test set does not require labels in this case)
 tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
@@ -386,7 +386,12 @@ if ~exist('filenames','var')
     error('You need to specify a cell array in cfg.filenames containing the filenames containing the data of each subject');
 end
 if ~exist('class_spec','var')
-    error('You need to specify in cfg.class_spec which trigger values go into which stimulus class used for training/testing');
+    error('You need to specify in cfg.class_spec which event values go into which stimulus class used for training/testing');
+end
+
+% backwards compatibility
+if exist('balance_triggers','var') && ~isfield(cfg,'balance_events')
+    balance_events = balance_triggers;
 end
 
 % re-structure parameters to work with lower-level API settings string in the classify_ and create_qsub_ functions
@@ -406,10 +411,10 @@ if strcmpi(whiten,'no')
 else
     whiten = '';
 end
-if strcmpi(balance_triggers,'no')
-    balance_triggers = 'unbalance_triggers';
+if strcmpi(balance_events,'no')
+    balance_events = 'unbalance_events';
 else
-    balance_triggers = '';
+    balance_events = '';
 end
 if strcmpi(balance_classes,'no')
     balance_classes = 'unbalance_classes';
@@ -442,7 +447,7 @@ end
 if ~isempty(sigma_basis_set)
     sigma_basis_set = sprintf('sigma%f',sigma_basis_set);
 end
-str_settings = cellarray2csvstring({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_triggers,balance_classes,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
+str_settings = cellarray2csvstring({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
