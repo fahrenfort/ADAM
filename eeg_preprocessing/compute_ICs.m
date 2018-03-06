@@ -1,5 +1,5 @@
 function compute_ICs(filepath,filename,outpath,interpolate_channels,cleandata,highpass,include_EOG)
-% function compute_ICs(filepath,filename,outpath,interpolate_channels,cleandata,highpass)
+% function compute_ICs(filepath,filename,outpath,interpolate_channels,cleandata,highpass,include_EOG)
 % perform ICA and save result. If interpolate_channels = 'yes', bad
 % channels are interpolated prior to ICA (default: false).
 % muscle artefacts can be removed (only works on epoched data), set

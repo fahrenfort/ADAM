@@ -47,7 +47,7 @@ function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
 % Example usage:
 % create_qsub_files('$HOME/Dropbox/matlab_scripts/eeg_mvpa','classify_RAW_FT_data',qsettings,'/My_experiment/EEGLAB_DATA',{'subj1' 'subj2' 'subj3'},'/My_experiment/MVPA_RESULTS',4,1:4,'linear',true,'1,2,3','4,5,6','7,8,9','10,11,12');
 %
-% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU, 2014, 2015, 2016
+% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU, 2014, 2015, 2016, 2018
 %
 % See also: adam_MVPA_firstlevel
 

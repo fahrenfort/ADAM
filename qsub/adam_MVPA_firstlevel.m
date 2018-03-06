@@ -133,7 +133,7 @@ function adam_MVPA_firstlevel(cfg)
 %                                    default settings), and subsquently peforms  decoding on the
 %                                    single trial power values of each of these frequency bands. See
 %                                    below for specification of frequency bands.
-%       cfg.channels               = 'ALL_NOSELECTION'; (default) will use all channels/electrodes
+%       cfg.channelpool            = 'ALL_NOSELECTION'; (default) will use all channels/electrodes
 %                                    in the data; note that if you still have EOG,ECG,etc. channels
 %                                    in your data set, it will also include these, which may or may
 %                                    not be desirable. If this is not desirable you can either
@@ -316,7 +316,7 @@ function adam_MVPA_firstlevel(cfg)
 % cfg.frequencies   = '8:2:12';
 % cfg.tfr_method    = 'induced';
 % cfg.tfr_baseline  = [.5 .2];
-% cfg.channels      = 'OCCIPARIET';
+% cfg.channelpool   = 'OCCIPARIET';
 %
 % adam_MVPA_firstlevel(cfg);
 %
@@ -350,7 +350,7 @@ repeat = 1;                 % by default, the analysis is ran only once
 iterations = 0;             % no iterations by default
 randompermutations = 0;     % no random permutations by default
 iterate_method = '';        % iteration/permutation method is empty by default (this is set internally if cfg.iterations or cfg.randompermutations is above 0)
-channels = 'all';           % in 64-electrode BioSemi this uses all electrodes except the EOG electrodes, other options: 'ALL_NOSELECTION' for other aquisition systems or MEG, or for BioSemi 'OCCIP' only occipital, 'PARIET' only parietal etc, type help select_channels
+channelpool = 'all';        % in 64-electrode BioSemi this uses all electrodes except the EOG electrodes, other options: 'ALL_NOSELECTION' for other aquisition systems or MEG, or for BioSemi 'OCCIP' only occipital, 'PARIET' only parietal etc, type help select_channels
 nfolds = 10;                % trains on 90% (9/10) and tests on 10% (1/10)
 crossclass = 'no';          % only trains and tests on the same time points
 resample = 'no';            % does not resample the data
@@ -392,6 +392,9 @@ end
 % backwards compatibility
 if exist('balance_triggers','var') && ~isfield(cfg,'balance_events')
     balance_events = balance_triggers;
+end
+if exist('channels','var') && ~isfield(cfg,'channelpool')
+    channelpool = channels;
 end
 
 % re-structure parameters to work with lower-level API settings string in the classify_ and create_qsub_ functions
@@ -474,25 +477,25 @@ tfr_and_erp_baseline = sprintf('%s;%s',tfr_baseline,erp_baseline);
 if isempty(frequencies)
     frequencies = '2:2:30';
 end
-if ischar(channels) && strcmpi(channels,'all')
-    channels = 'ALL';
+if ischar(channelpool) && strcmpi(channelpool,'all')
+    channelpool = 'ALL';
 end
-if isempty(channels)
-    channels = 'ALL_NOSELECTION';
+if isempty(channelpool)
+    channelpool = 'ALL_NOSELECTION';
 end
-if ~iscell(channels)
-    channels = {channels};
+if ~iscell(channelpool)
+    channelpool = {channelpool};
 end
 
 % run analysis
 if ~exist('qsub','var') || isempty(qsub) % run local
-    for cChannels = 1:numel(channels) % 
+    for cChannels = 1:numel(channelpool) % 
         for cSubj = 1:numel(filenames)
             for cRepeat = 1:repeat
                 if strcmpi(raw_or_tfr,'raw')
-                    classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels{cChannels},str_settings,crossclass_resample,erp_baseline,class_spec{:});
+                    classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,erp_baseline,class_spec{:});
                 elseif strcmpi(raw_or_tfr,'tfr')
-                    classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channels{cChannels},str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+                    classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
                 end
             end
         end
@@ -500,8 +503,8 @@ if ~exist('qsub','var') || isempty(qsub) % run local
 else % or create qsub files
     qsub.repeat = repeat; % repeat by the number of times specified in cfg.iterations or cfg.randpermutations
     if strcmpi(raw_or_tfr,'raw')
-        create_qsub_files(qsub.functionpath,'classify_RAW_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channels,str_settings,crossclass_resample,erp_baseline,class_spec{:});
+        create_qsub_files(qsub.functionpath,'classify_RAW_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channelpool,str_settings,crossclass_resample,erp_baseline,class_spec{:});
     elseif strcmpi(raw_or_tfr,'tfr')
-        create_qsub_files(qsub.functionpath,'classify_TFR_from_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channels,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+        create_qsub_files(qsub.functionpath,'classify_TFR_from_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channelpool,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
     end
 end

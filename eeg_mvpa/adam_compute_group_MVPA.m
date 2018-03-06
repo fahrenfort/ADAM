@@ -197,6 +197,17 @@ else
     dirz = dir(folder_name);
     dirz = {dirz([dirz(:).isdir]).name};
     dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    
+    for cPlot = 1:numel(plot_order)
+        dirindex = find(strncmpi(plot_order{cPlot},dirz,numel(plot_order{cPlot})));
+        if isempty(dirindex)
+            error(['cannot find condition ' plot_order{cPlot} ' specified in cfg.plot_order']);
+        elseif numel(dirindex) > 1
+            error(['cannot find a unique condition for the pattern ' plot_order{cPlot} ' specified in cfg.plot_order']);
+        else
+            plot_order{cPlot} = dirz{dirindex};
+        end
+    end       
     if ~all(ismember(plot_order,dirz))
         error('One or more of the folders specified in cfg.plot_order cannot be found in this results directory. Change cfg.plot_order or select a different directory for plotting.');
     end
