@@ -528,13 +528,16 @@ for cFreq = 1:numel(frequencies)
         % (1) whiten train and test data
         if whiten
             [train_FT_EEG, FT_IE] = whiten_FT_EEG(train_FT_EEG,train_condSet);
-            if nFolds <= 4 % re-compute covariance matrix if test data is fully independent or at least 25% of the total data
-                FT_IE = [];
-            else
+            if nFolds > 4 || whiten_test_using_train
+                % use train covariance to pre-whiten test data
                 whiten_test_using_train = true; % to keep track in settings
+                [test_FT_EEG] = whiten_FT_EEG(test_FT_EEG,test_condSet,FT_IE);
+                clear FT_IE;
+            else
+                % or re-compute covariance matrix if test data is fully independent or at least 25% of the total data
+                clear FT_IE;
+                [test_FT_EEG] = whiten_FT_EEG(test_FT_EEG,test_condSet,[]);
             end
-            % otherwise use train covariance to pre-whiten test data
-            [test_FT_EEG] = whiten_FT_EEG(test_FT_EEG,test_condSet,FT_IE);
         end
         % (2) between-class balance train by oversampling minority class using ADASYN/SMOTE
         % STILL NEED TO CHECK INSIDE balance_FT_EEG IF FT_EEG IS NOT ALREADY BINNED:

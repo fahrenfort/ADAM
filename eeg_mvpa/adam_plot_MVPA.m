@@ -265,12 +265,12 @@ if numel(stats)>1
         disp(['plot ' num2str(cStats)]);
         if singleplot
             hold on;
-            [map, H, cfg] = subplot_MVPA(cfg,stats(cStats),cStats);
+            [map, H, cfg] = subplot_MVPA(cfg,stats(cStats),cStats, numel(stats));
             legend_handle(cStats) = H.mainLine;
             legend_text{cStats} = regexprep(stats(cStats).condname,'_',' ');
         else
             subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
-            [map, ~, cfg] = subplot_MVPA(cfg,stats(cStats),cStats); % all in the first color
+            [map, ~, cfg] = subplot_MVPA(cfg,stats(cStats),cStats, numel(stats)); % all in the first color
             title(regexprep(stats(cStats).condname,'_',' '),'FontSize',10);
         end
     end
@@ -285,8 +285,11 @@ else
     end
 end
 
-function [map, H, cfg] = subplot_MVPA(cfg,stats,cGraph)
+function [map, H, cfg] = subplot_MVPA(cfg,stats,cGraph,nGraph)
 map = [];
+if nargin<4
+    nGraph = 1;
+end
 if nargin<3
     cGraph = 1;
 end
@@ -514,7 +517,7 @@ if strcmpi(plottype,'2D')
     if ~isempty(pVals)
         sigdata = data;
         if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none')
-            if ~singleplot elevate = 1; else elevate = (8-cGraph)-.5; end
+            if ~singleplot elevate = 1; else elevate = (nGraph-cGraph)+.5; end
             if inverty
                 sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/80)*elevate;
             else
@@ -554,7 +557,7 @@ if strcmpi(plottype,'2D')
             end
         end
     end
-    if ~all(acclim==unique(acclim))
+    if unique(numel(acclim)) == 2
         ylim(acclim);
     end
     xlim([1 numel(data)]);
@@ -576,7 +579,6 @@ if strcmpi(plottype,'2D')
         Ylabel((yaxis == chance)) = {'chance'}; % say "chance".
     end
     set(gca,'YTickLabel',Ylabel);
-    % set(gca,'TickLabelInterpreter', 'latex')
     hold off;
 else
     % determine significant time points
