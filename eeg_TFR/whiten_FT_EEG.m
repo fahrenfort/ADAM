@@ -1,12 +1,12 @@
-function [FT_EEG, IE] = whiten_FT_EEG(FT_EEG,condSet,IE,field)
+function [FT_EEG, IE] = whiten_FT_EEG(FT_EEG,condSet,IE,field,avgtime)
 % whiten_FT_EEG whitens the EEG data contained in an FT_EEG struct using Mahalanobis or ZCA
 % whitening, see https://en.wikipedia.org/wiki/Whitening_transformation. This is also called
 % sphering, or Multivariate Noise Normalization (MNN) also see:
 % https://www.biorxiv.org/content/early/2017/08/06/172619
 %
 % First computes covariance matrix per time point and per stimulus class. Averages covariance
-% matrices using across time points and across stimulus classes and inverts this matrix. Next, it
-% uses the inverted matrix to whiten the original data, so that the covariance is the identity
+% matrices across stimulus classes and optionally across time points, and inverts this matrix. Next,
+% it uses the inverted matrix to whiten the original data, so that the covariance is the identity
 % matrix, a set of uncorrelated variables with unit variance. An inverted matrix can also be
 % supplied when calling this function, in this case the data will be whitened using the supplied
 % matrix.
@@ -15,6 +15,9 @@ function [FT_EEG, IE] = whiten_FT_EEG(FT_EEG,condSet,IE,field)
 %
 % See also: ADAM_MVPA_FIRSTLEVEL, COVCOR
 
+if nargin < 5
+    avgtime = false;
+end
 if nargin < 4
     field = 'trial';
 end
@@ -28,6 +31,11 @@ end
 if ~isfield(FT_EEG,field)
     error([field ' should contain the data, but ' field ' is not a field of FT_EEG']);
 end
+if isempty(IE)
+    computeIE = true;
+else
+    computeIE = false;
+end
 
 % get trial info
 trialinfo = FT_EEG.trialinfo;
@@ -39,7 +47,7 @@ data = FT_EEG.(field);
 nConds = numel(condSet);
 
 % compute IE (if it was not passed to the function)
-if isempty(IE)
+if avgtime && computeIE
     % pre-allocate (time, conditions, channels, channels)
     E=NaN(nTime,nConds,nChannels,nChannels);
     for cT = 1:nTime
@@ -62,6 +70,19 @@ end
 % pre-allocate memory (trials, channels, time)
 data_new=NaN(numel(trialinfo),nChannels,nTime);
 for cT = 1:nTime
+    if ~avgtime && isempty(IE)
+        E=NaN(nConds,nChannels,nChannels);
+        for cCondSet = 1:nConds
+            thisCondSet = [condSet{cCondSet}];
+            if ischar(thisCondSet)
+                thisCondSet = string2double(thisCondSet);
+            end
+            X = squeeze(data(ismember(trialinfo,thisCondSet),:,cT)); % X = trials x channels
+            E(cCondSet,:,:)=covCor(X); % E = condition/class x channels x channels
+        end
+        EE = squeeze(mean(E,1)); % only average over condition/class
+        IE=EE^(-0.5);  % IE is channels x channels
+    end
     for cTrial = 1:numel(trialinfo)
         X=squeeze(data(cTrial,:,cT)); % for each trial and time point
         W=X*IE; % WHITEN

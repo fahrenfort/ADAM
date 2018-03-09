@@ -12,20 +12,24 @@ function [selchannelindex, selchannellabels] = select_channels(channellabels,bun
 % [channels, channellabels] = select_channels(channellabels,bundlename_or_bundlelabels)
 %
 % inputs:
-% channellabels: a cell array of the electrodes to select from (i.e. the labels of the electrodes that are in the data)
-% bundlename_or_bundlelabels determines which channels to select, either a bundle name:
-% bundlename_or_bundlelabels = 'EEG' or 'ALL' takes all EEG channels (NO EOG!)
-% bundlename_or_bundlelabels = 'EOG' all EOG channels
-% bundlename_or_bundlelabels = 'EEG_EOG' all EEG and all EOG channels
-% bundlename_or_bundlelabels = 'OCCIP' only occipital, 'PARIET' only parietal, etc: 'FRONTAL' 'TEMPORAL' 'OCCIPARIET' 'CDA' 
-% or a cell array of channels:
-% bundlename_or_bundlelabels = {'Oz', 'Iz', 'O1', 'O2'};
+%
+%   channellabels                   a cell array of the electrodes to select from (i.e. the labels
+%                                   of the electrodes that are in the data)
+%   bundlename_or_bundlelabels      'ALL_NOSELECTION' (default) determines which channels to select,
+%                                   either a bundle name or a cell array of channels. Examples of
+%                                   potential values: 'EEG' or 'ALL' selects all EEG channels (NO
+%                                   EOG!) 'EOG' selects all EOG channels 'EEG_EOG' selects all EEG
+%                                   and all EOG channels 'OCCIP' only occipital, etc: 'PARIET',
+%                                   'FRONTAL', 'TEMPORAL', 'OCCIPARIET' or 'CDA' 
+%                                   {'Oz', 'Iz', 'O1', 'O2'}; selects OZ, Iz, O1 and O2. The
+%                                   resulting bundle name in the results is 'Oz_Iz_O1_O2'.
 %
 % outputs:
-% channels are the indexnumbers of the selected channels channellabels
-% channellabels is a cell array of the channel names of the selected channels
 %
-% Internal function of the ADAM toolbox, by J.J.Fahrenfort, 2018
+%   channels                        indexnumbers of the selected channels channellabels
+%   channellabels                   a cell array of the channel names of the selected channels
+%
+% Internal function of the ADAM toolbox, by J.J.Fahrenfort, 2017, 2018
 %
 % See also: ADAM_MVPA_FIRSTLEVEL
 

@@ -1,6 +1,6 @@
 function [ clusterPvals, pStruct ] = cluster_based_permutation(data1,data2_or_chance_level,cfg,settings,mask,connectivity)
-% implements Maris, E., & Oostenveld, R. (2007). Nonparametric statistical testing of EEG- and
-% MEG-data. Journal of Neuroscience Methods, 164(1), 177?190.
+% cluster_based_permutation implements Maris, E., & Oostenveld, R. (2007). Nonparametric statistical
+% testing of EEG- and MEG-data. Journal of Neuroscience Methods, 164(1), 177?190.
 % http://doi.org/10.1016/J.Jneumeth.2007.03.024
 %
 % Note population level inference issues when using t-testing to evaluate accuracy measures, e.g.

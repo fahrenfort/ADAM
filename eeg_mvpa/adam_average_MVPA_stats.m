@@ -1,16 +1,11 @@
-function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2)
-% ADAM_COMPARE_MVPA_STATS performs a statistical comparison between two stats structures that result
-% from adam_compute_group_MVPA or adam_compute_group_ERP, given that the stats have the same
-% dimensions (e.g. two time-time generalization matrices of equal size and same number of
-% participants; i.e. within-subject repeated measures design).
+function avstats = adam_average_MVPA_stats(cfg,stats1,stats2)
+% ADAM_AVERAGE_MVPA_STATS averages two stats structures that result from adam_compute_group_MVPA or
+% adam_compute_group_ERP, given that the stats have the same dimensions (e.g. two time-time
+% generalization matrices of equal size and same number of participants; i.e. within-subject
+% repeated measures design). Also performs statistical testing against chance.
 %
 % Use as:
-%   adam_compare_MVPA_stats(cfg,stats1,stats2);
-%
-% The function effectively does a condition subtraction (stats2 - stats1) and tests against zero
-% using the same statistical procedure options as in adam_compute_group_MVPA. Each stats structure
-% can be a 1xN structure array, where each corresponding element of the array is compared accross
-% the two stat structures (see example below).
+%   avstats = adam_average_MVPA_stats(cfg,stats1,stats2);
 %
 % The cfg (configuration) input structure can contain the following:
 %
@@ -57,29 +52,7 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2)
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
-% Example usage: 
-%
-% (1)
-% cfg.mask = stats1.pVals<1; 
-%
-% --> the pVals matrix consists of significant p-values within significant clusters, and 1's for all
-%     non-signficant time(-time) points; so evaluating against <1 will give a binary mask with 1's
-%     for significant, and 0's for non-significant pixels; this binary mask can be used for
-%     comparing conditions:
-%
-% cfg = [];
-% diffstats = adam_compare_MVPA_stats(cfg,stats1,stats2);
-%
-% (2)
-% cfg = [];
-% diffstats = adam_compare_MVPA_stats(cfg,stats1,stats2);
-%
-% --> here, stats1 and stats2 could be EEG and MEG decoding, respectively, while each stats
-%     structure has two class-comparisons (e.g. famous vs. non-famous faces and famous vs. scrambled
-%     faces); diffstats will then also be a 1x2 structure-array reflecting the contrast EEG>MEG for:
-%     famous vs non-famous, and famous vs scrambled.
-%
-% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
+% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2018
 % 
 % See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
@@ -109,23 +82,34 @@ end
 nameOfStruct2Update = 'cfg';
 cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,trainlim,testlim,reduce_dims,nameOfStruct2Update);
 
-difstats = [];
+avstats = [];
 for cStats = 1:numel(stats1)
-    difstats = [difstats sub_compare_MVPA_stats(cfg,stats1(cStats),stats2(cStats),mask)];
+    avstats = [avstats sub_average_MVPA_stats(cfg,stats1(cStats),stats2(cStats),mask)];
 end
 
-function difstats = sub_compare_MVPA_stats(cfg,stats1,stats2,mask)
+function avstats = sub_average_MVPA_stats(cfg,stats1,stats2,mask)
 % unpack cfg
 v2struct(cfg);
+
 % compute some values
 ClassTotal{1} = stats1.indivClassOverTime;
 ClassTotal{2} = stats2.indivClassOverTime;
 nSubj = size(ClassTotal{1},1);
-difstats.ClassOverTime = shiftdim(mean(ClassTotal{1}-ClassTotal{2}));
-difstats.StdError = shiftdim(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj));
-difstats.condname = [stats1.condname ' - ' stats2.condname];
+averageClassTotal = (ClassTotal{1}+ClassTotal{2})/2;
+avstats.ClassOverTime = shiftdim(mean(averageClassTotal));
+avstats.StdError = shiftdim(std(averageClassTotal)/sqrt(nSubj));
+avstats.condname = ['avg of (' stats1.condname ', ' stats2.condname ')'];
 settings = stats1.settings; % assuming these are the same!
-settings.measuremethod = [settings.measuremethod ' difference'];
+settings.measuremethod = [settings.measuremethod ' average'];
+
+% determine chance level
+if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(stats1.cfg.plot_model,'FEM')
+    chance = 0;
+elseif strcmpi(settings.measuremethod,'AUC')
+    chance = .5;
+else
+    chance = 1/settings.nconds;
+end
 
 % mask size
 if isempty(mask)
@@ -134,16 +118,16 @@ end
 
 if strcmpi(mpcompcor_method,'fdr')
     % FDR CORRECTION
-    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,'tail',tail);
+    [~,ClassPvals] = ttest(averageClassTotal,chance,indiv_pval,'tail',tail);
     h = fdr_bh(squeeze(ClassPvals),cluster_pval);
     ClassPvals(~h) = 1;
     pStruct = []; % still need to implement
 elseif strcmpi(mpcompcor_method,'cluster_based')
     % CLUSTER BASED CORRECTION
-    [ ClassPvals, pStruct ] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},cfg,settings,mask);
+    [ ClassPvals, pStruct ] = cluster_based_permutation(averageClassTotal,chance,cfg,settings,mask);
 elseif strcmpi(mpcompcor_method,'uncorrected')
     % NO MP CORRECTION
-    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'tail',tail);
+    [~,ClassPvals] = ttest(averageClassTotal,chance,'tail',tail);
     ClassPvals = squeeze(ClassPvals);
     ClassPvals(~mask) = 1;
     pStruct = []; % still need to implement
@@ -154,7 +138,7 @@ else
 end
 
 % output stats
-difstats.pVals = ClassPvals;
-difstats.pStruct = pStruct;
-difstats.cfg = cfg;
-difstats.settings = settings;
+avstats.pVals = ClassPvals;
+avstats.pStruct = pStruct;
+avstats.cfg = cfg;
+avstats.settings = settings;

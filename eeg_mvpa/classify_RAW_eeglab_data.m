@@ -70,13 +70,13 @@ function classify_RAW_eeglab_data(filepath,filenames,outpath,nFolds,channelset,m
 % [begin,end]. If specified as 0 or [0,0], no baseline correction will be applied (default). It is
 % also possible to specify separate baselines for two input sets when separating them using a
 % semicolon, like this: erp_baselines = '-.25,0; 0,0', which would apply a baseline correction of
-% -250 to 0 ms only to the training set only. varargin is a variable set containing the trigger
+% -250 to 0 ms only to the training set only. varargin is a variable set containing the event
 % codes to select conditions from, specified as string with comma separated values:
 % cond1 = '1,2,3';
 % cond2 = '4,5,6';
-% In that setup, all trials containing either a trigger code 1, 2 or 3 will be taken as belonging to
+% In that setup, all trials containing either an event code 1, 2 or 3 will be taken as belonging to
 % condition 1, while all trials containing a 4, 5 and 6 will be taken as belonging to condition 2.
-% If different trigger codes are used in training versus testing, separate the condition
+% If different event codes are used in training versus testing, separate the condition
 % specification by a semicolon:
 % cond1 = '1,2;8,9';
 % cond2 = '3;10';
@@ -180,7 +180,7 @@ clean_muscle = false;
 clean_window = [];
 save_labels = false;
 basis_sigma = 1; % default width of basis set if not a delta, if this is empty, do a simple basis set (delta function)
-unbalance_triggers = false;
+unbalance_events = false;
 unbalance_classes = false;
 detrend_eeg = false;
 whiten = true;
@@ -261,8 +261,8 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'save_labels','savelabels'}))
         save_labels = true;
     end
-    if any(strcmpi(methods{c},{'unbalance_triggers','unbalance','unbalanced'}))
-        unbalance_triggers = true;
+    if any(strcmpi(methods{c},{'unbalance_triggers', 'unbalance_events','unbalance','unbalanced'}))
+        unbalance_events = true;
     end
     if any(strcmpi(methods{c},{'unbalance_classes'}))
         unbalance_classes = true;
@@ -286,7 +286,7 @@ if ~do_FEM && ~do_BDM
 end
 % check condset
 if isempty(condSet)
-    error('Cannot find usable trigger specification.');
+    error('Cannot find usable event specification.');
 end
 % double condset for test and train if only one is specified
 if size(condSet{1},1) == 1
@@ -310,22 +310,22 @@ if numel(filenames) > 1 && nFolds > 1
 end
 % check if condsets are non-overlapping while nFolds > 1, if so lower nFolds to 1
 if numel(filenames) == 1 && nFolds > 1 && ~overlapping
-    disp('WARNING: You specified non-overlapping trigger codes for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
+    disp('WARNING: You specified non-overlapping event codes for classes in training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
     nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
 end
-% if using same triggers for training and testing, increase nFolds
+% if using same events for training and testing, increase nFolds
 if numel(filenames) == 1 && nFolds == 1 && overlapping
     nFolds = 10;
     wraptext('WARNING: You dirty double dipper! You are using the same data for testing and training without a leave-one-out procedure. Defaulting nFolds to 10 for crossvalidation.',80);
 end
-% check if condsets are not the same but overlapping while triggers are balanced, if so unbalance_triggers
-if numel(filenames) == 1 && ~unbalance_triggers && ~allthesame && overlapping
-    unbalance_triggers = true;
-    wraptext('WARNING: Some stimulus triggers overlap between train and test, within class balancing has now been turned OFF');
+% check if condsets are not the same but overlapping while events are balanced, if so unbalance_events
+if numel(filenames) == 1 && ~unbalance_events && ~allthesame && overlapping
+    unbalance_events = true;
+    wraptext('WARNING: Some stimulus events overlap between train and test, within class balancing has now been turned OFF');
 end
 
 % display stimulus classes
-wraptext('These are the stimulus classes. Each row contains the trigger codes that go into a single class (first row training, second row testing):',80);
+wraptext('These are the stimulus classes. Each row contains the event codes that go into a single class (first row training, second row testing):',80);
 celldisp(condSet,'stimclass');
 
 % Determine bundle name and/or electrode selection
@@ -352,6 +352,7 @@ for cFile = 1:numel(filenames)
     [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}]= read_raw_data(filepath,filenames{cFile},outpath,bundlename_or_bundlelabels,erp_baseline{cFile},resample_eeg,do_csd,clean_muscle,clean_window,true,detrend_eeg);
     % randomize labels for first level random permutation testing. NOTE: permuting all observations/labels regardless of the conditions in the experiment
     if randomize_labels
+        rng default;
         rng('shuffle'); % random every time
         FT_EEG(cFile).trialinfo = FT_EEG(cFile).trialinfo(randperm(numel(FT_EEG(cFile).trialinfo)));
     end
@@ -365,14 +366,14 @@ end
 % extract some relevant trial info, training and testing data
 for cSet = 1:2
     thisCondSet = get_this_condset(condSet,cSet);
-    if unbalance_triggers
+    if unbalance_events
         trialinfo{cSet} = FT_EEG(cSet).trialinfo;
     else
         % bin/balance dataset (default action, this is not to achieve actual binnning, it just applies within-class balancing of conditions)
         FT_EEG_BINNED(cSet) = compute_bins_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','original');
         trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo;
         oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;
-        % a bit of hack to assign an unknown trigger number
+        % a bit of hack to assign an unknown event number
         FT_EEG(cSet).trialinfo(setdiff(1:numel(FT_EEG(cSet).trialinfo),[oldindex{cSet}{:}])) = -99;
     end
     % compute ERPs (baseline corrected, resampled, channels already selected)
@@ -409,12 +410,12 @@ else
     wraptext('Between-class balancing is ON, so that each stimulus class is evenly represented in the training set. If this is undesirable behavior, specify ''unbalance_classes'' in your methods.',80);
 end
 
-% within-class balancing: balance triggers within classes
-if unbalance_triggers
-    wraptext('Within-class balancing is OFF, such that an unequal distribution of triggercodes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have undesirable effects on how you interpret your results.',80);
+% within-class balancing: balance events within classes
+if unbalance_events
+    wraptext('Within-class balancing is OFF, such that an unequal distribution of event codes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have undesirable effects on how you interpret your results.',80);
 else
     [setindex{1}, setindex{2}] = unpack_binned(setindex{1}, setindex{2}, oldindex{1}, oldindex{2}); % unpack setindex{1} and setindex{2} to get back the original index
-    wraptext('Within-class balancing is ON, such that triggercodes are evenly represented within each stimulus class. If triggercodes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_triggers'' in your methods.',80);
+    wraptext('Within-class balancing is ON, such that event codes are evenly represented within each stimulus class. If event codes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_events'' in your methods.',80);
 end
 
 % generate folds, compute some stuff on them and save them temporarily before running MVPA
@@ -487,13 +488,16 @@ for cFld=1:nFolds
     % (1) whiten train and test data
     if whiten
         [train_FT_EEG, FT_IE] = whiten_FT_EEG(train_FT_EEG,train_condSet);
-        if nFolds <= 4 % re-compute covariance matrix if test data is fully independent or at least 25% of the total data
-            FT_IE = [];
-        else
+        if nFolds > 4 || whiten_test_using_train
+            % use train covariance to pre-whiten test data
             whiten_test_using_train = true; % to keep track in settings
+            [test_FT_EEG] = whiten_FT_EEG(test_FT_EEG,test_condSet,FT_IE);
+            clear FT_IE;
+        else
+            % or re-compute covariance matrix if test data is fully independent or at least 25% of the total data
+            clear FT_IE;
+            [test_FT_EEG] = whiten_FT_EEG(test_FT_EEG,test_condSet,[]);
         end
-        % otherwise use train covariance to pre-whiten test data
-        [test_FT_EEG] = whiten_FT_EEG(test_FT_EEG,test_condSet,FT_IE);
     end
     % (2) between-class balance train by oversampling minority class using ADASYN/SMOTE
     % NEED TO CHECK INSIDE balance_FT_EEG IF FT_EEG IS NOT ALREADY BINNED:
@@ -606,7 +610,7 @@ settings.condset = condSet;
 settings.csd_transform = do_csd;
 settings.bintrain = bintrain;
 settings.bintest = bintest;
-settings.unbalance_triggers = unbalance_triggers;
+settings.unbalance_events = unbalance_events;
 settings.unbalance_classes = unbalance_classes;
 settings.whiten = whiten;
 settings.whiten_test_using_train = whiten_test_using_train;

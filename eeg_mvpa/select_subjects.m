@@ -38,10 +38,13 @@ if iscell(subjnames_or_datastruct) % selecting names from cell array containg su
         if invert
             [inclsubj, exclsubj] = swapvars(inclsubj, exclsubj);
         end
+        disp(['including subject(s): ' strjoin(subjnames_or_datastruct(inclsubj),', ')]);
+        disp(['excluding subject(s): ' strjoin(subjnames_or_datastruct(exclsubj),', ')]);
         subjnames_or_datastruct = subjnames_or_datastruct(inclsubj);
         inclindex = inclsubj;
         exclindex = exclsubj;
     else
+        disp('no subjects are removed/selected');
         inclindex = 1:nSubj;
         exclindex = [];
     end

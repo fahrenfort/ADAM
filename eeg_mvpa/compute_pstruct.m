@@ -9,6 +9,13 @@ function pstruct = compute_pstruct(labels,clusterPvals,data,gsettings,settings,m
 v2struct(gsettings);
 v2struct(settings);
 pstruct = [];
+if nargin<7
+    connectivity = [];
+end
+if nargin<6
+    mask = ones(size(data));
+end
+
 mask = logical(mask);
 clusterlist = setdiff(unique(labels),0);
 for c = 1:numel(clusterlist)
