@@ -371,8 +371,8 @@ for cSet = 1:2
     % also compute TFR for entire set
     [~, FT_TFR{cSet}] = compute_TFR_from_FT_EEG(FT_EEG(cSet),thisCondSet,resample_eeg,orig_method,tf_baseline,erp_baseline,frequencies);
     % keep track of channels and time line
-    channels{cSet} = FT_TFR(cSet).label;
-    times{cSet} = FT_TFR(cSet).time;
+    channels{cSet} = FT_TFR{cSet}.label;
+    times{cSet} = FT_TFR{cSet}.time;
 end
 
 % if testing and training are on different files, check consistency

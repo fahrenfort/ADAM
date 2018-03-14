@@ -326,3 +326,6 @@ avweightstruct.indivWeights = subjweights;
 avweightstruct.timelim = timelim;
 avweightstruct.freqlim = freqlim;
 avweightstruct.pStruct = pStruct;
+if strcmpi(mpcompcor_method,'uncorrected')
+    avweightstruct.sign_elecs = {chanlocs(elecs).labels};
+end
