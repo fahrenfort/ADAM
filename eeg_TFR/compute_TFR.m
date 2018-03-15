@@ -79,9 +79,9 @@ cfg.output       = 'pow';
 %cfg.channel      = 'EEG';
 cfg.method       = 'mtmconvol';
 cfg.taper        = 'hanning';
-cfg.foi          = frequencies(frequencies<=30);                        % analysis 2 to 30 Hz in steps of 2 Hz
-cfg.t_ftimwin    = act_ftimwin(frequencies<=30); % repmat(.5,numel(cfg.foi),1);   % length of time window = 0.5 sec
-cfg.toi          = toi;                          % the times around which TFRs are computed, determined by downsample_factor
+cfg.foi          = frequencies(frequencies<=30);  % analysis 2 to 30 Hz in steps of 2 Hz
+cfg.t_ftimwin    = act_ftimwin(frequencies<=30);  % repmat(.5,1,numel(cfg.foi));   % length of time window = 0.5 sec 
+cfg.toi          = toi;                           % the times around which TFRs are computed, determined by downsample_factor
 cfg.pad          = 'maxperlen';
 if ~isempty(cfg.foi)
     % single trial

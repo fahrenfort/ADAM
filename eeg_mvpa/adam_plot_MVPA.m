@@ -91,13 +91,6 @@ function map = adam_plot_MVPA(cfg,varargin)
 % cfg.splinefreq  = 10;
 % cfg.line_colors = {'m','c'};
 %
-% --> Time-time temporal generalization plot with customized accuracy color limits for three-class 
-% decoding:
-% cfg = [];
-% cfg.acclim3D = [1/3-1/6 1/3+1/6];
-%
-% adam_plot_MVPA(cfg, stats);
-%
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
 % 
 % See also ADAM_COMPUTE_GROUP_ERP, ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL,

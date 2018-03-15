@@ -177,9 +177,12 @@ function adam_MVPA_firstlevel(cfg)
 %       cfg.tfr_baseline           = 'no' (default); or specify a time window according to
 %                                    [begin,end]; always in SECONDS, e.g. cfg.tfr_baseline =
 %                                    [-.45,-.2];
-%       cfg.frequencies            = '2:2:30' (default); takes frequencies from 2 to 30 Hz in steps
-%                                    of 2; this should be a string, and only applies when
-%                                    cfg.raw_or_tfr is set to 'tfr';
+%       cfg.frequencies            = 2:2:30 (default); specifies the frequencies, by default this is
+%                                    from 2 to 30 Hz in steps of 2; Only applies when cfg.raw_or_tfr
+%                                    is set to 'tfr'; When cfg.crossclass is set to 'yes', this
+%                                    creates a separate temporal generalization matrix for each
+%                                    frequency in frequencies. If cfg.crossclass is set to 'no',
+%                                    this creates a single time by frequency matrix.
 %       cfg.tfr_method             = 'total' (default); computes total power, alternatives are
 %                                    'induced', which subtracts the erp from each trial (separately
 %                                    performed on train and test data) and 'evoked'. When specifying
@@ -476,6 +479,9 @@ end
 tfr_and_erp_baseline = sprintf('%s;%s',tfr_baseline,erp_baseline);
 if isempty(frequencies)
     frequencies = '2:2:30';
+end
+if ~ischar(frequencies) && strcmpi(crossclass,'0')
+    frequencies = num2str(frequencies);
 end
 if ischar(channelpool) && strcmpi(channelpool,'all')
     channelpool = 'ALL';
