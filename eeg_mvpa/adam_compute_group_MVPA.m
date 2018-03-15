@@ -199,7 +199,10 @@ else
     dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
     
     for cPlot = 1:numel(plot_order)
-        dirindex = find(strcmpi(plot_order{cPlot},dirz)); % bug (or at least: suboptimal in my case): overlap in folder names gave multiple dirindices; jvd 3/13/18
+        dirindex = find(strcmpi(plot_order{cPlot},dirz)); 
+        if isempty(dirindex) % if an exact match cannot be made, look only for the pattern in the first sequency of characters
+            dirindex = find(strcmpi(plot_order{cPlot},dirz,numel(plot_order{cPlot}))); 
+        end
         if isempty(dirindex)
             error(['cannot find condition ' plot_order{cPlot} ' specified in cfg.plot_order']);
         elseif numel(dirindex) > 1
