@@ -197,7 +197,6 @@ else
     dirz = dir(folder_name);
     dirz = {dirz([dirz(:).isdir]).name};
     dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
-    
     for cPlot = 1:numel(plot_order)
         dirindex = find(strcmpi(plot_order{cPlot},dirz)); 
         if isempty(dirindex) % if an exact match cannot be made, look only for the pattern in the first sequency of characters

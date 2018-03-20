@@ -148,6 +148,10 @@ for t=1:size(allTrainData,2)
                 %[~,~,~,AUC] = perfcurve(labelsOfTestSet,scores(:,1),1); % THIS IS SLOW!
                 % solve this for multi-class, and do it fast
                 pairs = nchoosek(1:size(scores,2),2); % pair-wise combinations of classes
+                if size(pairs,1)>1
+                    % do this both ways in case of multi-class problems
+                    pairs(end+1:end+size(pairs,1),:) = pairs(:,[2 1]); 
+                end
                 AUC = zeros(1,size(pairs,1));
                 for c=1:size(pairs,1)
                     % grab all scores of the pair, the first one is always poslabel
