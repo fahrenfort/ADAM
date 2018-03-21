@@ -315,7 +315,7 @@ if isfield(stats,'cfg')
 end
 v2struct(cfg);
 
-if ~isempty(stats.settings.freqs)
+if strcmp(stats.settings.dimord,'freq_time') % this may conflict with avgfreq lineplots?
     plot_dim = 'freq_time';
 end
 if exist('plot_dim','var') && strcmpi(plot_dim, 'freq_time')
