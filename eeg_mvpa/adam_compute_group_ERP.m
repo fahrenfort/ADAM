@@ -378,13 +378,13 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     
     % determine condname
     if strcmpi(electrode_method,'subtract')
-        condname =  [origcondname ' channel subtraction'];
+        condname =  [origcondname ' channel subtraction of ' cellarray2csvstring(FT_ERP.channelpool)];
     elseif strcmpi(condition_method,'subtract')
-        condname =  [origcondname ' subtraction'];
+        condname =  [origcondname ' subtraction (' cellarray2csvstring(FT_ERP.channelpool) ')'];
     elseif strcmpi(condition_method,'average')
-        condname = [origcondname ' average'];
+        condname = [origcondname ' average (' cellarray2csvstring(FT_ERP.channelpool) ')'];
     else
-        condname = [origcondname ' erp' num2str(condition_def(cCond))];
+        condname = [origcondname ' erp' num2str(condition_def(cCond)) ' (' cellarray2csvstring(FT_ERP.channelpool) ')'];
     end
     
     % get some stats
@@ -395,7 +395,7 @@ for cCond = 1:numel(ClassTotal) % loop over stats
         % FDR CORRECTION
         [~,ClassPvals] = ttest(ClassTotal{cCond},chance,indiv_pval,tail);
         ClassPvals = shiftdim(squeeze(ClassPvals));
-        h = fdr_bh(squeeze(ClassPvals),cluster_pval);
+        h = fdr_bh(squeeze(ClassPvals),cluster_pval,'dep');
         ClassPvals(~h) = 1;
     elseif strcmp(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
@@ -465,12 +465,16 @@ if strcmpi(electrode_method,'subtract') %iscell(electrode_def{1})
     end
     FT_EEG.trial = trial;
     FT_EEG.channelpool = channelpool;
-elseif strcmpi(electrode_method,'average') % extract and average
+elseif strcmpi(electrode_method,'average')
     if ~iscell(electrode_def)
         electrode_def = {electrode_def};
     end
     FT_EEG = select_channels_from_FT_EEG(FT_EEG,electrode_def);
-    FT_EEG.channelpool = FT_EEG.label;
+    if numel(electrode_def) > 1
+        FT_EEG.channelpool = ['avg of ' cellarray2csvstring(FT_EEG.label)];
+    else
+        FT_EEG.channelpool = FT_EEG.label;
+    end
 else
     error('Specify cfg.electrode_method as ''average'' (default) or ''subtract''');
 end
