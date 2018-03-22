@@ -135,7 +135,7 @@ end
 if strcmpi(mpcompcor_method,'fdr')
     % FDR CORRECTION
     [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'alpha',indiv_pval,'tail',tail); % bug spotted by jvd: because pval wasn't specified as explicit 'param' and 'tail' was, it crashed
-    h = fdr_bh(squeeze(ClassPvals),cluster_pval);
+    h = fdr_bh(squeeze(ClassPvals),cluster_pval,'dep');
     ClassPvals(~h) = 1;
     pStruct = []; % still need to implement
 elseif strcmpi(mpcompcor_method,'cluster_based')

@@ -314,6 +314,17 @@ if isfield(stats,'cfg')
     stats = rmfield(stats,'cfg');
 end
 v2struct(cfg);
+
+% @Joram: this should not be fixed here, but at the level of adam_compute_group_MVPA (if at all).
+% The only reason I used plot_dim at the plotting stage here was to make sure swapaxes was working
+% properly. Other than that, plot_dim is really only used at the adam_compute_group_ stage. By
+% design, you currently have to indicate cfg.plot_dim = 'freq_time'; if you want to 
+% compute and plot frequency by time. This cannot be derived from settings.dimord, because it would
+% indeed conflict with avfreq lineplots or time_time plotting in certain frequency bands, as you
+% correctly inferred.
+% if strcmp(stats.settings.dimord,'freq_time') % this may conflict with avgfreq lineplots?
+%     plot_dim = 'freq_time';
+% end
 if exist('plot_dim','var') && strcmpi(plot_dim, 'freq_time')
     swapaxes = false;
 else

@@ -110,11 +110,9 @@ function adam_MVPA_firstlevel(cfg)
 %       cfg.nfolds                 = integer specifying the number of folds for cross-validation
 %                                    (default: 10);
 %       cfg.model                  = 'BDM' (default); BDM performs a backward decoding model; FEM
-%                                    performs a forward encoding model. One can also run both models
-%                                    simultaneously by separating them with a comma (cfg.model =
-%                                    'BDM,FEM';). It is only sensible to run a FEM when the classes
-%                                    are thought to form a continuum, such as positions on a circle,
-%                                    colors on a color wheel, or orientation.
+%                                    performs a forward encoding model. It is only sensible to run a
+%                                    FEM when the classes are thought to form a continuum, such as
+%                                    positions on a circle, colors on a color wheel, or orientation.
 %       cfg.sigma_basis_set        = 1; (default). Specifies the width of the basis set when running
 %                                    a forward encoding model (FEM). When setting
 %                                    cfg.sigma_basis_set = 0; the basis set is a simple box-car
@@ -203,22 +201,23 @@ function adam_MVPA_firstlevel(cfg)
 %                                    class on the testing side (for TFR data this only happens after
 %                                    TF decomposition, do not use binning for 'evoked', which
 %                                    averages prior to TF decomposition).
-%       cfg.whiten                 = 'yes' (default), can be turned off using 'no'; performs
-%                                    'whitening' of the data using Mahalanobis / ZCA whitening,
-%                                    decorrelating the features and normalizing the data to unit
-%                                    variance. Also see
+%       cfg.whiten                 = 'no' (default for BDM) or 'yes' (default for FEM);
+%                                    setting performs whitening of the data using Mahalanobis /
+%                                    ZCA whitening, decorrelating the features and normalizing the
+%                                    data to unit variance. Also see:
 %                                    https://en.wikipedia.org/wiki/Whitening_transformation.
 %                                    Whitening is also called sphering, or Multivariate Noise
-%                                    Normalization (MNN) and greatly improves decoding accuracy,
-%                                    also see:
-%                                    https://www.biorxiv.org/content/early/2017/08/06/172619.
-%                                    ADAM first computes the covariance matrix per time point and
-%                                    per stimulus class and subsequently averages these covariance
-%                                    matrices using across time points and across stimulus classes
-%                                    prior to inverting the matrix in service of the whitening
-%                                    operation. Averaging across classes ensures the whitening
-%                                    operation itself is independent of stimulus class, and thus
-%                                    does not drive decoding directly.
+%                                    Normalization (MNN). This is not useful for the current BDM
+%                                    implementation, as this uses LDA which already performs
+%                                    whitening internally, see:
+%                                    https://www.biorxiv.org/content/early/2017/08/06/172619. ADAM
+%                                    performs whitening by first computing the covariance matrix per
+%                                    time point and per stimulus class, and subsequently averages
+%                                    these covariance matrices using across stimulus classes prior
+%                                    to inverting the matrix in service of the whitening operation.
+%                                    Averaging across classes ensures the whitening operation itself
+%                                    is independent of stimulus class, and thus does not drive
+%                                    decoding directly.
 %       cfg.iterations             = [int]; iterations can be used to run a specified number of
 %                                    iterations of the analysis, which are stored in a folder called
 %                                    'iterations'. Each iteration (analysis) is appended with the
@@ -372,7 +371,6 @@ savelabels = 'no';          % if 'yes', also saves the classifier labels
 labelsonly = 'no';          % if 'yes', only saves the classifier labels (test set does not require labels in this case)
 tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
 clean_window = [];          % specifies the window used to reject muscle artifacts
-whiten = 'yes';             % specifies whether to apply pre-whitening to the data (MVNN)
 sigma_basis_set = [];       % specifies the width of the basis set (0 means box-car)
 
 % unpack cfg
@@ -412,10 +410,16 @@ if randompermutations > 0
     repeat = randompermutations;
     iterate_method = 'randperm';
 end
-if strcmpi(whiten,'no')
-    whiten = 'nowhiten';
+if strcmpi(model,'BDM') && ~exist('whiten','var')
+    whiten = 'no';
+end
+if strcmpi(model,'FEM') && ~exist('whiten','var')
+    whiten = 'yes';
+end
+if strcmpi(whiten,'yes')
+    whiten = 'whiten';
 else
-    whiten = '';
+    whiten = 'nowhiten';
 end
 if strcmpi(balance_events,'no')
     balance_events = 'unbalance_events';

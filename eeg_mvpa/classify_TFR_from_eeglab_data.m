@@ -178,7 +178,7 @@ basis_sigma = 1; % default width of basis set if not a delta, if this is empty, 
 unbalance_events = false;
 unbalance_classes = false;
 detrend_eeg = false;
-whiten = true;
+whiten = false;
 whiten_test_using_train = false;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'})) == 1
@@ -274,6 +274,9 @@ for c=1:numel(methods)
     end
     if any(strcmpi(methods{c},{'detrend','detrend_eeg'}))
         detrend_eeg = true;
+    end
+    if any(strcmpi(methods{c},{'whiten'}))
+        whiten = true;
     end
     if any(strcmpi(methods{c},{'nowhiten'}))
         whiten = false;
