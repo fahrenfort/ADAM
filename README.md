@@ -9,19 +9,21 @@ ADAM is an open source Matlab Toolbox. It allows you to perform multivariate ana
 
 # Features
 - Perform multivariate classification analyses (backward decoding) using an arbitrary number of conditions
+- Easily compute, plot and compare MVPA results side by side with ERP results
 - Compute forward encoding models, including Channel Tuning Functions (CTFs), either across time or averaged over time
 - Use the same data for training and testing through a k-fold leave-one-out procedure
-- Use different datasets for testing and training
+- Use different files for training and testing
+- Use different event codes for training and testing
 - Gives the option to either do time-frequency (TFR) decomposition first (using Fieldtrip) performing the analysis on a range of frequency bands, or just work with the raw EEG
 - The decoding can either be performed on induced TFR power or total TFR power
 - Do trial binning if required
 - Strictly enforces balanced designs
-- Compute Generalization Across Time (GAT) matrices (King et al, TiCS 2014) or time by frequency matrices, both for classification and for CTFs (forward modeling, e.g. see Foster et al 2016 or Samaha et al. 2016)
-- Compute GAT matrices for raw EEG or for any frequency (if using TFR data)
+- Computes temporal generalization matrices (King et al, TiCS 2014) or time by frequency matrices, both for classification and for CTFs (forward modeling, e.g. see Foster et al 2016 or Samaha et al. 2016)
+- Compute temporal generalization matrices for raw EEG or for any frequency (if using TFR data)
 - Average over training windows, average over testing windows, average over frequency windows
 - Compute, plot and do statistics on spatial topomaps for any time point based on the Haufe method (NeuroImage, 2014)
 - Compute, plot and do statistics on spatial top-maps of weights obtained from the forward model
-- Statistical testing, including cluster based permutation testing and FDR on the resulting GAT matrices or on the 2D vectors, either per condition or between conditions
+- Statistical testing, including cluster based permutation testing and FDR on the resulting temporal generalization matrices or on the 2D graphs, either per condition or between conditions
 - Visualization of the results (2D graphs, 3D color scale maps, topoplots etc)
 - The computation-intensive part of the toolbox has been optimized for use on UNIX computing clusters, to enable fast computation of large datasets (many subjects in parallel), but can also be ran locally on any computer with reasonable specs
 
@@ -35,7 +37,7 @@ One of the big advantages of this toolbox is that it takes generic input formats
 - A reasonably modern computer (>=8GB memory, enough HD space, modern processor, more is better)
 
 # Version
-The software is currently in pre-release, meaning that it is available for download but important features are still under development. We are still streamlining the basic analysis pipeline, to make it more consistent and more usable. **If you download the software now, expect no support, but do expect unexpected changes during updates.** We foresee that a first 'official' release will become available within the next few months.
+The toolbox is currently in version 1.0.0
 
 # Cite
 When you use the decoding (BDM) feature, please cite:<br>
@@ -46,4 +48,4 @@ Fahrenfort, J. J., Grubert, A., Olivers, C. N. L., & Eimer, M. (2017). Multivari
 
 
 # Manual
-We are currently working to supply an up-to-date manual of the toolbox, including some easy to use wrapper functions, which will be presented at the [ICON conference](http://www.icon2017.org) 5-8 August 2017 in Amsterdam
+A citable tutorial article covering how to use the decoding apect of the toolbox will become availabel shortly.
