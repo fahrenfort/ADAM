@@ -1,10 +1,8 @@
 [![ADAM](/install/ADAM_header.png)](https://github.com/fahrenfort/ADAM)
 
 ## Roadmap
-###Planned features
+#Planned features
 
-* better implementation of class balancing using SMOTE (Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P. (n.d.). SMOTE: Synthetic Minority Over-sampling Technique. Journal of Artificial Intelligence Research, 16, 321–357.)
-* implement AUC (Area Under the Curve) as a dependent measure (right now we have mean accuracy, d' and hr-far, but AUC might be more sensitive).
 * update core FEM functions to have a consistent API
 * improved topomap plotting
 * FEM tutorial
@@ -12,10 +10,12 @@
 * implement cluster based permutation for topomaps over time (not just space)
 * allow oversampling of trigger values within a class (under consideration) 
 
-##Prior releases
+#V1.0.0 is the current version
 
-###V1.0
-
+#Implemented prior to V1.0.0 
+* whitening (by default on for FEMs, not for BDMs as these use LDA)
+* better implementation of class balancing using ADASYN to oversample (Haibo He, Yang Bai, Garcia, E. A., & Shutao Li. (2008). ADASYN: Adaptive synthetic sampling approach for imbalanced learning (pp. 1322–1328). Presented at the 2008 IEEE International Joint Conference on Neural Networks (IJCNN 2008 - Hong Kong), IEEE.)
+* implemented AUC (Area Under the Curve) as the default performance measure (on top of balanced accuracy, d' and hr-far).
 * updated all core BDM functions to have a (more or less) consistent API
 * all core functions are now pre-pended with adam_
 * BDM tutorial (1st level, 2nd level, plotting) with example data   
