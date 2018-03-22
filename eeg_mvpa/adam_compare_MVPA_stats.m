@@ -96,9 +96,9 @@ indiv_pval = .05;
 mpcompcor_method = 'uncorrected';
 % unpack original cfg
 if isfield(stats1,'cfg')
-    v2struct(stats1(1).cfg,{'fieldNames','reduce_dims','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim','reduce_dims'});
+    v2struct(stats1(1).cfg,{'fieldNames','reduce_dims','plot_dim','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim'});
 elseif isfield(stats2,'cfg')
-    v2struct(stats2(1).cfg,{'fieldNames','reduce_dims','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim','reduce_dims'});
+    v2struct(stats2(1).cfg,{'fieldNames','reduce_dims','plot_dim','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim'});
 end
 v2struct(cfg);
 if exist('one_two_tailed','var')
@@ -107,7 +107,7 @@ end
 
 % pack cfg with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,trainlim,testlim,reduce_dims,nameOfStruct2Update);
+cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,trainlim,testlim,reduce_dims,plot_dim,nameOfStruct2Update);
 
 difstats = [];
 for cStats = 1:numel(stats1)
