@@ -1,7 +1,7 @@
 [![ADAM](/install/ADAM_header.png)](https://github.com/fahrenfort/ADAM)
 
 ## Roadmap
-###Planned features
+#Planned features
 
 * update core FEM functions to have a consistent API
 * improved topomap plotting
@@ -10,9 +10,9 @@
 * implement cluster based permutation for topomaps over time (not just space)
 * allow oversampling of trigger values within a class (under consideration) 
 
-##V1.0.0 is the current version
+#V1.0.0 is the current version
 
-###Implemented prior to V1.0.0 
+#Implemented prior to V1.0.0 
 * whitening (by default on for FEMs, not for BDMs as these use LDA)
 * better implementation of class balancing using ADASYN to oversample (Haibo He, Yang Bai, Garcia, E. A., & Shutao Li. (2008). ADASYN: Adaptive synthetic sampling approach for imbalanced learning (pp. 1322–1328). Presented at the 2008 IEEE International Joint Conference on Neural Networks (IJCNN 2008 - Hong Kong), IEEE.)
 * implemented AUC (Area Under the Curve) as the default performance measure (on top of balanced accuracy, d' and hr-far).
