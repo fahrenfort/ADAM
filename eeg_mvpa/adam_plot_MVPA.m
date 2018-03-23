@@ -586,11 +586,11 @@ if strcmpi(plottype,'2D')
     hold off;
 else
     % determine significant time points
-    %colormap('jet');
-    %cmap  = brewermap([],'*RdBu');
-    %colormap(cmap);
     if ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none')
         [data, map] = showstatsTFR(data,pVals,acclim);
+    else
+        cmap  = brewermap([],'*RdBu');
+        colormap(cmap);
     end
     
     % some smoothing on 3D

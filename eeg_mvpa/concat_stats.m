@@ -2,7 +2,7 @@ function outstats = concat_stats(varargin)
 % ADAM_CONCAT_STATS concatenates stats structures if they do not have the same fields by removing
 % fields that do not exist in both structures.
 %
-% Usage: outstats = adam_concat_stats(stats1, stats2, ...)
+% Usage: outstats = concat_stats(stats1, stats2, ...)
 % By J.J.Fahrenfort, VU, 2018
 
 allflds = fieldnames(varargin{1});

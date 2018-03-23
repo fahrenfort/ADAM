@@ -341,7 +341,7 @@ for cSubj = 1:nSubj
         subplot(numSubplots(nSubj,1),numSubplots(nSubj,2),cSubj);
         onestat.ClassOverTime = squeeze(trial);
         onestat.StdError = [];
-        onestat.pVals = zeros(size(squeeze(trial)));
+        onestat.pVals = ones(size(squeeze(trial)));
         onestat.indivClassOverTime = [];
         onestat.settings = settings;
         onestat.settings.measuremethod = '\muV';
