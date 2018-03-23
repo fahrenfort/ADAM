@@ -148,7 +148,7 @@ function adam_MVPA_firstlevel(cfg)
 %                                    own pre-defined selections by modifying the select_channels
 %                                    function. The second method is to directly specify the
 %                                    electrodes to include using a comma separated list (e.g.
-%                                    cfg.channels = 'O1,O2,Iz,Oz';). Type help select_channels for
+%                                    cfg.channelpool = 'O1,O2,Iz,Oz';). Type help select_channels for
 %                                    more details.
 %       cfg.clean_window           = [int int]; to remove muscle artefacts prior to decoding.
 %                                    Specify a time window to inspect for muscle artefacts using
@@ -499,7 +499,7 @@ end
 
 % run analysis
 if ~exist('qsub','var') || isempty(qsub) % run local
-    for cChannels = 1:numel(channelpool) % 
+    for cChannels = 1:numel(channelpool) % channelpool{cChannels}
         for cSubj = 1:numel(filenames)
             for cRepeat = 1:repeat
                 if strcmpi(raw_or_tfr,'raw')
@@ -509,7 +509,7 @@ if ~exist('qsub','var') || isempty(qsub) % run local
                 end
             end
         end
-    end
+   end
 else % or create qsub files
     qsub.repeat = repeat; % repeat by the number of times specified in cfg.iterations or cfg.randpermutations
     if strcmpi(raw_or_tfr,'raw')

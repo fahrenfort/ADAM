@@ -211,10 +211,11 @@ for c=1:numel(methods)
         measuremethod = methods{c};
         if numel(condSet) ~= 2
             disp('Number of stimulus classes is unequal to 2, defaulting back to computing AUC');
-            measuremethod = 'AUC'; % defaulting back to AUC
-        elseif numel(condSet) == 2
-            disp('When computing SDT measure: assuming the first condition is target (signal) and second is non-target (noise)');
+            measuremethod = 'AUC'; % defaulting back to accuracy
         end
+    end
+    if any(strcmpi(methods{c},{'accuracy'}))
+        measuremethod = methods{c};
     end
     if any(strcmpi(methods{c},{'labelsonly','onlylabels'}))
         labelsonly = true;
