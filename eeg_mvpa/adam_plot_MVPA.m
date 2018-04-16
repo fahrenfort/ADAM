@@ -327,8 +327,6 @@ v2struct(cfg);
 % end
 if exist('plot_dim','var') && strcmpi(plot_dim, 'freq_time')
     swapaxes = false;
-else
-    swapaxes = true;
 end
 if isempty(splinefreq)
     makespline = false;
@@ -606,8 +604,19 @@ else
             data = uint8(interp2(X,Y,double(data),XX,YY));
         end
     end
+    if strcmpi(ydim,'freq')
+        ylab = 'frequency in Hz';
+        xlab = 'time in ms';
+    else
+        ylab = 'testing time in ms';
+        xlab = 'training time in ms';
+    end
     if swapaxes
         data = permute(data,[2 1 3]);
+        [xaxis,yaxis] = swapvars(xaxis,yaxis);
+        [xticks,yticks] = swapvars(xticks,yticks);
+        [xlab,ylab] = swapvars(xlab,ylab);
+        [indx,indy] = swapvars(indx,indy);
     end
     imagesc(data);
     caxis(acclim);
@@ -631,18 +640,8 @@ else
     set(hcb,'YTick',zaxis,'YTickLabel',Ylabel);
     %ylabel(hcb,regexprep(measuremethod,'_',' ')); % add measuremethod to colorbar
     title(hcb,regexprep(measuremethod,'_',' '),'FontSize',10); % you can also put it above the color bar if you prefer
-    if strcmpi(ydim,'freq')
-        ylabel('frequency in Hz','FontSize',fontsize);
-        xlabel('time in ms','FontSize',fontsize);
-    else
-        if swapaxes
-            ylabel('training time in ms','FontSize',fontsize);
-            xlabel('testing time in ms','FontSize',fontsize);
-        else
-            ylabel('testing time in ms','FontSize',fontsize);
-            xlabel('training time in ms','FontSize',fontsize);
-        end
-    end
+    xlabel(xlab,'FontSize',fontsize);
+    ylabel(ylab,'FontSize',fontsize);
     set(gca,'YTick',indy);
     roundto = yticks;
     set(gca,'YTickLabel',num2cell(int64(round(yaxis(indy)/roundto)*roundto))); % convert to int64 to prevent -0 at 0-axis
@@ -651,9 +650,15 @@ end
 set(gca,'XTick',indx);
 roundto = xticks;
 set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)/roundto)*roundto)));
+%set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)))));
 set(gca,'FontSize',fontsize);
 set(gca,'color','none');
-axis square;
+if numel(xaxis) == numel(yaxis)
+    axis square;
+else
+    maxaspect = max([numel(xaxis) numel(yaxis)]);
+    pbaspect([numel(xaxis)/maxaspect numel(yaxis)/maxaspect 1]);
+end
 if inverty
     set(gca,'YDir','reverse');
 end

@@ -44,7 +44,7 @@ elseif ndims(labelMatrix) == 4 % wrapper in case labelMatrix also contains time 
             t2start = t;
             t2stop = t;
         end
-        for t2=t2start:t2stop
+        for t2=t2start:t2stop % train loop
             measure(t,t2) = class_accuracy_from_matrix_only(squeeze(labelMatrix(t,t2,:,:)),method);
         end
     end
