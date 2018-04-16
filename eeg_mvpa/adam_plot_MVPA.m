@@ -115,7 +115,11 @@ singleplot = false;
 plot_order = [];
 folder = '';
 startdir = '';
-swapaxes = true;
+if strcmpi(stats(1).settings.dimord, 'freq_time')
+    swapaxes = false;
+else
+    swapaxes = true;
+end
 referenceline = [];   % you can plot a reference line by indicating cfg.referenceline = timepoint (in milliseconds) where it should be plotted.
 if numel(stats) > 1
     line_colors = {[.5 0 0] [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5] [.75 0 0] [0 .75 0] [0 0 .75] [.75 .75 0] [0 .75 .75] [.75 0 .75] };
@@ -314,20 +318,6 @@ if isfield(stats,'cfg')
     stats = rmfield(stats,'cfg');
 end
 v2struct(cfg);
-
-% @Joram: this should not be fixed here, but at the level of adam_compute_group_MVPA (if at all).
-% The only reason I used plot_dim at the plotting stage here was to make sure swapaxes was working
-% properly. Other than that, plot_dim is really only used at the adam_compute_group_ stage. By
-% design, you currently have to indicate cfg.plot_dim = 'freq_time'; if you want to 
-% compute and plot frequency by time. This cannot be derived from settings.dimord, because it would
-% indeed conflict with avfreq lineplots or time_time plotting in certain frequency bands, as you
-% correctly inferred.
-% if strcmp(stats.settings.dimord,'freq_time') % this may conflict with avgfreq lineplots?
-%     plot_dim = 'freq_time';
-% end
-if exist('plot_dim','var') && strcmpi(plot_dim, 'freq_time')
-    swapaxes = false;
-end
 if isempty(splinefreq)
     makespline = false;
 else
@@ -605,17 +595,17 @@ else
         end
     end
     if strcmpi(ydim,'freq')
-        ylab = 'frequency in Hz';
-        xlab = 'time in ms';
+        ylegend = 'frequency in Hz';
+        xlegend = 'time in ms';
     else
-        ylab = 'testing time in ms';
-        xlab = 'training time in ms';
+        ylegend = 'testing time in ms';
+        xlegend = 'training time in ms';
     end
     if swapaxes
         data = permute(data,[2 1 3]);
         [xaxis,yaxis] = swapvars(xaxis,yaxis);
         [xticks,yticks] = swapvars(xticks,yticks);
-        [xlab,ylab] = swapvars(xlab,ylab);
+        [xlegend,ylegend] = swapvars(xlegend,ylegend);
         [indx,indy] = swapvars(indx,indy);
     end
     imagesc(data);
@@ -640,8 +630,8 @@ else
     set(hcb,'YTick',zaxis,'YTickLabel',Ylabel);
     %ylabel(hcb,regexprep(measuremethod,'_',' ')); % add measuremethod to colorbar
     title(hcb,regexprep(measuremethod,'_',' '),'FontSize',10); % you can also put it above the color bar if you prefer
-    xlabel(xlab,'FontSize',fontsize);
-    ylabel(ylab,'FontSize',fontsize);
+    xlabel(xlegend,'FontSize',fontsize);
+    ylabel(ylegend,'FontSize',fontsize);
     set(gca,'YTick',indy);
     roundto = yticks;
     set(gca,'YTickLabel',num2cell(int64(round(yaxis(indy)/roundto)*roundto))); % convert to int64 to prevent -0 at 0-axis
@@ -653,7 +643,7 @@ set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)/roundto)*roundto)));
 %set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)))));
 set(gca,'FontSize',fontsize);
 set(gca,'color','none');
-if numel(xaxis) == numel(yaxis)
+if numel(xaxis) == numel(yaxis) || ~strcmpi(dimord,'time_time')
     axis square;
 else
     maxaspect = max([numel(xaxis) numel(yaxis)]);
