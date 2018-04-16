@@ -139,9 +139,9 @@ function adam_MVPA_firstlevel(cfg)
 %                                    ADAM, or specify which channels/electrodes to include. There
 %                                    are two ways of doing that. The first is using one of the
 %                                    default electrode selections, e.g.: 'OCCIP', 'TEMPORAL',
-%                                    'PARIET' or 'FRONTAL' (e.g. cfg.channels = 'OCCIP';). You can
+%                                    'PARIET' or 'FRONTAL' (e.g. cfg.channelpool = 'OCCIP';). You can
 %                                    also specify two selections at once in a single cell array,
-%                                    like this: cfg.channels = {'ALL' 'OCCIP'}; In this case, ADAM
+%                                    like this: cfg.channelpool = {'ALL' 'OCCIP'}; In this case, ADAM
 %                                    will run both electrode selections. The predefined electrode
 %                                    selections will only include electrodes from a standard
 %                                    64-electrode BioSemi 10-20 system. It is easy to create your
