@@ -60,7 +60,7 @@ function map = adam_plot_MVPA(cfg,varargin)
 %   cfg.referenceline         = [int] in ms; you can plot a reference line
 %                               e.g. if the stimulus-class triggers were sent at 100 ms, define
 %                               cfg.referenceline = 100;
-%   cfg.line_colors           = [] (default); or string cell array e.g. {'g','r'}; or 
+%   cfg.line_colors           = [] (default); or string cell array containing RGB triplets, e.g. 
 %                               {[R G B],[R G B]} with integers between [0 1] for RGB values; this
 %                               overrides the default colors for line plots.
 %   cfg.swapaxes              = true (default); in a previous version of ADAM, training time was
@@ -80,16 +80,12 @@ function map = adam_plot_MVPA(cfg,varargin)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
 % Example usage: 
-%
-% --> Empty cfg will generate a plot with all settings to default
-% cfg = [];
-% 
-% --> Classification over time (i.e. with a reduce_dims in stats) with smoothed lines in one plot,
-% with customized colors:
+% --> Plot two stats variables with smoothed lines in a single plot, with customized colors:
 % cfg = [];
 % cfg.singleplot  = true;
-% cfg.splinefreq  = 10;
-% cfg.line_colors = {'m','c'};
+% cfg.splinefreq  = 30;
+% cfg.line_colors = {[.2 .7 .3], [.9 .1 .1], [.5 .5 .5]};
+% adam_plot_MVPA(cfg,stats,diffstats)
 %
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
 % 
@@ -127,6 +123,7 @@ else
     line_colors = {[0 0 0]};
 end
 acclim = [];
+acctick = [];
 acclim2D = [];
 acclim3D = [];
 cent_acctick = [];
@@ -150,15 +147,20 @@ if isfield(stats(1),'cfg')
 end
 
 % set color-limits (z-axis) or y-limits
+% if isempty(cent_acctick)
+%     % assuming this is the same for all graphs, cannot really be helped
+%     % stats are ordered in concat_stats such that diff stats are always last in the
+%     % stats array and 'raw' stats are the foundation for the plot
+%     if any(strcmpi(stats(1).settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(stats(1).settings.measuremethod,'\muV') || ~isempty(strfind(stats(1).settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
+%         cent_acctick = 0;
+%     elseif strcmpi(stats(1).settings.measuremethod,'AUC')
+%         cent_acctick = .5;
+%     else
+%         cent_acctick = 1/stats(1).settings.nconds;
+%     end
+% end
 if isempty(cent_acctick)
-    % assuming this is the same for all graphs, cannot really be helped
-    if any(strcmpi(stats(1).settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(stats(1).settings.measuremethod,'\muV') || ~isempty(strfind(stats(1).settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
-        cent_acctick = 0;
-    elseif strcmpi(stats(1).settings.measuremethod,'AUC')
-        cent_acctick = .5;
-    else
-        cent_acctick = 1/stats(1).settings.nconds;
-    end
+    cent_acctick = stats(1).settings.chance;
 end
 chance = cent_acctick;
 
@@ -206,12 +208,26 @@ if ~isempty(plot_order)
     line_colors = new_line_colors;
 end
 
+% which are the raw stats and which are the difstats? Only use the raw stats for y-limits.
+rawstats = [];
+for cStats = 1:numel(stats)
+    if isempty(strfind(stats(cStats).settings.measuremethod,' difference'))
+        rawstats = [rawstats cStats];
+    end
+    if isempty(rawstats)
+        stats2useforlims = 1:numel(stats);
+    else
+        stats2useforlims = rawstats;
+    end
+end
+
 % determine accuracy limits
+% NOTE: THIS MAY NOT WORK WELL YET WHEN PLOTTING 3D RAW AND DIFF STATS TOGETHER?
 if isempty(acclim)
     eval(['acclim = acclim' plottype ';']);
     if isempty(acclim)
-        mx = max(max(([stats(:).ClassOverTime])));
-        mn = min(min(([stats(:).ClassOverTime])));
+        mx = max(max(([stats(stats2useforlims).ClassOverTime])));
+        mn = min(min(([stats(stats2useforlims).ClassOverTime])));
         if strcmpi(plottype,'2D') % this is a 2D plot
             shift = abs(diff([mn mx]))/10;
             acclim = [mn-shift mx+shift];
@@ -223,9 +239,34 @@ if isempty(acclim)
     end
 end
 
+% determine acctick
+if isempty(acctick)
+    if plotsubjects
+        mx = max(acclim);
+        mn = min(acclim);
+        if strcmpi(plottype,'3D')
+            acctick = abs(max(abs([chance-mn mx-chance])))-0.001;
+        else
+            acctick = abs(max(abs([chance-mn mx-chance])))/2;
+        end
+    else
+        if strcmpi(stats(1).settings.measuremethod,'\muV')
+            acctick = round(diff(acclim)/8);
+            if acctick ==0
+                acctick = 1;
+            end
+        else
+            acctick = round(diff(acclim)/8,2);
+        end
+    end
+end
+if acctick == 0
+    acctick = .01;
+end
+
 % pack config with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(inverty,acclim,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,nameOfStruct2Update);
+cfg = v2struct(rawstats,inverty,acclim,acctick,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,nameOfStruct2Update);
 
 % make figure?
 if ~plotsubjects
@@ -383,31 +424,6 @@ if numel(acclim) == 1
 end
 acclim = sort(acclim);
 
-% determine acctick
-if isempty(acctick)
-    if plotsubjects
-        mx = max(max((ClassOverTime(:))));
-        mn = min(min((ClassOverTime(:))));
-        if strcmpi(plottype,'3D')
-            acctick = abs(max(abs([chance-mn mx-chance])))-0.001;
-        else
-            acctick = abs(max(abs([chance-mn mx-chance])))/2;
-        end
-    else
-        if strcmpi(measuremethod,'\muV')
-            acctick = round(diff(acclim)/8);
-            if acctick ==0
-                acctick = 1;
-            end
-        else
-            acctick = round(diff(acclim)/8,2);
-        end
-    end
-end
-if acctick == 0
-    acctick = .01;
-end
-
 % stuff particular to 2D and 3D plotting
 if strcmpi(plottype,'2D')
     yaxis = sort(unique([cent_acctick:-acctick:min(acclim) cent_acctick:acctick:max(acclim)]));
@@ -469,7 +485,7 @@ end
 if strcmpi(ydim,'freq')
     findticks = yticks:yticks:max(yaxis);
 else
-    if min(yaxis) < 0 && max(yaxis) > 0
+    if min(yaxis) < 0 & max(yaxis) > 0
         findticks = sort(unique([0:-yticks:min(yaxis) 0:yticks:max(yaxis)]));
     else
         findticks = sort(unique(min(yaxis):yticks:max(yaxis)));
@@ -487,6 +503,11 @@ else
     fontsize = 14;
 end
 if strcmpi(plottype,'2D')
+    % if we are plotting dif stats together with raw stats, put them on a second axis
+    if ~isempty(rawstats) && ~isempty(strfind(measuremethod,' difference')) && singleplot
+        yaxis = yaxis - chance; % a little hack to shift stuff up and down
+        data = data + chance;
+    end
     colormap('default');
     if isempty(StdError)
         H.dataLine = plot(data,'Color',line_colors{cGraph});
@@ -553,11 +574,6 @@ if strcmpi(plottype,'2D')
         ylim(acclim);
     end
     xlim([1 numel(data)]);
-    % little hack
-    if strcmpi(plot_model,'FEM')
-        measuremethod = 'CTF slope';
-    end
-    ylabel(measuremethod,'FontSize',fontsize);
     if strcmpi(reduce_dims,'avtrain')
         xlabel('test time in ms','FontSize',fontsize);
     elseif strcmpi(reduce_dims,'avtest')
@@ -565,12 +581,19 @@ if strcmpi(plottype,'2D')
     else
         xlabel('time in ms','FontSize',fontsize);
     end
-    set(gca,'YTick',yaxis);
-    Ylabel = regexp(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ','split');
-    if chance ~= 0 % create labels containing equal character counts when centered on some non-zero value
-        Ylabel((yaxis == chance)) = {'chance'}; % say "chance".
+    % if we are plotting dif stats together with raw stats, put them on a second axis
+    if ~isempty(rawstats) && ~isempty(strfind(measuremethod,' difference')) && singleplot
+        ax = axes('YLim',get(gca,'YLim'),'YTick',get(gca,'YTick'),'YTickLabel',get(gca,'YTickLabel'),'Position',get(gca,'Position'),'YAxisLocation','right','YColor',line_colors{cGraph});
+    else
+        ax = gca;
+        set(ax,'YTick',yaxis);
     end
-    set(gca,'YTickLabel',Ylabel);
+    ylabel(measuremethod,'FontSize',fontsize);
+    ticklabel = regexp(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ','split');
+    if chance ~= 0 % create labels containing equal character counts when centered on some non-zero value
+        ticklabel((yaxis == chance)) = {'chance'}; % say "chance".
+    end
+    set(ax,'YTickLabel',ticklabel);
     hold off;
 else
     % determine significant time points

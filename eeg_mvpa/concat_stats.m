@@ -11,6 +11,7 @@ for cStats = 2:numel(varargin)
     allflds = intersect(allflds, flds);
 end
 
+% remove empty fields
 outstats = [];
 for cStats = 1:numel(varargin)
     flds = fieldnames(varargin{cStats});
@@ -21,4 +22,18 @@ for cStats = 1:numel(varargin)
         end
     end
     outstats = [outstats tmp];
+end
+
+% re-order to have difference stats last
+if isfield(outstats(1),'settings')
+    moveToEnd = [];
+    moveToStart = [];
+    for cStats = 1:numel(outstats)
+        if ~isempty(strfind(outstats(cStats).settings.measuremethod,' difference'))
+            moveToEnd = [moveToEnd cStats];
+        else
+            moveToStart = [moveToStart cStats];
+        end
+    end
+    outstats = [outstats(moveToStart) outstats(moveToEnd)];
 end

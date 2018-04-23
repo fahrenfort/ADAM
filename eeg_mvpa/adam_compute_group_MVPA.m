@@ -352,7 +352,10 @@ for cSubj = 1:nSubj
         if ~isempty(whos(matObj,'BDM')) && strcmpi(plot_model,'BDM')
             v2struct(matObj.BDM); % unpack 
         elseif ~isempty(whos(matObj,'FEM')) && strcmpi(plot_model,'FEM')
-            v2struct(matObj.FEM); % unpack 
+            v2struct(matObj.FEM); % unpack
+            % little hack to fix the measure method
+            measuremethod = 'CTF slope';
+            settings.measuremethod = measuremethod;
         else
             try % backward compatibility, can be removed in later version
                 disp(wraptext('WARNING: These seem to be analyses that were performed using ancient scripts. Unless this is pure replication, it is recommended to run the first levels again.'));
@@ -601,13 +604,14 @@ for cSubj = 1:nSubj
 end
 
 % determine chance level
-if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(plot_model,'FEM')
+if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
     chance = 0;
 elseif strcmpi(settings.measuremethod,'AUC')
     chance = .5;
 else
     chance = 1/settings.nconds;
 end
+settings.chance = chance;
 
 % compute standard errors and averages
 ClassStdErr = shiftdim(squeeze(std(ClassOverTimeAll{1},0,1)/sqrt(size(ClassOverTimeAll{1},1))));
