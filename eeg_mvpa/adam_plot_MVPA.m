@@ -643,7 +643,7 @@ set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)/roundto)*roundto)));
 %set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)))));
 set(gca,'FontSize',fontsize);
 set(gca,'color','none');
-if numel(xaxis) == numel(yaxis) || ~strcmpi(dimord,'time_time')
+if numel(xaxis) == numel(yaxis) || ~strcmpi(dimord,'time_time') || strcmpi(plottype,'2D')  
     axis square;
 else
     maxaspect = max([numel(xaxis) numel(yaxis)]);
