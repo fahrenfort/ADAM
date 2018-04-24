@@ -1,12 +1,11 @@
-function avgctfstruct = plot_CTF(stats,cfg)
-% function plot_CTF(stats,weights,cfg)
+function avgctfstruct = adam_plot_CTF(cfg,stats)
+% function adam_plot_CTF(cfg,stats)
 % plot channel responses of forward encoding model, takes data from
-% compute_group_MVPA
-% THIS FUNCTION NEEDS SOME UPDATING TO RELY ONLY ON compute_group_MVPA TO
-% LIMIT DIMENSIONS AND COMPUTE STATS, AND MORE GENERALLY NEEDS A THOROUGH
-% CLEANUP
+% adam_compute_group_MVPA or from adam_subtract_stats
 %
-% By J.J.Fahrenfort, VU 2016 
+% This function needs help description, and some clean-up.
+%
+% By J.J.Fahrenfort, VU 2018 
 if nargin<2
     disp('cannot plot graph without some settings, need at least 2 arguments:');
     help plot_CTF;
@@ -20,23 +19,14 @@ singleplot = false;
 BLtime = [];
 reduce_dims = [];
 plottype = '3D';
-if isfield(cfg,'BLtime') && cfg.BLtime(1)<= cfg.BLtime(2)
-    if numel(stats) > 1
-        line_colors = {[0.5 0 0],[1 .5 .5],[0 .5 0],[.5 1 .5],[0 0 .5],[.5 .5 1],[.5 .5 0],[1 1 .5],[0 .5 .5],[.5 1 1],[.5 0 .5],[1 .5 1]};
-    else
-        line_colors = {[0 0 0],[.9 .9 .9]};
-    end
-else
-    if numel(stats) > 1
-        line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
-    else
-        line_colors = {[0 0 0]};
-    end
-end
+line_colors = [];
 v2struct(cfg);
+
+containsbaseline = ~isempty(BLtime) && cfg.BLtime(1)<= cfg.BLtime(2);
+
+% set plot type
 if strcmpi(plottype,'3D')
-    singleplot = false;
-    cfg.singleplot = false;
+    singleplot = false; % cannot plot 3D plots in single graph
     if isempty(reduce_dims) || ~any(strcmpi(reduce_dims,{'diag', 'avtrain', 'avtest'}))
         error('Cannot plot a 3D CTF without averaging over a dimension, specify cfg.reduce_dims = ''diag'', ''avtrain'' or ''avtest'' (use cfg.plottype = ''2D'' to use ''avtraintest'')');
     end
@@ -44,25 +34,26 @@ end
 if isempty(reduce_dims) || ~any(strcmpi(reduce_dims,{'diag', 'avtrain', 'avtest', 'avtraintest'}))
     error('Cannot plot CTF without averaging over a dimension, specify cfg.reduce_dims = ''diag'', ''avtrain'', ''avtest'' or ''avtraintest''');
 end
-containsbaseline = ~isempty(BLtime) && cfg.BLtime(1)<= cfg.BLtime(2);
-if containsbaseline && numel(line_colors)<numel(stats)*2 || isempty(line_colors)
+
+% set line colors
+if containsbaseline && (numel(line_colors)<numel(stats)*2 || isempty(line_colors))
     if numel(stats) > 1
-        line_colors = {[0.5 0 0],[1 .5 .5],[0 .5 0],[.5 1 .5],[0 0 .5],[.5 .5 1],[.5 .5 0],[1 1 .5],[0 .5 .5],[.5 1 1],[.5 0 .5],[1 .5 1]};
+        line_colors = {[.5 0 0] [1 .5 .5] [0 .5 0] [ .5 1 .5] [0 0 .5] [.5 .5 1] [.5 .5 0] [1 1 .5] [0 .5 .5] [.5 1 1] [.5 0 .5] [1 .5 1] [.75 0 0] [1 .5 .5] [0 .75 0] [.5 1 .5] [0 0 .75] [.5 .5 1] [1 1 .5] [0 .75 .75] [.5 1 1] [1 .5 1] };
     else
         line_colors = {[0 0 0],[.5 .5 .5]};
     end
-elseif ~containsbaseline && numel(line_colors)<numel(stats) || isempty(line_colors)
+elseif ~containsbaseline && (numel(line_colors)<numel(stats) || isempty(line_colors))
     if numel(stats) > 1
-        line_colors = {[.5 0 0], [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
+        line_colors = {[.5 0 0] [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5] [.75 0 0] [0 .75 0] [0 0 .75] [.75 .75 0] [0 .75 .75] [.75 0 .75] };
     else
         line_colors = {[0 0 0]};
     end
 end
-cfg.line_colors = line_colors;
+nameOfStruct2Update = 'cfg';
+cfg = v2struct(line_colors,singleplot,containsbaseline,nameOfStruct2Update);
 
 v2struct(stats(1).settings,{'fieldNames','dimord'});
 
-    
 % can only use diag if testlim is trainlim and dimension is time_time
 if strcmpi(reduce_dims, 'diag') && strcmpi(dimord,'time_time')
     if numel(testlim) == 1
@@ -73,11 +64,13 @@ if strcmpi(reduce_dims, 'diag') && strcmpi(dimord,'time_time')
     end
     cfg.testlim = cfg.trainlim;
 end
+
 % general time limit
 if ~isempty(timelim) % timelim takes precedence
     cfg.trainlim = timelim;
     cfg.testlim = timelim;
 end
+
 % limit freq in this case CTF = freq * time * channelweight becomes CTF = time * channelweight
 if strcmp(dimord,'freq_time')
     if isempty(freqlim)
@@ -115,14 +108,14 @@ for cStats=1:numel(stats)
     if strcmp(cfg.plotfield,'CTF')
         if singleplot
             hold on;
-            if ~isempty(BLtime) && BLtime(1)<= BLtime(2)
+            if containsbaseline
                 legend_text{cStats*2-1} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
                 legend_text{cStats*2} = 'baseline';
             else
                 legend_text{cStats} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
             end
         else
-            if ~isempty(BLtime) && BLtime(1)<= BLtime(2)
+            if containsbaseline
                 legend_text{1} = 'CTF';
                 legend_text{2} = 'baseline';
             else
@@ -134,7 +127,7 @@ for cStats=1:numel(stats)
     [indivCTFs, indivCTFmean, indivBLmean, pStruct] = plot_routine(stats(cStats),cfg,cStats);
     avgctfstruct(cStats).indivCTFs = indivCTFs;
     avgctfstruct(cStats).indivCTFmean = indivCTFmean;
-     avgctfstruct(cStats).indivBLmean = indivBLmean;
+    avgctfstruct(cStats).indivBLmean = indivBLmean;
     avgctfstruct(cStats).pStruct = pStruct;
     avgctfstruct(cStats).condname = stats(cStats).condname;
 end
@@ -173,18 +166,18 @@ if strcmp(plotfield,'CTFpercond')
             semCTFpercond{cCond} = circshift(semCTFpercond{cCond},floor(nCond)/2-cCond,dim2shift);
             channel_pos{cCond} = circshift(channel_pos{cCond},floor(nCond)/2-cCond,2);
         end
-        weights.CTF = CTFpercond{cCond};
-        weights.semCTF = semCTFpercond{cCond};
-        weights.channel_pos = channel_pos{cCond};
+        stats.weights.CTF = CTFpercond{cCond};
+        stats.weights.semCTF = semCTFpercond{cCond};
+        stats.weights.channel_pos = channel_pos{cCond};
         subplot(numSubplots(nCond,1),numSubplots(nCond,2),cCond);
-        [indivCTFs{cCond}, indivCTFmean{cCond}, indivBLmean{cCond}, pStruct{cCond}] = subplot_CTF(stats,weights,cfg);
+        [indivCTFs{cCond}, indivCTFmean{cCond}, indivBLmean{cCond}, pStruct{cCond}] = subplot_CTF(stats,cfg);
         set(gcf,'name',stats.condname,'numbertitle','off');
         title_text = ['condition ' num2str(cCond)];
         title(title_text);
     end
 else
-    weights.channel_pos =  1:nCond;
-    [indivCTFs, indivCTFmean, indivBLmean, pStruct] = subplot_CTF(stats,weights,cfg,cGraph);
+    stats.weights.channel_pos =  1:nCond;
+    [indivCTFs, indivCTFmean, indivBLmean, pStruct] = subplot_CTF(stats,cfg,cGraph);
     if ~singleplot % ~isfield(cfg,'color')
         title(strrep(stats.condname,'_',' '));
     end
@@ -192,14 +185,15 @@ end
 
 
 % use subfunction to do all the plotting, plots individual CTFs
-function [indivCTF, indivCTFmean, indivBLmean, pStruct] = subplot_CTF(stats,weights,cfg,cGraph)
-if nargin<4
+function [indivCTF, indivCTFmean, indivBLmean, pStruct] = subplot_CTF(stats,cfg,cGraph)
+if nargin<3
     cGraph = 1;
 end
 indivCTFmean = [];
 indivBLmean = [];
 pStruct = [];
 % unpack weights
+weights = stats.weights;
 v2struct(weights);
 % now unpack settings
 nconds = 2;
@@ -234,9 +228,6 @@ pval(1) = indiv_pval;
 pval(2) = cluster_pval;
 if isempty(colorlim)
     colorlim = weightlim;
-end
-if numel(BLtime) == 1
-    BLtime = [BLtime BLtime];
 end
 
 % if time tick is smaller than sample duration, increase time tick to sample duration
@@ -378,29 +369,30 @@ end
 % if 2D
 if strcmpi(plottype,'2D')
     % fill some empties
-    if isempty(CTFtime) || isempty(BLtime)
+    if isempty(CTFtime) %|| isempty(BLtime)
         if strcmpi(reduce_dims, 'avtrain') || strcmpi(reduce_dims, 'diag') || strcmpi(reduce_dims, 'avfreq') || strcmpi(reduce_dims, 'avtraintest')
             CTFtime = times{1} > 0;
-            BLtime = times{1} <= 0;
         else
             CTFtime = times{2} > 0;
-            BLtime = times{2} <= 0;            
         end
     else
         if strcmpi(reduce_dims, 'avtrain') || strcmpi(reduce_dims, 'diag') || strcmpi(reduce_dims, 'avfreq') || strcmpi(reduce_dims, 'avtraintest')
             CTFtime = times{1} >= CTFtime(1) & times{1} <= CTFtime(2);
-            BLtime = times{1} >= BLtime(1) & times{1} <= BLtime(2);
         else
             CTFtime = times{2} >= CTFtime(1) & times{2} <= CTFtime(2);
+        end
+    end
+    if containsbaseline
+        if strcmpi(reduce_dims, 'avtrain') || strcmpi(reduce_dims, 'diag') || strcmpi(reduce_dims, 'avfreq') || strcmpi(reduce_dims, 'avtraintest')
+            BLtime = times{1} >= BLtime(1) & times{1} <= BLtime(2);
+        else
             BLtime = times{2} >= BLtime(1) & times{2} <= BLtime(2);
         end
     end
-    
     % save CTF as output
     if strcmpi(reduce_dims, 'avtraintest') % THIS DOES NOT WORK YET -> FIX IT!
         indivCTFmean = squeeze(mean(squeeze(mean(indivCTF(:,CTFtime,CTFtime,:),2)),2));
         indivBLmean = squeeze(mean(squeeze(mean(indivCTF(:,BLtime,BLtime,:),2)),2));
-        % figure; plot(indivBLmean'); legend(strsplit(num2str(1:20),' '));figure;
         semCTF = std(squeeze(mean(squeeze(mean(indivCTF(:,CTFtime,CTFtime,:),2)),2)))/sqrt(size(indivCTF,1));
         semBL = std(squeeze(mean(squeeze(mean(indivCTF(:,BLtime,BLtime,:),2)),2)))/sqrt(size(indivCTF,1));
     else
@@ -411,7 +403,7 @@ if strcmpi(plottype,'2D')
     end
     
     % what to plot
-    if any(BLtime)
+    if containsbaseline
         CTF = [ mean(indivCTFmean,1); mean(indivBLmean,1)]';
         semCTF = [ semCTF; semBL]';
     else
@@ -444,11 +436,11 @@ if strcmpi(plottype,'2D')
     % set x-axis
     indx = round(linspace(1,size(CTF,1),size(CTF,1)));
     set(gca,'Xtick',indx);
-    %set(gca,'XTickLabel',num2cell(mod2base([1:size(CTF,1)]-makeround,size(CTF,1)-makeround)));
-    set(gca,'XTickLabel',num2cell(channel_pos));
+    % set(gca,'XTickLabel',num2cell(mod2base([1:size(CTF,1)]-makeround,size(CTF,1)-makeround)));
+    set(gca,'XTickLabel',num2cell(channel_pos-4));
     xlabel('channel');
     % legend
-    if any(BLtime) && ~singleplot %~isfield(cfg,'color');
+    if containsbaseline && ~singleplot %~isfield(cfg,'color');
         legend({'CTF', 'baseline'});
     elseif ~singleplot % ~isfield(cfg,'color');
         legend({'CTF'});
@@ -552,9 +544,21 @@ else
         wraptext('Due to a bug in the way Matlab exports figures (the ''endcaps'' property in OpenGL is set to''on'' by default), the ''significance lines'' near the time line are not correctly plotted when saving as .eps or .pdf. The workaround is to open these plots in Illustrator, manually select these lines and select ''butt cap'' for these lines (under the ''stroke'' property).');
     end
     
+    % NEW
+    % determine time tick
+    if isempty(timetick)
+        timetickoptions = [5,10,25,50,100,250,500,750,1000,1250,1500,2000,2500,5000];
+        timetick = timetickoptions(nearest(timetickoptions,(max(xaxis) - min(xaxis))/5));
+    end
+    
+    % if time tick is smaller than sample duration, increase time tick to sample duration
+    if numel(xaxis)>1 && timetick < (xaxis(2)-xaxis(1))
+        timetick = ceil((xaxis(2)-xaxis(1)));
+    end
+    
     % make a timeline that has 0 as zero-point and makes steps of xticks
     xticks = timetick;
-    if min(xaxis) <= 0 && max(xaxis) >= 0
+    if min(xaxis) < 0 && max(xaxis) > 0
         findticks = sort(unique([0:-xticks:min(xaxis) 0:xticks:max(xaxis)]));
     else
         findticks = sort(unique(min(xaxis):xticks:max(xaxis)));
@@ -563,16 +567,29 @@ else
     for tick = findticks
         indx = [indx nearest(xaxis,tick)];
     end
-    roundto = xticks;
+
+%     % make a timeline that has 0 as zero-point and makes steps of xticks
+%     xticks = timetick;
+%     if min(xaxis) <= 0 && max(xaxis) >= 0
+%         findticks = sort(unique([0:-xticks:min(xaxis) 0:xticks:max(xaxis)]));
+%     else
+%         findticks = sort(unique(min(xaxis):xticks:max(xaxis)));
+%     end
+%     indx = [];
+%     for tick = findticks
+%         indx = [indx nearest(xaxis,tick)];
+%     end
+    
     % draw time
     xlabel('time in ms.');
+    %xlim([indx(1) indx(end)]);
     set(gca,'XTick',indx);
-    xlim([indx(1) indx(end)]);
-    set(gca,'XTickLabel',num2cell(round(xaxis(indx)/roundto)*roundto));
+    roundto = xticks;
+    set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)/roundto)*roundto))); % num2cell(round(xaxis(indx)/roundto)*roundto)
     % draw channel numbers
     ylabel('channel');
     set(gca,'Ytick',indy);
-    set(gca,'YTickLabel',num2cell(channel_pos));
+    set(gca,'YTickLabel',num2cell(channel_pos-4));
     ylim([1 indy(end)]);
     % z-axis
     ylabel('channel');
@@ -589,7 +606,7 @@ else
 %     end
 
     % color scheme
-    %colormap jet;
+    % colormap jet;
     colormap(brewermap([],'*RdBu')); 
 end
 axis square;

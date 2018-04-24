@@ -147,18 +147,6 @@ if isfield(stats(1),'cfg')
 end
 
 % set color-limits (z-axis) or y-limits
-% if isempty(cent_acctick)
-%     % assuming this is the same for all graphs, cannot really be helped
-%     % stats are ordered in concat_stats such that diff stats are always last in the
-%     % stats array and 'raw' stats are the foundation for the plot
-%     if any(strcmpi(stats(1).settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(stats(1).settings.measuremethod,'\muV') || ~isempty(strfind(stats(1).settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
-%         cent_acctick = 0;
-%     elseif strcmpi(stats(1).settings.measuremethod,'AUC')
-%         cent_acctick = .5;
-%     else
-%         cent_acctick = 1/stats(1).settings.nconds;
-%     end
-% end
 if isempty(cent_acctick)
     cent_acctick = stats(1).settings.chance;
 end
@@ -210,37 +198,41 @@ end
 
 % which are the raw stats and which are the difstats? Only use the raw stats for y-limits.
 rawstats = [];
+rawchance = 0;
 for cStats = 1:numel(stats)
     if isempty(strfind(stats(cStats).settings.measuremethod,' difference'))
         rawstats = [rawstats cStats];
-    end
-    if isempty(rawstats)
-        stats2useforlims = 1:numel(stats);
-    else
-        stats2useforlims = rawstats;
+        rawchance = stats(cStats).settings.chance;
     end
 end
+difstats = setdiff(1:numel(stats),rawstats);
+if ~isempty(difstats) && ~isempty(rawstats) && singleplot
+    stats2useforlims = rawstats;
+elseif isempty(difstats) || isempty(rawstats)
+    stats2useforlims = 1:numel(stats);
+else
+    stats2useforlims = [];
+end
 
-% determine accuracy limits
-% NOTE: THIS MAY NOT WORK WELL YET WHEN PLOTTING 3D RAW AND DIFF STATS TOGETHER?
+% determine common accuracy limits
 if isempty(acclim)
     eval(['acclim = acclim' plottype ';']);
-    if isempty(acclim)
-        mx = max(max(([stats(stats2useforlims).ClassOverTime])));
-        mn = min(min(([stats(stats2useforlims).ClassOverTime])));
-        if strcmpi(plottype,'2D') % this is a 2D plot
-            shift = abs(diff([mn mx]))/10;
-            acclim = [mn-shift mx+shift];
-        else
-            shift = abs(diff([mn mx]))/20;
-            mx = max(abs([mx-chance chance-mn]));
-            acclim = [-mx-shift mx+shift]+chance;
-        end
+end
+if isempty(acclim) && ~isempty(stats2useforlims)
+    mx = max(max(([stats(stats2useforlims).ClassOverTime])));
+    mn = min(min(([stats(stats2useforlims).ClassOverTime])));
+    if strcmpi(plottype,'2D') % this is a 2D plot
+        shift = abs(diff([mn mx]))/10;
+        acclim = [mn-shift mx+shift];
+    else
+        shift = abs(diff([mn mx]))/20;
+        mx = max(abs([mx-chance chance-mn]));
+        acclim = [-mx-shift mx+shift]+chance;
     end
 end
 
-% determine acctick
-if isempty(acctick)
+% determine common acctick
+if isempty(acctick) && ~isempty(acclim)
     if plotsubjects
         mx = max(acclim);
         mn = min(acclim);
@@ -260,13 +252,10 @@ if isempty(acctick)
         end
     end
 end
-if acctick == 0
-    acctick = .01;
-end
 
 % pack config with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(rawstats,inverty,acclim,acctick,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,nameOfStruct2Update);
+cfg = v2struct(rawstats,rawchance,inverty,acclim,acctick,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,nameOfStruct2Update);
 
 % make figure?
 if ~plotsubjects
@@ -419,10 +408,44 @@ end
 ydim = dims{1};
 xdim = dims{2}; % unused
 
-if numel(acclim) == 1
-    acclim = [-acclim acclim];
+% determine accuracy limits
+if isempty(acclim)
+    mx = max(max(([stats.ClassOverTime])));
+    mn = min(min(([stats.ClassOverTime])));
+    if strcmpi(plottype,'2D') % this is a 2D plot
+        shift = abs(diff([mn mx]))/10;
+        acclim = [mn-shift mx+shift];
+    else
+        shift = abs(diff([mn mx]))/20;
+        mx = max(abs([mx-chance chance-mn]));
+        acclim = [-mx-shift mx+shift]+chance;
+    end
 end
-acclim = sort(acclim);
+
+% determine acctick
+if isempty(acctick)
+    if plotsubjects
+        mx = max(acclim);
+        mn = min(acclim);
+        if strcmpi(plottype,'3D')
+            acctick = abs(max(abs([chance-mn mx-chance])))-0.001;
+        else
+            acctick = abs(max(abs([chance-mn mx-chance])))/2;
+        end
+    else
+        if strcmpi(stats(1).settings.measuremethod,'\muV')
+            acctick = round(diff(acclim)/8);
+            if acctick == 0
+                acctick = 1;
+            end
+        else
+            acctick = round(diff(acclim)/8,2);
+        end
+    end
+end
+if acctick == 0
+    acctick = .01;
+end
 
 % stuff particular to 2D and 3D plotting
 if strcmpi(plottype,'2D')
@@ -505,8 +528,8 @@ end
 if strcmpi(plottype,'2D')
     % if we are plotting dif stats together with raw stats, put them on a second axis
     if ~isempty(rawstats) && ~isempty(strfind(measuremethod,' difference')) && singleplot
-        yaxis = yaxis - chance; % a little hack to shift stuff up and down
-        data = data + chance;
+        yaxis = yaxis - rawchance; % a little hack to shift stuff up and down
+        data = data + rawchance;
     end
     colormap('default');
     if isempty(StdError)
