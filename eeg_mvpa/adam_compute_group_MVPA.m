@@ -309,6 +309,7 @@ cfg = v2struct(freqlim,plotFreq,trainlim,testlim,tail,indiv_pval,cluster_pval,pl
 subjectfiles = dir([folder_name filesep channelpool plotFreq{1} filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
 subjectfiles = { subjectfiles(:).name };
+subjectfiles(strncmp(subjectfiles,'.',1)) = []; % remove hidden files
 
 % limiting subjects
 if ~isempty(exclsubj)
@@ -627,13 +628,14 @@ if nSubj > 1
         ClassPvals = shiftdim(squeeze(ClassPvals));
         h = fdr_bh(ClassPvals,cluster_pval,'dep');
         ClassPvals(~h) = 1;
+        pStruct = compute_pstruct(bwlabel(h),[],ClassPvals,cfg,settings);
     elseif strcmpi(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
         [ClassPvals, pStruct] = cluster_based_permutation(ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings,mask);
     elseif strcmpi(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
-        [~,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail);
-        ClassPvals(~mask) = 1;
+        [h,ClassPvals(1:size(ClassOverTimeAll{1},2),1:size(ClassOverTimeAll{1},3))] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail);
+        pStruct = compute_pstruct(bwlabel(squeeze(h)),[],ClassPvals,cfg,settings);
     else
         % NO TESTING, PLOT ALL
         ClassPvals = zeros([size(ClassOverTimeAll{1},2) size(ClassOverTimeAll{1},3)]);

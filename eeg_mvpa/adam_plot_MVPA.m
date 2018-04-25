@@ -148,7 +148,18 @@ end
 
 % set color-limits (z-axis) or y-limits
 if isempty(cent_acctick)
-    cent_acctick = stats(1).settings.chance;
+    settings = stats(1).settings;
+    if ~isfield(settings,'chance') % backwards compatibility
+        if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
+            cent_acctick = 0;
+        elseif strcmpi(settings.measuremethod,'AUC')
+            cent_acctick = .5;
+        else
+            cent_acctick = 1/settings.nconds;
+        end
+    else
+        cent_acctick = settings.chance;
+    end
 end
 chance = cent_acctick;
 
@@ -202,7 +213,18 @@ rawchance = 0;
 for cStats = 1:numel(stats)
     if isempty(strfind(stats(cStats).settings.measuremethod,' difference'))
         rawstats = [rawstats cStats];
-        rawchance = stats(cStats).settings.chance;
+        settings = stats(cStats).settings;
+        if ~isfield(settings,'chance') % backwards compatibility
+            if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
+                rawchance = 0;
+            elseif strcmpi(settings.measuremethod,'AUC')
+                rawchance = .5;
+            else
+                rawchance = 1/settings.nconds;
+            end
+        else
+            rawchance = stats(cStats).settings.chance;
+        end
     end
 end
 difstats = setdiff(1:numel(stats),rawstats);

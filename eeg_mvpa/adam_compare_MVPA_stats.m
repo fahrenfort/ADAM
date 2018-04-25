@@ -138,16 +138,15 @@ if strcmpi(mpcompcor_method,'fdr')
     [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'alpha',indiv_pval,'tail',tail); % bug spotted by jvd: because pval wasn't specified as explicit 'param' and 'tail' was, it crashed
     h = fdr_bh(squeeze(ClassPvals),cluster_pval,'dep');
     ClassPvals(~h) = 1;
-    pStruct = []; % still need to implement
+    pStruct = compute_pstruct(bwlabel(h),[],ClassPvals,cfg,settings);
 elseif strcmpi(mpcompcor_method,'cluster_based')
     % CLUSTER BASED CORRECTION
     [ ClassPvals, pStruct ] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},cfg,settings,mask);
 elseif strcmpi(mpcompcor_method,'uncorrected')
     % NO MP CORRECTION
-    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'tail',tail);
+    [h,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'tail',tail);
     ClassPvals = squeeze(ClassPvals);
-    ClassPvals(~mask) = 1;
-    pStruct = []; % still need to implement
+    pStruct = compute_pstruct(bwlabel(squeeze(h)),[],ClassPvals,cfg,settings);
 else
     % NO TESTING, PLOT ALL
     ClassPvals = zeros([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
