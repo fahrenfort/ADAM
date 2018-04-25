@@ -37,7 +37,7 @@ One of the big advantages of this toolbox is that it takes generic input formats
 - A reasonably modern computer (>=8GB memory, enough HD space, modern processor, more is better)
 
 # Version
-The toolbox is currently in version 1.0.0
+The toolbox is currently in version 1.x.x
 
 # Cite
 When you use the decoding (BDM) feature, please cite:<br>
