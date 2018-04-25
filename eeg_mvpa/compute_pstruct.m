@@ -1,12 +1,12 @@
-function pstruct = compute_pstruct(labels,clusterPvals,data,gsettings,settings,mask,connectivity)
-% function pstruct = compute_pstruct(labels,clusterPvals,data,gsettings,settings,mask,connectivity)
+function pstruct = compute_pstruct(labels,clusterPvals,data,cfg,settings,mask,connectivity)
+% function pstruct = compute_pstruct(labels,clusterPvals,data,cfg,settings,mask,connectivity)
 % computes an array of structs specifying for each cluster:
-% cluster size (number of points in cluster)
-% start_time and stop_time in ms
-% start_freq and stop_freq
-% included electrodes
-% cluster p-value
-v2struct(gsettings);
+% - cluster size (number of points in cluster)
+% - start_time and stop_time in ms
+% - start_freq and stop_freq
+% - included electrodes
+% - cluster p-value
+v2struct(cfg);
 v2struct(settings);
 pstruct = [];
 if nargin<7
@@ -16,10 +16,22 @@ if nargin<6
     mask = ones(size(data));
 end
 
+% here's a bit of an odd hack to be able to compute pStructs for FDR and uncorrected t-tests
+% the p-value of the 'clusters' in this case are simply the average p-value in that cluster
+% (assuming that the 'data' variable in this case contains the p-values from the t-tests)
+if isempty(clusterPvals)
+    clustervals = setdiff(unique(labels),0);
+    clusterPvals = data;
+    for cClust = 1:numel(clustervals)
+        clusterPvals(labels==clustervals(cClust)) = mean(clusterPvals(labels==clustervals(cClust)));
+    end
+end
+
 mask = logical(mask);
 clusterlist = setdiff(unique(labels),0);
 for c = 1:numel(clusterlist)
-    thisclust = labels == clusterlist(c);
+    thisclust = false(size(mask)); % make sure it has the right dimensions
+    thisclust(labels == clusterlist(c)) = true;
     pvals = clusterPvals(thisclust);
     pstruct(c).clusterpval = pvals(1);
     pstruct(c).clustersize = sum(sum(thisclust));

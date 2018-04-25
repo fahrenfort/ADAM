@@ -248,6 +248,7 @@ plotFreq = ''; % this is empty for now, but might be used to look at the ERPs ob
 subjectfiles = dir([folder_name filesep channelpool plotFreq filesep '*.mat']);
 [~, condname] = fileparts(folder_name);
 subjectfiles = { subjectfiles(:).name };
+subjectfiles(strncmp(subjectfiles,'.',1)) = []; % remove hidden files
 
 % limiting subjects
 if ~isempty(exclsubj)
@@ -397,21 +398,25 @@ for cCond = 1:numel(ClassTotal) % loop over stats
         ClassPvals = shiftdim(squeeze(ClassPvals));
         h = fdr_bh(squeeze(ClassPvals),cluster_pval,'dep');
         ClassPvals(~h) = 1;
+        pStruct = compute_pstruct(bwlabel(h),[],ClassPvals,cfg,settings);
     elseif strcmp(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
         [ClassPvals, pStruct] = cluster_based_permutation(ClassTotal{cCond},chance,cfg,settings);
         % compute Pstruct
     elseif strcmp(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
-        [~,ClassPvals] = ttest(ClassTotal{cCond},chance,indiv_pval,tail);
+        [h,ClassPvals] = ttest(ClassTotal{cCond},chance,indiv_pval,tail);
+        pStruct = compute_pstruct(bwlabel(squeeze(h)),[],ClassPvals,cfg,settings);
     else
         % NO TESTING, PLOT ALL
         ClassPvals = zeros(1,size(ClassTotal{cCond},2));
+        pStruct = [];
     end
     ClassPvals = shiftdim(squeeze(ClassPvals));
     
     % outputs: put it in a matrix for consistency in plot function
     settings.measuremethod = '\muV';
+    settings.chance = 0;
     stats(cCond).ClassOverTime = ClassAverage;
     stats(cCond).StdError = ClassStdErr;
     stats(cCond).pVals = ClassPvals;
@@ -419,9 +424,7 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     stats(cCond).settings = settings;
     stats(cCond).condname = condname;
     stats(cCond).channelpool = FT_ERP.channelpool;
-    if exist('pStruct','var')
-        stats(cCond).pStruct = pStruct;
-    end
+    stats(cCond).pStruct = pStruct;
     stats(cCond).reduce_dims = reduce_dims;
     stats(cCond).cfg = cfg;
     if isfield(stats(cCond).cfg,'plotsubjects')
