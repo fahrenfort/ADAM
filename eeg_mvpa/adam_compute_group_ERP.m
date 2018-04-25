@@ -398,7 +398,7 @@ for cCond = 1:numel(ClassTotal) % loop over stats
         ClassPvals = shiftdim(squeeze(ClassPvals));
         h = fdr_bh(squeeze(ClassPvals),cluster_pval,'dep');
         ClassPvals(~h) = 1;
-        pStruct = compute_pstruct(bwlabel(h),[],ClassPvals,cfg,settings);
+        pStruct = compute_pstructs(h,ClassPvals,ClassTotal{cCond},chance,cfg,settings);
     elseif strcmp(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
         [ClassPvals, pStruct] = cluster_based_permutation(ClassTotal{cCond},chance,cfg,settings);
@@ -406,7 +406,8 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     elseif strcmp(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
         [h,ClassPvals] = ttest(ClassTotal{cCond},chance,indiv_pval,tail);
-        pStruct = compute_pstruct(bwlabel(squeeze(h)),[],ClassPvals,cfg,settings);
+        ClassPvals = squeeze(ClassPvals);
+        pStruct = compute_pstructs(h,ClassPvals,ClassTotal{cCond},chance,cfg,settings);
     else
         % NO TESTING, PLOT ALL
         ClassPvals = zeros(1,size(ClassTotal{cCond},2));

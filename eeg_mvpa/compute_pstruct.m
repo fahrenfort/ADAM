@@ -16,17 +16,6 @@ if nargin<6
     mask = ones(size(data));
 end
 
-% here's a bit of an odd hack to be able to compute pStructs for FDR and uncorrected t-tests
-% the p-value of the 'clusters' in this case are simply the average p-value in that cluster
-% (assuming that the 'data' variable in this case contains the p-values from the t-tests)
-if isempty(clusterPvals)
-    clustervals = setdiff(unique(labels),0);
-    clusterPvals = data;
-    for cClust = 1:numel(clustervals)
-        clusterPvals(labels==clustervals(cClust)) = mean(clusterPvals(labels==clustervals(cClust)));
-    end
-end
-
 mask = logical(mask);
 clusterlist = setdiff(unique(labels),0);
 for c = 1:numel(clusterlist)
@@ -57,7 +46,7 @@ for c = 1:numel(clusterlist)
             pstruct(c).start_train = round(times{1}(find(mean(thisclust,1),1,'first'))*1000); % average over test
             pstruct(c).stop_train = round(times{1}(find(mean(thisclust,1),1,'last'))*1000);
             try
-                pstruct(c).peak_train = round(times{1}(indx1)*1000);
+                pstruct(c).peak_train = round(times{1}(indx2)*1000);
             catch me
                 pstruct(c).peak_train = 0;
             end
@@ -65,7 +54,7 @@ for c = 1:numel(clusterlist)
             pstruct(c).stop_test = round(times{2}(find(mean(thisclust,2),1,'last'))*1000);
             
             try
-                pstruct(c).peak_test = round(times{1}(indx2)*1000);
+                pstruct(c).peak_test = round(times{1}(indx1)*1000);
             catch me
                 pstruct(c).peak_test = 0;
             end
@@ -77,7 +66,7 @@ for c = 1:numel(clusterlist)
             if ~strcmpi(reduce_dims,'avfreq')
                 pstruct(c).start_freq = freqs(find(mean(thisclust,2),1,'first'));
                 pstruct(c).stop_freq = freqs(find(mean(thisclust,2),1,'last'));
-                pstruct(c).peak_train = round(times{1}(indx1)*1000);
+                pstruct(c).peak_freq = freqs(indx1);
             end
         end
     else

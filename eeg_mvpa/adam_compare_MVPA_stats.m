@@ -133,20 +133,22 @@ if isempty(mask)
 	mask = ones([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
 end
 
+% note that 'alpha' and 'tail' do not need to be specified explictly, the ttest and ttest2 functions
+% are backwards compatible with Matlab 2012b
 if strcmpi(mpcompcor_method,'fdr')
     % FDR CORRECTION
-    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'alpha',indiv_pval,'tail',tail); % bug spotted by jvd: because pval wasn't specified as explicit 'param' and 'tail' was, it crashed
+    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail); 
     h = fdr_bh(squeeze(ClassPvals),cluster_pval,'dep');
     ClassPvals(~h) = 1;
-    pStruct = compute_pstruct(bwlabel(h),[],ClassPvals,cfg,settings);
+    pStruct = compute_pstructs(h,ClassPvals,ClassTotal{1},ClassTotal{2},cfg,settings);
 elseif strcmpi(mpcompcor_method,'cluster_based')
     % CLUSTER BASED CORRECTION
     [ ClassPvals, pStruct ] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},cfg,settings,mask);
 elseif strcmpi(mpcompcor_method,'uncorrected')
     % NO MP CORRECTION
-    [h,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'tail',tail);
+    [h,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail);
     ClassPvals = squeeze(ClassPvals);
-    pStruct = compute_pstruct(bwlabel(squeeze(h)),[],ClassPvals,cfg,settings);
+    pStruct = compute_pstructs(squeeze(h),ClassPvals,ClassTotal{1},ClassTotal{2},cfg,settings);
 else
     % NO TESTING, PLOT ALL
     ClassPvals = zeros([size(ClassTotal{1},2) size(ClassTotal{1},3)]);

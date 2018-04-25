@@ -150,6 +150,8 @@ end
 
 pVals = ones(size(mask));
 tVals = zeros(size(mask));
+% note that 'alpha' and 'tail' do not need to be specified, the ttest and ttest2 functions are
+% backwards compatible with Matlab 2012b
 if paired
     [~,pVals(mask),~,stats] = ttest(maskdata1,maskdata2,indiv_pval,tail);
 else
