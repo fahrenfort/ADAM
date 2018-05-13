@@ -1,4 +1,6 @@
 function pStruct = compute_pstructs(H,pVals,data1,data2_or_chance_level,cfg,settings,mask)
+% function computes pStruct start and stop time and/or frequency for both positive and negative
+% clusters, and returns the result.
 
 % compute mask
 if nargin < 7 || isempty(mask)

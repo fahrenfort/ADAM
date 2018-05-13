@@ -137,8 +137,9 @@ end
 % are backwards compatible with Matlab 2012b
 if strcmpi(mpcompcor_method,'fdr')
     % FDR CORRECTION
-    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail); 
-    h = fdr_bh(squeeze(ClassPvals),cluster_pval,'dep');
+    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail);
+    ClassPvals = squeeze(ClassPvals);
+    h = fdr_bh(ClassPvals,cluster_pval,'dep');
     ClassPvals(~h) = 1;
     pStruct = compute_pstructs(h,ClassPvals,ClassTotal{1},ClassTotal{2},cfg,settings);
 elseif strcmpi(mpcompcor_method,'cluster_based')

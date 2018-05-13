@@ -82,8 +82,12 @@ if exist('ft_warning','file') == 2
     ft_warning off;
 end
 FT_EEG = ft_timelockbaseline(cfg,FT_EEG);
-if clean_data % muscle artifact detection
-    FT_EEG = muscle_removal(FT_EEG,[outpath filesep filename],clean_window);
+% keep track of index numbers
+origindex = 1:numel(FT_EEG.trialinfo);
+% muscle artifact detection
+if clean_data 
+    [FT_EEG, boollist] = muscle_removal(FT_EEG,[outpath filesep filename],clean_window);
+    origindex = origindex(~boollist);
 end
 
 % compute Current Source Density?
@@ -189,7 +193,7 @@ if shuffle_trials
     shuffle_order = randperm(numel(FT_EEG.trialinfo));
     FT_EEG.trialinfo = FT_EEG.trialinfo(shuffle_order);
     FT_EEG.trial = FT_EEG.trial(shuffle_order,:,:);
-    FT_EEG.origindex = shuffle_order;
+    FT_EEG.origindex = origindex(shuffle_order);
 else
-    FT_EEG.origindex = 1:numel(FT_EEG.trialinfo);
+    FT_EEG.origindex = origindex;
 end

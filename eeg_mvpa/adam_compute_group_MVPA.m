@@ -85,6 +85,16 @@ function stats = adam_compute_group_MVPA(cfg,folder_name)
 %                              e.g. it is sufficient to specify {'S01', 'S02'}; Subject names are
 %                              based on the file names that were used as input for the first-level
 %                              analysis.
+%       cfg.read_confidence   = false (default) or true. If true, adam_compute_group_MVPA will
+%                              attempt to read the confidence scores of the classifier for
+%                              individual trials / time points / frequencies for every subject and
+%                              store it in the stats output variable: stats.indivConf. The indivConf
+%                              field will contain the subfields: indivConf(nSubj).scores,
+%                              indivConf(nSubj).true_class_labels, indivConf(nSubj).event_labels,
+%                              indivConf(nSubj).trial_index, indivConf(nSubj).dimord. When
+%                              confidence scores are read into the stats variable, they can 
+%                              be used by adam_correlate_confidence to produce a new
+%                              stats variable that can subsequently be plotted. 
 %
 % The output stats structure will contain the following fields:
 %
@@ -160,7 +170,7 @@ cfg.plot_dim = plot_dim;
 
 % check freqlimits
 if (strcmpi(plot_dim,'freq_time') && ~strcmpi(reduce_dims,'avfreq')) && (numel(freqlim) == 1 || (~isempty(freqlim) && abs(diff(freqlim)) <= 2))
-    wraptext('WARNING: your cfg.freqlim indicates a rather small range of frequencies given cfg.plot_dim ''freq_time'', use cfg.reduce_dims = ''avfreq'' if you intend to average. Now simply plotting all frequencies.');
+    disp('WARNING: your cfg.freqlim indicates a rather small range of frequencies given cfg.plot_dim ''freq_time'', use cfg.reduce_dims = ''avfreq'' if you intend to average. Now simply plotting all frequencies.');
     freqlim = [];
     cfg.freqlim = [];
 end
@@ -227,7 +237,6 @@ tail = 'both';
 indiv_pval = .05;
 cluster_pval = .05;
 plotsubjects = false;
-name = [];
 channelpool = ''; 
 mpcompcor_method = 'uncorrected';
 plot_model = 'BDM'; % 'BDM' or 'FEM'
@@ -238,6 +247,7 @@ testlim = [];
 freqlim = [];
 exclsubj = [];
 compute_randperm = false;
+read_confidence = false;
 v2struct(cfg);
 % general time limit
 if ~isempty(timelim) % timelim takes precedence
@@ -301,7 +311,7 @@ else
     freqlim = [];
 end
         
-% pack graphsettings with defaults
+% pack cfg with defaults
 nameOfStruct2Update = 'cfg';
 cfg = v2struct(freqlim,plotFreq,trainlim,testlim,tail,indiv_pval,cluster_pval,plot_model,mpcompcor_method,reduce_dims,freqlim,nameOfStruct2Update);
 
@@ -351,15 +361,29 @@ for cSubj = 1:nSubj
         
         % get data
         if ~isempty(whos(matObj,'BDM')) && strcmpi(plot_model,'BDM')
-            v2struct(matObj.BDM); % unpack 
+            v2struct(matObj.BDM); % unpack
+            if read_confidence
+                if isempty(whos(matObj,'BDM_CONF')) % for backwards compatibility
+                    BDM_CONF = 'No confidence scores of the classifier were saved during first level analysis. To save confidence scores, specify cfg.save_confidence = ''yes'' when running adam_MVPA_firstlevel.';
+                else
+                    BDM_CONF = matObj.BDM_CONF;
+                end
+                if ischar(BDM_CONF)
+                    disp(BDM_CONF);
+                    read_confidence = false; % nothing to read
+                    cfg.read_confidence = read_confidence;
+                end
+            end
         elseif ~isempty(whos(matObj,'FEM')) && strcmpi(plot_model,'FEM')
             v2struct(matObj.FEM); % unpack
             % little hack to fix the measure method
             measuremethod = 'CTF slope';
             settings.measuremethod = measuremethod;
+            read_confidence = false; % FEM does not have confidence scores (yet)
+            cfg.read_confidence = read_confidence;
         else
             try % backward compatibility, can be removed in later version
-                disp(wraptext('WARNING: These seem to be analyses that were performed using ancient scripts. Unless this is pure replication, it is recommended to run the first levels again.'));
+                disp('WARNING: These seem to be analyses that were performed using ancient scripts. Unless this is pure replication, it is recommended to run the first levels again.');
                 matObj = load([folder_name filesep channelpool plotFreq{cFreq} filesep subjectfiles{cSubj}]);
                 v2struct(matObj);
                 if ~exist('covPatternsOverTime', 'var')
@@ -420,6 +444,15 @@ for cSubj = 1:nSubj
         
         % limit ClassOverTime
         ClassOverTime = ClassOverTime(lim1,lim2);
+        
+        % limit Confidence
+        if read_confidence
+            if strcmpi(BDM_CONF.dimord,'rpt_freq_time_class')
+                BDM_CONF.scores = BDM_CONF.scores(:,lim1,lim2,:);
+            elseif strcmpi(BDM_CONF.dimord,'rpt_time_class')
+                BDM_CONF.scores = BDM_CONF.scores(:,lim1,:);
+            end
+        end
         
         % hack to compute onset latencies for first level random permutations
         if compute_randperm && exist(permfolder,'dir')
@@ -568,6 +601,9 @@ for cSubj = 1:nSubj
         covPatternsOverTimeAll(indx{:}) = covPatternsOverTime;
         indx = [{cSubj} repmat({':'}, 1, ndims(corPatternsOverTime))];
         corPatternsOverTimeAll(indx{:}) = corPatternsOverTime;
+        if read_confidence
+            indivConf(cSubj) = BDM_CONF;
+        end
     else
         indx = [{cSubj} repmat({':'}, 1, ndims(C2_average))];
         C2_averageAll(indx{:}) = C2_average;
@@ -627,7 +663,7 @@ if nSubj > 1
     if strcmpi(mpcompcor_method,'fdr')
         % FDR CORRECTION
         [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail); 
-        ClassPvals = shiftdim(squeeze(ClassPvals));
+        ClassPvals = squeeze(ClassPvals);
         h = fdr_bh(ClassPvals,cluster_pval,'dep');
         ClassPvals(~h) = 1;
         pStruct = compute_pstructs(h,ClassPvals,ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings);
@@ -654,6 +690,9 @@ stats.StdError = ClassStdErr;
 stats.pVals = ClassPvals;
 stats.mpcompcor_method = mpcompcor_method;
 stats.indivClassOverTime = ClassOverTimeAll{1};
+if read_confidence
+    stats.indivConf = indivConf;
+end
 stats.settings = settings;
 stats.condname = condname;
 stats.filenames = subjectfiles;
@@ -741,7 +780,7 @@ if numel(chanlocs) < numel(settings.channels) && isfield(settings,'chanlocs')
         chanlocs = chanlocs{1};
     end
     if isempty(firstchanlocs)
-        disp(wraptext('WARNING: using electrode positions that are native to the data set. Therefore, the direction of the nose in topoplots cannot be ascertained with certainty. If needed, you can adjust the cfg.nosedir property prior to plotting (see help adam_plot_BDM_weights).',80));
+        disp('WARNING: using electrode positions that are native to the data set. Therefore, the direction of the nose in topoplots cannot be ascertained with certainty. If needed, you can adjust the cfg.nosedir property prior to plotting (see help adam_plot_BDM_weights).');
         firstchanlocs = chanlocs;
     end
     [~, ~, dataindex] = intersect({firstchanlocs(:).labels},{chanlocs(:).labels},'stable');

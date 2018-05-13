@@ -367,8 +367,8 @@ balance_events = 'yes';     % within-class balancing: balances events within eac
 balance_classes = 'yes';    % between class balancaing: balances training set using oversampling so that each class in the training set contains an equal number of instances 
 bintrain = 'no';            % average across events within a class on the training side
 bintest = 'no';             % average across events witin a class on the testing side
-savelabels = 'no';          % if 'yes', also saves the classifier labels
-labelsonly = 'no';          % if 'yes', only saves the classifier labels (test set does not require labels in this case)
+save_confidence = 'no';     % if 'yes', also saves the confidence scores of the classifier
+compute_performance = 'yes';% if 'no', does not save the performance of the classifier
 tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
 clean_window = [];          % specifies the window used to reject muscle artifacts
 sigma_basis_set = [];       % specifies the width of the basis set (0 means box-car)
@@ -441,15 +441,15 @@ if strcmpi(bintest,'yes')
 else
     bintest = '';
 end
-if strcmpi(savelabels,'yes')
-    savelabels = 'savelabels';
+if strcmpi(save_confidence,'yes')
+    save_confidence = 'save_confidence';
 else
-    savelabels = '';
+    save_confidence = '';
 end
-if strcmpi(labelsonly,'yes')
-    labelsonly = 'labelsonly';
+if strcmpi(compute_performance,'no')
+    compute_performance = 'no_performance';
 else
-    labelsonly = '';
+    compute_performance = '';
 end
 if ~isempty(clean_window)
     clean_window = sprintf('clean%.4f %.4f',clean_window);
@@ -457,7 +457,7 @@ end
 if ~isempty(sigma_basis_set)
     sigma_basis_set = sprintf('sigma%f',sigma_basis_set);
 end
-str_settings = cellarray2csvstring({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,savelabels,labelsonly,clean_window});
+str_settings = cellarray2csvstring({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
