@@ -395,8 +395,8 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     if strcmp(mpcompcor_method,'fdr')
         % FDR CORRECTION
         [~,ClassPvals] = ttest(ClassTotal{cCond},chance,indiv_pval,tail);
-        ClassPvals = shiftdim(squeeze(ClassPvals));
-        h = fdr_bh(squeeze(ClassPvals),cluster_pval,'dep');
+        ClassPvals = squeeze(ClassPvals);
+        h = fdr_bh(ClassPvals,cluster_pval,'dep');
         ClassPvals(~h) = 1;
         pStruct = compute_pstructs(h,ClassPvals,ClassTotal{cCond},chance,cfg,settings);
     elseif strcmp(mpcompcor_method,'cluster_based')

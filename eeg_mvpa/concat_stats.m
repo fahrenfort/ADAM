@@ -29,7 +29,7 @@ if isfield(outstats(1),'settings')
     moveToEnd = [];
     moveToStart = [];
     for cStats = 1:numel(outstats)
-        if ~isempty(strfind(outstats(cStats).settings.measuremethod,' difference'))
+        if ~isempty(strfind(outstats(cStats).settings.measuremethod,' difference')) || ~isempty(strfind(outstats(cStats).settings.measuremethod,' correlation'))
             moveToEnd = [moveToEnd cStats];
         else
             moveToStart = [moveToStart cStats];

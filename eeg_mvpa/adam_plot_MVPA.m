@@ -150,7 +150,7 @@ end
 if isempty(cent_acctick)
     settings = stats(1).settings;
     if ~isfield(settings,'chance') % backwards compatibility
-        if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
+        if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || ~isempty(strfind(settings.measuremethod,' correlation')) || strcmpi(plot_model,'FEM')
             cent_acctick = 0;
         elseif strcmpi(settings.measuremethod,'AUC')
             cent_acctick = .5;
@@ -211,12 +211,12 @@ end
 rawstats = [];
 rawchance = 0;
 for cStats = 1:numel(stats)
-    if isempty(strfind(stats(cStats).settings.measuremethod,' difference'))
+    if isempty(strfind(stats(cStats).settings.measuremethod,' difference')) && isempty(strfind(stats(cStats).settings.measuremethod,' correlation'))
         rawstats = [rawstats cStats];
         settings = stats(cStats).settings;
         if ~isfield(settings,'chance') % backwards compatibility
-            if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
-                rawchance = 0;
+            if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || ~isempty(strfind(settings.measuremethod,' correlation')) || strcmpi(plot_model,'FEM')
+                rawchance = 0; disp('yeah');
             elseif strcmpi(settings.measuremethod,'AUC')
                 rawchance = .5;
             else
@@ -549,7 +549,7 @@ else
 end
 if strcmpi(plottype,'2D')
     % if we are plotting dif stats together with raw stats, put them on a second axis
-    if ~isempty(rawstats) && ~isempty(strfind(measuremethod,' difference')) && singleplot
+    if ~isempty(rawstats) && (~isempty(strfind(measuremethod,' difference')) || ~isempty(strfind(measuremethod,' correlation'))) && singleplot
         yaxis = yaxis - rawchance; % a little hack to shift stuff up and down
         data = data + rawchance;
     end
@@ -627,7 +627,7 @@ if strcmpi(plottype,'2D')
         xlabel('time in ms','FontSize',fontsize);
     end
     % if we are plotting dif stats together with raw stats, put them on a second axis
-    if ~isempty(rawstats) && ~isempty(strfind(measuremethod,' difference')) && singleplot
+    if ~isempty(rawstats) && (~isempty(strfind(measuremethod,' difference')) || ~isempty(strfind(measuremethod,' correlation'))) && singleplot
         ax = axes('YLim',get(gca,'YLim'),'YTick',get(gca,'YTick'),'YTickLabel',get(gca,'YTickLabel'),'Position',get(gca,'Position'),'YAxisLocation','right','YColor',line_colors{cGraph});
     else
         ax = gca;
@@ -705,9 +705,9 @@ else
     set(gca,'YTickLabel',num2cell(int64(round(yaxis(indy)/roundto)*roundto))); % convert to int64 to prevent -0 at 0-axis
 end
 % set ticks on horizontal axis
-set(gca,'XTick',indx);
 roundto = xticks;
 set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)/roundto)*roundto)));
+set(gca,'XTick',indx);
 %set(gca,'XTickLabel',num2cell(int64(round(xaxis(indx)))));
 set(gca,'FontSize',fontsize);
 set(gca,'color','none');

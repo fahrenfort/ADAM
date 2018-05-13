@@ -1,6 +1,7 @@
 function classify_RAW_eeglab_data(filepath,filenames,outpath,nFolds,channelset,method,crossclass_and_or_resample,erp_baselines,varargin)
 % classify_RAW_eeglab_data is an internal function of the ADAM toolbox. Loads eeglab or FT data (no
 % time frequency decomposition) and performs a multivariate classification procedure.
+% Refer to the help of ADAM_MVPA_FIRSTLEVEL for proper instructions on how to use the ADAM toolbox.
 % Filenames either contains a single filename for testing and training, or two filenames separated
 % by a semi-colon or comma (the first for training, second for testing). outpath contains the folder
 % where results should be stored (if empty defaults to filepath). nFolds is the number of cohorts in
@@ -29,29 +30,25 @@ function classify_RAW_eeglab_data(filepath,filenames,outpath,nFolds,channelset,m
 % method specifies the method used for classification. Default is 'linear' for linear discriminant
 % analysis. Other options are: 'diagLinear', 'mahalanobis' or 'quadratic'.
 % The dependent classification measure can be specified in method, either using 'AUC' (default),
-% 'accuracy', or various SDT measures (which only work when two categories are present, the first
-% category is assumed to be the target present category, the second the target absent category. If
-% more than two categories are present when computing an SDT measure, the script defaults back to
-% computing AUC.
-% Specify by adding to method, e.g. like this: method = 'linear,hr-far'
-% If you want to output the individual labels that were assigned by the classifier to each of the
-% trials rather than computing accuracy, specify 'labelsonly'. If no conditions are specified for
-% the testing set, the algorithm goes through the entire testing set and outputs a label for each
-% time point in each trial. No accuracy scores will be computed in this case. If conditions are
-% specified for the test set, only conditions fitting this specification are labeled. In method you
-% can also specify that the classifier should be trained under random permutation of the training
-% labels by adding 'randperm', separated by a comma, like this: method = 'linear,randperm'. The
-% results of computing under random permutation are stored in a folder called 'randperm' and counted
-% so that they can be used for non-parametric hypothesis testing.
-% Similarly, you can also run another complete iteration of the same data (all folds) without
-% randomly permuting the labels, by specificying method = 'iterate'. The results of computing
-% another iteration are stored in a folder called 'iterations' and counted so that they can
-% subsequently be used for averaging to get a cleaner result. You can specify the number of times
-% you want to execute a permutation or iteration through the create_qsub_files function, by setting
-% the number of repeats using settings.repeat as an argument to that function. In method, you can
-% also specify whether the trial labels that are specified for each condition should be binned
-% (averaged) to generate new trials, or not. This is done by adding 'bin' to the method, separated
-% by comma's, like this: method = 'linear,bin';
+% 'accuracy', or various SDT measures ('dprime', 'hr-far', etc). If more than two categories are
+% present when computing an SDT measure, the script defaults back to computing AUC. Specify by
+% adding to method, e.g. like this: method = 'linear,accuracy'.
+% If you want to output the confidence
+% scores that were assigned by the classifier to each of the trials rather than computing classifier
+% performance, specify cfg.save_confidence = 'yes';. 
+% In method you can also specify that the classifier should be trained under random permutation of
+% the training labels by adding 'randperm', separated by a comma, like this: method =
+% 'linear,randperm'. the results of computing under random permutation are stored in a folder called
+% 'randperm' and counted so that they can be used for non-parametric hypothesis testing. Similarly,
+% you can also run another complete iteration of the same data (all folds) without randomly
+% permuting the labels, by specificying method = 'iterate'. The results of computing another
+% iteration are stored in a folder called 'iterations' and counted so that they can subsequently be
+% used for averaging to get a cleaner result. You can specify the number of times you want to
+% execute a permutation or iteration through the create_qsub_files function, by setting the number
+% of repeats using settings.repeat as an argument to that function. In method, you can also specify
+% whether the trial labels that are specified for each condition should be binned (averaged) to
+% generate new trials, or not. This is done by adding 'bin' to the method, separated by comma's,
+% like this: method = 'linear,bin';
 % If left out, no binning is applied (default). One can also specify 'bintrain' or 'bintest' if
 % binning should only take place on the training or on the testing side.
 % Other options for method are to specify whether to compute the Scalp Current Density (SCD) prior
@@ -171,14 +168,14 @@ randomize_labels = false;
 iterate = false;
 bintest = false;
 bintrain = false;
-labelsonly = false;
+compute_performance = true;
+save_confidence = false;
 do_csd = false;
 compute_induced = false;
 do_FEM = false;
 do_BDM = false;
 clean_muscle = false;
 clean_window = [];
-save_labels = false;
 basis_sigma = 1; % default width of basis set if not a delta, if this is empty, do a simple basis set (delta function)
 unbalance_events = false;
 unbalance_classes = false;
@@ -212,28 +209,23 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'subtr_bin', 'subtr_indiv'})) == 1
         subtr_method = methods{c};
     end
-    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr'}))
+    if any(strcmpi(methods{c},{'hr-far','dprime','hr','far','mr','cr','accuracy','AUC'}))
         measuremethod = methods{c};
-        if numel(condSet) ~= 2
-            disp('Number of stimulus classes is unequal to 2, defaulting back to computing AUC');
-            measuremethod = 'AUC'; % defaulting back to accuracy
+        if numel(condSet) ~= 2 && any(strcmpi(measuremethod,{'hr-far','dprime','hr','far','mr','cr'}))
+            disp('Number of stimulus classes is unequal to 2, defaulting to computing AUC');
+            measuremethod = 'AUC'; % defaulting back to AUC
         end
     end
-    if any(strcmpi(methods{c},{'accuracy'}))
-        measuremethod = methods{c};
+    if any(strcmpi(methods{c},{'no_performance'}))
+        compute_performance = false;
     end
-    if any(strcmpi(methods{c},{'labelsonly','onlylabels','labels_only'}))
-        labelsonly = true;
-        save_labels = true;
-        crossclass = false; % cross class is useless when keeping all labels, we will run out of memory (time * time * trials)
-        do_FEM = false;
-        do_BDM = true;
-        disp('Labels only works with BDM only');
+    if any(strcmpi(methods{c},{'save_confidence'}))
+        save_confidence = true;
     end
     if any(strcmpi(methods{c},{'csd','scd'}))
         do_csd = true;
     end
-    if any(strcmpi(methods{c},{'FEM','do_FEM','forward'})) && ~labelsonly
+    if any(strcmpi(methods{c},{'FEM','do_FEM','forward'}))
         do_FEM = true;
     end
     if any(strcmpi(methods{c},{'BDM','do_BDM','backward'}))
@@ -258,9 +250,6 @@ for c=1:numel(methods)
                 basis_sigma = 1;
             end
         end
-    end
-    if any(strcmpi(methods{c},{'save_labels','savelabels'}))
-        save_labels = true;
     end
     if any(strcmpi(methods{c},{'unbalance_triggers', 'unbalance_events','unbalance','unbalanced'}))
         unbalance_events = true;
@@ -288,6 +277,10 @@ end
 if ~do_FEM && ~do_BDM
     do_BDM = true;
 end
+if save_confidence && ~do_BDM
+    do_BDM = true;
+    disp('Saving confidence scores currently only works with BDM (update for FEM is pending)');
+end
 % check condset
 if isempty(condSet)
     error('Cannot find usable event specification.');
@@ -296,25 +289,29 @@ end
 if size(condSet{1},1) == 1
     condSet = put_this_condset(condSet,condSet,2);
 end
-% are train and test condsets overlapping?
+% are train and test class specifications overlapping between each other?
+trainevents = cellfun(@unique,get_this_condset(condSet,1),'UniformOutput',false);
+testevents = cellfun(@unique,get_this_condset(condSet,2),'UniformOutput',false);
 overlapping = false;
-allthesame = true;
-for cCondSet = 1:numel(condSet)
-    if any(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:)))
-        overlapping = true;
-    end
-    if ~all(ismember(condSet{cCondSet}(1,:),condSet{cCondSet}(2,:)))
-        allthesame = false;
-    end
+allthesame = false;
+if any(ismember(unique([trainevents{:}]),unique([testevents{:}])))
+    overlapping = true;
+end
+if all(ismember(unique([trainevents{:}]),unique([testevents{:}])))
+    allthesame = true;
+end
+% are class specifications overlapping within train or within test?
+if numel(unique([trainevents{:}])) < numel([trainevents{:}]) || numel(unique([testevents{:}])) < numel([testevents{:}])
+    error('ERROR: There is an overlap between events in your class definitions. Two different classes cannot contain the same event code.');
 end
 % check nFolds
 if numel(filenames) > 1 && nFolds > 1
-    disp('WARNING: You specified different filenames for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
+    wraptext('WARNING: You specified different filenames for training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.',80);
     nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
 end
 % check if condsets are non-overlapping while nFolds > 1, if so lower nFolds to 1
 if numel(filenames) == 1 && nFolds > 1 && ~overlapping
-    disp('WARNING: You specified non-overlapping event codes for classes in training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.');
+    wraptext('WARNING: You specified non-overlapping event codes for classes in training and testing, with more than 1 fold. Leave-one-out is not applicable here. Defaulting nFolds to 1.',80);
     nFolds = 1; % if you do want to cut up independent sets into folds, you can do so by turning this safety check off
 end
 % if using same events for training and testing, increase nFolds
@@ -327,10 +324,15 @@ if numel(filenames) == 1 && ~unbalance_events && ~allthesame && overlapping
     unbalance_events = true;
     wraptext('WARNING: Some stimulus events overlap between train and test, within class balancing has now been turned OFF');
 end
-
-% display stimulus classes
-wraptext('These are the stimulus classes. Each row contains the event codes that go into a single class (first row training, second row testing):',80);
-celldisp(condSet,'stimclass');
+% check whether compute_performance is used properly
+if ~compute_performance && nFolds > 1
+    compute_performance = true;
+    wraptext('WARNING: Always computing performance when using leave-on-out. Only set cfg.compute_performance = ''no'' when you do not have useful class labels to compute performance with. Defaulting back to cfg.compute_performance = ''yes''.',80);
+end
+    
+% display class specification
+wraptext('These are the class specifications. Each row contains the event codes that go into a single class (first row training, second row testing):',80);
+celldisp(condSet,'class_spec');
 
 % Determine bundle name and/or electrode selection
 [channelset, bundlename_or_bundlelabels] = return_channel_bundle(channelset);
@@ -393,7 +395,7 @@ if numel(filenames) > 1 && ~all(strcmpi(channels{1},channels{2}))
 end
 
 % Generate indices for folds to do training and testing
-[setindex{1}, setindex{2}, nFolds] = make_folds(trialinfo{1},trialinfo{2},condSet,nFolds,labelsonly);
+[setindex{1}, setindex{2}, nFolds] = make_folds(trialinfo{1},trialinfo{2},condSet,nFolds,~compute_performance);
 
 % create file name based on actual folds and save ERPs
 if numel(filenames) == 1
@@ -517,7 +519,8 @@ for cFld=1:nFolds
     msettings.crossclass = crossclass;
     msettings.method = method;
     msettings.measuremethod= measuremethod;
-    msettings.labelsonly = labelsonly;
+    msettings.compute_performance = compute_performance;
+    msettings.save_confidence = save_confidence;
     msettings.doBDM = do_BDM;
     msettings.doFEM = do_FEM;
     msettings.basis_sigma = basis_sigma;
@@ -533,30 +536,20 @@ for cFld=1:nFolds
 
     % some BDM/FEM specific stuff
     if do_BDM
-        if save_labels && ~labelsonly
-            BDM_labelMatrixOverT(cFld,:,:,:,:) = BDM.LabelsOverTime; % fld x t1 x t2 x response_matrix
-        elseif save_labels && labelsonly
-            BDM_labelMatrixOverT{cFld} = BDM.LabelsOverTime; % fld x trial x t1 (assigned_labels when method = 'labelsonly', nr of trials can be different for each fold)
+        % keep track of Classification over time for every fold (this is NaN when compute_performance == false)
+        BDM_ClassOverT(cFld,:,:) = BDM.ClassOverTime;
+        % keep track of confidence scores of the classifier for every fold
+        if save_confidence
+            BDM_ScoresOverT{cFld} = BDM.ScoresOverTime;
+            BDM_TrueClassLabels{cFld} = BDM.TrueClassLabels;
         end
-        if labelsonly
-            BDM_ClassOverT(cFld) = NaN;
-        else
-            if strcmpi(measuremethod,'AUC')
-                BDM_ClassOverT(cFld,:,:) = BDM.AUC;
-            else
-                BDM_ClassOverT(cFld,:,:) = class_accuracy_from_matrix(BDM.LabelsOverTime,measuremethod,crossclass); % fld x t1 x t2
-            end
-        end
+        % keep track of weights etc for every fold
         BDM_WeightsOverT(cFld,:,:) = BDM.WeightsOverTime; % fld x time x elec
         BDM_covPatternsOverT(cFld,:,:) = BDM.covPatternsOverTime; % fld x time x elec
         BDM_corPatternsOverT(cFld,:,:) = BDM.corPatternsOverTime; % fld x time x elec
     end
     if do_FEM
-        if save_labels
-            FEM_labelMatrixOverT(cFld,:,:,:,:) = FEM.LabelsOverTime;
-        end
-        % FEM_ClassOverT(cFld,:,:) = class_accuracy_from_matrix(FEM.LabelsOverTime,measuremethod); % fld x t1 x t2
-        FEM_ClassOverT(cFld,:,:) = tuning_from_matrix(FEM.C2_average,'slope',crossclass); % fld x t1 x t2
+        FEM_ClassOverT(cFld,:,:) = tuning_from_matrix(FEM.C2_average,'slope',crossclass); % fld x t1 x t2 -> maybe move this to BDM_and_FEM_FT_EEG!
         FEM_WeightsOverT(cFld,:,:,:) = FEM.WeightsOverTime; % fld x time x elec x channel_response
         FEM_C2_average(cFld,:,:,:) = FEM.C2_average; % fld x time x time x channel_response
         FEM_C2_percondition(cFld,:,:,:,:) = FEM.C2_percondition; % fld x time x time x cond x channel_response
@@ -566,26 +559,38 @@ end % end folds loop
 % mean data, average over folds where applicable
 BDM = [];
 FEM = [];
-BDMLabelsOverTime = [];
-FEMLabelsOverTime = [];
 if do_BDM
-    BDM.ClassOverTime = squeeze(mean(BDM_ClassOverT,1)); % t1 x t2 or trial x t1
+    % average over folds:
+    BDM.ClassOverTime = squeeze(mean(BDM_ClassOverT,1)); % t1 x t2
     BDM.WeightsOverTime = squeeze(mean(BDM_WeightsOverT,1)); % time x elec x channel_response
     BDM.covPatternsOverTime = squeeze(mean(BDM_covPatternsOverT,1)); % time x elec
     BDM.corPatternsOverTime = squeeze(mean(BDM_corPatternsOverT,1)); % time x elec
-    if save_labels
-        BDMLabelsOverTime = squeeze(BDM_labelMatrixOverT); % fld x t1 x t2 x response_matrix OR fold x trial x t1 (assigned_labels when method = 'labelsonly')
+    % save confidence scores for all test trials, requires a little reshuffling
+    if save_confidence
+        orig_index = vertcat(settrialindex{:,2});   % contains the original indices of the test trials
+        event_labels = vertcat(settrialinfo{:,2});  % contains the original labels of the test trials
+        scores = vertcat(BDM_ScoresOverT{:});       % put them into a single array for all folds
+        true_class_labels = vertcat(BDM_TrueClassLabels{:});
+        [trial_index, sort_index ] = sort(orig_index);   % sort into the right order
+        scores = scores(sort_index,:,:,:);
+        event_labels = event_labels(sort_index);
+        true_class_labels = true_class_labels(sort_index);
+        BDM_CONF.scores = scores;
+        BDM_CONF.true_class_labels = true_class_labels;
+        BDM_CONF.event_labels = event_labels;
+        BDM_CONF.trial_index = trial_index;
+        BDM_CONF.dimord = 'rpt_time_class'; % this may later be extended to also allow traintime x testtime, but this requires lots of memory    
+    else
+        BDM_CONF = 'No confidence scores of the classifier were saved during first level analysis. To save confidence scores, specify cfg.save_confidence = ''yes'' when running adam_MVPA_firstlevel.';
     end
-    clear BDM_*;
+    clearvars BDM_* -except BDM_CONF;
 end
 if do_FEM
     FEM.ClassOverTime = squeeze(mean(FEM_ClassOverT,1)); 
     FEM.WeightsOverTime = squeeze(mean(FEM_WeightsOverT,1));
     FEM.C2_average = squeeze(mean(FEM_C2_average,1));
     FEM.C2_percondition = squeeze(mean(FEM_C2_percondition,1));
-    if save_labels
-        FEMLabelsOverTime = squeeze(FEM_labelMatrixOverT);
-    end
+    % currently not possible to save confidence of FEM, maybe implement later
     clear FEM_*;
 end
 
@@ -608,6 +613,8 @@ settings.times = times;
 settings.frequency = 'none:_raw_eeg';
 settings.dimord = 'time_time';
 settings.measuremethod = measuremethod;
+settings.compute_performance = compute_performance;
+settings.save_confidence = save_confidence;
 settings.trialinfo = settrialinfo;
 settings.trialindex = settrialindex;
 settings.condset = condSet;
@@ -619,22 +626,16 @@ settings.unbalance_classes = unbalance_classes;
 settings.whiten = whiten;
 settings.whiten_test_using_train = whiten_test_using_train;
 
+% SAVE RESULTS
 % count filenames from 001 onwards if computing under permutation or iteration
 if iterate
     fullfilename = find_filename(outpath,filename);
-    save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3');
+    save(fullfilename, 'FEM', 'BDM', 'BDM_CONF', 'settings', '-v7.3'); % not saving ERP to save memory
 else
     fullfilename = fullfile(outpath, filename);
-    save(fullfilename, 'FEM', 'BDM', 'settings', '-v7.3', '-append'); % this file also contains the ERPs, so append
+    save(fullfilename, 'FEM', 'BDM', 'BDM_CONF', 'settings', '-v7.3', '-append'); % this file also contains the ERPs, so append
 end
-if save_labels
-    if labelsonly
-        save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_LabelsOverTime', FEMLabelsOverTime, 'FEM_LabelsOverTime');
-    else
-        save_var_under_different_name(fullfilename,BDMLabelsOverTime, 'BDM_ConfusionMatrixOverTime', FEMLabelsOverTime, 'FEM_ConfusionMatrixOverTime');
-    end
-end
-warning('on','all')
+warning('on','all');
 
 function findfile = find_filename(path,filename)
 c = 1;

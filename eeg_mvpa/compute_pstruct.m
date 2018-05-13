@@ -6,6 +6,7 @@ function pstruct = compute_pstruct(labels,clusterPvals,data,cfg,settings,mask,co
 % - start_freq and stop_freq
 % - included electrodes
 % - cluster p-value
+reduce_dims = '';
 v2struct(cfg);
 v2struct(settings);
 pstruct = [];
@@ -42,7 +43,6 @@ for c = 1:numel(clusterlist)
             % time window; the indx1 for one of the clusters falls outside
             % train time window, so it crashes for peak_train; I added a
             % try-catch statement to circumvent the problem
-
             pstruct(c).start_train = round(times{1}(find(mean(thisclust,1),1,'first'))*1000); % average over test
             pstruct(c).stop_train = round(times{1}(find(mean(thisclust,1),1,'last'))*1000);
             try
@@ -52,9 +52,8 @@ for c = 1:numel(clusterlist)
             end
             pstruct(c).start_test = round(times{2}(find(mean(thisclust,2),1,'first'))*1000); % average over train
             pstruct(c).stop_test = round(times{2}(find(mean(thisclust,2),1,'last'))*1000);
-            
             try
-                pstruct(c).peak_test = round(times{1}(indx1)*1000);
+                pstruct(c).peak_test = round(times{2}(indx1)*1000);
             catch me
                 pstruct(c).peak_test = 0;
             end
