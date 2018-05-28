@@ -354,8 +354,16 @@ end
 
 % load data and determine output name
 for cFile = 1:numel(filenames)
-    % NOTE: this line is different in TFR! Resampling here...
-    [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}]= read_raw_data(filepath,filenames{cFile},outpath,bundlename_or_bundlelabels,erp_baseline{cFile},resample_eeg,do_csd,clean_muscle,clean_window,true,detrend_eeg);
+    msettings = [];
+    msettings.channelset = bundlename_or_bundlelabels;
+    msettings.erp_baseline = erp_baseline{cFile};
+    msettings.resample_eeg = resample_eeg; % NOTE: this line is different in TFR! Resampling here...
+    msettings.do_csd = do_csd;
+    msettings.clean_data = clean_muscle;
+    msettings.clean_window = clean_window;
+    msettings.shuffle_trials = true;
+    msettings.detrend_eeg= detrend_eeg;
+    [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,msettings);
     % randomize labels for first level random permutation testing. NOTE: permuting all observations/labels regardless of the conditions in the experiment
     if randomize_labels
         rng default;
@@ -516,6 +524,7 @@ for cFld=1:nFolds
     test_FT_EEG = fix_dimord(test_FT_EEG,'chan_time_rpt'); % should be channel * time * trial
     
     % settings for backward and/or forward modelling
+    msettings = [];
     msettings.crossclass = crossclass;
     msettings.method = method;
     msettings.measuremethod= measuremethod;

@@ -6,9 +6,9 @@ function filter_clean_and_epoch_eeg(filepath,filenames,outpath, locutoff, hicuto
 % take all the .set files in the input filepath as sources.
 %
 %     locutoff  - lower edge of the frequency pass band (Hz)
-%                 {[]/0 -> lowpass}
+%                 {[]/0 -> only lowpass}
 %     hicutoff  - higher edge of the frequency pass band (Hz)
-%                 {[]/0 -> highpass}
+%                 {[]/0 -> only highpass}
 %
 % if both locutoff and hicutoff are zero the function does not filter
 % varargin is list of conditions to epoch, either as strings or numbers
@@ -83,14 +83,21 @@ for filename = filenames
     % load 
     EEG = pop_loadset('filename',[fname '.set'],'filepath',filepath);
     % hp filter
-    if hicutoff>0
-        EEG = pop_eegfiltnew(EEG, [], hicutoff, filtorder, revfilt);
+    if locutoff>0
+        EEG = pop_eegfiltnew(EEG, locutoff, [], filtorder, revfilt);
     end
     % find EEG channels
     channelnames = {EEG.chanlocs(:).labels};
-    eeg_channels = select_channels(channelnames,'EEG');
-    eog_channels = select_channels(channelnames,'EOG');
-    if isempty(eeg_channels)
+    try
+        eog_channels = select_channels(channelnames,'EOG');
+        eog_present = true;
+    catch
+        disp('No EOG channels in data');
+        eog_present = false;
+    end
+    try 
+        eeg_channels = select_channels(channelnames,'EEG');
+    catch
         error('stopping now, there are no EEG channels in this set??');
     end
     % double check whether channel location information is present
@@ -101,20 +108,14 @@ for filename = filenames
         end
     end
     % separate EEG and EOG channels
-    EOG = pop_select(EEG, 'channel', eog_channels);
+    if eog_present
+        EOG = pop_select(EEG, 'channel', eog_channels);
+    end
     EEG = pop_select(EEG, 'channel', eeg_channels);
     % look up electrode info
     if any(ismember(eeg_channels,nopos_channels))
         disp(['WARNING: Channels ' num2str(nopos_channels) ' have incomplete location information. Now attempting to read in location information.']);
-        try
-            EEG = pop_chanedit(EEG, 'lookup', findcapfile);
-        catch
-            try
-                EEG = pop_chanedit(EEG, 'lookup', which('standard-10-5-cap385.elp'));
-            catch
-                error('Cannot retrieve location information for some channels. Fix this first!');
-            end
-        end
+        EEG = pop_chanedit(EEG, 'lookup', trycapfile);
     end
     % identify and remove bad channels from the EEG, interpolate and write bad channels to text file
     chanlocs = EEG.chanlocs;
@@ -130,13 +131,15 @@ for filename = filenames
         fclose(fid);
     end
     % put EOG channels back in
-    EEG.nbchan = EEG.nbchan + EOG.nbchan;
-    EEG.data(end+1:end+EOG.nbchan,:,:) = EOG.data;
-    EEG.chanlocs(end+1:end+EOG.nbchan) = EOG.chanlocs;
+    if eog_present
+        EEG.nbchan = EEG.nbchan + EOG.nbchan;
+        EEG.data(end+1:end+EOG.nbchan,:,:) = EOG.data;
+        EEG.chanlocs(end+1:end+EOG.nbchan) = EOG.chanlocs;
+    end
     EEG = eeg_checkset(EEG);
     % lowpass
-    if locutoff>0
-        EEG = pop_eegfiltnew(EEG, locutoff, [], filtorder, revfilt);
+    if hicutoff>0
+        EEG = pop_eegfiltnew(EEG, [], hicutoff, filtorder, revfilt);
     end
     % epoch data
     if ~isempty(conditions)

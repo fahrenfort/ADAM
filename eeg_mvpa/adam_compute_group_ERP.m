@@ -379,13 +379,13 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     
     % determine condname
     if strcmpi(electrode_method,'subtract')
-        condname =  [origcondname ' channel subtraction of ' cellarray2csvstring(FT_ERP.channelpool)];
+        condname =  [origcondname ' channel subtraction of ' cell2csv(FT_ERP.channelpool)];
     elseif strcmpi(condition_method,'subtract')
-        condname =  [origcondname ' subtraction (' cellarray2csvstring(FT_ERP.channelpool) ')'];
+        condname =  [origcondname ' subtraction (' cell2csv(FT_ERP.channelpool) ')'];
     elseif strcmpi(condition_method,'average')
-        condname = [origcondname ' average (' cellarray2csvstring(FT_ERP.channelpool) ')'];
+        condname = [origcondname ' average (' cell2csv(FT_ERP.channelpool) ')'];
     else
-        condname = [origcondname ' erp' num2str(condition_def(cCond)) ' (' cellarray2csvstring(FT_ERP.channelpool) ')'];
+        condname = [origcondname ' erp' num2str(condition_def(cCond)) ' (' cell2csv(FT_ERP.channelpool) ')'];
     end
     
     % get some stats
@@ -475,7 +475,7 @@ elseif strcmpi(electrode_method,'average')
     end
     FT_EEG = select_channels_from_FT_EEG(FT_EEG,electrode_def);
     if numel(electrode_def) > 1
-        FT_EEG.channelpool = ['avg of ' cellarray2csvstring(FT_EEG.label)];
+        FT_EEG.channelpool = ['avg of ' cell2csv(FT_EEG.label)];
     else
         FT_EEG.channelpool = FT_EEG.label;
     end
@@ -484,7 +484,7 @@ else
 end
 if any(size(FT_EEG.trial)==0)
     dims = regexp(FT_EEG.dimord,'_','split');
-    error(['There are no dimensions left in these fields, change cfg selection parameters for ''' cellarray2csvstring(dims(logical(size(FT_EEG.trial)==0))) '''.']);
+    error(['There are no dimensions left in these fields, change cfg selection parameters for ''' cell2csv(dims(logical(size(FT_EEG.trial)==0))) '''.']);
 end
     
 function ndirs = drill2data(folder_name)

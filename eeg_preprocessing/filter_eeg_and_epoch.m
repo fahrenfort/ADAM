@@ -82,8 +82,13 @@ for filename = filenames
     [~,fname,~] = fileparts(filename{1});
     % load and filter
     EEG = pop_loadset('filename',[fname '.set'],'filepath',filepath);
-    if any([locutoff hicutoff]>0)
-        EEG = pop_eegfiltnew(EEG, locutoff, hicutoff, filtorder, revfilt);
+    % highpass
+    if locutoff>0
+        EEG = pop_eegfiltnew(EEG, locutoff, [], filtorder, revfilt);
+    end
+    % lowpass
+    if hicutoff>0
+        EEG = pop_eegfiltnew(EEG, [], hicutoff, filtorder, revfilt);
     end
     % remove mean across the entire block (somewhat superfluous but can't hurt)
     EEG = pop_rmbase( EEG,[]);

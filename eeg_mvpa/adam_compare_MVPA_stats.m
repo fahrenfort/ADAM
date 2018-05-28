@@ -122,6 +122,7 @@ ClassTotal{1} = stats1.indivClassOverTime;
 ClassTotal{2} = stats2.indivClassOverTime;
 nSubj = size(ClassTotal{1},1);
 difstats.ClassOverTime = shiftdim(mean(ClassTotal{1}-ClassTotal{2}));
+difstats.indivClassOverTime = ClassTotal{1}-ClassTotal{2};
 difstats.StdError = shiftdim(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj));
 difstats.condname = [stats1.condname ' - ' stats2.condname];
 settings = stats1.settings; % assuming these are the same!

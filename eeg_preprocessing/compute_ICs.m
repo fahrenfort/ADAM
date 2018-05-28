@@ -82,15 +82,7 @@ end
 % in case some EEG channels do not have location information
 if any(ismember(eeg_channels,nopos_channels))
     disp(['WARNING: Channels ' num2str(nopos_channels) ' have incomplete location information. Now attempting to read in location information.']);
-    try 
-        EEG = pop_chanedit(EEG, 'lookup', findcapfile);
-    catch
-        try
-            EEG = pop_chanedit(EEG, 'lookup', which('standard-10-5-cap385.elp'));
-        catch
-            error('Cannot retrieve location information for some channels. Fix this first!');
-        end
-    end
+    EEG = pop_chanedit(EEG, 'lookup', trycapfile);
 end
 
 % apply highpass filter
