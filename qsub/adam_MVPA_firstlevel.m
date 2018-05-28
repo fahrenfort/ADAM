@@ -158,17 +158,20 @@ function adam_MVPA_firstlevel(cfg)
 %                                    will be saved in its results folder, showing a graphical
 %                                    depiction of the artefacts that were removed (.png), as well as
 %                                    a list of the trial numbers that were removed (.txt).
-%       cfg.resample               = 'no' (default); or specify an integer to which to downsample
+%       cfg.resample               = 'no' (default); or specify an integer to which to resample
 %                                    your data; this is recommended if you have a high sampling rate
-%                                    (e.g. >250 Hz) and you want to do perform cross-classification
-%                                    (temporal generalization, see under cfg.crossclass above). When
-%                                    downsampling, it is recommended that the the original sampling
-%                                    frequency is a multiple of the frequency to which to downsample
-%                                    (e.g. if the original sampling frequency is 512Hz, do
-%                                    cfg.resample = 256; or cfg.resample = 128; etc). When
-%                                    time-frequency representations are computed, resampling is
-%                                    applied only after time-frequency decomposition (so the TFRs
-%                                    are computed on the original data).
+%                                    (e.g. >250 Hz), especially if you want to perform
+%                                    cross-classification (temporal generalization, see under
+%                                    cfg.crossclass above). When resampling, it is recommended that
+%                                    the original sampling frequency is a multiple of the frequency
+%                                    to which to downsample (e.g. if the original sampling frequency
+%                                    is 512Hz, do cfg.resample = 256; or cfg.resample = 128; etc)
+%                                    but this is not required. When decoding raw EEG, the signal is
+%                                    resampled using shape-preserving piecewise cubic interpolation.
+%                                    When time-frequency representations are computed prior to
+%                                    decoding, resampling is applied after time-frequency
+%                                    decomposition (so the TFRs are computed on the original data,
+%                                    prior to resampling).
 %       cfg.erp_baseline           = 'no' (default); or specify a time window according to
 %                                    [begin,end]; always in SECONDS, e.g. cfg.erp_baseline =
 %                                    [-.25,0];
@@ -457,7 +460,7 @@ end
 if ~isempty(sigma_basis_set)
     sigma_basis_set = sprintf('sigma%f',sigma_basis_set);
 end
-str_settings = cellarray2csvstring({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window});
+str_settings = cell2csv({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';

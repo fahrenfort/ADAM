@@ -4,8 +4,8 @@ function [selchannelindex, selchannellabels] = select_channels(channellabels,bun
 % 'ALL_NOSELECTION' to refrain from selecting anything (in this case you have to make a selection
 % manually in your EEG files prior to running your analyses if you want to remove EOG etc). This
 % function selects channels (e.g. removes HEOG, VEOG or makes some other selection) in a BioSemi and
-% other standard 10-20 64-electrode systems. It is very easy to add create other bundles, just
-% modify this function to add more bundlenames, e.g. adding a line like:
+% other standard 10-20 / 10-05 64-electrode systems. It is very easy to add create other bundles,
+% just modify this function to add more bundlenames, e.g. adding a line like:
 % bundlenames.YOURBUNDLENAME = {'your' 'electrode' 'selection'};
 %
 % usage: 
@@ -40,16 +40,20 @@ if strcmpi('ALL',bundlename_or_bundlelabels)
     bundlename_or_bundlelabels = 'EEG';
 end
 if iscell(bundlename_or_bundlelabels)
-    disp(['selecting the following channels: ' cellarray2csvstring(bundlename_or_bundlelabels) ]);
+    disp(['selecting the following channels: ' cell2csv(bundlename_or_bundlelabels) ]);
 else
     disp(['selecting ' bundlename_or_bundlelabels ' channels...']);
 end
 if strcmpi('EEG',bundlename_or_bundlelabels)
     wraptext('Removing EOG channels...\n\nassuming this is a 64 channel BioSemi 10-20 system, electrodes outside the 64 channel range are always removed. Edit the select_channels.m function if this is undesirable behavior.');
 end
-% This is the bundle definition, add more bundles to your liking:
-bundlenames.EEG =           {'Fp1'    'AF7'    'AF3'    'F1'    'F3'    'F5'    'F7'    'FT7'   'FC5'   'FC3'   'FC1'   'C1'    'C3'    'C5'    'T7'    'TP7'    'CP5'    'CP3' 'CP1'    'P1'    'P3'    'P5'    'P7'    'P9'    'PO7'    'PO3'    'O1'    'Iz'  'Oz'    'POz'    'Pz'    'CPz'    'Fpz'    'Fp2'    'AF8'    'AF4'    'AFz' 'Fz'    'F2'    'F4'    'F6'    'F8'    'FT8'    'FC6'    'FC4'    'FC2'  'FCz'    'Cz'    'C2'    'C4'    'C6'    'T8'    'TP8'    'CP6'    'CP4'  'CP2'    'P2'    'P4'    'P6'    'P8'    'P10'    'PO8'    'PO4'    'O2'  'PO9'    'PO10'};
-bundlenames.EOG =           {'VEOG'   'HEOG'   'HEOG_L' 'HEOG_R' 'EOG1' 'EOG2'  'EOG3'  'EOG4'  'LO1'   'LO2'   'IO1'   'IO2'   'SO1'   'SO2' };
+% These are the EEG and EOG channels according to the 10-20 / 10-05 definition:
+all_locs = readlocs(trycapfile);
+all_labels = {all_locs(:).labels};
+all_types = {all_locs(:).type};
+bundlenames.EEG =           all_labels(strcmpi(all_types,'EEG'));
+bundlenames.EOG =           {all_labels{strcmpi(all_types,'EOG')} 'HEOG_L' 'HEOG_R' 'EOG3'  'EOG4' }; % expand with your own EOG labels if necessary
+% These are idiosyncratic bundle definitions, add more bundles or change them to your liking if you want:
 bundlenames.OCCIP =         {'PO7'    'PO3'    'O1'     'Iz'    'Oz'    'POz'   'PO8'   'PO4'   'O2'    'PO9'   'PO10'};
 bundlenames.PARIET =        {'P1'     'P3'     'P5'     'P7'    'Pz'    'P2'    'P4'    'P6'    'P8' };
 bundlenames.FRONTAL =       {'Fp1'    'AF7'    'AF3'    'Fpz'   'Fp2'   'AF8'   'AF4'   'AFz'   'Fz' };
@@ -78,5 +82,5 @@ end
 selchannelindex = find(ismember(channellabels,bundlelabels));
 selchannellabels = channellabels(selchannelindex);
 if isempty(selchannellabels)
-    error(['could not find any of the channels: ' cellarray2csvstring(bundlelabels) ' in the data.']);
+    error(['could not find any of the channels: ' cell2csv(bundlelabels) ' in the data.']);
 end

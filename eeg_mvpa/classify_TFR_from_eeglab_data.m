@@ -342,8 +342,16 @@ end
 
 % load data 
 for cFile = 1:numel(filenames)
-    % NOTE: this line is different in RAW! No resampling done here (yet)...
-    [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,bundlename_or_bundlelabels,erp_baseline,false,do_csd,clean_muscle,clean_window,true,detrend_eeg);
+    msettings = [];
+    msettings.channelset = bundlename_or_bundlelabels;
+    msettings.erp_baseline = erp_baseline; % NOTE: different in RAW.
+    msettings.resample_eeg = false; % NOTE: this line is different in RAW. No resampling done here (yet)...
+    msettings.do_csd = do_csd;
+    msettings.clean_data = clean_muscle;
+    msettings.clean_window = clean_window;
+    msettings.shuffle_trials = true;
+    msettings.detrend_eeg= detrend_eeg;
+    [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,msettings);
     % randomize labels for first level random permutation testing. NOTE: permuting all observations/labels regardless of the conditions in the experiment
     if randomize_labels
         rng default;
@@ -554,6 +562,7 @@ for cFreq = 1:numel(frequencies)
         test_FT_EEG = fix_dimord(test_FT_EEG,'chan_time_rpt'); % should be channel * time * trial
 
         % settings for backward and/or forward modelling
+        msettings = [];
         msettings.crossclass = crossclass;
         msettings.method = method;
         msettings.measuremethod= measuremethod;

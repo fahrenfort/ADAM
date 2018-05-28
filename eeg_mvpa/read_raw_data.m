@@ -1,36 +1,25 @@
-function [ FT_EEG, filename, chanlocs ]= read_raw_data(filepath,filename,outpath,channelset,erp_baseline,resample_eeg,do_csd,clean_data,clean_window,shuffle_trials,detrend_eeg)
-% function [ FT_EEG, filename, chanlocs ]= read_raw_data(filepath,filename,outpath,channelset,erp_baseline,resample_eeg,do_csd,clean_data,clean_window,shuffle_trials,detrend_eeg)
-% read eeglab data and transform into FT_EEG
-% perform SCD and a bunch of other stuff such as trial rejection and resampling if necessary
-% Johannes Fahrenfort, VU 2016, 2017
-if nargin<11
-    detrend_eeg = false;
-end
-if nargin<10
-    shuffle_trials = false;
-end
-if nargin<9
-    clean_window = [];
-end
-if nargin<8
-    clean_data = false;
-end
-if nargin<7
-    do_csd = false;
-end
-if nargin<6
-    resample_eeg = false;
-end
-if nargin<5
-    erp_baseline = 'no';
-end
-if nargin<4
-    channelset = 'all';
-end
+function [ FT_EEG, filename, chanlocs ]= read_raw_data(filepath,filename,outpath,msettings)
+% function [ FT_EEG, filename, chanlocs ]= read_raw_data(filepath,filename,outpath,msettings)
+% read eeglab data or FT data and transform into FT_EEG
+% perform CSD and a bunch of other stuff such as trial rejection and resampling if necessary
+% internal function of the ADAM toolbox.
+% Johannes Fahrenfort, VU 2016, 2017, 2018
+
+% set some defaults
+detrend_eeg = false;
+shuffle_trials = false;
+clean_window = [];
+clean_data = false;
+do_csd = false;
+resample_eeg = false;
+erp_baseline = 'no';
+channelset = 'all';
+v2struct(msettings);
+
 if nargin<3
     outpath = filepath;
 end
-% remove .set if present
+% remove .set / .mat if present
 [~,filename,~] = fileparts(filename);
 
 
@@ -116,6 +105,8 @@ end
 if resample_eeg
     cfg = [];
     cfg.resamplefs = resample_eeg;
+    cfg.resamplemethod = 'resample';
+    cfg.detrend = 'no';
     % turn off annoying FT warnings
     if exist('ft_warning','file') == 2
         ft_warning off;
@@ -174,7 +165,7 @@ else % if not coming from eeglab, recreate eeglab chanlocs structure
             if exist('1005chanlocdata.mat','file')
                 load('1005chanlocdata.mat');
             else
-                chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
+                chanlocdata = readlocs(trycapfile,'importmode','native'); % from standard 10-20 system
             end
             [~, ~, chanindex] = intersect(FT_EEG.label,{chanlocdata(:).labels},'stable'); % takes FT_EEG.label as point of departure!
             chanlocs = chanlocdata(chanindex);

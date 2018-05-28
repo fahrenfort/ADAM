@@ -52,7 +52,7 @@ if ~isempty(chandim)
     if ~isempty(channels)
         [new_channels,~,chanindex] = intersect(channels,label,'stable');
         if numel(new_channels) ~= numel(channels)
-            disp(['WARNING: could not find all of the electrodes specified in ' cellarray2csvstring(channels)]);
+            disp(['WARNING: could not find all of the electrodes specified in ' cell2csv(channels)]);
         end
         index{chandim} = chanindex;
     end

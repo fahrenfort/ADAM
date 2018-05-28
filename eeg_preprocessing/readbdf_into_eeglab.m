@@ -10,11 +10,11 @@ verchannels = {'EXG3' 'EXG4'}; % verchannels = {'VEOGsT' 'VEOGsT'};
 % EOG left / right
 horchannels = {'EXG2' 'EXG1' }; % horchannels = {'HEOGsL' 'HEOGsR'}; 
 % eeglab path
-eeglab_path = [getenv('HOME') filesep 'Documents/matlab_toolboxes/eeglab13_4_4b'];
+% eeglab_path = [getenv('HOME') filesep 'Documents/matlab_toolboxes/eeglab13_4_4b'];
 
 % add eeglab path
 if (~isdeployed)
-    addpath(eeglab_path);
+    eeglab nogui;
 end
 
 % load triggers

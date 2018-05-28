@@ -28,6 +28,8 @@ function stats = adam_compute_group_MVPA(cfg,folder_name)
 %                              correction correction; other options are: 'cluster_based' for
 %                              cluster-based permutation testing, 'fdr' for false-discovery rate,
 %                              or 'none' if you don't wish to perform a statistical analysis.
+%       cfg.iterations       = 1000 (default); the number of permutations used for cluster based
+%                              permutation testing.
 %       cfg.indiv_pval       = .05 (default); integer; the statistical threshold for each individual
 %                              time point;
 %       cfg.cluster_pval     = .05 (default); integer; if mpcompcor_method is set to
@@ -329,7 +331,7 @@ end
 % see if data exists
 nSubj = numel(subjectfiles);
 if nSubj == 0
-    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{:} ' maybe you should specify (a different) cfg.channelpool?']);
+    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{1} ' maybe you should specify (a different) cfg.channelpool?']);
 end
 
 % prepare figure in case individual subjects are plotted
@@ -407,7 +409,7 @@ for cSubj = 1:nSubj
             if exist('1005chanlocdata.mat','file')
                 load('1005chanlocdata.mat');
             else
-                chanlocdata = readlocs(findcapfile,'importmode','native'); % from standard 10-20 system
+                chanlocdata = readlocs(trycapfile,'importmode','native'); % from standard 10-20 system
             end
         end
         

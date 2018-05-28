@@ -55,7 +55,6 @@ function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
 walltime = '23:59:59';
 lnodes = '1';
 mem = [];
-cores = 16;
 repeat = 1;
 use_scratch = true;
 keep_together = false;
@@ -237,7 +236,7 @@ for cMat = 1:numel(allMat)
         end
         line = [line ' &\n'];
         % close qsub file once all cores are used or all commands have been issued
-        if (mod(cQsubs,maxcores) == 0 && repeat > 1)
+        if (mod(cQsubs,maxcores) == 0 && repeat > 1 && ~(cQsubs==size(combMat,1)))
             % pause till all previous are done
             line = [line 'wait\n'];
         elseif (mod(cQsubs,maxcores) == 0 && repeat == 1) || maxcores == 1 || cQsubs == size(combMat,1)

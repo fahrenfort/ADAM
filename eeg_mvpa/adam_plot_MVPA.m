@@ -185,7 +185,7 @@ end
 % set line colors
 if numel(line_colors)<numel(stats) || isempty(line_colors)
     if numel(stats) > 1
-        line_colors = {[.5 0 0] [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5]};
+        line_colors = {[.5 0 0] [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5] [.75 0 0] [0 .75 0] [0 0 .75] [.75 .75 0] [0 .75 .75] [.75 0 .75] };
     else
         line_colors = {[0 0 0]};
     end
@@ -194,11 +194,14 @@ end
 % determine which conditions to plot
 if ~isempty(plot_order)
     for cPlot = 1:numel(plot_order)
-        statindex = find(strncmpi(plot_order{cPlot},{stats(:).condname},numel(plot_order{cPlot})));
+        statindex = find(strcmpi(plot_order{cPlot},{stats(:).condname}));
         if isempty(statindex)
-            error(['cannot find condition ' plot_order{cPlot} ' specified in cfg.plot_order']);
-        elseif numel(statindex) > 1
-            error(['cannot find a unique condition for the pattern ' plot_order{cPlot} ' specified in cfg.plot_order']);
+            statindex = find(strncmpi(plot_order{cPlot},{stats(:).condname},numel(plot_order{cPlot})));
+            if isempty(statindex)
+                error(['cannot find condition ' plot_order{cPlot} ' specified in cfg.plot_order']);
+            elseif numel(statindex) > 1
+                error(['cannot find a unique condition for the pattern ' plot_order{cPlot} ' specified in cfg.plot_order']);
+            end
         end
         newstats(cPlot) = stats(statindex);
         new_line_colors{cPlot} = line_colors{statindex};
