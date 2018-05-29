@@ -1,11 +1,12 @@
-function avstats = adam_average_MVPA_stats(cfg,stats1,stats2)
-% ADAM_AVERAGE_MVPA_STATS averages two stats structures that result from adam_compute_group_MVPA or
-% adam_compute_group_ERP, given that the stats have the same dimensions (e.g. two time-time
-% generalization matrices of equal size and same number of participants; i.e. within-subject
-% repeated measures design). Also performs statistical testing against chance.
+function avstats = adam_average_MVPA_stats(cfg,varargin)
+% ADAM_AVERAGE_MVPA_STATS averages two or more stats variables that result from
+% adam_compute_group_MVPA or from adam_compute_group_ERP, given that the stats have the same
+% dimensions (e.g. two time-time generalization matrices of equal size and same number of
+% participants; i.e. within-subject repeated measures design). Also performs statistical testing
+% against chance.
 %
 % Use as:
-%   avstats = adam_average_MVPA_stats(cfg,stats1,stats2);
+%   avstats = adam_average_MVPA_stats(cfg,stats1,stats2,...);
 %
 % The cfg (configuration) input structure can contain the following:
 %
@@ -32,23 +33,28 @@ function avstats = adam_average_MVPA_stats(cfg,stats1,stats2)
 %                              can for example base the mask on a statistical outcome of the
 %                              adam_compute_group_ functions or, extracted from the stats.pVals
 %                              (see example below).
+%       stats1, stats2, ... =  contains two or more stats variables computed by
+%                              adam_compute_group_MVPA, adam_compute_group_ERP, etc. Function
+%                              assumes that stats are based on the same accuracy measure and use
+%                              the same statistical test.
 %
 % The output diffstats structure will contain the following fields:
 %
-%       stats.ClassOverTime:    NxM matrix; group-average classification accuracy over N
-%                               testing time points and M training time points; note that if
-%                               reduce_dims is specified, M will be 1, and ClassOverTime will be
-%                               squeezed to a Nx1 matrix of classification over time. Here,
-%                               ClassOverTime will be the difference in classification accuracy
-%                               between two conditions.
-%       stats.StdError:         NxM matrix; standard-error across subjects over time-time
-%       stats.pVals:            NxM matrix; p-values of each tested time-time point 
-%       stats.pStruct:          struct; cluster info, currently only appears if mpcompcor_method
-%                               was set to 'cluster_based'
-%       stats.settings:         struct; the settings used during the level-1 (single subject)
-%                               results
-%       stats.condname:         string; name of format 'condition1 - condition2'. 
-%       stats.cfg:              struct; the cfg used to create these stats
+%       stats.ClassOverTime:     NxM matrix; group-average classification accuracy over N
+%                                testing time points and M training time points; note that if
+%                                reduce_dims is specified, M will be 1, and ClassOverTime will be
+%                                squeezed to a Nx1 matrix of classification over time. Here,
+%                                ClassOverTime will be the average classification performance
+%                                over the averaged conditions.
+%       stats.indivClassOverTime SxNxM; same as above over S subjects.
+%       stats.StdError:          NxM matrix; standard-error across subjects over time-time
+%       stats.pVals:             NxM matrix; p-values of each tested time-time point 
+%       stats.pStruct:           struct; cluster info, currently only appears if mpcompcor_method
+%                                was set to 'cluster_based'
+%       stats.settings:          struct; the settings used during the level-1 (single subject)
+%                                results
+%       stats.condname:          string; name of format 'average(condition1,condition2)'. 
+%       stats.cfg:               struct; the cfg used to create these stats
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
@@ -56,22 +62,27 @@ function avstats = adam_average_MVPA_stats(cfg,stats1,stats2)
 % 
 % See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
-% input checking
-if numel(stats1) ~= numel(stats2)
-    error('The two stats input variables must contain the same number of elements.');
+if nargin<2
+    disp('cannot plot graph without stats input, need at least 2 arguments:');
+    help adam_plot_MVPA;
+    return
 end
+
+% concatenate stats
+stats = concat_stats(varargin{:});
+
 % get some defaults
+plot_model = 'BDM';
 mask = [];
 reduce_dims = '';
 tail = 'both';
 cluster_pval = .05;
 indiv_pval = .05;
 mpcompcor_method = 'uncorrected';
+plot_dim = 'time_time';
 % unpack original cfg
-if isfield(stats1,'cfg')
-    v2struct(stats1(1).cfg,{'fieldNames','reduce_dims','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim','reduce_dims'});
-elseif isfield(stats2,'cfg')
-    v2struct(stats2(1).cfg,{'fieldNames','reduce_dims','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim','reduce_dims'});
+if isfield(stats(1),'cfg')
+    v2struct(stats(1).cfg);
 end
 v2struct(cfg);
 if exist('one_two_tailed','var')
@@ -80,60 +91,58 @@ end
 
 % pack cfg with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,trainlim,testlim,reduce_dims,nameOfStruct2Update);
+cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,trainlim,testlim,reduce_dims,plot_dim,nameOfStruct2Update);
 
-avstats = [];
-for cStats = 1:numel(stats1)
-    avstats = [avstats sub_average_MVPA_stats(cfg,stats1(cStats),stats2(cStats),mask)];
-end
-
-function avstats = sub_average_MVPA_stats(cfg,stats1,stats2,mask)
 % unpack cfg
 v2struct(cfg);
-
-% compute some values
-ClassTotal{1} = stats1.indivClassOverTime;
-ClassTotal{2} = stats2.indivClassOverTime;
-nSubj = size(ClassTotal{1},1);
-averageClassTotal = (ClassTotal{1}+ClassTotal{2})/2;
-avstats.ClassOverTime = shiftdim(mean(averageClassTotal));
-avstats.StdError = shiftdim(std(averageClassTotal)/sqrt(nSubj));
-avstats.condname = ['avg of (' stats1.condname ', ' stats2.condname ')'];
-settings = stats1.settings; % assuming these are the same!
+nStats = numel(stats);
+indivClassOverTime = zeros(size(stats(1).indivClassOverTime));
+for cStats = 1:nStats
+    % compute some values
+    indivClassOverTime = indivClassOverTime + stats(cStats).indivClassOverTime;
+end
+nSubj = size(indivClassOverTime,1);
+indivClassOverTime = indivClassOverTime/nStats;
+avstats.indivClassOverTime = indivClassOverTime;
+avstats.ClassOverTime = shiftdim(mean(indivClassOverTime));
+avstats.StdError = shiftdim(std(indivClassOverTime)/sqrt(nSubj));
+avstats.condname = ['average(' cell2csv({stats(:).condname}) ')'];
+settings = stats(1).settings; % assuming these are the same!
 settings.measuremethod = [settings.measuremethod ' average'];
 
 % determine chance level
-if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(stats1.cfg.plot_model,'FEM')
+if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
     chance = 0;
 elseif strcmpi(settings.measuremethod,'AUC')
     chance = .5;
 else
     chance = 1/settings.nconds;
 end
+settings.chance = chance;
 
 % mask size
 if isempty(mask)
-	mask = ones([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
+	mask = ones([size(indivClassOverTime,2) size(indivClassOverTime,3)]);
 end
 
 if strcmpi(mpcompcor_method,'fdr')
     % FDR CORRECTION
-    [~,ClassPvals] = ttest(averageClassTotal,chance,indiv_pval,'tail',tail);
+    [~,ClassPvals] = ttest(indivClassOverTime,chance,indiv_pval,'tail',tail);
     h = fdr_bh(squeeze(ClassPvals),cluster_pval);
     ClassPvals(~h) = 1;
     pStruct = []; % still need to implement
 elseif strcmpi(mpcompcor_method,'cluster_based')
     % CLUSTER BASED CORRECTION
-    [ ClassPvals, pStruct ] = cluster_based_permutation(averageClassTotal,chance,cfg,settings,mask);
+    [ ClassPvals, pStruct ] = cluster_based_permutation(indivClassOverTime,chance,cfg,settings,mask);
 elseif strcmpi(mpcompcor_method,'uncorrected')
     % NO MP CORRECTION
-    [~,ClassPvals] = ttest(averageClassTotal,chance,'tail',tail);
+    [~,ClassPvals] = ttest(indivClassOverTime,chance,'tail',tail);
     ClassPvals = squeeze(ClassPvals);
     ClassPvals(~mask) = 1;
     pStruct = []; % still need to implement
 else
     % NO TESTING, PLOT ALL
-    ClassPvals = zeros([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
+    ClassPvals = zeros([size(indivClassOverTime,2) size(indivClassOverTime,3)]);
     pStruct = [];
 end
 

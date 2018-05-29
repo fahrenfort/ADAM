@@ -94,11 +94,12 @@ tail = 'both';
 cluster_pval = .05;
 indiv_pval = .05;
 mpcompcor_method = 'uncorrected';
+plot_dim = 'time_time';
 % unpack original cfg
 if isfield(stats1,'cfg')
-    v2struct(stats1(1).cfg,{'fieldNames','reduce_dims','plot_dim','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim'});
+    v2struct(stats1(1).cfg);
 elseif isfield(stats2,'cfg')
-    v2struct(stats2(1).cfg,{'fieldNames','reduce_dims','plot_dim','tail','cluster_pval','indiv_pval','mpcompcor_method','trainlim','testlim'});
+    v2struct(stats2(1).cfg);
 end
 v2struct(cfg);
 if exist('one_two_tailed','var')
