@@ -14,7 +14,7 @@ function map = adam_plot_MVPA(cfg,varargin)
 %
 % Inputs: 
 %   cfg                       = contains input parameters to specify plotting (see below)
-%   stats1, stats2, ...       = contains onre or more stats variables computed by
+%   stats1, stats2, ...       = contains one or more stats variables computed by
 %                               adam_compute_group_MVPA, adam_compute_group_ERP, etc. Function
 %                               assumes that stats are based on the same accuracy measure and use
 %                               the same statistical test.
@@ -109,6 +109,7 @@ inverty = [];
 plotsubjects = false;
 singleplot = false;
 plot_order = [];
+figure_axis = 'horizontal';
 folder = '';
 startdir = '';
 if strcmpi(stats(1).settings.dimord, 'freq_time')
@@ -130,6 +131,13 @@ cent_acctick = [];
 
 % unpack config
 v2struct(cfg);
+
+% subplot direction
+ax1 = 1; ax2 = 2;
+if strcmpi(figure_axis,'vertical')
+    ax1 = 2; ax2 = 1;
+end
+
 
 % BACKWARDS COMPATIBILITY
 if exist('one_two_tailed','var')
@@ -295,7 +303,7 @@ if ~plotsubjects
     if singleplot
         UL = screensize([3 4])-50; % subtract a little to be on the save side
     else
-        UL = (screensize([3 4])-50)./[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
+        UL = (screensize([3 4])-50)./[numSubplots(numel(stats),ax2) numSubplots(numel(stats),ax1)];
     end
     if all(UL>[600 400])
         UL=[600 400]; % take this as default
@@ -304,7 +312,7 @@ if ~plotsubjects
     if singleplot
         po(3:4)=UL;
     else
-        po(3:4)=UL.*[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
+        po(3:4)=UL.*[numSubplots(numel(stats),ax2) numSubplots(numel(stats),ax1)];
     end
     po(1:2) = (screensize(3:4)-po(3:4))/2; po(logical([po(1:2)<100 0 0])) = round(po(logical([po(1:2)<100 0 0]))/4); % position in the center, push further to left / bottom if there is little space on horizontal or vertical axis axis
     set(fh,'position',po);
@@ -319,21 +327,22 @@ if numel(stats)>1
             hold on;
             [map, H, cfg] = subplot_MVPA(cfg,stats(cStats),cStats, numel(stats));
             legend_handle(cStats) = H.mainLine;
-            legend_text{cStats} = regexprep(stats(cStats).condname,'_',' ');
+            legend_text{cStats} = regexprep(regexprep(stats(cStats).condname,'_',' '),'-','-\n');
         else
-            subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
+            subplot(numSubplots(numel(stats),ax1),numSubplots(numel(stats),ax2),cStats);
             [map, ~, cfg] = subplot_MVPA(cfg,stats(cStats),cStats, numel(stats)); % all in the first color
-            title(regexprep(stats(cStats).condname,'_',' '),'FontSize',10);
+            title(str2cell(regexprep(stats(cStats).condname,'_',' '),'-'),'FontSize',10);
         end
     end
     if singleplot
-        legend(legend_handle,legend_text,'FontSize',10);
         legend boxoff;
+        legend(legend_handle,legend_text,'FontSize',10,'boxoff');
+        %
     end
 else
     map = subplot_MVPA(cfg,stats);
     if ~plotsubjects
-        title(regexprep(stats.condname,'_',' '),'FontSize',10);
+        title(str2cell(regexprep(stats.condname,'_',' '),'-'),'FontSize',10);
     end
 end
 
@@ -700,7 +709,7 @@ else
     end
     set(hcb,'YTick',zaxis,'YTickLabel',Ylabel);
     %ylabel(hcb,regexprep(measuremethod,'_',' ')); % add measuremethod to colorbar
-    title(hcb,regexprep(measuremethod,'_',' '),'FontSize',10); % you can also put it above the color bar if you prefer
+    title(hcb,str2cell(regexprep(measuremethod,'_',' '),' '),'FontSize',10); % you can also put it above the color bar if you prefer
     xlabel(xlegend,'FontSize',fontsize);
     ylabel(ylegend,'FontSize',fontsize);
     set(gca,'YTick',indy);
