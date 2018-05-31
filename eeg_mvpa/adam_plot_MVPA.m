@@ -305,8 +305,8 @@ if ~plotsubjects
     else
         UL = (screensize([3 4])-50)./[numSubplots(numel(stats),ax2) numSubplots(numel(stats),ax1)];
     end
-    if all(UL>[600 400])
-        UL=[600 400]; % take this as default
+    if any(UL>[400 350])
+        UL=[400 350]; % take this as default
     end
     po=get(fh,'position');
     if singleplot

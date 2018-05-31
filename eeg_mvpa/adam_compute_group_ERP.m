@@ -18,7 +18,7 @@ function stats = adam_compute_group_ERP(cfg,folder_name)
 %   stats = adam_compute_group_ERP(cfg)
 %
 % The cfg (configuration) input structure should specify electrode selection and statistics options.
-% The cfg can contain the following optional parameters: 
+% The cfg can contain the following optional parameters:
 %
 %
 %       cfg.startdir         = '' (default); ADAM will pop-up a selection dialog when running
@@ -55,7 +55,7 @@ function stats = adam_compute_group_ERP(cfg,folder_name)
 %                              electrodes that are then averaged or subracted; make sure the
 %                              labeling you specify corresponds to the labels present in the raw
 %                              data that you used as input for adam_MVPA_firstlevel.
-%       cfg.electrode_method = 'average' (default); string specifying what to do if multiple 
+%       cfg.electrode_method = 'average' (default); string specifying what to do if multiple
 %                              electrodes are specificied: 'average', the ERP of the average of the
 %                              specified electrodes is computed; 'subtract', two sets of electrodes
 %                              or two invidual electrodes are first averaged and then subtracted,
@@ -79,12 +79,12 @@ function stats = adam_compute_group_ERP(cfg,folder_name)
 %                              subjects that are extracted will be plotted in a single figure, with
 %                              a separate subplot for each subject to enable inspection of the data
 %                              underlying group averages.
-%       cfg.resample_eeg     = integer for a new down-sampled sampling rate if desired; default: 0 
+%       cfg.resample_eeg     = integer for a new down-sampled sampling rate if desired; default: 0
 %                              (no resampling).
 %
 % The output stats structure will contain the following fields:
 %
-%       stats.ClassOverTime:    1xN matrix; group-average ERP over N time points (name ClassOverTime 
+%       stats.ClassOverTime:    1xN matrix; group-average ERP over N time points (name ClassOverTime
 %                               comes from MVPA nomenclature: Classification over time).
 %       stats.StdError:         1xN matrix; standard-deviation across subjects over time
 %       stats.pVals:            1xN matrix; p-values of each tested time point
@@ -101,10 +101,10 @@ function stats = adam_compute_group_ERP(cfg,folder_name)
 %
 % Common use cases:
 %   (1) get ERP difference between conditions
-%   (2) get condition-average ERP and test against zero 
+%   (2) get condition-average ERP and test against zero
 %   (3) get condition-specific ERPs and test each against zero
 %   (4) get N2pc/CDA electrode subtractions for two conditions, average them, and test against zero
-% 
+%
 % Use case (1):
 % cfg.electrode_def    = { 'Oz', 'Iz', 'POz' };
 % cfg.elecrode_method  = 'average' (default)
@@ -130,7 +130,7 @@ function stats = adam_compute_group_ERP(cfg,folder_name)
 %                                           subtracted from PO8. These are subsequently averaged.
 %
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
-% 
+%
 % See also ADAM_MVPA_FIRSTLEVEL, ADAM_COMPUTE_GROUP_MVPA, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
 if nargin<2
@@ -159,47 +159,52 @@ if isempty(folder_name)
     if ~ischar(folder_name)
         error('no folder was selected');
     end
-    cfg.folder = folder_name;
-    % where am I?
-    ndirs = drill2data(folder_name);
-    if isempty(plot_order)
-        dirz = dir(folder_name);
-        dirz = {dirz([dirz(:).isdir]).name};
-        plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
-        if ndirs == 1
-            [folder_name, plot_order] = fileparts(folder_name);
-            plot_order = {plot_order};            
-        elseif ndirs > 2
-            error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
-        end
-        cfg.plot_order = plot_order;
-    elseif ndirs ~= 2
-        error('You seem to be selecting a directory that is either too high or too low in the hiearchy given that you have specified cfg.plot_order. Either remove cfg.plot_order or select the appropriate level in the hierarchy.');
-    else
-        dirz = dir(folder_name);
-        dirz = {dirz([dirz(:).isdir]).name};
-        dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
-        if ~all(ismember(plot_order,dirz))
-            error('One or more of the folders specified in cfg.plot_order cannot be found in this results directory. Change cfg.plot_order or select a different directory for plotting.');
-        end
+end
+cfg.folder = folder_name;
+
+% where am I?
+ndirs = drill2data(folder_name);
+if isempty(plot_order)
+    dirz = dir(folder_name);
+    dirz = {dirz([dirz(:).isdir]).name};
+    plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    if ndirs == 1
+        [folder_name, plot_order] = fileparts(folder_name);
+        plot_order = {plot_order};
+    elseif ndirs > 2
+        error('You seem to be selecting a directory that is too high in the hiearchy, drill down a little more.');
     end
-    % loop through directories (results folders)
-    stats = [];
-    for cdirz = 1:numel(plot_order)
-        stats = [stats subcompute_group_ERP(cfg,[folder_name filesep plot_order{cdirz}])];
-    end
+    cfg.plot_order = plot_order;
+elseif ndirs ~= 2
+    error('You seem to be selecting a directory that is either too high or too low in the hiearchy given that you have specified cfg.plot_order. Either remove cfg.plot_order or select the appropriate level in the hierarchy.');
 else
-    if ~iscell(folder_name)
-        folder_name = {folder_name};
-    end
-    stats = [];
-    for cdirz=1:numel(folder_name)
-        if ~exist(folder_name{cdirz},'dir')
-            error([folder_name{cdirz} ' should refer to a full and existing folder path. Alternatively leave folder_name empty to pop up a selection dialog.']);
+    dirz = dir(folder_name);
+    dirz = {dirz([dirz(:).isdir]).name};
+    dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    for cPlot = 1:numel(plot_order)
+        dirindex = find(strcmpi(plot_order{cPlot},dirz));
+        if isempty(dirindex) % if an exact match cannot be made, look only for the pattern in the first sequency of characters
+            dirindex = find(strcmpi(plot_order{cPlot},dirz,numel(plot_order{cPlot})));
         end
-        [stats, cfg] = [stats subcompute_group_ERP(cfg,folder_name{cdirz})];
+        if isempty(dirindex)
+            error(['cannot find condition ' plot_order{cPlot} ' specified in cfg.plot_order']);
+        elseif numel(dirindex) > 1
+            error(['cannot find a unique condition for the pattern ' plot_order{cPlot} ' specified in cfg.plot_order']);
+        else
+            plot_order{cPlot} = dirz{dirindex};
+        end
+    end
+    if ~all(ismember(plot_order,dirz))
+        error('One or more of the folders specified in cfg.plot_order cannot be found in this results directory. Change cfg.plot_order or select a different directory for plotting.');
     end
 end
+
+% loop through directories (results folders)
+stats = [];
+for cdirz = 1:numel(plot_order)
+    stats = [stats subcompute_group_ERP(cfg,[folder_name filesep plot_order{cdirz}])];
+end
+
 % fill cfg.plot_order in case not given by user and from single folder
 if numel(cfg.plot_order) == 1
     cfg.plot_order = {stats(:).condname};
@@ -219,7 +224,7 @@ resample_eeg = 0;
 electrode_def = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
 electrode_method = 'average';
-condition_method = 'keep'; 
+condition_method = 'keep';
 % unpack graphsettings
 plottype = '2D';
 channelpool = '';
@@ -252,7 +257,7 @@ subjectfiles(strncmp(subjectfiles,'.',1)) = []; % remove hidden files
 
 % limiting subjects
 if ~isempty(exclsubj)
-   subjectfiles = select_subjects(subjectfiles,exclsubj,true);
+    subjectfiles = select_subjects(subjectfiles,exclsubj,true);
 end
 
 % see if data exists
@@ -309,10 +314,10 @@ for cSubj = 1:nSubj
     %   (3) get raw ERPs for more conditions from a given results folder without averaging
     % 	(4) get N2pc/CDA electrode subtractions for two conditions, average
     %       them, and do stats against zero (for each results folder)
-        
+    
     % strcmpi(electrode_method,'average')
     % strcmpi(condition_method,'subtract')
-
+    
     % now do condition subtraction
     clear trial;
     % subtract
@@ -321,16 +326,16 @@ for cSubj = 1:nSubj
             error('Condition_def does not contain the correct number of conditions (2) to be able to subtract.');
         end
         trial = FT_ERP.trial(FT_ERP.trialinfo==condition_def(1),:,:) - FT_ERP.trial(FT_ERP.trialinfo==condition_def(2),:,:);
-    % average
+        % average
     elseif strcmpi(condition_method,'average')
         trial = mean(FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:),1);
-    % plain extraction
-    else  
+        % plain extraction
+    else
         trial = FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:);
     end
     % little hack to change V to muV (if applicable)
     if  all(all(all(trial<10^-3)))
-        trial = trial*10^6; 
+        trial = trial*10^6;
     end
     % hold on to each subject's resulting erps
     for cCond=1:size(trial,1)
@@ -378,17 +383,20 @@ origcondname = condname;
 for cCond = 1:numel(ClassTotal) % loop over stats
     
     % determine condname
-    if strcmpi(electrode_method,'subtract')
-        condname =  [origcondname ' channel subtraction of ' cell2csv(FT_ERP.channelpool)];
+    if strcmpi(electrode_method,'subtract') && strcmpi(condition_method,'average')
+        condname =  [origcondname '-average(' cell2csv(FT_ERP.channelpool) ')'];
+    elseif strcmpi(electrode_method,'subtract')
+        condname =  [origcondname '-' cell2csv(FT_ERP.channelpool)];
     elseif strcmpi(condition_method,'subtract')
-        condname =  [origcondname ' subtraction (' cell2csv(FT_ERP.channelpool) ')'];
+        condname =  [origcondname '-subtraction(' cell2csv(FT_ERP.channelpool) ')'];
     elseif strcmpi(condition_method,'average')
-        condname = [origcondname ' average (' cell2csv(FT_ERP.channelpool) ')'];
+        condname = [origcondname ' average(' cell2csv(FT_ERP.channelpool) ')'];
     else
         condname = [origcondname ' erp' num2str(condition_def(cCond)) ' (' cell2csv(FT_ERP.channelpool) ')'];
     end
     
     % get some stats
+    indivClassOverTime = ClassTotal{cCond};
     ClassAverage = shiftdim(squeeze(mean(ClassTotal{cCond},1)));
     ClassStdErr = shiftdim(squeeze(std(ClassTotal{cCond},0,1)/sqrt(size(ClassTotal{cCond},1))));
     
@@ -419,6 +427,7 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     settings.measuremethod = '\muV';
     settings.chance = 0;
     stats(cCond).ClassOverTime = ClassAverage;
+    stats(cCond).indivClassOverTime = indivClassOverTime;
     stats(cCond).StdError = ClassStdErr;
     stats(cCond).pVals = ClassPvals;
     stats(cCond).mpcompcor_method = mpcompcor_method;
@@ -452,7 +461,7 @@ if ~isempty(timelim)
 end
 clear channelpool;
 % subtracting electrode sets, subtracts electrode 2 from electrode 1 for each condition
-if strcmpi(electrode_method,'subtract') %iscell(electrode_def{1}) 
+if strcmpi(electrode_method,'subtract') %iscell(electrode_def{1})
     if size(electrode_def,2)~=2
         error('to subtract electrode sets, you should define two columns in cfg.electrode_def');
     end
@@ -465,7 +474,7 @@ if strcmpi(electrode_method,'subtract') %iscell(electrode_def{1})
             FT_TEMP(cDif) = select_channels_from_FT_EEG(FT_EEG,electrode_def{cCond,cDif});
         end
         trial(cCond,:,:) = FT_TEMP(1).trial(FT_TEMP(1).trialinfo==condition_def(cCond),:,:) - FT_TEMP(2).trial(FT_TEMP(2).trialinfo==condition_def(cCond),:,:);
-        channelpool{cCond} = [FT_TEMP(1).label '-' FT_TEMP(2).label];
+        channelpool{cCond} = [ 'chan_subtract(' FT_TEMP(1).label ',' FT_TEMP(2).label ')'];
     end
     FT_EEG.trial = trial;
     FT_EEG.channelpool = channelpool;
@@ -475,7 +484,7 @@ elseif strcmpi(electrode_method,'average')
     end
     FT_EEG = select_channels_from_FT_EEG(FT_EEG,electrode_def);
     if numel(electrode_def) > 1
-        FT_EEG.channelpool = ['avg of ' cell2csv(FT_EEG.label)];
+        FT_EEG.channelpool = ['average(' cell2csv(FT_EEG.label) ')'];
     else
         FT_EEG.channelpool = FT_EEG.label;
     end
@@ -486,7 +495,7 @@ if any(size(FT_EEG.trial)==0)
     dims = regexp(FT_EEG.dimord,'_','split');
     error(['There are no dimensions left in these fields, change cfg selection parameters for ''' cell2csv(dims(logical(size(FT_EEG.trial)==0))) '''.']);
 end
-    
+
 function ndirs = drill2data(folder_name)
 % drills down until it finds data, returns the number of directories it had
 % to drill
