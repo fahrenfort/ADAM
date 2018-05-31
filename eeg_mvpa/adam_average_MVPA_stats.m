@@ -99,62 +99,73 @@ cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,tr
 v2struct(cfg);
 nStats = numel(stats);
 indivClassOverTime = zeros(size(stats(1).indivClassOverTime));
+ClassOverTime = zeros(size(stats(1).ClassOverTime));
+% compute average
 for cStats = 1:nStats
-    % compute some values
+    ClassOverTime = ClassOverTime + stats(cStats).ClassOverTime;
     indivClassOverTime = indivClassOverTime + stats(cStats).indivClassOverTime;
 end
 nSubj = size(indivClassOverTime,1);
+ClassOverTime = ClassOverTime/nStats;
 indivClassOverTime = indivClassOverTime/nStats;
+avstats.ClassOverTime = ClassOverTime;
 avstats.indivClassOverTime = indivClassOverTime;
-if size(indivClassOverTime,1) > 1
-    avstats.ClassOverTime = shiftdim(mean(indivClassOverTime));
+if nSubj > 1
     avstats.StdError = shiftdim(std(indivClassOverTime)/sqrt(nSubj));
 else
-    avstats.ClassOverTime = indivClassOverTime';
     avstats.StdError = [];
 end
 avstats.condname = ['average(' cell2csv({stats(:).condname}) ')'];
 settings = stats(1).settings; % assuming these are the same!
-settings.measuremethod = [settings.measuremethod ' average'];
 
 % determine chance level
-if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strncmpi(settings.measuremethod,'\muV',4) || ~isempty(strfind(settings.measuremethod,' difference')) || strcmpi(plot_model,'FEM')
-    chance = 0;
-elseif strncmpi(settings.measuremethod,'AUC',3)
-    chance = .5;
+if ~isfield(settings,'chance')
+    if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strncmpi(settings.measuremethod,'\muV',4) || ~isempty(strfind(settings.measuremethod,'difference')) || strcmpi(plot_model,'FEM')
+        chance = 0;
+    elseif strcmpi(settings.measuremethod,'AUC')
+        chance = .5;
+    else
+        chance = 1/settings.nconds;
+    end
+    settings.chance = chance;
 else
-    chance = 1/settings.nconds;
+    chance = settings.chance;
 end
-settings.chance = chance;
 
 % mask size
 if isempty(mask)
 	mask = ones([size(indivClassOverTime,2) size(indivClassOverTime,3)]);
 end
 
-if strcmpi(mpcompcor_method,'fdr') && size(indivClassOverTime,1) > 1
-    % FDR CORRECTION
-    [~,ClassPvals] = ttest(indivClassOverTime,chance,indiv_pval,'tail',tail);
-    h = fdr_bh(squeeze(ClassPvals),cluster_pval);
-    ClassPvals(~h) = 1;
-    pStruct = []; % still need to implement
-elseif strcmpi(mpcompcor_method,'cluster_based') && size(indivClassOverTime,1) > 1
-    % CLUSTER BASED CORRECTION
-    [ ClassPvals, pStruct ] = cluster_based_permutation(indivClassOverTime,chance,cfg,settings,mask);
-elseif strcmpi(mpcompcor_method,'uncorrected') && size(indivClassOverTime,1) > 1
-    % NO MP CORRECTION
-    [~,ClassPvals] = ttest(indivClassOverTime,chance,'tail',tail);
-    ClassPvals = squeeze(ClassPvals);
-    ClassPvals(~mask) = 1;
-    pStruct = []; % still need to implement
+if nSubj > 1
+    if strcmpi(mpcompcor_method,'fdr')
+        % FDR CORRECTION
+        [~,ClassPvals] = ttest(indivClassOverTime,chance,indiv_pval,tail);
+        ClassPvals = squeeze(ClassPvals);
+        h = fdr_bh(ClassPvals,cluster_pval,'dep');
+        ClassPvals(~h) = 1;
+        pStruct = compute_pstructs(h,ClassPvals,indivClassOverTime,chance,cfg,settings);
+    elseif strcmpi(mpcompcor_method,'cluster_based')
+        % CLUSTER BASED CORRECTION
+        [ ClassPvals, pStruct ] = cluster_based_permutation(indivClassOverTime,chance,cfg,settings,mask);
+    elseif strcmpi(mpcompcor_method,'uncorrected')
+        % NO MP CORRECTION
+        [h, ClassPvals] = ttest(indivClassOverTime,chance,indiv_pval,tail);
+        ClassPvals = squeeze(ClassPvals);
+        pStruct = compute_pstructs(squeeze(h),ClassPvals,indivClassOverTime,chance,cfg,settings);
+    else
+        % NO TESTING, PLOT ALL
+        ClassPvals = zeros([size(indivClassOverTime,2) size(indivClassOverTime,3)]);
+    end
 else
-    % NO TESTING, PLOT ALL
     ClassPvals = zeros([size(indivClassOverTime,2) size(indivClassOverTime,3)]);
-    pStruct = [];
 end
+ClassPvals = shiftdim(squeeze(ClassPvals));
 
 % output stats
 avstats.pVals = ClassPvals;
-avstats.pStruct = pStruct;
+if exist('pStruct','var')
+    avstats.pStruct = pStruct;
+end
 avstats.cfg = cfg;
 avstats.settings = settings;
