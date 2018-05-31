@@ -1,0 +1,53 @@
+General install instructions:
+
+You need to have Matlab 2012b or later (earlier versions may or may not work), including the
+    Signal Processing Toolbox
+    Statistics Toolbox
+    If you find dependencies on other toolboxes please let me know
+
+
+STEP 1:	
+If you are running the analysis in the introduction article 'Moving from ERP to MVPA, and comparing EEG to MEG using the Amsterdam Decoding and Modeling toolbox (ADAM)' you probably already downloaded all the required software contained in a folder called TOOLBOXES from https://osf.io/p2k97/files.  
+
+You can also download these packages from their respective sources:
+- A recent version of FieldTrip, we tested using:
+    ftp://ftp.fieldtriptoolbox.org/pub/fieldtrip/fieldtrip-20170711.zip
+- A recent release of EEGlab, we tested using:
+    ftp://sccn.ucsd.edu/pub/daily/eeglab14_1_1b.zip
+- The most recent version of the ADAM toolbox:
+    http://www.fahrenfort.com/ADAM.htm
+
+
+STEP 2:
+After you have unzip the 'TOOLBOXES' file containing all three toolboxes, you can put that folder anywhere you want (e.g. 'C:\ TOOLBOXES' on Windows, or '/Users/accountname/TOOLBOXES' on a mac), as long as you know where you put it. If you already have EEGLAB or FieldTrip in a different location that is fine too, as long as you know what their paths are.
+
+
+STEP 3:
+Next, we need to make sure that Matlab knows how to find the toolboxes. Go into the 'TOOLBOXES' folder above, and then into the 'ADAM-master' and finally the 'install' directory. Here you will find a 'startup.m' file. Open this file by double clicking on it. You should see something like:
+
+%------------------------ toolboxes ------------------------%
+% path definitions
+ft_path = 'C:\TOOLBOXES\fieldtrip-20170704'; % Note Mac and Linux use forward slashes / instead of \
+eeglab_path = 'C:\TOOLBOXES\eeglab14_1_1b'; 
+adam_path = 'C:\TOOLBOXES\ADAM-master';
+
+
+Now replace those paths to point to the three toolboxes from step 2.
+If you already have EEGLAB or FieldTrip you can also point to existing folders on your computer.
+Note that if you are on Linux or Mac, you should start with a file separator, e.g.:
+'/Users/Johannes/TOOLBOXES/fieldtrip-20150318'
+
+
+STEP 4
+Once you have correctly specified the folder paths to all three toolboxes, run 'startup.m' by clicking on the green 'Run' icon in your toolbar (at the top of your Matlab window, Editor tab). If all goes well, you should see:
+
+FIELDTRIP IS ALIVE
+EEGLAB IS ALIVE
+ADAM IS ALIVE
+
+after which you should be able to run all aspects of the tutorial. For the most part, the tutorial relies only on the ADAM toolbox, only the first level analyses require EEGLAB and/or FieldTrip.
+
+NOTE:
+If you want to make these changes permanent, you should replace Matlab's default startup.m on your computer with the one you just created. You can find where the default startup.m file is located by typing 'userpath' in the Matlab command window.
+If for whatever reason you run into path conflicts, you can reset all the existing paths by typing 'restoredefaultpath' in your command window prior to running startup.m, but note that you will loose all paths in your current path settings.
+

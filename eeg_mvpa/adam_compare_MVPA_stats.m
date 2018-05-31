@@ -125,7 +125,11 @@ nSubj = size(ClassTotal{1},1);
 difstats.ClassOverTime = shiftdim(mean(ClassTotal{1}-ClassTotal{2}));
 difstats.indivClassOverTime = ClassTotal{1}-ClassTotal{2};
 difstats.StdError = shiftdim(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj));
-difstats.condname = [stats1.condname ' - ' stats2.condname];
+if ~isempty(strfind(stats1.condname,'subtract')) || ~isempty(strfind(stats1.condname,'average'))
+    difstats.condname = [stats1.condname ' - ' stats2.condname];
+else
+    difstats.condname = ['subtract(' stats1.condname ',' stats2.condname ')'];
+end
 settings = stats1.settings; % assuming these are the same!
 settings.measuremethod = [settings.measuremethod ' difference'];
 settings.chance = 0;
