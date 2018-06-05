@@ -336,7 +336,7 @@ if numel(stats)>1
     end
     if singleplot
         legend boxoff;
-        legend(legend_handle,legend_text,'FontSize',10,'boxoff');
+        legend(legend_handle,legend_text,'FontSize',10);
         %
     end
 else

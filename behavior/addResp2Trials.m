@@ -1,4 +1,4 @@
-function out = addResp2Trials(data, time_window, eventvalues, first)
+function out = addResp2Trials(data, time_window, eventvalues, last)
 % addResp2Trials adds responses to the stimulus field after reading in presentation logfiles using
 % readPresentationNew.
 %
@@ -6,7 +6,8 @@ function out = addResp2Trials(data, time_window, eventvalues, first)
 %           time_window  -  within which response has to take place in ms. (default: 200-1500)
 %           eventvalues  -  the response event values that are included in the operation (default:
 %                           empty, reading in all responses)
-%           first        -  if true, takes the first response (default: last)
+%           last        -   if true, takes the last response, otherwise takes the first response
+%                           (default: false)
 % outputs:
 %           out has the same structure as data, but now with response events and their associated
 %           reaction times added to the stimulus field
@@ -14,7 +15,7 @@ function out = addResp2Trials(data, time_window, eventvalues, first)
 % By J.J.Fahrenfort, UvA/VU 2018
 
 if nargin < 4
-    first = false;
+    last = false;
 end
 if nargin < 3
     eventvalues = [];
@@ -40,11 +41,11 @@ for cStim = 1:numel(data.stimuli.time)
         responses = NaN;
         RT = NaN;
     end
-    if first
-        out.stimuli.response(cStim) = responses(1);
-        out.stimuli.RT(cStim) = RT(1);
-    else
+    if last
         out.stimuli.response(cStim) = responses(end);
         out.stimuli.RT(cStim) = RT(end);
+    else
+        out.stimuli.response(cStim) = responses(1);
+        out.stimuli.RT(cStim) = RT(1);      
     end
 end
