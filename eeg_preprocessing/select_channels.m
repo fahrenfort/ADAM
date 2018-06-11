@@ -45,7 +45,7 @@ else
     disp(['selecting ' bundlename_or_bundlelabels ' channels...']);
 end
 if strcmpi('EEG',bundlename_or_bundlelabels)
-    wraptext('Removing EOG channels...\n\nassuming this is a 64 channel BioSemi 10-20 system, electrodes outside the 64 channel range are always removed. Edit the select_channels.m function if this is undesirable behavior.');
+    wraptext('Removing EOG channels...\nassuming electrodes are defined using labels from the 10-20 system, electrodes that are not defined using labels from this system are always removed. Edit the select_channels.m function or specify cfg.channelpool = ''ALL_NOSELECTION''; when reading in the data if this is undesirable behavior.');
 end
 % These are the EEG and EOG channels according to the 10-20 / 10-05 definition:
 all_locs = readlocs(trycapfile);
