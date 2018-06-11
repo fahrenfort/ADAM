@@ -353,7 +353,11 @@ for cSubj = 1:nSubj
         
         % locate data
         matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep subjectfiles{cSubj}]);
-        settings = matObj.settings;
+        if isempty(whos(matObj,'settings'))
+            error([ subjectfiles{cSubj} ' in ' condname ' does not contain the expected fields, which suggests that the analysis did not complete succesfully. Check the error message that appeared during first level analysis.']);
+        else
+            settings = matObj.settings;
+        end
         
         % for backward compatibility
         if strcmpi(settings.dimord,'frequency_time')

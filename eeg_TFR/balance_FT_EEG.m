@@ -58,7 +58,8 @@ for c=1:numel(minIndices)
     out_data = ADASYN_time_series(in_data, in_labels, nReq, [], [], whitened);
     if ~isempty(out_data)
         FT_EEG.trial = [FT_EEG.trial; out_data];
-        FT_EEG.trialinfo = [FT_EEG.trialinfo; repmat(minClass',[nReq/numel(minClass) 1])];
+        FT_EEG.trialinfo = [FT_EEG.trialinfo; repmat(minClass',[ceil(nReq/numel(minClass)) 1])];
+        FT_EEG.trialinfo = FT_EEG.trialinfo(1:size(FT_EEG.trial,1)); % if its too long
     end
 end
 
