@@ -48,9 +48,13 @@ if strcmpi('EEG',bundlename_or_bundlelabels)
     wraptext('Removing EOG channels...\nassuming electrodes are defined using labels from the 10-20 system, electrodes that are not defined using labels from this system are always removed. Edit the select_channels.m function or specify cfg.channelpool = ''ALL_NOSELECTION''; when reading in the data if this is undesirable behavior.');
 end
 % These are the EEG and EOG channels according to the 10-20 / 10-05 definition:
-all_locs = readlocs(trycapfile);
-all_labels = {all_locs(:).labels};
-all_types = {all_locs(:).type};
+if exist('1005chanlocdata.mat','file')
+    load('1005chanlocdata.mat');
+else
+    chanlocdata = readlocs(trycapfile,'importmode','native'); % from standard 10-20 system
+end
+all_labels = {chanlocdata(:).labels};
+all_types = {chanlocdata(:).type};
 bundlenames.EEG =           all_labels(strcmpi(all_types,'EEG'));
 bundlenames.EOG =           {all_labels{strcmpi(all_types,'EOG')} 'HEOG_L' 'HEOG_R' 'EOG3'  'EOG4' }; % expand with your own EOG labels if necessary
 % These are idiosyncratic bundle definitions, add more bundles or change them to your liking if you want:

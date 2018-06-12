@@ -4,19 +4,26 @@ function adam_create_group_training_sets(cfg)
 % training set is intended. Outputs these training sets in FT_EEG format.
 %
 % Inputs:
-%   datadir         - string specifying the path to the input files (eeglab .set/.fdt or fieldtrip)
-%   filenames       - cell array of filenames for which the group training sets are created
-%   outdir          - where the results are saved
-%   eventvals          - eventvals for which the operation is performed
+%   datadir         - string specifying the path to the input files (eeglab .set/.fdt or fieldtrip
+%                     .mat), required.
+%   filenames       - cell array of filenames for which the group training sets are created,
+%                     required.
 %   erp_baseline    - [int int] a baseline period specified in seconds, e.g. [-.1 0] or
-%                     'no' (not recommended)
+%                     'no' (not recommended), required.
+%   outdir          - where the results are saved, optional. If outdir is not specified, files are
+%                     saved in datadir.
+%   eventvals       - eventvals for which the operation is performed (if left empty, it will use all
+%                     eventvals on which the data was epoched, optional.
 %   keepratio       - .75 (default), the minimum number of subjects on which each trial average is
 %                     based. If the trial average is based on fewer subjects than specified by this
-%                     ratio, the trial will not be included in the training set.
+%                     ratio, the trial will not be included in the training set, optional.
+%   skipuntil       - 'subjectname' (optional field, string), if the function previously crashed and
+%                     you want to skip until this subject, optional.
 %
-%   A number of additional parameters can be specified, see read_raw_data for parameter values.
+% A number of additional parameters can be specified, see read_raw_data for parameter values.
 %
-% Outputs: data is saved to outdir.
+% Outputs: data is saved to datadir or outdir. Each filename is prepended with the prefix
+% 'grptrain_'
 %
 % J.J.Fahrenfort, UvA/VU 2018
 
@@ -25,24 +32,40 @@ datadir = [];
 filenames = [];
 outputdir = [];
 erp_baseline = [];
+skipuntil = [];
 
 % unpack settings
 v2struct(cfg);
-missingparams = cellfun(@isempty,{datadir, filenames, outputdir, erp_baseline});
+missingparams = cellfun(@isempty,{datadir, filenames, erp_baseline});
 if any(missingparams)
-    paramstrings = {'datadir', 'filenames', 'outputdir', 'erp_baseline'};
+    paramstrings = {'datadir', 'filenames', 'erp_baseline'};
     error(['Missing cfg fields: ' cell2csv(paramstrings(missingparams),true)]);
 end
 
+% check existence of input dir
+if ~exist(datadir,'dir')
+    error([datadir ' does not exist.']);
+end
+
 % create target directory
-if ~exist(outputdir,'dir')
+if isempty(outputdir)
+    outputdir = datadir;
+elseif ~exist(outputdir,'dir')
     mkdir(outputdir);
 end
 
-for cFiles=1:numel(filenames)
+% determine first subject
+if isempty(skipuntil)
+    startsubject = 1;
+else
+    startsubject = find(strcmpi(filenames,skipuntil));
+    disp(['starting with subject ' filenames{startsubject}]);
+end
+
+for cFiles=startsubject:numel(filenames)
     cfg.files2use = setdiff(filenames,filenames{cFiles});
     FT_EEG = create_training_set(cfg);
-    save(fullfile(outputdir,filenames{cFiles}),'FT_EEG','-v7.3');
+    save(fullfile(outputdir,['grptrain_' filenames{cFiles}]),'FT_EEG','-v7.3');
 end
 
 function FT_EEG_OUT = create_training_set(cfg)
