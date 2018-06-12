@@ -41,27 +41,7 @@ else
     error(['Cannot load data, filename ''' filename ''' cannot be found at ''' filepath '''']);
 end
 
-% add sample info if missing
-if ~isfield(FT_EEG,'fsample')
-    FT_EEG.fsample = round((numel(FT_EEG.time)-1)/(FT_EEG.time(end)-FT_EEG.time(1)));
-end
-
-% double check whether all necessary fields are there
-FT_FIELDS = fieldnames(FT_EEG);
-reqfields = {'fsample', 'label', 'trial', 'time', 'trialinfo'};
-absentfields = reqfields(~ismember(reqfields,FT_FIELDS));
-if numel(absentfields)==1
-    error(['The following required field is missing from your data: ' sprintf('%s',absentfields{1})]);
-elseif numel(absentfields)>1
-    error(['The following required fields are missing from your data: ' sprintf('%s, ',absentfields{1:end-1}) absentfields{end}]);
-end
-
-% detrend eeg
-if detrend_eeg
-    FT_EEG = detrend_FT_EEG(FT_EEG);
-end
-
-% baseline correction
+% baseline correction, converts data to FT timelock format
 cfg = [];
 cfg.baseline = erp_baseline;
 cfg.channel = 'all';
@@ -71,6 +51,33 @@ if exist('ft_warning','file') == 2
     ft_warning off;
 end
 FT_EEG = ft_timelockbaseline(cfg,FT_EEG);
+
+% add sample info if missing
+if ~isfield(FT_EEG,'fsample')
+    FT_EEG.fsample = round((numel(FT_EEG.time)-1)/(FT_EEG.time(end)-FT_EEG.time(1)));
+end
+% add dimord info if missing
+if ~isfield(FT_EEG,'dimord')
+    if size(FT_EEG.trial,1) == numel(FT_EEG.trialinfo) && size(FT_EEG.trial,2) == numel(FT_EEG.label) && size(FT_EEG.trial,3) == numel(FT_EEG.time)
+        FT_EEG.dimord = 'rpt_chan_time';
+    else
+        error('The dimord field seems missing and/or dimensions in the dataset seem to be off. When you are using fieldtrip format, make sure the input files have dimord rpt_chan_time (trial x channel x time).');
+    end
+end
+
+% double check whether all necessary fields are now present
+FT_FIELDS = fieldnames(FT_EEG);
+reqfields = {'fsample', 'label', 'trial', 'time', 'trialinfo', 'dimord'};
+absentfields = reqfields(~ismember(reqfields,FT_FIELDS));
+if ~isempty(absentfields)
+    error(['The following required fields are missing from your data: ' cell2csv(absentfields,true)]);
+end
+
+% detrend eeg
+if detrend_eeg
+    FT_EEG = detrend_FT_EEG(FT_EEG);
+end
+
 % keep track of index numbers
 origindex = 1:numel(FT_EEG.trialinfo);
 % muscle artifact detection
@@ -188,3 +195,9 @@ if shuffle_trials
 else
     FT_EEG.origindex = origindex;
 end
+
+% remove superfluous fields
+FT_FIELDS = fieldnames(FT_EEG);
+reqfields = {'fsample', 'label', 'trial', 'time', 'trialinfo', 'dimord', 'origindex'};
+rmfields = setdiff(FT_FIELDS,reqfields);
+FT_EEG = rmfield(FT_EEG,rmfields);
