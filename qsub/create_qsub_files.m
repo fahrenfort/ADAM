@@ -218,7 +218,7 @@ for cMat = 1:numel(allMat)
         % copy all the files to and from scratch
         if use_scratch
             filename = combMat{cQsubs,2};
-            filenames = regexp(filename,',','split');
+            filenames = regexp(filename,';|,','split');
             for c = 1:numel(filenames)
                 filename = filenames{c};
                 if regexp(filename(end-3:end),'\....') == 1
