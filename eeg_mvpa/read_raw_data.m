@@ -200,4 +200,4 @@ end
 FT_FIELDS = fieldnames(FT_EEG);
 reqfields = {'fsample', 'label', 'trial', 'time', 'trialinfo', 'dimord', 'origindex'};
 rmfields = setdiff(FT_FIELDS,reqfields);
-FT_EEG = rmfield(FT_EEG,rmfields);
+FT_EEG = orderfields(rmfield(FT_EEG,rmfields));
