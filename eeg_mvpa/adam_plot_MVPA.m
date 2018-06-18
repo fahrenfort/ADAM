@@ -207,9 +207,10 @@ if ~isempty(plot_order)
             statindex = find(strncmpi(plot_order{cPlot},{stats(:).condname},numel(plot_order{cPlot})));
             if isempty(statindex)
                 error(['cannot find condition ' plot_order{cPlot} ' specified in cfg.plot_order']);
-            elseif numel(statindex) > 1
-                error(['cannot find a unique condition for the pattern ' plot_order{cPlot} ' specified in cfg.plot_order']);
             end
+        end
+        if numel(statindex) > 1
+            error(['cannot find a unique condition for the pattern ' plot_order{cPlot} ' specified in cfg.plot_order, remove cfg.plot_order to plot these graphs.']);
         end
         newstats(cPlot) = stats(statindex);
         new_line_colors{cPlot} = line_colors{statindex};

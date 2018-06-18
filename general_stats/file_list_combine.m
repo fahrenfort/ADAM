@@ -26,7 +26,7 @@ if nargin > 2
                 indB = cB;
             end
         end
-        output{c} = [listA{indA} ',' listB{indB}];
+        output{c} = [listA{indA} ';' listB{indB}];
     end
 else
     if numel(listA) ~= numel(listB)
@@ -37,6 +37,6 @@ else
     end
     output{numel(listA)} = [];
     for c = 1:numel(listA)
-        output{c} = [listA{c} ',' listB{c}];
+        output{c} = [listA{c} ';' listB{c}];
     end
 end
