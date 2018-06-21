@@ -5,10 +5,16 @@ function output = file_list_combine(listA,listB,patternlist)
 % listB, where each new cell separates the matched files from listA and
 % listB by a comma and puts them in a new cell. If patternlist is omitted,
 % it simply matches the elements one by one from the ordered lists.
+%
 % Example:
 % new_list = file_list_combine({'subj1_condA', 'subj2_condA'},{'subj1_condB', 'subj2_condB'},{'subj1','subj2'});
 % or
 % new_list = file_list_combine({'subj1_condA', 'subj2_condA'},{'subj1_condB', 'subj2_condB'});
+% 
+% output:
+% new_list = 
+%    'subj1_condA;subj1_condB'    'subj2_condA;subj2_condB'
+% 
 %
 % By J.J.Fahrenfort, VU, 2015, 2016
 if nargin > 2
