@@ -683,10 +683,14 @@ if nSubj > 1
         pStruct = compute_pstructs(squeeze(h),ClassPvals,ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings);
     else
         % NO TESTING, PLOT ALL
-        ClassPvals = []; % zeros([size(ClassOverTimeAll{1},2) size(ClassOverTimeAll{1},3)]);
+        ClassPvals = [];
     end
 else
-    ClassPvals = []; %zeros([size(ClassOverTimeAll{1},2) size(ClassOverTimeAll{1},3)]);
+    if compute_randperm
+        ClassPvals = pVals;
+    else
+        ClassPvals = [];
+    end
 end
 ClassPvals = shiftdim(squeeze(ClassPvals));
 
