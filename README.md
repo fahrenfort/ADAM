@@ -48,5 +48,4 @@ Fahrenfort, J. J., Grubert, A., Olivers, C. N. L., & Eimer, M. (2017). Multivari
 
 
 # Manual
-A citable tutorial article covering how to use the decoding apect of the toolbox is here: http://doi.org/10.3389/fnins.2018.00368.
-=======
+A citable tutorial article covering how to use the decoding features of the toolbox can be found here: http://doi.org/10.3389/fnins.2018.00368.
