@@ -436,8 +436,9 @@ else
     wraptext('Within-class balancing is ON, such that event codes are evenly represented within each stimulus class. If event codes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_events'' in your methods.',80);
 end
 
-% create and save TFR for training and testing do trial selection prior to TFR computation
-% (important for induced!)
+% generate folds, compute some stuff on them and save them temporarily before running MVPA
+% do trial selection prior to TFR computation (important for induced!)
+settrialinfo = [];
 settrialindex = [];
 for cFld = 1:nFolds
     for cSet = 1:2
@@ -445,8 +446,6 @@ for cFld = 1:nFolds
         set_tfr_method{cSet} = tfr_method;
         % select trials belonging to this subset
         trialindex = vertcat(setindex{cSet}{cFld,:});
-        % get goodies for later
-        origtrialindex{cSet} = FT_EEG(cSet).origindex(trialindex)';
         % keep trying if running into memory issues (often temporary because all analyses are running in parallel)
         success = false; counterr = 0;
         while ~success
@@ -458,6 +457,9 @@ for cFld = 1:nFolds
             end
         end
         method_2use = orig_method;
+        % get some goodies
+        trialinfo{cSet} = FT_EEG_2use.trialinfo;
+        origtrialindex{cSet} = FT_EEG(cSet).origindex(trialindex)';
         % FYI
         set_use_splines(cFld,cSet) = use_splines;
         % if test_total is true, refrain from using induced during test, otherwise check trial
@@ -503,6 +505,7 @@ for cFld = 1:nFolds
         filesizes_MB(cFld,cSet) = round(sizenow/(2^20)*100)/100;
     end
     % FYI, store for every fold
+    settrialinfo = [settrialinfo; trialinfo];
     settrialindex = [settrialindex; origtrialindex];
 end % end folds loop in which temp files are created
 
@@ -520,7 +523,7 @@ for cFreq = 1:numel(frequencies)
           
     % and run models, with as little overhead as possible
     clear BDM_* FEM_*;
-    settrialinfo = [];
+
     for cFld=1:nFolds
         % create file pointers for this fold
         frequency = frequencies(cFreq);
@@ -609,8 +612,6 @@ for cFreq = 1:numel(frequencies)
             FEM_C2_average(cFld,:,:,:) = FEM.C2_average; % fld x time x time x channel_response
             FEM_C2_percondition(cFld,:,:,:,:) = FEM.C2_percondition; % fld x time x time x cond x channel_response
         end
-        % FYI
-        settrialinfo = [settrialinfo; trialinfo];
         
     end % end folds loop, only frequency loop is left
     
