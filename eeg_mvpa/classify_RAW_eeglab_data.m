@@ -449,14 +449,14 @@ settrialindex = [];
 for cFld=1:nFolds
     % select trials from each dataset
     for cSet = 1:2
-        % get relevant condSet for computation
-        condSet_2use = get_this_condset(condSet,cSet);
         % select trials belonging to this subset from original dataset
         trialindex = vertcat(setindex{cSet}{cFld,:});
         FT_EEG_2use = select_trials_from_FT_EEG(FT_EEG(cSet),trialindex);
         % get some goodies
         trialinfo{cSet} = FT_EEG_2use.trialinfo;
         origtrialindex{cSet} = FT_EEG(cSet).origindex(trialindex)';
+        % get relevant condSet for computation
+        condSet_2use = get_this_condset(condSet,cSet);
         % compute induced?
         if compute_induced
             if strcmpi(subtr_method,'subtr_bin')
