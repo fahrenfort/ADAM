@@ -2,18 +2,25 @@ function output = cond_string(varargin)
 % cond_string creates a comma separated string from the intersection of integers input arrays
 % containing event values.
 % Useful to convert event definitions from the experimental design to class specifications.
-% Optionally you can separate train and test events using a string that contains a semicolon ';'
+% Optionally you can separate train and test events using a string that contains a semicolon ';',
+% but pay close attention to the syntax of this function.
 %
 % Use as:
-%   cond_string(events1,events2,....); OR cond_string(events1,...,';',events2,...);
+%   cond_string(events1,events2,....); OR cond_string([events1,...],';',[events2,...]);
+%
+% To prevent errors using the syntax of this function, it is recommended to closely follow the
+% examples below, and modify these examples to match with your own experimental conditions.
 % 
-% Example:
+% Example event code definition:
 % Two experimental factors, each with three levels: (1) stimulus type and (2) stimulus repetition in
 % the trial.
 %
+% % FACTOR 1: stimulus type
 % famous_faces = [5 6 7];                    % specifies triggers of all famous faces
 % nonfamous_faces = [13 14 15];              % specifies triggers of all non-famous faces
 % scrambled_faces = [17 18 19];              % specifies triggers of all scrambled faces
+%
+% % FACTOR 2: stimulus repetition
 % first_presentation = [5 13 17];            % specifies triggers of all first presentations
 % immediate_repeat = [6 14 18];              % specifies triggers of all immediate repeats
 % delayed_repeat = [7 15 19];                % specifies triggers of all delayed repeats

@@ -405,13 +405,24 @@ end
 % Generate indices for folds to do training and testing
 [setindex{1}, setindex{2}, nFolds] = make_folds(trialinfo{1},trialinfo{2},condSet,nFolds,~compute_performance);
 
-% create file name based on actual folds and save ERPs
+% create file name based on train-test procedure
 if numel(filenames) == 1
-    filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];
+    if nFolds == 1
+        train = ['_train_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,1),'UniformOutput',false),false,'_')]; if numel(train) > 25; train = ''; end;
+        test = ['_test_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,2),'UniformOutput',false),false,'_')];
+        filename = ['CLASS_PERF_' filenames{1} train test ];
+    else
+        filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];
+    end
 else
-    filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
+    filename = ['CLASS_PERF_train_' filenames{1} '_test_' filenames{2}];
 end
-if ~iterate % only save FT_ERP for standard analyses, for iterations the size of the results would balloon
+if numel(filename) > 255
+    filename = filename(1:255);
+end
+
+% save ERPs
+if ~iterate % do not save ERPs for iterations or every iteration would contain the ERPs
     fullfilename = [ outpath filesep filename ];
     save(fullfilename, 'FT_ERP','-v7.3');
 end

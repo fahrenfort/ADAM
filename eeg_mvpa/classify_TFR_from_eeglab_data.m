@@ -395,20 +395,29 @@ end
 % Generate indices for folds to do training and testing
 [setindex{1}, setindex{2}, nFolds] = make_folds(trialinfo{1},trialinfo{2},condSet,nFolds,~compute_performance);
 
-% create file name based on actual folds and save ERPs and TFRs
+% create file name based on train-test procedure
 if numel(filenames) == 1
-    filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];
+    if nFolds == 1
+        train = ['_train_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,1),'UniformOutput',false),false,'_')]; if numel(train) > 25; train = ''; end;
+        test = ['_test_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,2),'UniformOutput',false),false,'_')];
+        filename = ['CLASS_PERF_' filenames{1} train test ];
+    else
+        filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];
+    end
 else
-    filename = ['CLASS_PERF_' filenames{1} '_' filenames{2}];
+    filename = ['CLASS_PERF_train_' filenames{1} '_test_' filenames{2}];
 end
-if ~crossclass % do not turn this on when doing cross classification (only on for the allfreqsf folder), otherwise every frequency would contain and FT_ERP and FT_TFR
+if numel(filename) > 255
+    filename = filename(1:255);
+end
+
+% save ERPs and TFRs
+if ~crossclass && ~iterate % do not save for cross classification or iterations, otherwise every frequency would contain and FT_ERP and FT_TFR
     % a folder for time by frequency
     fullpath = fullfile(outpath, 'allfreqs');
     mkdir(fullpath);
-    if ~iterate
-        fullfilename = fullfile(fullpath, filename);
-        save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3'); 
-    end
+    fullfilename = fullfile(fullpath, filename);
+    save(fullfilename, 'FT_ERP', 'FT_TFR', '-v7.3');
 end
 clear FT_EEG_BINNED FT_ERP FT_TFR; % save memory by clearing
 
@@ -760,7 +769,7 @@ if ~crossclass
     settings.freqs = frequencies;
     settings.dimord = 'freq_time';
     % a folder for time by frequency
-    fullpath = fullfile(outpath, 'allfreqs');    
+    fullpath = fullfile(outpath, 'allfreqs');
     % count filenames from 0001 onwards if computing under random permutation or iteration
     % create a folder for iterations / random permutations
     if iterate && randomize_labels
