@@ -185,17 +185,28 @@ function adam_MVPA_firstlevel(cfg)
 %                                    frequency in frequencies. If cfg.crossclass is set to 'no',
 %                                    this creates a single time by frequency matrix.
 %       cfg.tfr_method             = 'total' (default); computes total power, alternatives are
-%                                    'induced', which subtracts the erp from each trial (separately
-%                                    performed on train and test data) and 'evoked'. When specifying
-%                                    'evoked', ADAM averages groups of trials prior to computing
-%                                    power. The averages are computed according to the class
-%                                    definitions. E.g. if cfg.class_spec = '1,2,3'; it will compute
-%                                    time frequency representations on the average of a triplet of
-%                                    trials that have event codes 1, 2 and 3. One can increase the
-%                                    number of trials that go into such an evoked average using the
-%                                    class definition, e.g. when using cfg.class_spec{1} =
-%                                    '1,1,1,2,2,2,3,3,3'; then each average on which power is
-%                                    computed for class 1 will contain 9 rather than 3 trials.
+%                                    'induced' and 'evoked'. 
+%                                    Induced subtracts the average condition ERP from each trial
+%                                    prior to computing the TFR (this is separately performed on
+%                                    train and test data). As a result, the analysis only contains
+%                                    effects that are non-phase locked to trial onset. This is
+%                                    particularly interesting when doing time frequency
+%                                    decomposition ('tfr'). However, the 'induced' option also works
+%                                    when doing an analysis on raw data. This can be used as a proof
+%                                    of principle to show that decoding on raw data always operates
+%                                    on the phase-locked signal, showing that the decoding retuns to
+%                                    chance when the evoked part is subtracted out of the signal
+%                                    (i.e. when the ERP is subtracted out).
+%                                    When specifying 'evoked', ADAM averages groups of trials prior
+%                                    to computing power. The averages are computed according to the
+%                                    class definitions. E.g. if cfg.class_spec = '1,2,3'; it will
+%                                    compute time frequency representations on the average of a
+%                                    triplet of trials that have event codes 1, 2 and 3. One can
+%                                    increase the number of trials that go into such an evoked
+%                                    average using the class definition, e.g. when using
+%                                    cfg.class_spec{1} = '1,1,1,2,2,2,3,3,3'; then each average on
+%                                    which power is computed for class 1 will contain 9 rather than
+%                                    3 trials.
 %       cfg.bintrain               = 'no' (default); if 'yes', averages across events within a
 %                                    class on the training side (for TFR data this only happens
 %                                    after TF decomposition, do not use binning for 'evoked', which
@@ -403,7 +414,9 @@ end
 
 % re-structure parameters to work with lower-level API settings string in the classify_ and create_qsub_ functions
 if strcmpi(raw_or_tfr,'raw');
-    tfr_method = '';       % don't need this for raw
+    if ~strcmpi(tfr_method,'induced')
+        tfr_method = '';       % don't need this for raw
+    end
 end
 if iterations > 1
     repeat = iterations;
@@ -413,8 +426,11 @@ if randompermutations > 0
     repeat = randompermutations;
     iterate_method = 'randperm';
 end
-if strcmpi(model,'BDM') && ~exist('whiten','var')
+if strfind(model,'BDM') && ~exist('whiten','var')
     whiten = 'no';
+    if strfind(model,'FEM')
+        disp('WARNING: whitening was turned off by default because you are running a BDM (whitening is superfluous for LDA), but you are also running an FEM (for which it is better to turn whitening on).');
+    end
 end
 if strcmpi(model,'FEM') && ~exist('whiten','var')
     whiten = 'yes';

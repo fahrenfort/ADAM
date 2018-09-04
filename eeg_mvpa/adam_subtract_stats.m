@@ -2,7 +2,7 @@ function dif_out = adam_subtract_stats(statsorweights1,statsorweights2)
 % function difstatsorweights = subtract_MVPA_conditions(statsorweights1,statsorweights2)
 % subtracts weight or stats structs from each other according to
 % difstatsorweights = statsorweights1 - statsorweights2
-% 
+% This function needs some help.
 structfields = fieldnames(statsorweights1);
 for c = 1:numel(structfields)
     if any(strcmpi(structfields{c},{'chanlocs','channelpool','settings','cfg'}))
