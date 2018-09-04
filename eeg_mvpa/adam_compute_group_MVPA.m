@@ -342,6 +342,7 @@ if plotsubjects;
 end
 
 % do the loop, restrict time and frequency if applicable
+trialcount = zeros(1,nSubj);
 for cSubj = 1:nSubj
     fprintf(1,'loading subject %d of %d\n', cSubj, nSubj);
     
@@ -364,6 +365,9 @@ for cSubj = 1:nSubj
             settings.dimord = 'freq_time';
         end
         v2struct(settings);
+        
+        % compute trial counts
+        trialcount(cSubj) = numel(trialinfo{1,1}) + numel(trialinfo{1,2});
         
         % get data
         if ~isempty(whos(matObj,'BDM')) && strcmpi(plot_model,'BDM')
@@ -510,7 +514,7 @@ for cSubj = 1:nSubj
             C2_average = C2_average(lim1,lim2,:);
             C2_percondition = C2_percondition(lim1,lim2,:,:);
         end
-        
+               
         % if applicable, reduce dimensionality (creates 2D plot)
         if strcmpi(reduce_dims,'avfreq') && strcmpi(dimord,'freq_time')
             if isempty(freqlim)
@@ -704,6 +708,7 @@ if read_confidence
     stats.indivConf = indivConf;
 end
 stats.settings = settings;
+stats.trialcount = trialcount;
 stats.condname = condname;
 stats.filenames = subjectfiles;
 stats.channelpool = channelpool;

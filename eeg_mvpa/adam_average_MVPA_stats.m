@@ -48,18 +48,18 @@ function avstats = adam_average_MVPA_stats(cfg,varargin)
 %                                over the averaged conditions.
 %       stats.indivClassOverTime SxNxM; same as above over S subjects.
 %       stats.StdError:          NxM matrix; standard-error across subjects over time-time
-%       stats.pVals:             NxM matrix; p-values of each tested time-time point 
+%       stats.pVals:             NxM matrix; p-values of each tested time-time point
 %       stats.pStruct:           struct; cluster info, currently only appears if mpcompcor_method
 %                                was set to 'cluster_based'
 %       stats.settings:          struct; the settings used during the level-1 (single subject)
 %                                results
-%       stats.condname:          string; name of format 'average(condition1,condition2)'. 
+%       stats.condname:          string; name of format 'average(condition1,condition2)'.
 %       stats.cfg:               struct; the cfg used to create these stats
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2018
-% 
+%
 % See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
 if nargin<2
@@ -98,23 +98,65 @@ cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,tr
 % unpack cfg
 v2struct(cfg);
 nStats = numel(stats);
+% initialize decoding vars
 indivClassOverTime = zeros(size(stats(1).indivClassOverTime));
 ClassOverTime = zeros(size(stats(1).ClassOverTime));
-% compute average
+% initialize weight vars
+getweights = isfield(stats(1),'weights') && stats(1).settings.FEM;
+if getweights
+    avWeights = zeros(size(stats(1).weights.avWeights));
+    indivWeights = zeros(size(stats(1).weights.indivWeights));
+    CTF = zeros(size(stats(1).weights.CTF));
+    indivCTF = zeros(size(stats(1).weights.indivCTF));
+    nConds = numel(stats(1).weights.CTFpercond);
+    for cCond = 1:nConds
+        CTFpercond{cCond} = zeros(size(stats(1).weights.CTFpercond{cCond}));
+        indivCTFpercond{cCond} = zeros(size(stats(1).weights.indivCTFpercond{cCond}));
+    end
+end
+% add up to compute average of stats
 for cStats = 1:nStats
     ClassOverTime = ClassOverTime + stats(cStats).ClassOverTime;
     indivClassOverTime = indivClassOverTime + stats(cStats).indivClassOverTime;
+    % also compute average of weights
+    if getweights
+        avWeights = avWeights + stats(cStats).weights.avWeights;
+        indivWeights = indivWeights + stats(cStats).weights.indivWeights;
+        CTF = CTF + stats(cStats).weights.CTF;
+        indivCTF = indivCTF + stats(cStats).weights.indivCTF;
+        for cCond = 1:nConds
+            CTFpercond{cCond} = CTFpercond{cCond} + stats(cStats).weights.CTFpercond{cCond};
+            indivCTFpercond{cCond} = indivCTFpercond{cCond} + stats(cStats).weights.indivCTFpercond{cCond};
+        end
+    end
 end
+% average and store
 nSubj = size(indivClassOverTime,1);
-ClassOverTime = ClassOverTime/nStats;
-indivClassOverTime = indivClassOverTime/nStats;
-avstats.ClassOverTime = ClassOverTime;
-avstats.indivClassOverTime = indivClassOverTime;
+avstats.ClassOverTime = ClassOverTime/nStats;
+avstats.indivClassOverTime = indivClassOverTime/nStats;
+if getweights
+    avstats.weights.avWeights = avWeights/nStats;
+    avstats.weights.indivWeights = indivWeights/nStats;
+    avstats.weights.CTF = CTF/nStats;
+    avstats.weights.indivCTF = indivCTF/nStats;
+    for cCond = 1:nConds;
+        avstats.weights.CTFpercond{cCond} = CTFpercond{cCond}/nStats;
+        avstats.weights.indivCTFpercond{cCond} = indivCTFpercond{cCond}/nStats;
+    end
+end
+% re-compute SEMs
 if nSubj > 1
-    avstats.StdError = shiftdim(std(indivClassOverTime)/sqrt(nSubj));
+    avstats.StdError = shiftdim(std(avstats.indivClassOverTime)/sqrt(nSubj));
+    if getweights
+        avstats.weights.semCTF = shiftdim(std(avstats.weights.indivCTF))/sqrt(nSubj);
+        for cCond = 1:nConds
+           avstats.weights.semCTFpercond{cCond} = shiftdim(std(avstats.weights.indivCTFpercond{cCond}))/sqrt(nSubj);
+        end
+    end
 else
     avstats.StdError = [];
 end
+
 avstats.condname = ['average(' cell2csv({stats(:).condname}) ')'];
 settings = stats(1).settings; % assuming these are the same!
 
@@ -134,7 +176,7 @@ end
 
 % mask size
 if isempty(mask)
-	mask = ones([size(indivClassOverTime,2) size(indivClassOverTime,3)]);
+    mask = ones([size(indivClassOverTime,2) size(indivClassOverTime,3)]);
 end
 
 if nSubj > 1

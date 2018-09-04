@@ -215,7 +215,7 @@ size_scores1 = size(scores1);
 % reshape to a two-dimensional array, so we correlate every point
 scores1 = reshape(scores1,[size_scores1(1) prod(size_scores1(2:end))]);
 % if they are the same size, scores2 should be reshaped too
-if all(size(scores1)==size(scores2)) 
+if numel(scores1)==numel(scores2)
     scores2 = reshape(scores2,[size_scores1(1) prod(size_scores1(2:end))]);
     matchScore2 = true;
 else

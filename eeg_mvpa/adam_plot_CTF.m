@@ -1,11 +1,39 @@
 function avgctfstruct = adam_plot_CTF(cfg,stats)
-% function adam_plot_CTF(cfg,stats)
-% plot channel responses of forward encoding model, takes data from
-% adam_compute_group_MVPA or from adam_subtract_stats
+% ADAM_PLOT_CTF plots the Channel Tuning Function (CTF) associated with one or more stats structures
+% that result from adam_compute_group_MVPA or adam_average_MVPA_stats, given that the stats have
+% been generated using a forward encoding model (FEM) during first level analysis by specifying
+% cfg.model = 'FEM' when running adam_MVPA_firstlevel. Help needs more work.
 %
-% This function needs help description, and some clean-up.
+% Use as:
+%   adam_plot_CTF(cfg,stats);
 %
-% By J.J.Fahrenfort, VU 2018 
+% The cfg (configuration) input structure can contain the following:
+%       cfg.plotfield           = 'CTF' or 'CTFpercond';
+%       cfg.plottype            = '2D' or '3D'
+%       cfg.mpcompcor_method    = 'cluster_based';
+%       cfg.tail                = 'both';
+%       cfg.trainlim            = [];
+%       cfg.testlim             = [];
+%       cfg.timelim             = [];
+%       cfg.freqlim             = [];
+%       cfg.singleplot          = true;
+%       cfg.makeround           = true;
+%       cfg.shiftindiv          = true;
+
+%       cfg.flat                = true;
+%       cfg.timetick            = 250;
+%       cfg.reduce_dims         = 'diag', 'avtrain', 'avtest', 'avtraintest', 'avfreq'
+%       cfg.weightlim           = [];
+%       cfg.colorlim            = [];
+%       cfg.CTFtime             = [];  
+%       cfg.BLtime              = [];
+%       cfg.ytick               = .1;
+%       
+% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
+% 
+% See also ADAM_COMPUTE_GROUP_ERP, ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL,
+% ADAM_PLOT_BDM_WEIGHTS, ADAM_COMPARE_MVPA_STATS
+
 if nargin<2
     disp('cannot plot graph without some settings, need at least 2 arguments:');
     help plot_CTF;
@@ -20,6 +48,7 @@ BLtime = [];
 reduce_dims = [];
 plottype = '3D';
 line_colors = [];
+ytick = .05;
 v2struct(cfg);
 
 containsbaseline = ~isempty(BLtime) && cfg.BLtime(1)<= cfg.BLtime(2);
@@ -50,7 +79,7 @@ elseif ~containsbaseline && (numel(line_colors)<numel(stats) || isempty(line_col
     end
 end
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(line_colors,singleplot,containsbaseline,nameOfStruct2Update);
+cfg = v2struct(line_colors,singleplot,containsbaseline,ytick,nameOfStruct2Update);
 
 v2struct(stats(1).settings,{'fieldNames','dimord'});
 
@@ -82,11 +111,9 @@ if strcmp(dimord,'freq_time')
     cfg.freqlim = freqlim;
 end
 
+% if plotting average CTF, always create a single figure
 if strcmp(plotfield,'CTF')
-    % make figure
-    title_text = regexprep(regexprep(folder,startdir,''),'_',' ');
-    title_text = title_text(1:find(title_text==filesep,1,'last')-1);
-    fh = figure('name',title_text);
+    fh = figure();
     UL=[600 450];
     po=get(fh,'position');
     % the line below needs to be adjusted for singleplot
@@ -97,87 +124,103 @@ if strcmp(plotfield,'CTF')
     end
     set(fh,'position',po);
     set(fh,'color','w');
+    if singleplot
+        hold on;
+    end
 end
-
-% if singleplot
-%     colororder = get(gca,'ColorOrder');
-% end
 
 % loop for main conditions
 for cStats=1:numel(stats)
-    if strcmp(cfg.plotfield,'CTF')
-        if singleplot
-            hold on;
-            if containsbaseline
-                legend_text{cStats*2-1} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
-                legend_text{cStats*2} = 'baseline';
-            else
-                legend_text{cStats} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
-            end
+    if singleplot
+        if containsbaseline
+            legend_text{cStats*2-1} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
+            legend_text{cStats*2} = 'baseline';
         else
-            if containsbaseline
-                legend_text{1} = 'CTF';
-                legend_text{2} = 'baseline';
-            else
-                legend_text{1} = 'CTF';
-            end
+            legend_text{cStats} = ['CTF ' strrep(stats(cStats).condname,'_',' ')];
+        end
+    else
+        if strcmp(cfg.plotfield,'CTF')
             subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
         end
+        if containsbaseline
+            legend({'CTF', 'baseline'});
+        else
+            legend_text{1} = 'CTF';
+        end
     end
-    [indivCTFs, indivCTFmean, indivBLmean, pStruct] = plot_routine(stats(cStats),cfg,cStats);
+    [indivCTFs, indivCTFmean, indivBLmean, pStruct] = plot_routine(cfg,stats(cStats),cStats);
     avgctfstruct(cStats).indivCTFs = indivCTFs;
     avgctfstruct(cStats).indivCTFmean = indivCTFmean;
     avgctfstruct(cStats).indivBLmean = indivBLmean;
     avgctfstruct(cStats).pStruct = pStruct;
     avgctfstruct(cStats).condname = stats(cStats).condname;
-end
-
-if singleplot
-    legend(legend_text);
-    legend boxoff;
+    
+    % put in legend
+    if ~singleplot || (singleplot && cStats == numel(stats))
+        legend(legend_text);
+        legend boxoff;
+    end
 end
 
 % what to plot: individual condition CTFs or average CTF?
-function [indivCTFs, indivCTFmean, indivBLmean, pStruct] = plot_routine(stats,cfg,cGraph)
-if nargin<3
-    cGraph = 1;
-end
+function [indivCTFs, indivCTFmean, indivBLmean, pStruct] = plot_routine(cfg,stats,cStats)
 indivCTFs = [];
 plotfield = 'CTF';
 shiftindiv = false;
 v2struct(cfg);
 weights = stats.weights;
 nCond = size(weights.CTF,ndims(weights.CTF));
+
+%plotting individual condition CTFs
 if strcmp(plotfield,'CTFpercond')
     v2struct(weights);
-    % make figure
-    fh = figure;
-    set(fh, 'Position', get(0,'Screensize'));
-    set(fh,'color','w');
-    % loop for individual conditions (channels)
+    % if plotting individual condition CTFs, create a figure for each stat
+    if cStats == 1 || ~singleplot
+        fh = figure();
+        UL=[600 450];
+        po=get(fh,'position');
+        po(3:4)=UL.*[numSubplots(nCond,2) numSubplots(nCond,1)];
+        set(fh,'position',po);
+        set(fh,'color','w');
+        if singleplot
+            hold on;
+        end
+    end
+    % if multiple figures are created, give each a condition title
+    if ~singleplot
+        set(gcf,'name',stats.condname,'numbertitle','off');
+    end
+    % loop individual conditions
     for cCond=1:nCond
-        % shift shape of CTF to central point, a bit complicated due to
-        % the fact that the array is time*time*chan (or freq*time*chan) which has to be
-        % shifted to be chan*time*time (or chan*freq*time) prior to shifting
+        % shift shape of CTF to a central channel, always do this on the last dimension 
+        % (which contains the individual channels)
         channel_pos{cCond} =  1:nCond;
         if shiftindiv
             dim2shift = ndims(CTFpercond{cCond}); % channels are always the last dimension
-            CTFpercond{cCond} = circshift(CTFpercond{cCond},floor(nCond)/2-cCond,dim2shift); 
-            semCTFpercond{cCond} = circshift(semCTFpercond{cCond},floor(nCond)/2-cCond,dim2shift);
-            channel_pos{cCond} = circshift(channel_pos{cCond},floor(nCond)/2-cCond,2);
+            CTFpercond{cCond} = circshift(CTFpercond{cCond},floor(nCond/2)-cCond,dim2shift); 
+            semCTFpercond{cCond} = circshift(semCTFpercond{cCond},floor(nCond/2)-cCond,dim2shift);
+            % annoying, we have to do this for individual subjects
+            for cSubj = 1:size(indivCTFpercond{cCond},1)
+                indivCTFpercond{cCond}(cSubj,:,:,:) = circshift(squeeze(indivCTFpercond{cCond}(cSubj,:,:,:)),floor(nCond/2)-cCond,dim2shift);
+            end
+            channel_pos{cCond} = circshift(channel_pos{cCond},floor(nCond/2)-cCond,2);
         end
-        stats.weights.CTF = CTFpercond{cCond};
-        stats.weights.semCTF = semCTFpercond{cCond};
-        stats.weights.channel_pos = channel_pos{cCond};
+        % inject the individual condition CTFs into a temporary stats structure for plotting
+        temp = stats;
+        temp.weights.CTF = CTFpercond{cCond};
+        temp.weights.semCTF = semCTFpercond{cCond};
+        temp.weights.indivCTF = indivCTFpercond{cCond};
+        temp.weights.channel_pos = channel_pos{cCond};
         subplot(numSubplots(nCond,1),numSubplots(nCond,2),cCond);
-        [indivCTFs{cCond}, indivCTFmean{cCond}, indivBLmean{cCond}, pStruct{cCond}] = subplot_CTF(stats,cfg);
-        set(gcf,'name',stats.condname,'numbertitle','off');
+        [indivCTFs{cCond}, indivCTFmean{cCond}, indivBLmean{cCond}, pStruct{cCond}] = subplot_CTF(cfg,temp,cStats);
+        disp(['plot ' num2str(cStats) ',  condition ' num2str(cCond)]);
         title_text = ['condition ' num2str(cCond)];
         title(title_text);
     end
 else
     stats.weights.channel_pos =  1:nCond;
-    [indivCTFs, indivCTFmean, indivBLmean, pStruct] = subplot_CTF(stats,cfg,cGraph);
+    [indivCTFs, indivCTFmean, indivBLmean, pStruct] = subplot_CTF(cfg,stats,cStats);
+    disp(['plot ' num2str(cStats)]);
     if ~singleplot % ~isfield(cfg,'color')
         title(strrep(stats.condname,'_',' '));
     end
@@ -185,10 +228,10 @@ end
 
 
 % use subfunction to do all the plotting, plots individual CTFs
-function [indivCTF, indivCTFmean, indivBLmean, pStruct] = subplot_CTF(stats,cfg,cGraph)
-if nargin<3
-    cGraph = 1;
-end
+function [indivCTF, indivCTFmean, indivBLmean, pStruct] = subplot_CTF(cfg,stats,cStats)
+% if nargin<3
+%     cStats = 1;
+% end
 indivCTFmean = [];
 indivBLmean = [];
 pStruct = [];
@@ -413,18 +456,17 @@ if strcmpi(plottype,'2D')
     
     % plot
     hold on;
-    disp(['plot ' num2str(cGraph)]);
     for cL = 1:size(CTF,2)
-        if isnumeric(line_colors{2*cGraph-2+cL})
-            errorbar(CTF(:,cL),semCTF(:,cL)/2,'Color',line_colors{2*cGraph-2+cL});
+        if isnumeric(line_colors{2*cStats-2+cL})
+            errorbar(CTF(:,cL),semCTF(:,cL)/2,'Color',line_colors{2*cStats-2+cL});
         else
-            errorbar(CTF(:,cL),semCTF(:,cL)/2,line_colors{2*cGraph-2+cL});
+            errorbar(CTF(:,cL),semCTF(:,cL)/2,line_colors{2*cStats-2+cL});
         end
     end
     if ~isempty(weightlim)
         ylim(weightlim);
         % y-axis
-        yticks = .05; % hardcoded for now, fix later
+        yticks = ytick; % hardcoded for now, fix later
         if min(weightlim) < 0 && max(weightlim) > 0
             yaxis = sort(unique([0:-yticks:min(weightlim) 0:yticks:max(weightlim)]));
         else
@@ -437,15 +479,8 @@ if strcmpi(plottype,'2D')
     indx = round(linspace(1,size(CTF,1),size(CTF,1)));
     set(gca,'Xtick',indx);
     % set(gca,'XTickLabel',num2cell(mod2base([1:size(CTF,1)]-makeround,size(CTF,1)-makeround)));
-    set(gca,'XTickLabel',num2cell(channel_pos-4));
+    set(gca,'XTickLabel',num2cell(channel_pos-floor(max(channel_pos)/2)));
     xlabel('channel');
-    % legend
-    if containsbaseline && ~singleplot %~isfield(cfg,'color');
-        legend({'CTF', 'baseline'});
-    elseif ~singleplot % ~isfield(cfg,'color');
-        legend({'CTF'});
-    end
-    legend boxoff;
 else
     % first do some statistics
     sigline = [];
@@ -567,18 +602,6 @@ else
     for tick = findticks
         indx = [indx nearest(xaxis,tick)];
     end
-
-%     % make a timeline that has 0 as zero-point and makes steps of xticks
-%     xticks = timetick;
-%     if min(xaxis) <= 0 && max(xaxis) >= 0
-%         findticks = sort(unique([0:-xticks:min(xaxis) 0:xticks:max(xaxis)]));
-%     else
-%         findticks = sort(unique(min(xaxis):xticks:max(xaxis)));
-%     end
-%     indx = [];
-%     for tick = findticks
-%         indx = [indx nearest(xaxis,tick)];
-%     end
     
     % draw time
     xlabel('time in ms.');
@@ -589,7 +612,7 @@ else
     % draw channel numbers
     ylabel('channel');
     set(gca,'Ytick',indy);
-    set(gca,'YTickLabel',num2cell(channel_pos-4));
+    set(gca,'YTickLabel',num2cell(channel_pos-floor(max(channel_pos)/2)));
     ylim([1 indy(end)]);
     % z-axis
     ylabel('channel');
