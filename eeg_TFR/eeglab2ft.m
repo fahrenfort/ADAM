@@ -24,9 +24,15 @@ for cEvents = 1:numel(EEG.epoch)
     else
         index = EEG.epoch(cEvents).eventlatency == 0;
     end
-    event = EEG.epoch(cEvents).eventtype(index);
+    if isempty(index)
+        error('Cannot find an event code with event latency 0, which is the critical event this function attempts to extract.');
+    end
+    event = EEG.epoch(cEvents).eventtype;
     if iscell(event)
-        event = event{1};
+        event = event{index};
+    end
+    if ~ischar(event) && numel(event) > 1
+        event = event(index);
     end
     if ischar(event)
         event = string2double(event);
