@@ -155,10 +155,13 @@ if isempty(folder_name)
         cfg.startdir = '';
         disp('NOTE: it is easier to select a directory when you indicate a starting directory using cfg.startdir, otherwise you have to start selection from root every time...');
     end
-    folder_name = uigetdir(cfg.startdir,'select directory to plot');
+    folder_name = uigetdir(cfg.startdir,'select directory for which to compute group ERP results');
     if ~ischar(folder_name)
         error('no folder was selected');
     end
+end
+if ~exist(folder_name,'dir')
+    error('the specified folder does not exist');
 end
 cfg.folder = folder_name;
 
