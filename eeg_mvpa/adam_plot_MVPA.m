@@ -327,7 +327,13 @@ if numel(stats)>1
         if singleplot
             hold on;
             [map, H, cfg] = subplot_MVPA(cfg,stats(cStats),cStats, numel(stats));
-            legend_handle(cStats) = H.mainLine;
+            if isfield(H,'mainLine')
+                legend_handle(cStats) = H.mainLine;
+            elseif isfield(H,'dataLine')
+                legend_handle(cStats) = H.dataLine;
+            else
+                error('huh? missing handle to plot legend!');
+            end
             legend_text{cStats} = regexprep(regexprep(stats(cStats).condname,'_',' '),'-','-\n');
         else
             subplot(numSubplots(numel(stats),ax1),numSubplots(numel(stats),ax2),cStats);
@@ -387,6 +393,10 @@ if isempty(splinefreq)
     makespline = false;
 else
     makespline = true;
+end
+% interpolation does not seem to work for 3D, just turn it off for now
+if strcmpi(plottype,'3D')
+    makespline = false;
 end
 
 % unpack stats

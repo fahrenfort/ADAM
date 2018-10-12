@@ -3,11 +3,16 @@ function savepstructs(stats,fname)
 % J.J.Fahrenfort, VU 2017
 if isfield(stats(1),'pStruct') && ~isempty([stats(:).pStruct])
     clustertypes = fieldnames(stats(1).pStruct);
-    fid = fopen([fname '.txt'],'w');
+    [~, ~, ext] = fileparts(fname);
+    if ~strcmpi(ext,'.txt')
+        fname = [fname(1:end-numel(ext)) '.txt'];
+    end
+    fid = fopen(fname,'w');
     for cStats = 1:numel(stats)
         fprintf(fid,'%s\n\n',stats(cStats).condname);
         for cType = 1:numel(clustertypes)
             clusters = stats(cStats).pStruct.(clustertypes{cType});
+            if numel(clusters) > 0; fprintf(fid,'%s\n\n',upper(clustertypes{cType})); end;
             for cClust =1:numel(clusters)
                 flds = fieldnames(clusters(cClust));
                 for cFld = 1:numel(flds)
