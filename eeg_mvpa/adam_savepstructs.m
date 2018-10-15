@@ -41,7 +41,7 @@ if isempty(outputdir)
         cfg.outputdir = '';
     end
     outputdir = uigetdir(cfg.outputdir,'select directory to save the pstruct results to');
-    if ~ischar(folder_name)
+    if ~ischar(outputdir)
         error('no folder was selected');
     end
 end
