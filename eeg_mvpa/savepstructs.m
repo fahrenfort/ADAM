@@ -7,7 +7,7 @@ if isfield(stats(1),'pStruct') && ~isempty([stats(:).pStruct])
     if ~strcmpi(ext,'.txt')
         fname = [fname(1:end-numel(ext)) '.txt'];
     end
-    fid = fopen(fname,'w');
+    fid = fopen(fname,'wt');
     for cStats = 1:numel(stats)
         fprintf(fid,'%s\n\n',stats(cStats).condname);
         for cType = 1:numel(clustertypes)
