@@ -30,6 +30,7 @@ stats = concat_stats(varargin{:});
 
 % settting some defaults
 outputdir = '';
+startdir = '';
 filename = '';
 
 % unpack config
@@ -40,7 +41,7 @@ if isempty(outputdir)
     if ~isfield(cfg,'outputdir')
         cfg.outputdir = '';
     end
-    outputdir = uigetdir(cfg.outputdir,'select directory to save the pstruct results to');
+    outputdir = uigetdir(startdir,'select directory to save the pstruct results to');
     if ~ischar(outputdir)
         error('no folder was selected');
     end
