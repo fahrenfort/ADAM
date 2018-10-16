@@ -649,6 +649,7 @@ for cFreq = 1:numel(frequencies)
         FEM.C2_average = squeeze(mean(FEM_C2_average,1));
         FEM.C2_percondition = squeeze(mean(FEM_C2_percondition,1));
         clear FEM_*;
+        BDM_CONF = [];
     end
     
     % save some settings so we know wtf just happened
@@ -766,6 +767,7 @@ if ~crossclass
         FEM.C2_percondition = FEMfreq_C2_percondition;
         FEM.C2_average = FEMfreq_C2_average;
         clear FEMfreq_*;
+        BDM_CONF = [];
     end
     settings.freqs = frequencies;
     settings.dimord = 'freq_time';

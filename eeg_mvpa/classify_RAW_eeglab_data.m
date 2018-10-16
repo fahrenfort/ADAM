@@ -612,6 +612,7 @@ if do_FEM
     FEM.C2_percondition = squeeze(mean(FEM_C2_percondition,1));
     % currently not possible to save confidence of FEM, maybe implement later
     clear FEM_*;
+    BDM_CONF = [];
 end
 
 % save some settings so we know wtf just happened
