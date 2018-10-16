@@ -426,7 +426,7 @@ if randompermutations > 0
     repeat = randompermutations;
     iterate_method = 'randperm';
 end
-if strfind(model,'BDM') && ~exist('whiten','var')
+if strcmpi(model,'BDM') && ~exist('whiten','var')
     whiten = 'no';
     if strfind(model,'FEM')
         disp('WARNING: whitening was turned off by default because you are running a BDM (whitening is superfluous for LDA), but you are also running an FEM (for which it is better to turn whitening on).');
