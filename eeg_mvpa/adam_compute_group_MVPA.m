@@ -169,6 +169,10 @@ if exist('plotorder','var')
     cfg = rmfield(cfg,'plotorder');
 end
 cfg.plot_dim = plot_dim;
+if exist('channels','var') && ~isfield(cfg,'channelpool')
+    channelpool = channels;
+    cfg.channelpool = channelpool;
+end
 
 % check freqlimits
 if (strcmpi(plot_dim,'freq_time') && ~strcmpi(reduce_dims,'avfreq')) && (numel(freqlim) == 1 || (~isempty(freqlim) && abs(diff(freqlim)) <= 2))

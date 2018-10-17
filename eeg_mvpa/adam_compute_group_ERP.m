@@ -148,6 +148,10 @@ if exist('plotorder','var')
     cfg.plot_order = plot_order;
     cfg = rmfield(cfg,'plotorder');
 end
+if exist('channels','var') && ~isfield(cfg,'channelpool')
+    channelpool = channels;
+    cfg.channelpool = channelpool;
+end
 
 % Main routine, is a folder name specified? If not, pop up selection dialog
 if isempty(folder_name)
