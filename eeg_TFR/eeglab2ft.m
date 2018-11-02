@@ -17,36 +17,8 @@ if ~isstruct(EEG)
     EEG = pop_loadset('filename',[EEG '.set'],'filepath',filepath);
 end
 FT_EEG = eeglab2fieldtrip_local(EEG, 'preprocessing');
-% also get events
-for cEvents = 1:numel(EEG.epoch)
-    if iscell(EEG.epoch(cEvents).eventlatency)
-        index = cell2mat(EEG.epoch(cEvents).eventlatency) == 0;
-    else
-        index = EEG.epoch(cEvents).eventlatency == 0;
-    end
-    if isempty(index)
-        error('Cannot find an event code with event latency 0, which is the critical event this function attempts to extract.');
-    end
-    event = EEG.epoch(cEvents).eventtype;
-    if iscell(event)
-        event = event{index};
-    end
-    if ~ischar(event) && numel(event) > 1
-        event = event(index);
-    end
-    if ischar(event)
-        event = string2double(event);
-        if numel(event) > 1
-            warning('cannot convert event to a single numeric value, taking the first value');
-            event = event(1);
-        end
-        if isempty(event) || isnan(event)
-            event = NaN;
-            warning('event value is NaN when converted to a numeral');
-        end
-    end
-    FT_EEG.trialinfo(cEvents,1) = event;
-end
+% also get events using pop_export
+FT_EEG.trialinfo = pop_exportepoch(EEG);
 clear EEG;
 
 function data = eeglab2fieldtrip_local(EEG, fieldbox, transform)

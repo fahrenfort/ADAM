@@ -10,7 +10,7 @@ refchannel = 'Ear_R';
 horchannels = {'HEOG_R' 'HEOG_L'};
 
 % eeglab path
-%eeglab_path = [getenv('HOME') filesep 'Documents/matlab_toolboxes/eeglab13_4_4b'];
+% eeglab_path = [getenv('HOME') filesep 'Documents/matlab_toolboxes/eeglab13_4_4b'];
 eeglab nogui;
 
 % add eeglab path
@@ -18,15 +18,17 @@ eeglab nogui;
 %     addpath(eeglab_path);
 % end
 
+ext = 'vhdr'; % 'xhdr'
+
 % read data
-if ~strcmpi(filename(end-4:end),'.vhdr')
-    filename = [filename '.vhdr'];
+if ~strcmpi(filename(end-3:end),ext)
+    filename = [filename '.' ext];
 end
 [fpath, fname, ext ] = fileparts(filename);
 if exist(filename,'file')
     % EEG = pop_fileio(filename);
     disp(filename);
-    [EEG, com] = pop_loadbv(fpath, fname);
+    [EEG, com] = pop_loadbv(fpath, [fname ext]);
     %EEG = pop_loadbv(filename);
 else
     error([fpath filesep fname ' does not seem to exist']);

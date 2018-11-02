@@ -14,14 +14,15 @@ do_csd = false;
 resample_eeg = false;
 erp_baseline = 'no';
 channelset = 'all';
-v2struct(msettings);
-
-if nargin<3
+if nargin>3
+    v2struct(msettings);
+end
+if nargin<3 || isempty(outpath)
     outpath = filepath;
 end
+
 % remove .set / .mat if present
 [~,filename,~] = fileparts(filename);
-
 
 % first try to load eeglab data in .set format
 if exist(fullfile(filepath,[filename '.set']),'file')
