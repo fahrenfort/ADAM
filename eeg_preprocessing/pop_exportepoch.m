@@ -1,19 +1,44 @@
 function events = pop_exportepoch(EEG)
-% exports epoch triggers that occur at time 0, as integers
-events = zeros(1,numel(EEG.epoch));
-for c=1:numel(EEG.epoch);
-    eventlatency = EEG.epoch(c).eventlatency;
+% POP_EXPORTEPOCH exports epoch event values from an EEGLAB EEG structure. It only exports event
+% values that occur at time 0 of your epoch, and it exports them as integers. These event values
+% correspond to the values that the ADAM toolbox will be using. It is the function that ADAM uses
+% internally to read EEGLAB events from your EEGLAB file. You can modify and re-import these event
+% values using: EEG = pop_importepoch(EEG,events,{'eventtype'},'typefield','eventtype');
+% 
+% Use as:
+%   events = pop_exportepoch(EEG);
+%
+% internal function of the ADAM toolbox, by J.J.Fahrenfort, UvA/VU, 2018
+%
+% See also ADAM_MVPA_FIRSTLEVEL, READ_RAW_DATA
+
+events = NaN(numel(EEG.epoch),1);
+for cEvents = 1:numel(EEG.epoch)
+    eventlatency = EEG.epoch(cEvents).eventlatency;
     if iscell(eventlatency)
         eventlatency = cell2mat(eventlatency);
     end
-    eventtype = EEG.epoch(c).eventtype;
-    if iscell(eventtype)
-        event = eventtype{eventlatency==0};
-    else
-        event = eventtype(eventlatency==0);
+    timezero = find(eventlatency == 0);
+    if isempty(timezero)
+        error('Cannot find an event code with event latency 0, which is the critical event this function attempts to extract.');
+    end
+    event = EEG.epoch(cEvents).eventtype;
+    if iscell(event)
+        event = event{timezero};
+    end
+    if ~ischar(event) && numel(event) > 1
+        event = event(timezero);
     end
     if ischar(event)
         event = string2double(event);
+        if numel(event) > 1
+            warning('Cannot convert event to a single numeric value, taking the first value');
+            event = event(1);
+        end
+        if isempty(event) || isnan(event)
+            event = NaN;
+            warning('Event value is NaN when converted to a numeral');
+        end
     end
-    events(c) = event;
+    events(cEvents,1) = event;
 end

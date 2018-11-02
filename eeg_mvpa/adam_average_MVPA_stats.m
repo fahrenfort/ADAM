@@ -132,8 +132,10 @@ for cStats = 1:nStats
 end
 % average and store
 nSubj = size(indivClassOverTime,1);
-avstats.ClassOverTime = ClassOverTime/nStats;
-avstats.indivClassOverTime = indivClassOverTime/nStats;
+ClassOverTime = ClassOverTime/nStats;
+indivClassOverTime = indivClassOverTime/nStats;
+avstats.ClassOverTime = ClassOverTime;
+avstats.indivClassOverTime = indivClassOverTime;
 if getweights
     avstats.weights.avWeights = avWeights/nStats;
     avstats.weights.indivWeights = indivWeights/nStats;
