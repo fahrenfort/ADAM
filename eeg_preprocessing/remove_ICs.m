@@ -41,7 +41,7 @@ if nargin < 4
     hor_ver_blink_gd = [];
 end
 if ischar(hor_ver_blink_gd)
-    hor_ver_blink_gd = str2double(hor_ver_blink_gd);
+    hor_ver_blink_gd = str2num(hor_ver_blink_gd);
 end
 if isempty(hor_ver_blink_gd) || numel(hor_ver_blink_gd)~=4
     disp('removing only EOG ICs (default)');
