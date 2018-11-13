@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_qca2</title>
+  <meta name="keywords" content="nt_qca2">
+  <meta name="description" content="[square,quad,square2,quad2,D]=nt_qca(x,npcs,nsmooth) - maximize induced power using quadratic component analysis">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_qca2.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_qca2
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[square,quad,square2,quad2,D]=nt_qca(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [squares,quad,squares2,quad2,D]=nt_qca2(x,npcs,nsmooth) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[square,quad,square2,quad2,D]=nt_qca(x,npcs,nsmooth) - maximize induced power using quadratic component analysis
+
+  square: linear component closest to most repeatable quadratic component 
+  quad: most reproducible quadratic component
+  square2: linear component closest to least repeatable quadratic component 
+  quad: least reproducible quadratic component
+  D: eigenvalues
+
+  x: data (time*channel*trial)
+  npcs: maximum number of data PCs to use
+  nsmooth: square smoothing window to apply to xproducts [default: 1]
+
+  Usually we are interested in the first component of 'squares'
+  (component with square closest to best quadratic component). 
+ 
+ NoiseTools.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean2.html" class="code" title="function x=nt_demean2(x,w)">nt_demean2</a>	y=nt_demean2(x,w) - remove mean of each row and page</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_qca02.html" class="code" title="function [tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth)">nt_qca02</a>	[tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [squares,quad,squares2,quad2,D]=nt_qca2(x,npcs,nsmooth)</a>
+0002 <span class="comment">%[square,quad,square2,quad2,D]=nt_qca(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  square: linear component closest to most repeatable quadratic component</span>
+0005 <span class="comment">%  quad: most reproducible quadratic component</span>
+0006 <span class="comment">%  square2: linear component closest to least repeatable quadratic component</span>
+0007 <span class="comment">%  quad: least reproducible quadratic component</span>
+0008 <span class="comment">%  D: eigenvalues</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">%  x: data (time*channel*trial)</span>
+0011 <span class="comment">%  npcs: maximum number of data PCs to use</span>
+0012 <span class="comment">%  nsmooth: square smoothing window to apply to xproducts [default: 1]</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">%  Usually we are interested in the first component of 'squares'</span>
+0015 <span class="comment">%  (component with square closest to best quadratic component).</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% NoiseTools.</span>
+0018 
+0019 
+0020 <span class="keyword">if</span> nargin&lt;3||isempty(nsmooth); nsmooth=1; <span class="keyword">end</span>
+0021 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0022 [nsamples,nchans,ntrials]=size(x);
+0023 
+0024 x=[x,ones(nsamples,1,ntrials)*max(abs(x(:)))]; <span class="comment">% append a DC component to absorb DC</span>
+0025 
+0026 [tosquares,quad,tosquares2,quad2,D]=<a href="nt_qca02.html" class="code" title="function [tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth)">nt_qca02</a>(x,npcs,nsmooth);
+0027 
+0028 squares=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,tosquares);
+0029 squares=<a href="nt_demean2.html" class="code" title="function x=nt_demean2(x,w)">nt_demean2</a>(squares);
+0030 r=nt_repeatability(squares.^2);
+0031 
+0032 <span class="comment">%figure(10); plot(r); pause</span>
+0033 
+0034 [dummy,idx]=sort(r,<span class="string">'descend'</span>);
+0035 squares=squares(:,idx,:);
+0036 
+0037 squares2=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,tosquares2(:,1));
+0038 
+0039 
+0040 
+0041</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

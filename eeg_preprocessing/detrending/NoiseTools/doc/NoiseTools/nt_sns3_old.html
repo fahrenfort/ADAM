@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_sns3_old</title>
+  <meta name="keywords" content="nt_sns3_old">
+  <meta name="description" content="[y,w]=nt_sns2(x,thresh) - sensor noise suppression, new version">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_sns3_old.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_sns3_old
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,w]=nt_sns2(x,thresh) - sensor noise suppression, new version</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [x,d]=nt_sns3(x,thresh) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> [y,w]=nt_sns2(x,thresh) - sensor noise suppression, new version
+
+  y: denoised data 
+  w: 0 for parts that needed fixing, 1 elsewhere (time*chans)
+
+  x: data to denoise (time*chans or time*chans*trials)
+  thresh: threshold for Mahalanobis distance (default:1);</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,N) - PCA matrix from covariance</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [x,d]=nt_sns3(x,thresh)</a>
+0002 <span class="comment">% [y,w]=nt_sns2(x,thresh) - sensor noise suppression, new version</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: denoised data</span>
+0005 <span class="comment">%  w: 0 for parts that needed fixing, 1 elsewhere (time*chans)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data to denoise (time*chans or time*chans*trials)</span>
+0008 <span class="comment">%  thresh: threshold for Mahalanobis distance (default:1);</span>
+0009 <span class="comment">%</span>
+0010 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0011 
+0012 <span class="keyword">if</span> nargin&lt;1; error; <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin&lt;2 || isempty(thresh); thresh=1; <span class="keyword">end</span>
+0014 
+0015 [nsample,nchan,~]=size(x);
+0016 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0017 
+0018 mn=mean(x); <span class="comment">% save means</span>
+0019 x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0020 nn=sqrt(mean(x.^2)); <span class="comment">% save norms</span>
+0021 x=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x);
+0022 
+0023 <span class="comment">%{</span>
+0024 For each channel, find sections <span class="keyword">for</span> which it does not fit the 
+0025 subspace spanned by other sensors.  The calculation is repeated 
+0026 and the projection matrix is refined at each step.
+0027 <span class="comment">%}</span>
+0028 
+0029 y=zeros(size(x));
+0030 d=ones(size(x,1),nchan); <span class="comment">% distance from projection, d&gt;thresh means artifact</span>
+0031 
+0032 NITER=2; <span class="comment">% iterations to refine c0</span>
+0033 <span class="keyword">for</span> k=1:NITER
+0034     
+0035     <span class="comment">% c0: covariance of non-artifact part</span>
+0036     dd=max(d,[],2);
+0037     c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x,[],dd&lt;=1);
+0038     
+0039     d0=d;
+0040     <span class="keyword">for</span> iChan=1:nchan
+0041 
+0042         oChan=setdiff(1:nchan,iChan); <span class="comment">% other channels</span>
+0043         
+0044         [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,N)">nt_pcarot</a>(c0(oChan,oChan)); <span class="comment">% PCA</span>
+0045         PCA_THRESH=10^-6;
+0046         idx=find(eigenvalues/max(eigenvalues) &gt; PCA_THRESH); <span class="comment">% discard weak dims</span>
+0047         topcs=topcs(:,idx);
+0048         b=c0(iChan,oChan)*topcs/(topcs'*c0(oChan,oChan)*topcs); <span class="comment">% matrix to project on other channels</span>
+0049         y(:,iChan)=(x(:,oChan)*topcs)*b'; <span class="comment">% projection</span>
+0050 
+0051         y0=y;
+0052         
+0053         <span class="comment">% fix to exclude the most serious competing channels from projection</span>
+0054         competitors=zeros(size(d0(:,oChan)));
+0055         iCompetitors=d0(:,oChan)&gt; 1 <span class="keyword">...</span><span class="comment"> % bad</span>
+0056             &amp; d0(:,oChan) &gt; repmat(d0(:,iChan),1,nchan-1); <span class="comment">% and worse than this one</span>
+0057         competitors(find(iCompetitors))=d0(find(iCompetitors));
+0058         idx=find(~min(competitors,[],2)); <span class="comment">% samples with no competitors</span>
+0059         [~,worst]=max(competitors,[],2); <span class="comment">% which competitor dominates?</span>
+0060         worst(idx)=0; <span class="comment">% set to zero if there is none</span>
+0061         <span class="keyword">for</span> k=1:numel(oChan);
+0062             
+0063             iReplace=find(k==worst);
+0064             <span class="keyword">if</span> iReplace
+0065                 ooChan=setdiff(1:nchan,[iChan,oChan(k)]); <span class="comment">% channels other than this and worst</span>
+0066                 [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,N)">nt_pcarot</a>(c0(ooChan,ooChan)); <span class="comment">% PCA</span>
+0067                 PCA_THRESH=10^-6;
+0068                 idx=find(eigenvalues/max(eigenvalues) &gt; PCA_THRESH); <span class="comment">% discard weak dims</span>
+0069                 topcs=topcs(:,idx);
+0070                 b=c0(iChan,ooChan)*topcs/(topcs'*c0(ooChan,ooChan)*topcs);
+0071                 y(iReplace,iChan)=(x(iReplace,ooChan)*topcs)*b'; <span class="comment">% projection</span>
+0072             <span class="keyword">end</span>
+0073         <span class="keyword">end</span>
+0074         
+0075         
+0076         ddd=y(:,iChan)-x(:,iChan); <span class="comment">% difference from projection</span>
+0077         
+0078         d(:,iChan)=mahal(ddd,ddd)/thresh; <span class="comment">% excentricity of each sample and each channel</span>
+0079 
+0080         figure(1); clf
+0081         FOCUS=861600+(1:500); subplot 311; plot(x(FOCUS,:)); title(<span class="string">'raw'</span>);
+0082         subplot 312; plot([x(FOCUS,iChan), y0(FOCUS,iChan), y(FOCUS,iChan)]); title (num2str(iChan)); legend(<span class="string">'raw'</span>,<span class="string">'proj'</span>,<span class="string">'fixed'</span>);
+0083         subplot 313; plot(d(FOCUS,:)); pause
+0084 
+0085     <span class="keyword">end</span>    
+0086     <span class="comment">%disp(mean(w))</span>
+0087 <span class="keyword">end</span>
+0088 
+0089 dd=max(d,[],2);
+0090 <span class="comment">%x=nt_demean(x,dd&lt;1);</span>
+0091 c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x,[],dd&lt;1);
+0092 
+0093 
+0094 <span class="comment">%{</span>
+0095 For each channel, find the part <span class="keyword">for</span> which it dominates the artifact.
+0096 Replace that part based on projection on the other channels. 
+0097 <span class="comment">%}</span>
+0098 
+0099 idx=find(dd&gt;1);
+0100 xx=x(idx,:);
+0101 xx=abs(<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(xx));
+0102 
+0103 <span class="keyword">for</span> iChan=1:nchan
+0104     
+0105 <span class="comment">%     oChan=setdiff(1:nchan,iChan);</span>
+0106 <span class="comment">%     b=c0(iChan,oChan)/c0(oChan,oChan);    % projection matrix</span>
+0107 <span class="comment">%     idx2=find(xx(:,iChan)&gt;max(xx(:,oChan),[],2)); % find sections where this channel is largest</span>
+0108 <span class="comment">%     idx2=find(xx(:,iChan)&gt;max(xx(:,oChan),[],2)); % find sections where this channel is largest</span>
+0109 <span class="comment">%     x(idx(idx2),iChan)=x(idx(idx2),oChan)*b'; % replace by projection</span>
+0110 
+0111     oChan=setdiff(1:nchan,iChan);
+0112     b=c0(iChan,oChan)/c0(oChan,oChan);    <span class="comment">% projection matrix</span>
+0113     idx2=find(xx(:,iChan)&gt;max(xx(:,oChan),[],2)); <span class="comment">% find sections where this channel is largest</span>
+0114     
+0115     x(idx(idx2),iChan)=x(idx(idx2),oChan)*b'; <span class="comment">% replace by projection</span>
+0116     
+0117     idx2=find(d(:,iChan)&gt;1 &amp; d(:,iChan)&gt;max(d(:,oChan),[],2));
+0118     <span class="comment">%x(idx2,iChan)=x(idx2,oChan)*b';</span>
+0119 
+0120 <span class="keyword">end</span>
+0121 
+0122 <span class="comment">%{</span>
+0123 To do:
+0124 - avoid problems with rank-deficient data
+0125 - exclude borderline channels from projection
+0126 <span class="comment">%}</span>
+0127 
+0128 x=bsxfun(@times,x,nn);
+0129 x=bsxfun(@plus,x,mn);
+0130 
+0131 x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(x,nsample);
+0132 d=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(d,nsample);
+0133 
+0134 
+0135</pre></div>
+<hr><address>Generated on Wed 29-Apr-2015 15:09:19 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

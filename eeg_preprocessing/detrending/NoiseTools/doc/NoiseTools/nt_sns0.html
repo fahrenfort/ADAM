@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_sns0</title>
+  <meta name="keywords" content="nt_sns0">
+  <meta name="description" content="r=nt_sns0(c,nneigbors,skip,wc) - sensor noise suppression">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_sns0.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_sns0
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>r=nt_sns0(c,nneigbors,skip,wc) - sensor noise suppression</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function r=nt_sns0(c,nneighbors,skip,wc) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> r=nt_sns0(c,nneigbors,skip,wc) - sensor noise suppression
+
+   r: denoising matrix
+
+   c: full covariance of data to denoise
+   nneighbors: number of channels to use in projection 
+   skip: number of neighbors to skip [default: 0]
+   wc: weighted covariance</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_sns.html" class="code" title="function y=nt_sns(x,nneighbors,skip,w)">nt_sns</a>	y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function r=nt_sns0(c,nneighbors,skip,wc)</a>
+0002 <span class="comment">% r=nt_sns0(c,nneigbors,skip,wc) - sensor noise suppression</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%   r: denoising matrix</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%   c: full covariance of data to denoise</span>
+0007 <span class="comment">%   nneighbors: number of channels to use in projection</span>
+0008 <span class="comment">%   skip: number of neighbors to skip [default: 0]</span>
+0009 <span class="comment">%   wc: weighted covariance</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%</span>
+0012 
+0013 
+0014 n=size(c,1);
+0015 
+0016 <span class="keyword">if</span> nargin&lt;2 || isempty(nneighbors); error(<span class="string">'need to specify nneighbors'</span>); <span class="keyword">end</span>
+0017 <span class="keyword">if</span> nargin&lt;3 || isempty(skip); skip=0; <span class="keyword">end</span>
+0018 <span class="keyword">if</span> nargin&lt;4 || isempty(wc); wc=c; <span class="keyword">end</span>
+0019 
+0020 nneighbors=min(nneighbors,n-skip-1);
+0021 
+0022 r=zeros(size(c));
+0023 
+0024 <span class="comment">% normalize</span>
+0025 d=sqrt(1./(diag(c)+eps));
+0026 c=<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(c,d),d');
+0027 
+0028 <span class="keyword">for</span> iChan=1:n
+0029  
+0030     c1=c(:,iChan);                      <span class="comment">% correlation of channel with all other channels</span>
+0031     [c1,idx]=sort(c1.^2,1,<span class="string">'descend'</span>);   <span class="comment">% sort by correlation</span>
+0032     idx=idx(skip+2:skip+1+nneighbors);  <span class="comment">% keep best</span>
+0033 
+0034     <span class="comment">% pca neighbors to orthogonalize them</span>
+0035     c2=wc(idx,idx);
+0036     [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>(c2);
+0037     topcs=topcs*diag(1./sqrt(eigenvalues));
+0038     topcs(find(isinf(topcs)|isnan(topcs)))=0;
+0039     
+0040     <span class="comment">% augment rotation matrix to include this channel</span>
+0041     topcs=[1,zeros(1,nneighbors);zeros(nneighbors,1),topcs];
+0042     
+0043     <span class="comment">% correlation matrix for rotated data</span>
+0044     c3=topcs'*wc([iChan;idx],[iChan;idx])*topcs;
+0045     
+0046     <span class="comment">% first row defines projection to clean component iChan</span>
+0047     c4=c3(1,2:end)*topcs(2:<span class="keyword">end</span>,2:end)';
+0048 
+0049     <span class="comment">% insert new column into denoising matrix</span>
+0050     r(idx,iChan)=c4;
+0051 
+0052 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

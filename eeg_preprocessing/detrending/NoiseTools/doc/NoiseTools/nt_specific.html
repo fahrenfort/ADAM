@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_specific</title>
+  <meta name="keywords" content="nt_specific">
+  <meta name="description" content="y=nt_specific(x) - isolate channel-specific activity">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_specific.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_specific
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_specific(x) - isolate channel-specific activity</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_specific(x,w,thresh) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_specific(x) - isolate channel-specific activity
+
+  y: channel-specific component
+  
+  x: data (2D or 3D)
+  w: weights
+  thresh: threshold to discard PCs (default: 10^-6)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,N) - PCA matrix from covariance</li><li><a href="nt_specific.html" class="code" title="function y=nt_specific(x,w,thresh)">nt_specific</a>	y=nt_specific(x) - isolate channel-specific activity</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_specific.html" class="code" title="function y=nt_specific(x,w,thresh)">nt_specific</a>	y=nt_specific(x) - isolate channel-specific activity</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y=nt_specific(x,w,thresh)</a>
+0002 <span class="comment">%y=nt_specific(x) - isolate channel-specific activity</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: channel-specific component</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data (2D or 3D)</span>
+0007 <span class="comment">%  w: weights</span>
+0008 <span class="comment">%  thresh: threshold to discard PCs (default: 10^-6)</span>
+0009 
+0010 <span class="keyword">if</span> nargin&lt;3||isempty(thresh); thresh=0; <span class="keyword">end</span>
+0011 <span class="keyword">if</span> nargin&lt;2; w=[]; <span class="keyword">end</span>
+0012 
+0013 <span class="keyword">if</span> ~isempty(w); error(<span class="string">'weights not yet implemented'</span>); <span class="keyword">end</span>
+0014 
+0015 <span class="keyword">if</span> ndims(x)&gt;2;
+0016     [m,n,o]=size(x);
+0017     x=<a href="nt_specific.html" class="code" title="function y=nt_specific(x,w,thresh)">nt_specific</a>(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x),w,thresh);
+0018     x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(x,m);
+0019     <span class="keyword">return</span>
+0020 <span class="keyword">end</span>
+0021 
+0022 [m,n]=size(x);
+0023 cc=x'*x;
+0024 
+0025 y=zeros(size(x));
+0026 <span class="keyword">for</span> k=1:n
+0027     idx=[1:k-1,k+1:n];
+0028     [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,N)">nt_pcarot</a>(cc(idx,idx)); <span class="comment">% PCA to orthogonalize the other channels</span>
+0029     topcs=topcs(:,find(eigenvalues/max(eigenvalues)&gt;thresh));
+0030     b=x(:,idx)*topcs(:,:);
+0031     b=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(b); <span class="comment">% this could be optimized</span>
+0032     c=x(:,k)'*b/m; <span class="comment">% projection matrix</span>
+0033     <span class="comment">%y(:,k)=x(:,k)-b*c'; % remove projection</span>
+0034     y(:,k)=b*c'; <span class="comment">% remove projection</span>
+0035 <span class="keyword">end</span>
+0036 
+0037 
+0038 
+0039 <span class="comment">% function x=nt_specific(x,w,thresh)</span>
+0040 <span class="comment">% %y=nt_specific(x) - isolate channel-specific activity</span>
+0041 <span class="comment">% %</span>
+0042 <span class="comment">% %  y: channel-specific component</span>
+0043 <span class="comment">% %</span>
+0044 <span class="comment">% %  x: data (2D or 3D)</span>
+0045 <span class="comment">% %  w: weights</span>
+0046 <span class="comment">% %  thresh: threshold to discard PCs (default: 10^-6)</span>
+0047 <span class="comment">%</span>
+0048 <span class="comment">% if nargin&lt;3||isempty(thresh); thresh=0; end</span>
+0049 <span class="comment">% if nargin&lt;2; w=[]; end</span>
+0050 <span class="comment">%</span>
+0051 <span class="comment">% if ~isempty(w); error('weights not yet implemented'); end</span>
+0052 <span class="comment">%</span>
+0053 <span class="comment">% if ndims(x)&gt;2;</span>
+0054 <span class="comment">%     [m,n,o]=size(x);</span>
+0055 <span class="comment">%     x=nt_specific(nt_unfold(x),w,thresh);</span>
+0056 <span class="comment">%     x=nt_fold(x,m);</span>
+0057 <span class="comment">%     return</span>
+0058 <span class="comment">% end</span>
+0059 <span class="comment">% [m,n]=size(x);</span>
+0060 <span class="comment">% cc=x'*x;</span>
+0061 <span class="comment">%</span>
+0062 <span class="comment">% y=zeros(size(x));</span>
+0063 <span class="comment">% for k=1:n</span>
+0064 <span class="comment">%     idx=[1:k-1,k+1:n];</span>
+0065 <span class="comment">%     [topcs,eigenvalues]=nt_pcarot(cc(idx,idx)); % PCA to orthogonalize the other channels</span>
+0066 <span class="comment">%     topcs=topcs(:,1:60);</span>
+0067 <span class="comment">%     %topcs=topcs(:,find(eigenvalues/max(eigenvalues)&gt;thresh));</span>
+0068 <span class="comment">%     b=x(:,idx)*topcs(:,:);</span>
+0069 <span class="comment">%     b=nt_normcol(b); % this could be optimized</span>
+0070 <span class="comment">%     c=x(:,k)'*b/m; % projection matrix</span>
+0071 <span class="comment">%     x(:,k)=x(:,k)-b*c'; % remove projection</span>
+0072 <span class="comment">%     cc(idx,k)=x(:,k)'*x(:,idx); % update covariance matrix</span>
+0073 <span class="comment">%     cc(k,:)=cc(:,k)';</span>
+0074 <span class="comment">% end</span></pre></div>
+<hr><address>Generated on Wed 19-Feb-2014 10:52:00 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

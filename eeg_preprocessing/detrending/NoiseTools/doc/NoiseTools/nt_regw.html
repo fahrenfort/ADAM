@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_regw</title>
+  <meta name="keywords" content="nt_regw">
+  <meta name="description" content="[b,z]=nt_regw(y,x,w) - weighted regression">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_regw.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_regw
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[b,z]=nt_regw(y,x,w) - weighted regression</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [b,z]=nt_regw(y,x,w) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[b,z]=nt_regw(y,x,w) - weighted regression
+
+  b: regression matrix (apply to x to approximate y)
+  z: regression (x*b)
+
+  y: data
+  x: regressor
+  w: weight to apply to y
+
+  w is either a matrix of same size as y, or a column vector to be applied
+  to each column of y
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>	nt_imagescc - plot image with symmetric scaling</li><li><a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>	[b,z]=nt_regw(y,x,w) - weighted regression</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>	[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</li><li><a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>	[b,z]=nt_regw(y,x,w) - weighted regression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [b,z]=nt_regw(y,x,w)</a>
+0002 <span class="comment">%[b,z]=nt_regw(y,x,w) - weighted regression</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  b: regression matrix (apply to x to approximate y)</span>
+0005 <span class="comment">%  z: regression (x*b)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  y: data</span>
+0008 <span class="comment">%  x: regressor</span>
+0009 <span class="comment">%  w: weight to apply to y</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%  w is either a matrix of same size as y, or a column vector to be applied</span>
+0012 <span class="comment">%  to each column of y</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% NoiseTools</span>
+0015 
+0016 PCA_THRESH=0.0000001; <span class="comment">% discard dimensions of x with eigenvalue lower than this</span>
+0017 
+0018 <span class="keyword">if</span> nargin&lt;3; w=[]; <span class="keyword">end</span>
+0019 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0020 
+0021 <span class="comment">%% check/fix sizes</span>
+0022 m=size(y,1);
+0023 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0024 y=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(y);
+0025 <span class="keyword">if</span> size(x,1)~=size(y,1); 
+0026     disp(size(x)); disp(size(y)); error(<span class="string">'!'</span>); 
+0027 <span class="keyword">end</span>
+0028 
+0029 <span class="comment">%% save weighted mean</span>
+0030 <span class="keyword">if</span> nargout&gt;1
+0031     mn=y-<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(y,w);
+0032 <span class="keyword">end</span>
+0033 
+0034 <span class="comment">%%</span>
+0035 <span class="keyword">if</span> isempty(w) 
+0036     <span class="comment">%% simple regression</span>
+0037     xx=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0038     yy=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(y);
+0039     [V,D]=eig(xx'*xx); V=real(V); D=real(D);
+0040     topcs=V(:,find(D/max(D) &gt; PCA_THRESH)); <span class="comment">% discard weak dims</span>
+0041     xxx=xx*topcs;
+0042     b=(yy'*xxx) / (xxx'*xxx); b=b';
+0043     <span class="keyword">if</span> nargout&gt;1; z=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,w)*topcs*b; z=z+mn; <span class="keyword">end</span>
+0044 <span class="keyword">else</span>
+0045     <span class="comment">%% weighted regression</span>
+0046     <span class="keyword">if</span> size(w,1)~=size(x,1); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0047     <span class="keyword">if</span> size(w,2)==1; 
+0048         <span class="comment">%% same weight for all channels</span>
+0049         <span class="keyword">if</span> sum(w(:))==0; 
+0050             <span class="comment">%warning('weights all zero');</span>
+0051             b=0;
+0052         <span class="keyword">else</span>
+0053             yy=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(y,w).*repmat(w,1,size(y,2)); 
+0054             xx=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,w).*repmat(w,1,size(x,2));  
+0055             [V,D]=eig(xx'*xx); V=real(V); D=real(D); D=diag(D);
+0056             topcs=V(:,find(D/max(D) &gt; PCA_THRESH)); <span class="comment">% discard weak dims</span>
+0057             xxx=xx*topcs;
+0058             b=(yy'*xxx) / (xxx'*xxx); b=b';
+0059         <span class="keyword">end</span>
+0060         <span class="keyword">if</span> nargout&gt;1; z=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,w)*topcs*b; z=z+mn; <span class="keyword">end</span>
+0061     <span class="keyword">else</span>
+0062         <span class="comment">%% each channel has own weight</span>
+0063         <span class="keyword">if</span> size(w,2) ~= size(y,2); error(<span class="string">'!'</span>); <span class="keyword">end</span> 
+0064         <span class="keyword">if</span> nargout; z=zeros(size(y)); <span class="keyword">end</span>
+0065         <span class="keyword">for</span> iChan=1:size(y,2)
+0066             <span class="keyword">if</span> sum(w(:,iChan))==0; <span class="comment">%disp(iChan);</span>
+0067                 <span class="comment">%warning('weights all zero');</span>
+0068                 b=zeros(size(y,2));
+0069             <span class="keyword">else</span>
+0070                 yy=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(y(:,iChan),w(:,iChan)) .* w(:,iChan); 
+0071                 x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,w(:,iChan)); <span class="comment">% remove channel-specific-weighted mean from regressor</span>
+0072                 xx=x.*repmat(w(:,iChan),1,size(x,2)); 
+0073                 [V,D]=eig(xx'*xx); V=real(V); D=real(diag(D));
+0074                 topcs=V(:,find(D/max(D) &gt; PCA_THRESH)); <span class="comment">% discard weak dims</span>
+0075                 xxx=xx*topcs;
+0076                 b(iChan,1:size(topcs,2))=(yy'*xxx) / (xxx'*xxx); 
+0077             <span class="keyword">end</span>
+0078             <span class="keyword">if</span> nargout&gt;1; z(:,iChan)=x*(topcs*b(iChan,1:size(topcs,2))') + mn(:,iChan); <span class="keyword">end</span>
+0079         <span class="keyword">end</span>
+0080     <span class="keyword">end</span>             
+0081 <span class="keyword">end</span>
+0082 
+0083 <span class="comment">%%</span>
+0084 <span class="keyword">if</span> nargout&gt;1;
+0085     z=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(z,m);
+0086 <span class="keyword">end</span>
+0087 
+0088 <span class="comment">%% test code</span>
+0089 <span class="keyword">if</span> 0
+0090     <span class="comment">% basic</span>
+0091     x=randn(100,10); y=randn(100,10); 
+0092     b1=<a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>(x,y); b2=<a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>(x,x); b3=<a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>(x,y,ones(size(x))); 
+0093     figure(1); subplot 131; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(b1); subplot 132; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(b2); subplot 133; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(b3);
+0094 <span class="keyword">end</span>
+0095 <span class="keyword">if</span> 0
+0096     <span class="comment">% fit random walk</span>
+0097     y=cumsum(randn(1000,1)); x=(1:1000)'; x=[x,x.^2,x.^3];
+0098     [b,z]=<a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>(y,x); 
+0099     figure(1); clf; plot([y,z]);
+0100 <span class="keyword">end</span>
+0101 <span class="keyword">if</span> 0
+0102     <span class="comment">% weights, random</span>
+0103     y=cumsum(randn(1000,1)); x=(1:1000)'; x=[x,x.^2,x.^3];
+0104     w=rand(size(y));
+0105     [b,z]=<a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>(y,x,w); 
+0106     figure(1); clf; plot([y,z]);
+0107 <span class="keyword">end</span>
+0108 <span class="keyword">if</span> 0
+0109     <span class="comment">% weights, 1st vs 2nd half</span>
+0110     y=cumsum(randn(1000,1))+1000; x=(1:1000)'; x=[x,x.^2,x.^3];
+0111     w=ones(size(y)); w(1:500,:)=0;
+0112     [b,z]=<a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>(y,x,w); 
+0113     figure(1); clf; plot([y,z]);
+0114 <span class="keyword">end</span>
+0115 <span class="keyword">if</span> 0
+0116     <span class="comment">% multichannel</span>
+0117     y=cumsum(randn(1000,2)); x=(1:1000)'; x=[x,x.^2,x.^3];
+0118     w=ones(size(y)); 
+0119     [b,z]=<a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>(y,x,w); 
+0120     figure(1); clf; plot([y,z]);
+0121 <span class="keyword">end</span>
+0122</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

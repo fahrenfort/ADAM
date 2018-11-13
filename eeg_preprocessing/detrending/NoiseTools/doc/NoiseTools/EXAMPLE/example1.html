@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of example1</title>
+  <meta name="keywords" content="example1">
+  <meta name="description" content="Find the linear combinations of multichannel data that">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">EXAMPLE</a> &gt; example1.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/EXAMPLE&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>example1
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>Find the linear combinations of multichannel data that</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Find the linear combinations of multichannel data that
+ maximize repeatability over trials.  Data are time*channel*trials.
+
+ Uses nt_dss0().</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% Find the linear combinations of multichannel data that</span>
+0002 <span class="comment">% maximize repeatability over trials.  Data are time*channel*trials.</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% Uses nt_dss0().</span>
+0005 
+0006 clear;
+0007 disp(mfilename);
+0008 help(mfilename)
+0009 
+0010 <span class="comment">% create synthetic data</span>
+0011 nsamples=100*3;
+0012 nchans=30;
+0013 ntrials=100;
+0014 noise_dim=20; <span class="comment">% dimensionality of noise</span>
+0015 source=[zeros(nsamples/3,1);sin(2*pi*(1:nsamples/3)/(nsamples/3))';zeros(nsamples/3,1)]; 
+0016 s=source*randn(1,nchans);
+0017 s=repmat(s,[1,1,100]); <span class="comment">% evoked</span>
+0018 SNR=0.1;
+0019 noise=nt_mmat(randn(nsamples,noise_dim,ntrials), randn(noise_dim,nchans));
+0020 data=noise/rms(noise(:))+SNR*s/nt_rms(s(:));
+0021 
+0022 <span class="comment">% apply DSS to clean them</span>
+0023 c0=nt_cov(data);
+0024 c1=nt_cov(mean(data,3));
+0025 [todss,pwr0,pwr1]=nt_dss0(c0,c1);
+0026 z=nt_mmat(data,todss);
+0027 
+0028 
+0029 <span class="comment">% plot results</span>
+0030 figure(1); clf
+0031 subplot 131; 
+0032 plot(source); title(<span class="string">'source'</span>); 
+0033 subplot 132;
+0034 plot(mean(data,3)); title(<span class="string">'data'</span>);
+0035 subplot 133;
+0036 nt_bsplot(z(:,1,:)); title(<span class="string">'recovered'</span>); 
+0037</pre></div>
+<hr><address>Generated on Wed 29-Nov-2017 23:17:18 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

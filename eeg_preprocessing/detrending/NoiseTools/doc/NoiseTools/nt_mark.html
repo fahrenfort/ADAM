@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_mark</title>
+  <meta name="keywords" content="nt_mark">
+  <meta name="description" content="nt_mark(idx,labels,line_params,text_params)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_mark.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_mark
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>nt_mark(idx,labels,line_params,text_params)</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function nt_mark(idx,labels,line_params,text_params) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> nt_mark(idx,labels,line_params,text_params)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_split.html" class="code" title="function [idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep)">nt_split</a>	[idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep) - split time series into intervals</li><li><a href="nt_split_jd.html" class="code" title="function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);">nt_split_jd</a>	[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function nt_mark(idx,labels,line_params,text_params)</a>
+0002 <span class="comment">% nt_mark(idx,labels,line_params,text_params)</span>
+0003 
+0004 
+0005 <span class="keyword">if</span> nargin&lt;2; labels=[]; <span class="keyword">end</span>
+0006 
+0007 ylim=get(gca,<span class="string">'ylim'</span>);
+0008 <span class="keyword">for</span> k=1:numel(idx)
+0009     line([idx(k) idx(k)],[ylim(1),ylim(1)+0.95*(ylim(2)-ylim(1))], <span class="string">'color'</span>, <span class="string">'r'</span>, <span class="string">'linestyle'</span>, <span class="string">'--'</span>);
+0010     <span class="keyword">if</span> ~isempty(labels)
+0011         <span class="keyword">if</span> k&lt;= numel(labels) &amp;&amp; ~isempty(labels{k});
+0012             text(idx(k), ylim(1)+0.97*(ylim(2)-ylim(1)), labels{k});
+0013         <span class="keyword">end</span>
+0014     <span class="keyword">end</span>
+0015 <span class="keyword">end</span>
+0016 set(gca,<span class="string">'ylim'</span>,ylim)</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

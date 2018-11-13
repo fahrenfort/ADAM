@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_trial2mat</title>
+  <meta name="keywords" content="nt_trial2mat">
+  <meta name="description" content="[y,w]=nt_trial2mat(x,max_nsamples) - convert trial cell array to 3D matrix">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_trial2mat.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_trial2mat
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,w]=nt_trial2mat(x,max_nsamples) - convert trial cell array to 3D matrix</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y,w]=nt_trial2mat(x,max_nsamples) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,w]=nt_trial2mat(x,max_nsamples) - convert trial cell array to 3D matrix
+
+  y: matrix (samples * channels * trials)
+  w: weights (samples * 1 * trials)
+
+  x: trial array (each trial is channels * samples)
+  max_nsamples: max number of samples per trial
+
+ In the case of variable-length trials, the weights can be used to indicate 
+ which parts of the array are valid data.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,w]=nt_trial2mat(x,max_nsamples) </a>
+0002 <span class="comment">%[y,w]=nt_trial2mat(x,max_nsamples) - convert trial cell array to 3D matrix</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: matrix (samples * channels * trials)</span>
+0005 <span class="comment">%  w: weights (samples * 1 * trials)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: trial array (each trial is channels * samples)</span>
+0008 <span class="comment">%  max_nsamples: max number of samples per trial</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% In the case of variable-length trials, the weights can be used to indicate</span>
+0011 <span class="comment">% which parts of the array are valid data.</span>
+0012 
+0013 <span class="keyword">if</span> nargin&lt;2; max_nsamples=[]; <span class="keyword">end</span>
+0014 
+0015 ntrials=numel(x);
+0016 
+0017 <span class="comment">% determine maximum trial size</span>
+0018 nsamples=0;
+0019 <span class="keyword">for</span> k=1:ntrials
+0020     [m,n]=size(x{k});
+0021     nsamples=max(n,nsamples);
+0022 <span class="keyword">end</span>
+0023 
+0024 <span class="comment">% clip if too large</span>
+0025 <span class="keyword">if</span> ~isempty(max_nsamples)
+0026     nsamples=min(nsamples,max_nsamples);
+0027 <span class="keyword">end</span>
+0028 
+0029 <span class="comment">% load data into 3D matrix</span>
+0030 nchans=m;
+0031 y=zeros(nsamples, nchans, ntrials);
+0032 w=zeros(nsamples, 1, ntrials);
+0033 <span class="keyword">for</span> k=1:ntrials
+0034     [m,n]=size(x{k});
+0035     <span class="keyword">if</span> n&gt;nsamples;
+0036         <span class="comment">% longer than max: clip</span>
+0037         x{k}=x{k}(:,1:nsamples);
+0038         n=nsamples;
+0039     <span class="keyword">end</span>
+0040     y(1:n,:,k)=x{k}';
+0041     w(1:n,1,k)=1;
+0042 <span class="keyword">end</span>
+0043</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

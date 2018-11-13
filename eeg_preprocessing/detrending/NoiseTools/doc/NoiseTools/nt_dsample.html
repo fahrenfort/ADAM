@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_dsample</title>
+  <meta name="keywords" content="nt_dsample">
+  <meta name="description" content="y=nt_dsample(x,factor) - downsample by averaging neighboring samples">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_dsample.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_dsample
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_dsample(x,factor) - downsample by averaging neighboring samples</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function x=nt_dsample(x,factor) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_dsample(x,factor) - downsample by averaging neighboring samples
+
+  y: downsampled data
+ 
+  x: data to downsample (2 or 3D)
+  factor: downsampling factor (can be fractional)
+
+ Downsampling is performed along columns.  If size(x,1) is not multiple of
+ factor, it is truncated.
+ 
+ The data are lowpass filtered by convolution with a square window, which
+ ensures minimal temporal distortion of the waveform. However it does not
+ strongly attenuate frequency components beyond the Nyquist frequency, so
+ it is not optimal from a frequency-domain point of view. If this is a
+ concern, uses nt_resample() instead.
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dsample.html" class="code" title="function x=nt_dsample(x,factor)">nt_dsample</a>	y=nt_dsample(x,factor) - downsample by averaging neighboring samples</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dsample.html" class="code" title="function x=nt_dsample(x,factor)">nt_dsample</a>	y=nt_dsample(x,factor) - downsample by averaging neighboring samples</li><li><a href="nt_xprod.html" class="code" title="function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)">nt_xprod</a>	[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts</li><li><a href="nt_xprod2.html" class="code" title="function [y]=nt_xprod2(x1,x2,dsratio)">nt_xprod2</a>	[y,ind]=nt_xprod(x1,x2,dsratio) - form all crossproducts</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function x=nt_dsample(x,factor)</a>
+0002 <span class="comment">%y=nt_dsample(x,factor) - downsample by averaging neighboring samples</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: downsampled data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data to downsample (2 or 3D)</span>
+0007 <span class="comment">%  factor: downsampling factor (can be fractional)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% Downsampling is performed along columns.  If size(x,1) is not multiple of</span>
+0010 <span class="comment">% factor, it is truncated.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% The data are lowpass filtered by convolution with a square window, which</span>
+0013 <span class="comment">% ensures minimal temporal distortion of the waveform. However it does not</span>
+0014 <span class="comment">% strongly attenuate frequency components beyond the Nyquist frequency, so</span>
+0015 <span class="comment">% it is not optimal from a frequency-domain point of view. If this is a</span>
+0016 <span class="comment">% concern, uses nt_resample() instead.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% NoiseTools</span>
+0019 
+0020 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0021 <span class="keyword">if</span> factor==1; <span class="keyword">return</span>; <span class="keyword">end</span>
+0022 <span class="keyword">if</span> factor ~= round(factor); error(<span class="string">'factor must be integer'</span>); <span class="keyword">end</span>
+0023 
+0024 <span class="keyword">if</span> ndims(x)&gt;2;
+0025     d=size(x);
+0026     x=reshape(x,[d(1),prod(d(2:end))]);
+0027     x=<a href="nt_dsample.html" class="code" title="function x=nt_dsample(x,factor)">nt_dsample</a>(x,factor);
+0028     x=reshape(x,[size(x,1),d(2:end)]);
+0029     <span class="keyword">return</span>
+0030 <span class="keyword">end</span>
+0031 
+0032 [m,n]=size(x);
+0033 a=floor(m/factor);
+0034 b=rem(m,factor);
+0035 
+0036 <span class="keyword">if</span> b&gt;0;
+0037     xx=x((a*factor+1):<span class="keyword">end</span>,:); <span class="comment">% extra bit</span>
+0038     x=x(1:a*factor,:);
+0039 <span class="keyword">end</span>
+0040 
+0041 x=reshape(x,[factor,a,n]);
+0042 x=mean(x,1);
+0043 x=shiftdim(x,1);
+0044 
+0045 <span class="comment">% buggy, dunno why, simpler to remove</span>
+0046 <span class="comment">% if b&gt;0</span>
+0047 <span class="comment">%     x=[x;mean(xx,1)];</span>
+0048 <span class="comment">% end</span>
+0049</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

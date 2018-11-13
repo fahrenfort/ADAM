@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_dss1</title>
+  <meta name="keywords" content="nt_dss1">
+  <meta name="description" content="[todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2) - evoked-biased DSS denoising">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_dss1.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_dss1
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2) - evoked-biased DSS denoising</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2) - evoked-biased DSS denoising
+
+  todss: denoising matrix
+  pwr0: power per component (raw)
+  pwr1: power per component (averaged)
+
+  x: data to denoise (time * channels * trials)
+  w: weight
+  keep1: (in DSS0) number of PCs to retain (default: all)
+  keep2: (in DSS0) ignore PCs smaller than keep2 (default: 10.^-12)
+
+  The data mean is NOT removed prior to processing.
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bsplot.html" class="code" title="function nt_bsplot(x,w,style,abscissa,zeroflag,rmsflag)">nt_bsplot</a>	nt_bsplot(x,sds,style,abscissa,zeroflag,rmsflag) - plot average with bootstrap standard deviation</li><li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_wmean.html" class="code" title="function y=nt_wmean(x,w,dim)">nt_wmean</a>	y=nt_wmean(x,w,dim) - weighted average</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dss_repeat_cluster.html" class="code" title="function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)">nt_dss_repeat_cluster</a>	y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2)</a>
+0002 <span class="comment">%[todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2) - evoked-biased DSS denoising</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  todss: denoising matrix</span>
+0005 <span class="comment">%  pwr0: power per component (raw)</span>
+0006 <span class="comment">%  pwr1: power per component (averaged)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  x: data to denoise (time * channels * trials)</span>
+0009 <span class="comment">%  w: weight</span>
+0010 <span class="comment">%  keep1: (in DSS0) number of PCs to retain (default: all)</span>
+0011 <span class="comment">%  keep2: (in DSS0) ignore PCs smaller than keep2 (default: 10.^-12)</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%  The data mean is NOT removed prior to processing.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% NoiseTools</span>
+0016 
+0017 <span class="keyword">if</span> nargin&lt;4; keep2=10.^-12; <span class="keyword">end</span>
+0018 <span class="keyword">if</span> nargin&lt;3; keep1=[]; <span class="keyword">end</span>
+0019 <span class="keyword">if</span> nargin&lt;2; w=[]; <span class="keyword">end</span>
+0020 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0021 
+0022 <span class="keyword">if</span> ndims(x)&lt;3; error(<span class="string">'x should be 3D'</span>); <span class="keyword">end</span>
+0023 <span class="keyword">if</span> ~isa(x,<span class="string">'double'</span>); warning(<span class="string">'x is not double precision'</span>); <span class="keyword">end</span>
+0024 
+0025 x=x(:,:,:); <span class="comment">% collapse higher dims</span>
+0026 
+0027 [m,n,o]=size(x);
+0028 
+0029 <span class="keyword">if</span> isempty(w)   <span class="comment">% average over trials (--&gt; bias function for DSS)</span>
+0030     [c0,nc0]=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x);
+0031     c0=c0/nc0;
+0032     [c1,nc1]=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(mean(x,3)); 
+0033     c1=c1/nc1;
+0034 <span class="keyword">else</span>
+0035     <span class="comment">% weighted average over trials (--&gt; bias function for DSS)</span>
+0036     xx=<a href="nt_wmean.html" class="code" title="function y=nt_wmean(x,w,dim)">nt_wmean</a>(x,w,3);
+0037     ww=min(w,[],2);
+0038     <span class="comment">% covariance of raw and biased data</span>
+0039     [c0,nc0]=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x,[],w);
+0040     c0=c0/nc0;
+0041     [c1,nc1]=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(xx,[],ww); 
+0042     c1=c1/nc1;
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="comment">% derive DSS matrix</span>
+0046 [todss,pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1,keep1,keep2);
+0047 
+0048 <span class="keyword">if</span> nargout==0
+0049     
+0050     figure(100); clf; 
+0051     subplot 221; 
+0052     plot(pwr1./pwr0,<span class="string">'.-'</span>);
+0053     xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'score'</span>);
+0054     z=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,todss(:,1:3));
+0055     <span class="keyword">for</span> iComp=1:3;
+0056         subplot(2,2,iComp+1);
+0057         <a href="nt_bsplot.html" class="code" title="function nt_bsplot(x,w,style,abscissa,zeroflag,rmsflag)">nt_bsplot</a>(z(:,iComp,:));
+0058         title(iComp);
+0059         xlabel(<span class="string">'sample'</span>);
+0060     <span class="keyword">end</span>
+0061     
+0062     clear todss pwr0 pwr1
+0063 <span class="keyword">end</span>
+0064</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

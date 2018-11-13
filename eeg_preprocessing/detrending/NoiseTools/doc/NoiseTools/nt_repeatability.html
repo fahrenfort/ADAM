@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_repeatability</title>
+  <meta name="keywords" content="nt_repeatability">
+  <meta name="description" content="[score]=nt_repeatability(x,demean_flag) - repeatability score">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_repeatability.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_repeatability
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[score]=nt_repeatability(x,demean_flag) - repeatability score</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function score=nt_repeatability(x,demean_flag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> [score]=nt_repeatability(x,demean_flag) - repeatability score
+
+  score: ratio of power of mean to total power
+
+  x: data (time * channels * repeats)
+  demean_flag: 0: no demean, 1: demean, 2: remove mean
+  of e
+
+  If no out argument is given, plot result.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_demean2.html" class="code" title="function x=nt_demean2(x,w)">nt_demean2</a>	y=nt_demean2(x,w) - remove mean of each row and page</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_qca.html" class="code" title="function [squares,quads,D]=nt_qca(x,npcs,nsmooth,nquads)">nt_qca</a>	[squares,quads,D]=nt_qca(x,npcs,nsmooth,nquads) - maximize induced power using quadratic component analysis</li><li><a href="nt_qca2.html" class="code" title="function [squares,quad,squares2,quad2,D]=nt_qca2(x,npcs,nsmooth)">nt_qca2</a>	[square,quad,square2,quad2,D]=nt_qca(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function score=nt_repeatability(x,demean_flag)</a>
+0002 <span class="comment">% [score]=nt_repeatability(x,demean_flag) - repeatability score</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  score: ratio of power of mean to total power</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data (time * channels * repeats)</span>
+0007 <span class="comment">%  demean_flag: 0: no demean, 1: demean, 2: remove mean</span>
+0008 <span class="comment">%  of e</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">%  If no out argument is given, plot result.</span>
+0011 
+0012 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0013 <span class="keyword">if</span> ndims(x)~=3; error(<span class="string">'data must be 3D'</span>); <span class="keyword">end</span>
+0014 
+0015 <span class="keyword">if</span> nargin&lt;2 || isempty(demean_flag)
+0016     demean_flag=1;
+0017 <span class="keyword">end</span>
+0018 
+0019 <span class="keyword">if</span> demean_flag==1
+0020     x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0021 <span class="keyword">elseif</span> demean_flag==2
+0022     x=<a href="nt_demean2.html" class="code" title="function x=nt_demean2(x,w)">nt_demean2</a>(x);
+0023 <span class="keyword">end</span>
+0024 
+0025 score=mean(mean(x,3).^2)./mean(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x.^2));
+0026 
+0027 <span class="keyword">if</span> nargout == 0 ;
+0028     plot(score); xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'score'</span>); title(<span class="string">'repeatability'</span>);
+0029     score=[];
+0030 <span class="keyword">end</span>
+0031</pre></div>
+<hr><address>Generated on Tue 09-May-2017 13:19:57 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

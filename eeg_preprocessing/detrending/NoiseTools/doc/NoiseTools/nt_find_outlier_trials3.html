@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_find_outlier_trials3</title>
+  <meta name="keywords" content="nt_find_outlier_trials3">
+  <meta name="description" content="[idx,d]=nt_find_outlier_trials3(x,criterion,norm_flag) - find outlier trials">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_find_outlier_trials3.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_find_outlier_trials3
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[idx,d]=nt_find_outlier_trials3(x,criterion,norm_flag) - find outlier trials</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [idx,d,cc]=nt_find_outlier_trials3(x,criterion,norm_flag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[idx,d]=nt_find_outlier_trials3(x,criterion,norm_flag) - find outlier trials
+
+  idx: indices of trials to keep
+  d: relative deviations from mean
+  
+  x: data (time * channels * trials)
+  criterion: keep trials less than criterion from mean
+  norm_flag: if true divide each frame by its RMS [default:0]
+
+  This version compares covariance matrices of sample-normalized data.
+
+  If no output arguments are specified, plots 'd'.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_find_outlier_trials3.html" class="code" title="function [idx,d,cc]=nt_find_outlier_trials3(x,criterion,norm_flag)">nt_find_outlier_trials3</a>	[idx,d]=nt_find_outlier_trials3(x,criterion,norm_flag) - find outlier trials</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_find_outlier_trials3.html" class="code" title="function [idx,d,cc]=nt_find_outlier_trials3(x,criterion,norm_flag)">nt_find_outlier_trials3</a>	[idx,d]=nt_find_outlier_trials3(x,criterion,norm_flag) - find outlier trials</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [idx,d,cc]=nt_find_outlier_trials3(x,criterion,norm_flag)</a>
+0002 <span class="comment">%[idx,d]=nt_find_outlier_trials3(x,criterion,norm_flag) - find outlier trials</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  idx: indices of trials to keep</span>
+0005 <span class="comment">%  d: relative deviations from mean</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data (time * channels * trials)</span>
+0008 <span class="comment">%  criterion: keep trials less than criterion from mean</span>
+0009 <span class="comment">%  norm_flag: if true divide each frame by its RMS [default:0]</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%  This version compares covariance matrices of sample-normalized data.</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%  If no output arguments are specified, plots 'd'.</span>
+0014 <span class="comment">%</span>
+0015 
+0016 <span class="keyword">if</span> nargin&lt;3||isempty(norm_flag); norm_flag=0; <span class="keyword">end</span>
+0017 <span class="keyword">if</span> nargin&lt;2||isempty(criterion); criterion=inf; <span class="keyword">end</span>
+0018 <span class="keyword">if</span> ndims(x)~=3; error(<span class="string">'x should be 3D'</span>); <span class="keyword">end</span>
+0019 
+0020 <span class="keyword">if</span> nargout==0;
+0021     [idx,d]=<a href="nt_find_outlier_trials3.html" class="code" title="function [idx,d,cc]=nt_find_outlier_trials3(x,criterion,norm_flag)">nt_find_outlier_trials3</a>(x,criterion,norm_flag);
+0022     plot(d, <span class="string">'.-'</span>);
+0023     xlabel(<span class="string">'trial'</span>); ylabel(<span class="string">'normalized deviation from mean'</span>); 
+0024     clear idx d mn idx_unsorted
+0025     <span class="keyword">return</span>
+0026 <span class="keyword">end</span>
+0027 
+0028 [m,n,o]=size(x);
+0029 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0030 <span class="keyword">if</span> norm_flag
+0031     x=bsxfun(@times,x,1./(eps+sqrt(mean(x.^2,2)))); <span class="comment">% normalize by dividing each sample by rms</span>
+0032 <span class="keyword">end</span>
+0033 x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(x,m);
+0034 
+0035 cc=zeros(n,n,o);
+0036 <span class="keyword">for</span> iTrial=1:o
+0037     cc(:,:,iTrial)=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(:,:,iTrial));
+0038 <span class="keyword">end</span>
+0039 
+0040 cc=reshape(cc,n*n,o);
+0041 cc=bsxfun(@times,cc,1./(eps+sqrt(mean(cc.^2,1)))); <span class="comment">% normalize by dividing each trial cv by rms</span>
+0042 
+0043 d=sqrt(mean( bsxfun(@minus,cc,mean(cc,2) ).^2 )) ./  sqrt(mean(mean(cc,2).^2));
+0044 
+0045 <span class="comment">%</span>
+0046 <span class="comment">%</span>
+0047 <span class="comment">% if isempty(mn); mn=mean(x,2); end</span>
+0048 <span class="comment">% if isnan(mn)</span>
+0049 <span class="comment">%     mn=nt_tsregress(x,mean(x,2));  % distance from regression</span>
+0050 <span class="comment">% else</span>
+0051 <span class="comment">%     mn2=repmat(mn(:),1,o);       % distance from mean</span>
+0052 <span class="comment">% end</span>
+0053 <span class="comment">% d=x-mn2;</span>
+0054 
+0055 
+0056 <span class="comment">%d=mean(d.^2);</span>
+0057 <span class="comment">%d=d/sqrt(mean(d.^2));</span>
+0058 <span class="comment">%d=mean(d.^2)/mean(mn.^2);</span>
+0059 
+0060 idx=find(d&lt;criterion);
+0061 
+0062 <span class="comment">% [dd,idx]=sort(d,'ascend');</span>
+0063 <span class="comment">% idx=idx(find(dd&lt;criterion));</span>
+0064 <span class="comment">% idx_unsorted=idx;</span>
+0065 <span class="comment">% idx=sort(idx); % put them back in natural order</span>
+0066 <span class="comment">% mn=mean(x(:,idx),2);</span>
+0067 
+0068</pre></div>
+<hr><address>Generated on Mon 10-Nov-2014 14:40:42 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_xxcorr</title>
+  <meta name="keywords" content="nt_xxcorr">
+  <meta name="description" content="[C,idx]=nt_xxcorr(A,B,MAXLAG) - true unbiased cross-correlation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_xxcorr.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_xxcorr
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[C,idx]=nt_xxcorr(A,B,MAXLAG) - true unbiased cross-correlation</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [C,idx]=nt_xxcorr(A,B,MAXLAG) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[C,idx]=nt_xxcorr(A,B,MAXLAG) - true unbiased cross-correlation
+
+  C: unbiased cross-correlation function
+  idx: index of largest extremum.
+  
+  A: first column vector
+  B: second column vector
+  MAXLAG: lags are between -MAXLAG and +MAXLAG.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_xxcorr.html" class="code" title="function [C,idx]=nt_xxcorr(A,B,MAXLAG)">nt_xxcorr</a>	[C,idx]=nt_xxcorr(A,B,MAXLAG) - true unbiased cross-correlation</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_xxcorr.html" class="code" title="function [C,idx]=nt_xxcorr(A,B,MAXLAG)">nt_xxcorr</a>	[C,idx]=nt_xxcorr(A,B,MAXLAG) - true unbiased cross-correlation</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [C,idx]=nt_xxcorr(A,B,MAXLAG)</a>
+0002 <span class="comment">%[C,idx]=nt_xxcorr(A,B,MAXLAG) - true unbiased cross-correlation</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  C: unbiased cross-correlation function</span>
+0005 <span class="comment">%  idx: index of largest extremum.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  A: first column vector</span>
+0008 <span class="comment">%  B: second column vector</span>
+0009 <span class="comment">%  MAXLAG: lags are between -MAXLAG and +MAXLAG.</span>
+0010 <span class="comment">%</span>
+0011 
+0012 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin==1; B=A; MAXLAG=[]; <span class="keyword">end</span>
+0014 <span class="keyword">if</span> nargin==2;
+0015     <span class="keyword">if</span> numel(B)==1;
+0016         MAXLAG=B; B=A;
+0017     <span class="keyword">else</span>
+0018         MAXLAG=[];
+0019     <span class="keyword">end</span>
+0020 <span class="keyword">end</span>
+0021 <span class="keyword">if</span> isempty(MAXLAG); MAXLAG=floor(size(B,1)/4); <span class="keyword">end</span>
+0022 <span class="keyword">if</span> size(A,1)==1; A=A(:); B=B(:); <span class="keyword">end</span>
+0023 <span class="keyword">if</span> size(B,1)&lt;=2*MAXLAG; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0024 
+0025 
+0026 
+0027 <span class="keyword">if</span> size(A,2)==1 &amp;&amp; size(B,2)==1; 
+0028     
+0029     <span class="comment">% single channels</span>
+0030     B=B(MAXLAG:end-MAXLAG);
+0031     C=xcorr(A,B);
+0032     C=C(size(A,1)-1+(0:2*MAXLAG));
+0033     [~,idx]=max(abs(C));
+0034     
+0035     <span class="comment">% power for normalization</span>
+0036     a=cumsum(A.^2);
+0037     a=a(size(B,1)-1:end)-[0;a(1:end-size(B,1)+1)];
+0038     b=sum(B.^2);
+0039     d=sqrt(a*b);
+0040     
+0041     C=C./d; C(find(isnan(C)))=0;
+0042 
+0043     <span class="keyword">if</span> nargout==0;
+0044         abscissa=-MAXLAG:MAXLAG;
+0045         plot(abscissa,zeros(size(C)), <span class="string">'k'</span>); hold on
+0046         plot(abscissa,C);
+0047         plot(abscissa(idx),C(idx),<span class="string">'.k'</span>); hold off
+0048         axis tight; xlabel(<span class="string">'lag (samples)'</span>);
+0049         lag=idx-MAXLAG-1;
+0050         <span class="keyword">if</span> C(idx)&gt;1
+0051             <span class="keyword">if</span> lag&gt;0; 
+0052                 title([<span class="string">'X lags Y by '</span>,num2str(lag)]);
+0053             <span class="keyword">else</span>
+0054                 title([<span class="string">'Y lags X by '</span>,num2str(-lag)]);
+0055             <span class="keyword">end</span>
+0056         <span class="keyword">else</span>
+0057             <span class="keyword">if</span> lag&gt;0; 
+0058                 title([<span class="string">'X lags -Y by '</span>,num2str(lag)]);
+0059             <span class="keyword">else</span>
+0060                 title([<span class="string">'Y lags -X by '</span>,num2str(-lag)]);
+0061             <span class="keyword">end</span>
+0062         <span class="keyword">end</span>
+0063         C=[];
+0064     <span class="keyword">end</span>
+0065     
+0066 <span class="keyword">else</span>
+0067     
+0068     <span class="comment">% multiple channels</span>
+0069     C=zeros(2*MAXLAG+1,size(A,2),size(B,2));
+0070     idx=zeros(size(A,2),size(B,2));
+0071     <span class="keyword">for</span> k=1:size(A,2)        
+0072         <span class="keyword">for</span> j=1:size(B,2)
+0073             [a,b]=<a href="nt_xxcorr.html" class="code" title="function [C,idx]=nt_xxcorr(A,B,MAXLAG)">nt_xxcorr</a>(A(:,k),B(:,j),MAXLAG);
+0074             C(:,k,j)=a;
+0075             idx(k,j)=b;
+0076         <span class="keyword">end</span>
+0077     <span class="keyword">end</span>
+0078     
+0079     <span class="keyword">if</span> nargout==0
+0080        imagescc(idx-MAXLAG-1);
+0081        colorbar
+0082        C=[]; idx=[];
+0083     <span class="keyword">end</span>
+0084     
+0085 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

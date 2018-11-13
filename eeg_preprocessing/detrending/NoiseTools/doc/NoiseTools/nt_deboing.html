@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_deboing</title>
+  <meta name="keywords" content="nt_deboing">
+  <meta name="description" content="y=nt_deboing(x,events) - fit, remove ringing associated with events">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_deboing.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_deboing
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_deboing(x,events) - fit, remove ringing associated with events</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_deboing(x,events) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_deboing(x,events) - fit, remove ringing associated with events
+
+  y: clean data
+
+  x: data to clean
+  events: list of event samples
+
+ NoiseTools.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>	[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y=nt_deboing(x,events)</a>
+0002 <span class="comment">%y=nt_deboing(x,events) - fit, remove ringing associated with events</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: clean data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data to clean</span>
+0007 <span class="comment">%  events: list of event samples</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% NoiseTools.</span>
+0010 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0011 
+0012 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0013 
+0014 <span class="keyword">if</span> size(x,2)&gt;1; 
+0015     error(<span class="string">'x should be column vector'</span>); 
+0016 <span class="keyword">end</span>
+0017 
+0018 ORDER=10; <span class="comment">% order of polynomial trend</span>
+0019 NSAMPLES=100; <span class="comment">% number of samples over which to estimate impulse response</span>
+0020 EXTRA=50; <span class="comment">% samples before stimulus to anchor trend</span>
+0021 NNUM=8;NDEN=8; <span class="comment">% number of filter coeffs</span>
+0022 THRESH=3; <span class="comment">% threshold for robust detrending</span>
+0023 
+0024 <span class="comment">% remove events too close to beginning or end</span>
+0025 events(find(events&lt;EXTRA))=[];
+0026 events(find(events&gt;size(x,1)-NSAMPLES))=[];
+0027 
+0028 y=x;
+0029 <span class="keyword">for</span> iEvent=1:numel(events)
+0030     event=events(iEvent);
+0031     
+0032     <span class="comment">% select portion to fit filter response, remove polynomial trend</span>
+0033     event_response=x(event-EXTRA:event+NSAMPLES);
+0034     event_response=<a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>(event_response,ORDER,[],[],THRESH); 
+0035     event_response=event_response(EXTRA+1:end);
+0036        
+0037     event_response=event_response(2:end); <span class="comment">% not sure why...</span>
+0038     
+0039     <span class="comment">% estimate filter parameters</span>
+0040     event_response=[event_response;zeros(size(event_response))]; <span class="comment">% helps ensure stable filter</span>
+0041     [B,A]=stmcb(event_response,NNUM,NDEN); 
+0042     
+0043     <span class="comment">% estimate filter response to event</span>
+0044     model=filter(B,A,[1;zeros(NSAMPLES,1)]);
+0045     y(event+(1:size(model,1)))=x(event+(1:size(model,1))) - model;
+0046     <span class="comment">%figure(1); clf; plot(nt_demean([event_response(1:size(model,1)),model,x(event+(1:size(model,1)))])); pause</span>
+0047 <span class="keyword">end</span>
+0048 
+0049 <span class="keyword">if</span> nargout==0
+0050     <span class="comment">% plot, don't return</span>
+0051     figure(1); clf;
+0052     plot([x,y]);
+0053     
+0054     clear y
+0055 <span class="keyword">end</span>
+0056 
+0057</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

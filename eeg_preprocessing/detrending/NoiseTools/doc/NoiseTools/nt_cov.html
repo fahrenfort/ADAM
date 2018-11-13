@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_cov</title>
+  <meta name="keywords" content="nt_cov">
+  <meta name="description" content="[c,tw]=nt_cov(x,shifts,w) - time shift covariance">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_cov.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_cov
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[c,tw]=nt_cov(x,shifts,w) - time shift covariance</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [c,tw]=nt_cov(x,shifts,w); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[c,tw]=nt_cov(x,shifts,w) - time shift covariance
+
+  c: covariance matrix
+  tw: total weight (c/tw is normalized covariance)
+
+  x: data
+  shifts: array of time shifts (must be non-negative)
+  w: weights
+  
+ If SHIFTS==[0], this function calculates the covariance matrix of X, 
+ weighted by W.  In the general case it calculates the covariance matrix
+ of time-shifted X.
+
+ X can be 1D, 2D or 3D.  It can also be a cell array. 
+ W can be 1D (if X is 1D or 2D) or 2D (if X is 3D). The same weight is
+ applied to each column.
+ 
+ Output is a 2D matrix with dimensions (ncols(X)*numel(SHIFTS))^2.
+ It is made up of an ncols(X)*ncols(X) matrix of submatrices, each of 
+ dimensions numel(SHIFTS)*numel(SHIFTS).
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>	z=nt_multishift(x,shifts,amplitudes) - apply multiple shifts to matrix</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bias_cluster.html" class="code" title="function [c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags)">nt_bias_cluster</a>	[c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags) - cluster covariance</li><li><a href="nt_bias_fft.html" class="code" title="function [c0,c1]=nt_bias_fft(x,freq,nfft)">nt_bias_fft</a>	[c0,c1]=nt_bias_fft(x,freq,nfft) - covariance with and w/o filter bias</li><li><a href="nt_bias_filter.html" class="code" title="function [c0,c1]=nt_bias_filter(x,B,A)">nt_bias_filter</a>	[c0,c1]=nt_bias_filter(x,B,A) - covariance with and w/o filter bias</li><li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li><li><a href="nt_dprime.html" class="code" title="function [d,err_rate,perm_rate,area_roc,roc]=nt_dprime(x,y,jd_flag)">nt_dprime</a>	[d,err_rate,perm,area_roc,roc]=nt_dprime(x,y,jd_flag) - calculate d' (discriminability) of two distributions</li><li><a href="nt_dss1.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2)">nt_dss1</a>	[todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2) - evoked-biased DSS denoising</li><li><a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>	[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>	[topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_sns.html" class="code" title="function y=nt_sns(x,nneighbors,skip,w)">nt_sns</a>	y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression</li><li><a href="nt_split_jd.html" class="code" title="function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);">nt_split_jd</a>	[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization</li><li><a href="nt_star.html" class="code" title="function [x,w,ww]=nt_star(x,thresh,closest,depth)">nt_star</a>	[y,w,ww]=nt_star(x,thresh,closest,depth) - sensor noise suppression</li><li><a href="nt_star2.html" class="code" title="function [x,w,ww]=nt_star2(x,thresh,closest,w)">nt_star2</a>	[y,w,ww]=nt_star2(x,thresh,closest,w) - sensor noise suppression</li><li><a href="nt_tsr.html" class="code" title="function [y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh)">nt_tsr</a>	[y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</li><li><a href="nt_tsr_nodemean.html" class="code" title="function [y,idx,w]=nt_tsr_nodemean(x,ref,shifts,wx,wref,keep,thresh)">nt_tsr_nodemean</a>	[y,idx,w]=nt_tsr_nodemean(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</li><li><a href="nt_tsregress.html" class="code" title="function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)">nt_tsregress</a>	[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [c,tw]=nt_cov(x,shifts,w);</a>
+0002 <span class="comment">%[c,tw]=nt_cov(x,shifts,w) - time shift covariance</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  c: covariance matrix</span>
+0005 <span class="comment">%  tw: total weight (c/tw is normalized covariance)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data</span>
+0008 <span class="comment">%  shifts: array of time shifts (must be non-negative)</span>
+0009 <span class="comment">%  w: weights</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% If SHIFTS==[0], this function calculates the covariance matrix of X,</span>
+0012 <span class="comment">% weighted by W.  In the general case it calculates the covariance matrix</span>
+0013 <span class="comment">% of time-shifted X.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% X can be 1D, 2D or 3D.  It can also be a cell array.</span>
+0016 <span class="comment">% W can be 1D (if X is 1D or 2D) or 2D (if X is 3D). The same weight is</span>
+0017 <span class="comment">% applied to each column.</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Output is a 2D matrix with dimensions (ncols(X)*numel(SHIFTS))^2.</span>
+0020 <span class="comment">% It is made up of an ncols(X)*ncols(X) matrix of submatrices, each of</span>
+0021 <span class="comment">% dimensions numel(SHIFTS)*numel(SHIFTS).</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% NoiseTools</span>
+0024 
+0025 <span class="comment">%% arguments</span>
+0026 <span class="keyword">if</span> nargin&lt;3; w=[]; <span class="keyword">end</span>;
+0027 <span class="keyword">if</span> nargin&lt;2||isempty(shifts); shifts=0; <span class="keyword">end</span>;
+0028 <span class="keyword">if</span> prod(size(x))==0; error(<span class="string">'data empty'</span>); <span class="keyword">end</span>
+0029 shifts=shifts(:);           <span class="comment">% --&gt; column vector</span>
+0030 nshifts=numel(shifts); 
+0031 
+0032 
+0033 <span class="keyword">if</span> isempty(w) 
+0034     <span class="comment">%% no weights</span>
+0035     <span class="keyword">if</span> isnumeric(x)
+0036         <span class="comment">%% matrix</span>
+0037         [m,n,o]=size(x);
+0038         c=zeros(n*nshifts);
+0039         <span class="keyword">for</span> k=1:o
+0040             xx=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(x(:,:,k),shifts);
+0041             c=c+xx'*xx;
+0042         <span class="keyword">end</span>
+0043         tw=size(xx,1)*o;
+0044     <span class="keyword">elseif</span> iscell(x)
+0045         <span class="comment">%% cell array</span>
+0046         [m,n]=size(x{1});
+0047         o=length(x);
+0048         c=zeros(n*nshifts);
+0049         <span class="keyword">for</span> k=1:o;
+0050             <span class="keyword">if</span> size(x{k},2)~=n;  disp([size(x{k}),n, k]); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0051             xx=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(x{k}(:,:),shifts);
+0052             c=c+xx'*xx;
+0053         <span class="keyword">end</span>
+0054         tw=size(xx,1)*o;
+0055     <span class="keyword">else</span> error(<span class="string">'!'</span>); <span class="keyword">end</span>   
+0056 <span class="keyword">else</span>
+0057     <span class="comment">%% weights</span>
+0058     <span class="keyword">if</span> isnumeric(x)
+0059         <span class="comment">%% matrix</span>
+0060         [m,n,o]=size(x);
+0061         c=zeros(n*nshifts);
+0062         <span class="keyword">for</span> k=1:o
+0063             <span class="keyword">if</span> ~all(shifts == [0]); 
+0064                 xx=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(x(:,:,k),shifts); 
+0065                 ww=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(w(:,:,k),shifts);
+0066                 ww=min(ww,[],2);
+0067             <span class="keyword">else</span>
+0068                 xx=x(:,:,k); ww=w(:,:,k);
+0069             <span class="keyword">end</span>
+0070             xx=<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(xx,ww);
+0071             c=c+xx'*xx;
+0072         <span class="keyword">end</span>
+0073         tw=sum(w(:));
+0074     <span class="keyword">else</span>
+0075         <span class="comment">%% cell array</span>
+0076         c=zeros(n*nshifts);
+0077         [m,n]=size(x{1});
+0078         o=length(x);
+0079         <span class="keyword">for</span> k=1:o
+0080             <span class="keyword">if</span> ~all(shifts == [0]); 
+0081                 xx=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(x{k}(:,:),shifts); 
+0082                 ww=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(w{k}(:,:),shifts);
+0083                 ww=min(ww,[],2);
+0084             <span class="keyword">else</span>
+0085                 xx=x{k}(:,:); ww=w{k}(:,:);
+0086             <span class="keyword">end</span>
+0087             xx=<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(xx,ww);
+0088             c=c+xx'*xx;
+0089         <span class="keyword">end</span>
+0090         tw=sum(w(:));
+0091     <span class="keyword">end</span>       
+0092 <span class="keyword">end</span>
+0093</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

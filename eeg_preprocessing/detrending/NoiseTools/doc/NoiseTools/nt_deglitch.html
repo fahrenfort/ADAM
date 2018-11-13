@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_deglitch</title>
+  <meta name="keywords" content="nt_deglitch">
+  <meta name="description" content="[y,B,A]=nt_deglitch(x,glitchList,filt,nfit) - remove temporally localized glitch">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_deglitch.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_deglitch
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,B,A]=nt_deglitch(x,glitchList,filt,nfit) - remove temporally localized glitch</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y,B,A]=nt_deglitch(x,glitchList,nfilt,nfit,advance); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,B,A]=nt_deglitch(x,glitchList,filt,nfit) - remove temporally localized glitch
+
+  y: clean data
+  B,A: filter coefficients for last estimated event
+
+  x: data to clean (time * channels)
+  glitchList: list of glitch positions (cell array if x multichannel)
+  nfilt: number of filter coefficients to estimate [default: 10, 10]
+  nfit: number of samples over which to fit filter [default: 50]
+  advance: number of samples to include before event [default: 3]
+
+ If x is multichannel glitchI should be a cell array.
+ 
+ See also <a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>.
+
+ NoiseTools.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_banner.html" class="code" title="function h=nt_banner(text)">nt_banner</a>	h=nt_banner(text,varargin) - annotate with text at head of figure</li><li><a href="nt_deglitch.html" class="code" title="function [y,B,A]=nt_deglitch(x,glitchList,nfilt,nfit,advance);">nt_deglitch</a>	[y,B,A]=nt_deglitch(x,glitchList,filt,nfit) - remove temporally localized glitch</li><li><a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>	[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_deglitch.html" class="code" title="function [y,B,A]=nt_deglitch(x,glitchList,nfilt,nfit,advance);">nt_deglitch</a>	[y,B,A]=nt_deglitch(x,glitchList,filt,nfit) - remove temporally localized glitch</li><li><a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>	[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,B,A]=nt_deglitch(x,glitchList,nfilt,nfit,advance);</a>
+0002 <span class="comment">%[y,B,A]=nt_deglitch(x,glitchList,filt,nfit) - remove temporally localized glitch</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: clean data</span>
+0005 <span class="comment">%  B,A: filter coefficients for last estimated event</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data to clean (time * channels)</span>
+0008 <span class="comment">%  glitchList: list of glitch positions (cell array if x multichannel)</span>
+0009 <span class="comment">%  nfilt: number of filter coefficients to estimate [default: 10, 10]</span>
+0010 <span class="comment">%  nfit: number of samples over which to fit filter [default: 50]</span>
+0011 <span class="comment">%  advance: number of samples to include before event [default: 3]</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% If x is multichannel glitchI should be a cell array.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% See also nt_detrend.</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% NoiseTools.</span>
+0018 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0019 
+0020 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0021 <span class="keyword">if</span> nargin&lt;3; nfilt=[10,10]; <span class="keyword">end</span>
+0022 <span class="keyword">if</span> nargin&lt;4||isempty(nfit); nfit=50; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> nargin&lt;5||isempty(advance); advance=3; <span class="keyword">end</span>
+0024 
+0025 <span class="keyword">if</span> numel(nfilt)==1; nfilt=[nfilt,nfilt]; <span class="keyword">end</span>
+0026 
+0027 <span class="keyword">if</span> ~6==exist(<span class="string">'stmcb'</span>); 
+0028     error(<span class="string">'Need function stmcb from signal toolbox'</span>);
+0029 <span class="keyword">end</span>
+0030 
+0031 
+0032 y=x;
+0033 
+0034 <span class="keyword">if</span> size(x,2)==1 ~iscell(glitchList)
+0035     glitchList={glitchList}; 
+0036 <span class="keyword">end</span>
+0037 
+0038 <span class="keyword">for</span> iChan=1:size(x,2)
+0039 
+0040     events=glitchList{iChan}; 
+0041     
+0042     <span class="keyword">for</span> iEvent=1:numel(events)
+0043 
+0044         iStart=events(iEvent)-advance;
+0045         glitch=x(iStart+(1:nfit),iChan);
+0046         glitch=glitch-mean(glitch(floor(nfit/2):end));
+0047         
+0048         <span class="comment">%The filter is estimated anew for each event.</span>
+0049         <span class="keyword">try</span>
+0050             [B,A]=stmcb([glitch;zeros(size(glitch))],nfilt(1),nfilt(2));            
+0051             z=filter(B,A,[1;zeros(nfit-1,1)]);
+0052             y(iStart+(1:nfit),iChan)=y(iStart+(1:nfit))-z;
+0053         <span class="keyword">catch</span>
+0054             warning(<span class="string">'stmcb failed (advance too large?)'</span>);
+0055         <span class="keyword">end</span>
+0056     <span class="keyword">end</span>
+0057 <span class="keyword">end</span>
+0058 
+0059 
+0060 <span class="keyword">if</span> ~nargout
+0061     <span class="comment">% don't return values, just plot</span>
+0062     <span class="comment">%disp(['steps at: ', num2str(stepI(2:end-1))]);</span>
+0063     figure(1); clf; <a href="nt_banner.html" class="code" title="function h=nt_banner(text)">nt_banner</a>(<span class="string">'nt_destep'</span>);
+0064     xx=[x(:),y(:)];
+0065     lim=[min(xx(:)),max(xx(:))]; lim=[lim(1)-0.1*(lim(2)-lim(1)), lim(2)+0.1*(lim(2)-lim(1))];
+0066     subplot 211; plot([x,y]); xlabel(<span class="string">'samples'</span>); ylim(lim); legend(<span class="string">'raw'</span>,<span class="string">'clean'</span>); legend boxoff
+0067     subplot 212;     plot(y,<span class="string">'r'</span>); xlabel(<span class="string">'samples'</span>); legend(<span class="string">'clean'</span>); legend boxoff
+0068     figure(2); clf
+0069     plot(filter(B,A,[1;zeros(199,1)]),<span class="string">'.-'</span>); xlabel(<span class="string">'samples'</span>); title(<span class="string">'estimated impulse response of antialiasing filter (last event)'</span>);
+0070     clear y B A;
+0071 <span class="keyword">end</span>
+0072 
+0073 
+0074 
+0075 <span class="comment">% test code</span>
+0076 <span class="keyword">if</span> 0
+0077     N=8;
+0078     Wn=0.25; <span class="comment">% CTF corner frequency is 1/4 of sampling rate</span>
+0079     nsamples=100;
+0080     [B,A] = butter(N,Wn);
+0081     y=filter(B,A,ones(nsamples,1));
+0082     BETA0=[1, zeros(1,8), 1, zeros(1,8)];
+0083     fun = @(beta,x)(filter([beta(1),beta(2),beta(3),beta(4),beta(5),beta(6),beta(7),beta(8),beta(9)],<span class="keyword">...</span>
+0084         [beta(10),beta(11),beta(12),beta(13),beta(14),beta(15),beta(16),beta(17),beta(18)],x));
+0085     x=ones(nsamples,1);
+0086     BETA = nlinfit(x,y,fun,BETA0);
+0087     BETA=BETA/BETA(10);
+0088     BB=BETA(1:9); AA=BETA(10:end);
+0089     figure(1); clf;
+0090     plot([y,filter(BB,AA,ones(size(y)))])
+0091 <span class="keyword">end</span>
+0092 
+0093 <span class="keyword">if</span> 0
+0094     N=8;
+0095     Wn=0.25; <span class="comment">% CTF corner frequency is 1/4 of sampling rate</span>
+0096     [B,A] = butter(N,Wn);
+0097     x=[zeros(1100,1);ones(2000,1)];
+0098     x=filter(B,A,x);
+0099     x=x+0.01*randn(size(x));
+0100     [y,stepList]=<a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>(x);
+0101     figure(1); clf;
+0102     subplot 211;
+0103     plot([x,y]); legend(<span class="string">'raw'</span>,<span class="string">'step removed'</span>)
+0104     subplot 212;
+0105     plot([y,<a href="nt_deglitch.html" class="code" title="function [y,B,A]=nt_deglitch(x,glitchList,nfilt,nfit,advance);">nt_deglitch</a>(y,stepList)]); legend(<span class="string">'step removed'</span>, <span class="string">'deglitched'</span>);
+0106 <span class="keyword">end</span>
+0107 <span class="keyword">if</span> 0
+0108     N=8;
+0109     Wn=0.25; <span class="comment">% CTF corner frequency is 1/4 of sampling rate</span>
+0110     [B,A] = butter(N,Wn);
+0111     x=[zeros(1100,1);ones(1100,1);2*ones(1100,1);3*ones(1100,1);4*ones(1100,1);0*ones(1100,1)];
+0112     <span class="comment">%x=filter(B,A,x);</span>
+0113     x=x+0.0*randn(size(x));
+0114     <a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>(x);
+0115 <span class="keyword">end</span>
+0116 <span class="keyword">if</span> 0
+0117     <span class="comment">% this example needs fixing</span>
+0118     x=ft_read_data(<span class="string">'/data/meg/litvak/phantom090715_BrainampDBS_20150709_18.ds'</span>); x=permute(x,[2,1,3]); x=x(:,33:306,:);
+0119     x=x(:,100,1);
+0120     [y,stepList]=<a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>(x,[],[],30);
+0121     figure(1); subplot 211; plot(x);
+0122     subplot 212; plot(<a href="nt_deglitch.html" class="code" title="function [y,B,A]=nt_deglitch(x,glitchList,nfilt,nfit,advance);">nt_deglitch</a>(y,stepList));
+0123 <span class="keyword">end</span>
+0124 
+0125</pre></div>
+<hr><address>Generated on Wed 29-Nov-2017 23:17:18 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

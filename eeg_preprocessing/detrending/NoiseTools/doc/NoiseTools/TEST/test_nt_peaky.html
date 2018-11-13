@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of test_nt_peaky</title>
+  <meta name="keywords" content="test_nt_peaky">
+  <meta name="description" content="simulation with multichannel data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">TEST</a> &gt; test_nt_peaky.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/TEST&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>test_nt_peaky
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>simulation with multichannel data</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> simulation with multichannel data</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% simulation with multichannel data</span>
+0002 
+0003 <span class="comment">%{</span>
+0004 Data are uncorrelated noise sources mixed via a random matrix.  One or
+0005 more of these sources are slowly modulated.  The aim is to discover this
+0006 structure and/or extract the source.
+0007 <span class="comment">%}</span>
+0008 clear
+0009 close all
+0010 
+0011 nsamples=10000;
+0012 nchannels=10;
+0013 
+0014 <span class="keyword">if</span> 1
+0015     x=randn(nsamples,nchannels);
+0016     x=nt_normcol(nt_pca(x)); <span class="comment">% decorrelate noise sources</span>
+0017 <span class="keyword">else</span>
+0018     x=zeros(nsamples,nchannels);
+0019     freqs=100+30*(1:nchannels);
+0020     <span class="keyword">for</span> k=1:nchannels
+0021         x(:,k)=sin(2*pi*freqs(k)*(1:nsamples)'/nsamples);
+0022     <span class="keyword">end</span>
+0023 <span class="keyword">end</span>
+0024 
+0025 <span class="comment">% modulate</span>
+0026 SNRs=ones(nchannels,1);
+0027 depths=ones(nchannels,1);
+0028 <span class="keyword">for</span> k=1:nchannels 
+0029     x(:,k)=SNRs(k)*x(:,k).*(1+depths(k)*sin(2*pi*(rand+k*((1:nsamples)'/nsamples)))); 
+0030 <span class="keyword">end</span>    
+0031 x0=x; <span class="comment">% save</span>
+0032 
+0033 figure(1); clf
+0034 subplot 311
+0035 imagescc(filter(ones(10,1),1,abs(x0))'); title(<span class="string">'Sources'</span>)
+0036 
+0037 <span class="comment">% mix</span>
+0038 x=x*randn(nchannels); 
+0039 subplot 312
+0040 imagescc(filter(ones(10,1),1,abs(x))'); title(<span class="string">'Mixture'</span>)
+0041 
+0042 figure(2); clf
+0043 subplot 211; 
+0044 plot(x); title(<span class="string">'Mixture'</span>)
+0045 subplot 212;
+0046 p=mean(nt_pca(x).^2);
+0047 plot(p/max(p), <span class="string">'.-'</span>);set(gca,<span class="string">'yscale'</span>,<span class="string">'log'</span>);
+0048 title(<span class="string">'PCA spectrum'</span>);
+0049 xlabel(<span class="string">'PC'</span>); ylabel(<span class="string">'power'</span>)
+0050 
+0051 
+0052 <span class="comment">%%</span>
+0053 T=100;  <span class="comment">% Time resolution (samples)</span>
+0054 W=200;  <span class="comment">% Effective integration time</span>
+0055 nSmooth=floor(W/T);
+0056 
+0057 [tocomps,score]=nt_peaky([],x,T,nSmooth);
+0058 
+0059 zz=nt_mmat(x,tocomps);
+0060 zz=nt_normcol(zz);
+0061 figure(1);
+0062 subplot 313
+0063 imagescc(filter(ones(100,1),1,abs(zz))'); title(<span class="string">'all'</span>)
+0064 title(<span class="string">'Reconstruction'</span>)</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

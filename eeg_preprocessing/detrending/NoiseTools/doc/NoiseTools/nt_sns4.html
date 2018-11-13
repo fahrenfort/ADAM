@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_sns4</title>
+  <meta name="keywords" content="nt_sns4">
+  <meta name="description" content="[y,w]=nt_sns2(x,thresh) - sensor noise suppression, new version">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_sns4.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_sns4
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,w]=nt_sns2(x,thresh) - sensor noise suppression, new version</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [x,w]=nt_sns2(x,thresh) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> [y,w]=nt_sns2(x,thresh) - sensor noise suppression, new version
+
+  y: denoised data 
+  w: 0 for parts that needed fixing, 1 elsewhere (time*chans)
+
+  x: data to denoise (time*chans or time*chans*trials)
+  thresh: threshold for Mahalanobis distance (default:1);</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov2.html" class="code" title="function [c,tw]=nt_cov2(x,w);">nt_cov2</a>	[c,tw]=nt_cov2(x,w) - weighted covariance</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,N) - PCA matrix from covariance</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [x,w]=nt_sns2(x,thresh)</a>
+0002 <span class="comment">% [y,w]=nt_sns2(x,thresh) - sensor noise suppression, new version</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: denoised data</span>
+0005 <span class="comment">%  w: 0 for parts that needed fixing, 1 elsewhere (time*chans)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data to denoise (time*chans or time*chans*trials)</span>
+0008 <span class="comment">%  thresh: threshold for Mahalanobis distance (default:1);</span>
+0009 <span class="comment">%</span>
+0010 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0011 <span class="keyword">if</span> nargin&lt;1; error; <span class="keyword">end</span>
+0012 <span class="keyword">if</span> nargin&lt;2 || isempty(thresh); thresh=1; <span class="keyword">end</span>
+0013 PCA_THRESH=10^-15;
+0014 [nsample,nchan,~]=size(x);
+0015 
+0016 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0017 mn=mean(x); <span class="comment">% save means</span>
+0018 x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0019 nn=sqrt(mean(x.^2)); <span class="comment">% save norm</span>
+0020 x=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x);
+0021 
+0022 <span class="comment">%{</span>
+0023 For each channel, find sections <span class="keyword">for</span> which it does not fit the 
+0024 subspace spanned by other sensors.  The calculation is repeated 
+0025 and the projection matrix is refined at each step.
+0026 <span class="comment">%}</span>
+0027 
+0028 w=ones(size(x));
+0029 
+0030 NITER=3; <span class="comment">% iterations to refine c0</span>
+0031 <span class="keyword">for</span> k=1:NITER
+0032     
+0033     <span class="comment">% c0: covariance of non-artifact part</span>
+0034     ww=min(w,[],2);
+0035     x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,ww);
+0036     [c0,tw]=<a href="nt_cov2.html" class="code" title="function [c,tw]=nt_cov2(x,w);">nt_cov2</a>(x,ww);
+0037     c0=c0./tw; c0(isnan(c0))=0;
+0038     
+0039     <span class="keyword">for</span> iChan=1:nchan
+0040         
+0041         <span class="comment">% regress this channel on all others</span>
+0042         oChan=setdiff(1:nchan,iChan); 
+0043         
+0044         [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,N)">nt_pcarot</a>(c0(oChan,oChan)); <span class="comment">% PCA</span>
+0045         idx=find(eigenvalues/max(eigenvalues) &gt; PCA_THRESH); <span class="comment">% discard weak dims</span>
+0046         topcs=topcs(:,idx);
+0047         b=c0(iChan,oChan)*topcs/(topcs'*c0(oChan,oChan)*topcs); <span class="comment">% matrix to project on other channels</span>
+0048         y(:,iChan)=(x(:,oChan)*topcs)*b'; <span class="comment">% projection</span>
+0049         
+0050         <span class="comment">% fix parts where other channels are bad</span>
+0051         <span class="keyword">for</span> iChan2=oChan
+0052             oChan2=setdiff(oChan,iChan2);
+0053             iBad=find(w(:,iChan2)==0);
+0054             <span class="keyword">if</span> ~isempty(iBad)
+0055                 [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,N)">nt_pcarot</a>(c0(oChan2,oChan2)); <span class="comment">% PCA</span>
+0056                 idx=find(eigenvalues/max(eigenvalues) &gt; PCA_THRESH); <span class="comment">% discard weak dims</span>
+0057                 topcs=topcs(:,idx);
+0058                 b=c0(iChan,oChan2)*topcs/(topcs'*c0(oChan2,oChan2)*topcs); <span class="comment">% matrix to project on other channels</span>
+0059                 y(iBad,iChan)=(x(iBad,oChan2)*topcs)*b'; <span class="comment">% projection</span>
+0060             <span class="keyword">end</span>
+0061         <span class="keyword">end</span>
+0062                 
+0063                 
+0064         
+0065         dd=y(:,iChan)-x(:,iChan); <span class="comment">% difference from projection</span>
+0066         <span class="comment">%plot([y(:,iChan),x(:,iChan)]); pause</span>
+0067         d=mahal(dd,dd)/thresh; <span class="comment">% excentricity of each sample</span>
+0068        
+0069         w(:,iChan)=(d&lt;1);
+0070 
+0071     <span class="keyword">end</span>    
+0072     <span class="comment">%figure(10); clf; imagescc(w);  pause</span>
+0073     disp(mean(w(:)))
+0074 <span class="keyword">end</span>
+0075 
+0076 x=y;
+0077 
+0078 <span class="comment">%{</span>
+0079 To do:
+0080 Record all the DC shifts introduced when x mean is removed, so as to
+0081 restore accurately.
+0082 <span class="comment">%}</span>
+0083 
+0084 x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0085 x=bsxfun(@times,x,nn);
+0086 x=bsxfun(@plus,x,mn);
+0087 
+0088 x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(x,nsample);
+0089 w=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(w,nsample);
+0090 
+0091 
+0092</pre></div>
+<hr><address>Generated on Wed 29-Apr-2015 15:09:19 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

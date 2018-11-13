@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_bias_hi_amp</title>
+  <meta name="keywords" content="nt_bias_hi_amp">
+  <meta name="description" content="[c0,c1]=bias_hi_amp(x,exponent) - covariance with and without hi-amp bias">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_bias_hi_amp.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_bias_hi_amp
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[c0,c1]=bias_hi_amp(x,exponent) - covariance with and without hi-amp bias</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [c0,c1,w]=bias_hi_amp(x,exponent) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[c0,c1]=bias_hi_amp(x,exponent) - covariance with and without hi-amp bias
+
+ y: high-amplitude component
+ 
+ x: data set (2D or 3D)
+ exponent: exponent to apply to squared difference (larger=peakier) [default: 0.5]</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_vecadd.html" class="code" title="function x=nt_vecadd(x,v)">nt_vecadd</a>	y=nt_vecadd(x,v) - add vector to all rows or columns of matrix</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_hi_amp.html" class="code" title="function y=nt_hi_amp(x,exponent)">nt_hi_amp</a>	y=nt_hi_amp(x) - decompose into high-amplitude components</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [c0,c1,w]=bias_hi_amp(x,exponent)</a>
+0002 <span class="comment">%[c0,c1]=bias_hi_amp(x,exponent) - covariance with and without hi-amp bias</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% y: high-amplitude component</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% x: data set (2D or 3D)</span>
+0007 <span class="comment">% exponent: exponent to apply to squared difference (larger=peakier) [default: 0.5]</span>
+0008 
+0009 <span class="keyword">if</span> nargin&lt;2; exponent=0.5; <span class="keyword">end</span>
+0010 
+0011 <span class="comment">% bias function emphasizes high-amplitude</span>
+0012 w=mean((x.^2).^exponent,2);
+0013 ww=squeeze(min(w,[],1));
+0014 w=<a href="nt_vecadd.html" class="code" title="function x=nt_vecadd(x,v)">nt_vecadd</a>(squeeze(w),-ww');  <span class="comment">% subtract minimum from each trial (sharpens the bias function)</span>
+0015 w=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(w(:),size(x,1));
+0016 
+0017 c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x);
+0018 <span class="comment">% c1=tscov(vecmult(unfold(x),w));</span>
+0019 <span class="comment">% save memory:</span>
+0020 c1=zeros(size(x,2));
+0021 <span class="keyword">for</span> k=1:size(x,3)
+0022     c1=c1+<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(x(:,:,k),w(:,:,k)));
+0023 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 12-Oct-2016 15:09:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

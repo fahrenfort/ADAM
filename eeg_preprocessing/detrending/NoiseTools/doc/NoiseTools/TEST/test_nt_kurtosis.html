@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of test_nt_kurtosis</title>
+  <meta name="keywords" content="test_nt_kurtosis">
+  <meta name="description" content="Test nt_bias_kurtosis on synthetic data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">TEST</a> &gt; test_nt_kurtosis.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/TEST&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>test_nt_kurtosis
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>Test nt_bias_kurtosis on synthetic data</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Test nt_bias_kurtosis on synthetic data</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 
+0002 <span class="comment">% Test nt_bias_kurtosis on synthetic data</span>
+0003 clf;
+0004 rng(0); <span class="comment">% reset random number generator</span>
+0005 nsamples=5000;
+0006 nchans=10;
+0007 
+0008 <span class="comment">%{</span>
+0009 We create a peaky target and mix it with multiple sources of noise via a
+0010 random mixing matrix.
+0011 <span class="comment">%}</span>
+0012 
+0013 target=zeros(nsamples,1);
+0014 target(900:1100,:)=1; <span class="comment">%target(1001:1100,:)=-1;</span>
+0015 noise=randn(nsamples,nchans);
+0016 x=noise(:,1:nchans-1)*randn(nchans-1,nchans);
+0017 SNR=0.001;
+0018 x=x + SNR*target*randn(1,nchans);
+0019 x=nt_demean(x);
+0020 
+0021 figure(1); clf
+0022 subplot 221; plot (target); title(<span class="string">'target'</span>); ylim([0 1.1]);
+0023 subplot 222; plot(x); title(<span class="string">'mixture'</span>);
+0024 
+0025 <span class="comment">%{</span>
+0026 We use nt_bias_kurtosis to find a transform that reveals components with
+0027 high kurtosis.
+0028 <span class="comment">%}</span>
+0029 nIterations=5;
+0030 exponent=2;
+0031 w=[];
+0032 smooth=1;
+0033 [todss]=nt_kurtosis(x,nIterations,exponent,w,smooth);
+0034 
+0035 z=nt_mmat(x,todss);
+0036 subplot 224
+0037 plot(z(:,1)); title(<span class="string">'extracted'</span>);
+0038 
+0039 <span class="comment">%{</span>
+0040 Same, with two targets.
+0041 <span class="comment">%}</span>
+0042 
+0043 target1=zeros(nsamples,1);
+0044 target1(900:1000,:)=1; <span class="comment">%target(1001:1100,:)=-1;</span>
+0045 target2=zeros(nsamples,1);
+0046 target2(2001:2200,:)=1; <span class="comment">%target(1001:1100,:)=-1;</span>
+0047 x=noise(:,1:nchans-2)*randn(nchans-2,nchans);
+0048 SNR=0.01;
+0049 x=x + SNR*target1*randn(1,nchans) + SNR*target2*randn(1,nchans);
+0050 x=nt_demean(x);
+0051 
+0052 figure(2); clf
+0053 subplot 221; plot ([target1,target2]); title(<span class="string">'targets'</span>); ylim([0 1.1]);
+0054 subplot 222; plot(x); title(<span class="string">'mixture'</span>);
+0055 
+0056 nIterations=5;
+0057 exponent=2;
+0058 w=[];
+0059 smooth=1;
+0060 [todss]=nt_kurtosis(x,nIterations,exponent,w,smooth);
+0061 z=nt_mmat(x,todss);
+0062 
+0063 subplot 426
+0064 plot(z(:,1)); title(<span class="string">'first peaky component'</span>);
+0065 
+0066 <span class="comment">%{</span>
+0067 We use the peakiest component to define a weight that deemphasizes the
+0068 interval <span class="keyword">for</span> which that component has high amplitude.  
+0069 We then call nt_bias_kurtosis to find remaining peaky components.
+0070 <span class="comment">%}</span>
+0071 
+0072 w=abs(z(:,1))&lt;0.5*max(abs(z(:,1)));
+0073 nIterations=5;
+0074 exponent=2;
+0075 smooth=1;
+0076 [todss]=nt_kurtosis(x,nIterations,exponent,w,smooth);
+0077 z=nt_mmat(x,todss);
+0078 
+0079 subplot 428;
+0080 plot(z(:,1)); title(<span class="string">'second peaky component'</span>);
+0081</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

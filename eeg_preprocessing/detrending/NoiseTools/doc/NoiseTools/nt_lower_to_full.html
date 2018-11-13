@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_lower_to_full</title>
+  <meta name="keywords" content="nt_lower_to_full">
+  <meta name="description" content="b=nt_lower_to_full(a,ind) - transform lower diagonal to full  covariance">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_lower_to_full.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_lower_to_full
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>b=nt_lower_to_full(a,ind) - transform lower diagonal to full  covariance</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function b=nt_lower_to_full(a,ind,n) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> b=nt_lower_to_full(a,ind) - transform lower diagonal to full  covariance
+
+  b: full matrix
+
+  a: matrix of lower diagonal terms
+  ind: indices of lower diagonal terms
+  n: covariance matrix is n*n
+
+ Typically used to transform output of nt_xprod into a series of
+ covariance matrices.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bias_cluster.html" class="code" title="function [c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags)">nt_bias_cluster</a>	[c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags) - cluster covariance</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function b=nt_lower_to_full(a,ind,n)</a>
+0002 <span class="comment">% b=nt_lower_to_full(a,ind) - transform lower diagonal to full  covariance</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  b: full matrix</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  a: matrix of lower diagonal terms</span>
+0007 <span class="comment">%  ind: indices of lower diagonal terms</span>
+0008 <span class="comment">%  n: covariance matrix is n*n</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% Typically used to transform output of nt_xprod into a series of</span>
+0011 <span class="comment">% covariance matrices.</span>
+0012 <span class="comment">%</span>
+0013 
+0014 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0015 <span class="keyword">if</span> nargin&lt;3; 
+0016     <span class="comment">% estimate based on on size of a (this fails if diagonal is not</span>
+0017     <span class="comment">% present)</span>
+0018     n=floor(sqrt(2*size(a,2)));
+0019 <span class="keyword">end</span>
+0020 
+0021 b=zeros(size(a,1),n,n);
+0022 
+0023 [I,J]=ind2sub(n,ind);
+0024 
+0025 <span class="keyword">for</span> k=1:numel(I)
+0026     b(:,I(k),J(k))=a(:,k);
+0027 <span class="keyword">end</span>
+0028 <span class="keyword">for</span> k=1:numel(I)
+0029     b(:,J(k),I(k))=a(:,k);
+0030 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

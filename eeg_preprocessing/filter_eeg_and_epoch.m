@@ -13,11 +13,11 @@ function filter_eeg_and_epoch(filepath,filenames,outpath, locutoff, hicutoff, st
 % if both locutoff and hicutoff are zero the function does not filter
 % varargin is list of conditions to epoch, either as strings or numbers
 % separated by comma's, or as a cell array
-% Use  vec2str([1001:1024 1101:1124]) when called from create_qsub_files in
+% Use  cond_string([1001:1024 1101:1124]) when called from create_qsub_files in
 % order to epoch all conditions running from 1001 to 1024 and from 1101 to
 % 1124. If varargin is left empty, no epoching will be applied.
 %
-% example: filter_eeg_and_epoch('c:\alldata\','subject01', 'c:\filtereddata', 0.1, 0, -.25, 0, num2str([1001:1024 1101:1124]));
+% example: filter_eeg_and_epoch('c:\alldata\','subject01', 'c:\filtereddata', 0.1, 0, -.25, 0, cond_string([1001:1024 1101:1124]));
 %
 % J.J.Fahrenfort, VU 2015
 

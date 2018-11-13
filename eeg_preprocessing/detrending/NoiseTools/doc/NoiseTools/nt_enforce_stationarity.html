@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_enforce_stationarity</title>
+  <meta name="keywords" content="nt_enforce_stationarity">
+  <meta name="description" content="y=nt_enforce_stationarity(x,DSR,thresh) - locally project out non-stationary components">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_enforce_stationarity.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_enforce_stationarity
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_enforce_stationarity(x,DSR,thresh) - locally project out non-stationary components</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function x=nt_enforce_stationarity(x,DSR,thresh); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> y=nt_enforce_stationarity(x,DSR,thresh) - locally project out non-stationary components
+
+ y: cleaned data
+
+ x: data to clean (time * channels)
+ DSR: size of chunks over which to cluster
+ thresh: variance ratio threshold</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose)">nt_cluster_jd</a>	[IDX,todss,SCORE]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li><li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>	[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_tsr_nodemean.html" class="code" title="function [y,idx,w]=nt_tsr_nodemean(x,ref,shifts,wx,wref,keep,thresh)">nt_tsr_nodemean</a>	[y,idx,w]=nt_tsr_nodemean(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function x=nt_enforce_stationarity(x,DSR,thresh);</a>
+0002 <span class="comment">% y=nt_enforce_stationarity(x,DSR,thresh) - locally project out non-stationary components</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% y: cleaned data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% x: data to clean (time * channels)</span>
+0007 <span class="comment">% DSR: size of chunks over which to cluster</span>
+0008 <span class="comment">% thresh: variance ratio threshold</span>
+0009 
+0010 <span class="keyword">if</span> nargin&lt;3 || isempty(thresh); thresh=10; <span class="keyword">end</span>
+0011 <span class="keyword">if</span> nargin&lt;2 || isempty(DSR); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0012 
+0013 nx=size(x,1);
+0014 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0015 
+0016 
+0017 score=inf;
+0018 
+0019 figure(10); clf; set(gcf, <span class="string">'name'</span>, <span class="string">'nt_enforce_stationarity'</span>);
+0020 subplot 413; plot(x); title(<span class="string">'original'</span>)
+0021 
+0022 <span class="keyword">while</span> 1
+0023     
+0024     <span class="comment">% find clusters with maximally different covariance</span>
+0025     [A]=<a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose)">nt_cluster_jd</a>((<a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>(x)),DSR);
+0026     figure(10);
+0027     subplot 411; plot(A,<span class="string">'.-'</span>); title(<span class="string">'cluster mask'</span>); drawnow
+0028     
+0029     <span class="comment">% DSS to enhance the smaller cluster</span>
+0030     <span class="keyword">if</span> numel(find(A==1))&lt;numel(find(A==2));
+0031         idx=find(A==1);
+0032         [todss]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x),<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(find(A==1),:)));
+0033     <span class="keyword">else</span>
+0034         idx=find(A==2);
+0035         <span class="comment">%todss=fliplr(todss);</span>
+0036         [todss]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x),<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(find(A==2),:)));
+0037     <span class="keyword">end</span>
+0038     
+0039     z=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,todss);
+0040     subplot 412; plot(z(:,1)); title(<span class="string">'component to remove'</span>);
+0041     score=mean(z(idx,1).^2)/mean(z(:,1).^2);
+0042     disp([<span class="string">'power ratio score: '</span>, num2str(score)]);
+0043     
+0044     <span class="keyword">if</span> score&lt;thresh
+0045         <span class="keyword">break</span>
+0046     <span class="keyword">end</span>
+0047     
+0048     x(idx,:)=<a href="nt_tsr_nodemean.html" class="code" title="function [y,idx,w]=nt_tsr_nodemean(x,ref,shifts,wx,wref,keep,thresh)">nt_tsr_nodemean</a>(x(idx,:),z(idx,1));
+0049     subplot 414; plot(x); title(<span class="string">'clean'</span>);
+0050     drawnow
+0051     
+0052     <span class="comment">%pause;</span>
+0053     <span class="comment">%x=nt_demean(x);</span>
+0054 <span class="keyword">end</span>
+0055 x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(x,nx);
+0056 <span class="keyword">if</span> nargout==0; 
+0057     clear x
+0058 <span class="keyword">end</span>
+0059 
+0060     
+0061</pre></div>
+<hr><address>Generated on Wed 12-Oct-2016 15:09:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_qca02</title>
+  <meta name="keywords" content="nt_qca02">
+  <meta name="description" content="[tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth) - maximize induced power using quadratic component analysis">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_qca02.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_qca02
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth) - maximize induced power using quadratic component analysis
+
+  tosquare: matrix to most reproducible induced component
+  quad: most reproducible quadratic component
+  tosquare2: matrix to most reproducible induced component
+  quad2: most reproducible quadratic component
+  D: eigenvalues sorted by absolute value
+
+  x: data (time*channel*trial)
+  npcs: maximum number of data PCs to use [default: all]
+  nsmooth: square smoothing window to apply to xproducts [default: 1]
+  nquads: number of quadratic components to return [default: 1]
+ 
+ NoiseTools.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>	[topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w) - time-shift pca</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_qca2.html" class="code" title="function [squares,quad,squares2,quad2,D]=nt_qca2(x,npcs,nsmooth)">nt_qca2</a>	[square,quad,square2,quad2,D]=nt_qca(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth)</a>
+0002 <span class="comment">%[tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  tosquare: matrix to most reproducible induced component</span>
+0005 <span class="comment">%  quad: most reproducible quadratic component</span>
+0006 <span class="comment">%  tosquare2: matrix to most reproducible induced component</span>
+0007 <span class="comment">%  quad2: most reproducible quadratic component</span>
+0008 <span class="comment">%  D: eigenvalues sorted by absolute value</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">%  x: data (time*channel*trial)</span>
+0011 <span class="comment">%  npcs: maximum number of data PCs to use [default: all]</span>
+0012 <span class="comment">%  nsmooth: square smoothing window to apply to xproducts [default: 1]</span>
+0013 <span class="comment">%  nquads: number of quadratic components to return [default: 1]</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% NoiseTools.</span>
+0016 
+0017 
+0018 <span class="keyword">if</span> nargin&lt;3; nsmooth=1; <span class="keyword">end</span>
+0019 <span class="keyword">if</span> nargin&lt;2; npcs=[]; <span class="keyword">end</span>
+0020 [nsamples,nchans,ntrials]=size(x);
+0021 
+0022 
+0023 <span class="comment">% PCA &amp; normalize, select PCs to save space</span>
+0024 THRESH=10^-12;
+0025 [topcs,pwr]=<a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>(x,[],[],THRESH); 
+0026 <span class="keyword">if</span> isempty(npcs) || npcs&gt;size(topcs,2); npcs=size(topcs,2); <span class="keyword">end</span>
+0027 topcs=topcs*diag(1/sqrt(pwr));
+0028 topcs=topcs(:,1:npcs); 
+0029 x=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,topcs);
+0030 
+0031 <span class="comment">% covariance of cross-products</span>
+0032 c0=zeros(npcs*(npcs+1)/2);
+0033 xxx=zeros(nsamples-nsmooth+1,npcs*(npcs+1)/2);
+0034 <span class="keyword">for</span> k=1:ntrials
+0035     xx=zeros(nsamples,npcs*(npcs+1)/2);
+0036     ii=1;
+0037     <span class="keyword">for</span> jj=1:npcs
+0038         <span class="keyword">for</span> kk=1:jj
+0039             xx(:,ii)=x(:,kk,k).*x(:,jj,k);
+0040             ii=ii+1;
+0041         <span class="keyword">end</span>
+0042     <span class="keyword">end</span>
+0043     xx=filter(ones(nsmooth,1)/nsmooth,1,xx);                      <span class="comment">% lowpass (demodulate)</span>
+0044     xx=xx(nsmooth:<span class="keyword">end</span>,:,:);
+0045     xxx=xxx+xx;
+0046     c0=c0+xx'*xx;
+0047 <span class="keyword">end</span>
+0048 c1=xxx'*xxx;
+0049 
+0050 <span class="comment">% DSS to find most repeatable</span>
+0051 [todss,pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1,[],0);
+0052 tobest=todss(:,2); <span class="comment">% first is DC</span>
+0053 toworst=todss(:,end);
+0054 
+0055 <span class="comment">% form square matrix</span>
+0056 ii=1;
+0057 A=zeros(npcs);
+0058 <span class="keyword">for</span> k=1:npcs
+0059     <span class="keyword">for</span> j=1:k
+0060         <span class="keyword">if</span> j==k;
+0061             A(k,j)=tobest(ii);
+0062         <span class="keyword">else</span>
+0063             A(k,j)=tobest(ii)/2;
+0064             A(j,k)=tobest(ii)/2;
+0065         <span class="keyword">end</span>
+0066         ii=ii+1;
+0067     <span class="keyword">end</span>
+0068 <span class="keyword">end</span>
+0069 
+0070 <span class="comment">% eigenvectors &amp; values</span>
+0071 [V,D]=eig(A);
+0072 D=diag(D);
+0073 [dummy,idx]=sort(abs(D),<span class="string">'descend'</span>); 
+0074 V=V(:,idx);
+0075 D=D(idx);
+0076 tosquare=topcs*V;
+0077 
+0078 <span class="comment">% form square matrix</span>
+0079 ii=1;
+0080 A=zeros(npcs);
+0081 <span class="keyword">for</span> k=1:npcs
+0082     <span class="keyword">for</span> j=1:k
+0083         <span class="keyword">if</span> j==k;
+0084             A(k,j)=toworst(ii);
+0085         <span class="keyword">else</span>
+0086             A(k,j)=toworst(ii)/2;
+0087             A(j,k)=toworst(ii)/2;
+0088         <span class="keyword">end</span>
+0089         ii=ii+1;
+0090     <span class="keyword">end</span>
+0091 <span class="keyword">end</span>
+0092 
+0093 <span class="comment">% eigenvectors &amp; values</span>
+0094 [V,D]=eig(A);
+0095 D=diag(D);
+0096 [dummy,idx]=sort(abs(D),<span class="string">'descend'</span>); 
+0097 V=V(:,idx);
+0098 D=D(idx);
+0099 tosquare2=topcs*V;
+0100 
+0101 
+0102 
+0103 <span class="comment">% best &amp; worst quadratic component(s)</span>
+0104 <span class="keyword">if</span> nargout&gt;1;
+0105     quads=zeros(nsamples-nsmooth+1,1,ntrials);
+0106     quads2=zeros(nsamples-nsmooth+1,1,ntrials);
+0107     <span class="keyword">for</span> k=1:ntrials
+0108         xx=zeros(nsamples,npcs*(npcs+1)/2);
+0109         ii=1;
+0110         <span class="keyword">for</span> jj=1:npcs
+0111             <span class="keyword">for</span> kk=1:jj
+0112                 xx(:,ii)=x(:,kk,k).*x(:,jj,k);
+0113                 ii=ii+1;
+0114             <span class="keyword">end</span>
+0115         <span class="keyword">end</span>
+0116         xx=filter(ones(nsmooth,1)/nsmooth,1,xx);                      <span class="comment">% lowpass (demodulate)</span>
+0117         xx=xx(nsmooth:<span class="keyword">end</span>,:,:);                                       <span class="comment">% chop off onset artifact</span>
+0118         quad(:,:,k)=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(xx,todss(:,1));
+0119         quad2(:,:,k)=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(xx,todss(:,end));
+0120     <span class="keyword">end</span>
+0121 <span class="keyword">end</span>
+0122</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

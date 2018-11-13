@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_qpca0</title>
+  <meta name="keywords" content="nt_qpca0">
+  <meta name="description" content="[tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads) - quadratic PCA">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_qpca0.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_qpca0
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads) - quadratic PCA</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads) - quadratic PCA
+
+  tosquares: matrix to linear components closest to largest quadradric component
+  quads: largest quadratic component(s)
+  D: eigenvalues sorted by absolute value
+
+  x: data (time*channel*trial)
+  npcs: maximum number of data PCs to use [default: all]
+  nsmooth: square smoothing window to apply to xproducts [default: 1]
+  nquads: number of quadratic components to return [default: 1]
+ 
+ NoiseTools.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>	[topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_qpca.html" class="code" title="function [squares,quads,D]=nt_qpca(x,npcs,nsmooth,nquads)">nt_qpca</a>	[squares,quads]=nt_qpca(x,npcs,nsmooth,nquads) - quadratic PCA</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads)</a>
+0002 <span class="comment">%[tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads) - quadratic PCA</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  tosquares: matrix to linear components closest to largest quadradric component</span>
+0005 <span class="comment">%  quads: largest quadratic component(s)</span>
+0006 <span class="comment">%  D: eigenvalues sorted by absolute value</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  x: data (time*channel*trial)</span>
+0009 <span class="comment">%  npcs: maximum number of data PCs to use [default: all]</span>
+0010 <span class="comment">%  nsmooth: square smoothing window to apply to xproducts [default: 1]</span>
+0011 <span class="comment">%  nquads: number of quadratic components to return [default: 1]</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% NoiseTools.</span>
+0014 
+0015 
+0016 <span class="keyword">if</span> nargin&lt;4; nquads=1; <span class="keyword">end</span>
+0017 <span class="keyword">if</span> nargin&lt;3; nsmooth=1; <span class="keyword">end</span>
+0018 <span class="keyword">if</span> nargin&lt;2; npcs=[]; <span class="keyword">end</span>
+0019 [nsamples,nchans,ntrials]=size(x);
+0020 
+0021 
+0022 <span class="comment">% PCA &amp; normalize, select PCs to save space</span>
+0023 THRESH=10^-12;
+0024 [topcs,pwr]=<a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>(x,[],[],THRESH); 
+0025 <span class="keyword">if</span> isempty(npcs) || npcs&gt;size(topcs,2); npcs=size(topcs,2); <span class="keyword">end</span>
+0026 topcs=topcs*diag(1./sqrt(pwr));
+0027 topcs=topcs(:,1:npcs); 
+0028 x=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,topcs);
+0029 
+0030 nquads=min(nquads,npcs*(npcs+1)/2-1);
+0031 
+0032 <span class="comment">% covariance of cross-products</span>
+0033 c0=zeros(npcs*(npcs+1)/2);
+0034 xxx=zeros(nsamples-nsmooth+1,npcs*(npcs+1)/2);
+0035 <span class="keyword">for</span> k=1:ntrials
+0036     xx=zeros(nsamples,npcs*(npcs+1)/2);
+0037     ii=1;
+0038     <span class="keyword">for</span> jj=1:npcs
+0039         <span class="keyword">for</span> kk=1:jj
+0040             xx(:,ii)=x(:,kk,k).*x(:,jj,k);
+0041             ii=ii+1;
+0042         <span class="keyword">end</span>
+0043     <span class="keyword">end</span>
+0044     xx=filter(ones(nsmooth,1)/nsmooth,1,xx);                      <span class="comment">% lowpass (demodulate)</span>
+0045     xx=xx(nsmooth:<span class="keyword">end</span>,:,:);
+0046     xxx=xxx+xx;
+0047     c0=c0+xx'*xx;
+0048 <span class="keyword">end</span>
+0049 
+0050 <span class="comment">% DSS to find most repeatable</span>
+0051 topcs2=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>(c0);
+0052 tobest=topcs2(:,2); <span class="comment">% first is DC</span>
+0053 
+0054 <span class="comment">% form square matrix</span>
+0055 ii=1;
+0056 A=zeros(npcs);
+0057 <span class="keyword">for</span> k=1:npcs
+0058     <span class="keyword">for</span> j=1:k
+0059         <span class="keyword">if</span> j==k;
+0060             A(k,j)=tobest(ii);
+0061         <span class="keyword">else</span>
+0062             A(k,j)=tobest(ii)/2;
+0063             A(j,k)=tobest(ii)/2;
+0064         <span class="keyword">end</span>
+0065         ii=ii+1;
+0066     <span class="keyword">end</span>
+0067 <span class="keyword">end</span>
+0068 
+0069 <span class="comment">% eigenvectors &amp; values</span>
+0070 [V,D]=eig(A);
+0071 D=diag(D);
+0072 [dummy,idx]=sort(abs(D),<span class="string">'descend'</span>); 
+0073 V=V(:,idx);
+0074 D=D(idx);
+0075 tosquares=topcs*V;
+0076 
+0077 <span class="comment">% answer best quadratic component(s)</span>
+0078 <span class="keyword">if</span> nargout&gt;1;
+0079     quads=zeros(nsamples-nsmooth+1,nquads+1,ntrials);
+0080     <span class="keyword">for</span> k=1:ntrials
+0081         xx=zeros(nsamples,npcs*(npcs+1)/2);
+0082         ii=1;
+0083         <span class="keyword">for</span> jj=1:npcs
+0084             <span class="keyword">for</span> kk=1:jj
+0085                 xx(:,ii)=x(:,kk,k).*x(:,jj,k);
+0086                 ii=ii+1;
+0087             <span class="keyword">end</span>
+0088         <span class="keyword">end</span>
+0089         xx=filter(ones(nsmooth,1)/nsmooth,1,xx);                      <span class="comment">% lowpass (demodulate)</span>
+0090         xx=xx(nsmooth:<span class="keyword">end</span>,:,:);                                       <span class="comment">% chop off onset artifact</span>
+0091         quads(:,:,k)=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(xx,topcs2(:,1:nquads+1));
+0092     <span class="keyword">end</span>
+0093 <span class="keyword">end</span>
+0094</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

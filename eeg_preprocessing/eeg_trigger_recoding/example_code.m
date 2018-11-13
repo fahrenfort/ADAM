@@ -9,6 +9,8 @@ for cSes = 1:nSes
     data = logstruct.(logfiles{cSes});
     % here some computations to compute the actual conditions
     % the result you put in actual_triggers
+    actual_triggers = pop_exportepoch(EEG); % pop_exportepoch obtains the event values of epoched data
+    actual_triggers = actual_triggers + 6; % do something to triggers, here add 6 for illustration purposes
     triggerstruct.(logfiles{cSes}) = actual_triggers;
 end
 save('/Users/VU-MBP/Dropbox/Work/Experimenten/WM_debunk_EEG/info/newtriggerinfo.mat', 'triggerstruct');

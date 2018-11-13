@@ -1,0 +1,311 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of listdlg3</title>
+  <meta name="keywords" content="listdlg3">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">private</a> &gt; listdlg3.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/private&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>listdlg3
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="getnicedialoglocation.html" class="code" title="function figure_size = getnicedialoglocation(figure_size, figure_units)">getnicedialoglocation</a>	adjust the specified figure position to fig nicely over GCBF</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function [selection,value] = listdlg(varargin)</a></li><li><a href="#_sub2" class="code">function doKeypress(src, evd, listbox)</a></li><li><a href="#_sub3" class="code">function doOK(ok_btn, evd, listbox)</a></li><li><a href="#_sub4" class="code">function doCancel(cancel_btn, evd, listbox)</a></li><li><a href="#_sub5" class="code">function doSelectAll(selectall_btn, evd, listbox)</a></li><li><a href="#_sub6" class="code">function doListboxClick(listbox, evd, selectall_btn)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 [a b c]=fileparts(evalc(<span class="string">'which listdlg'</span>));
+0002 addpath([a,<span class="string">'/private'</span>);
+0003 
+0004 <a name="_sub0" href="#_subfunctions" class="code">function [selection,value] = listdlg(varargin)</a>
+0005 <span class="comment">%LISTDLG  List selection dialog box.</span>
+0006 <span class="comment">%   [SELECTION,OK] = LISTDLG('ListString',S) creates a modal dialog box</span>
+0007 <span class="comment">%   which allows you to select a string or multiple strings from a list.</span>
+0008 <span class="comment">%   SELECTION is a vector of indices of the selected strings (length 1 in</span>
+0009 <span class="comment">%   the single selection mode).  This will be [] when OK is 0.  OK is 1 if</span>
+0010 <span class="comment">%   you push the OK button, or 0 if you push the Cancel button or close the</span>
+0011 <span class="comment">%   figure.</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%   Double-clicking on an item or pressing &lt;CR&gt; when multiple items are</span>
+0014 <span class="comment">%   selected has the same effect as clicking the OK button.  Pressing &lt;CR&gt;</span>
+0015 <span class="comment">%   is the same as clicking the OK button. Pressing &lt;ESC&gt; is the same as</span>
+0016 <span class="comment">%   clicking the Cancel button.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">%   Inputs are in parameter,value pairs:</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">%   Parameter       Description</span>
+0021 <span class="comment">%   'ListString'    cell array of strings for the list box.</span>
+0022 <span class="comment">%   'SelectionMode' string; can be 'single' or 'multiple'; defaults to</span>
+0023 <span class="comment">%                   'multiple'.</span>
+0024 <span class="comment">%   'ListSize'      [width height] of listbox in pixels; defaults</span>
+0025 <span class="comment">%                   to [160 300].</span>
+0026 <span class="comment">%   'InitialValue'  vector of indices of which items of the list box</span>
+0027 <span class="comment">%                   are initially selected; defaults to the first item.</span>
+0028 <span class="comment">%   'Name'          String for the figure's title; defaults to ''.</span>
+0029 <span class="comment">%   'PromptString'  string matrix or cell array of strings which appears</span>
+0030 <span class="comment">%                   as text above the list box; defaults to {}.</span>
+0031 <span class="comment">%   'OKString'      string for the OK button; defaults to 'OK'.</span>
+0032 <span class="comment">%   'CancelString'  string for the Cancel button; defaults to 'Cancel'.</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">%   A 'Select all' button is provided in the multiple selection case.</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">%   Example:</span>
+0037 <span class="comment">%     d = dir;</span>
+0038 <span class="comment">%     str = {d.name};</span>
+0039 <span class="comment">%     [s,v] = listdlg('PromptString','Select a file:',...</span>
+0040 <span class="comment">%                     'SelectionMode','single',...</span>
+0041 <span class="comment">%                     'ListString',str)</span>
+0042  <span class="comment">%</span>
+0043 <span class="comment">%  See also DIALOG, ERRORDLG, HELPDLG, INPUTDLG,</span>
+0044 <span class="comment">%    MSGBOX, QUESTDLG, WARNDLG.</span>
+0045 
+0046 <span class="comment">%   Copyright 1984-2010 The MathWorks, Inc.</span>
+0047 <span class="comment">%   $Revision: 1.20.4.14 $  $Date: 2011/09/08 23:36:08 $</span>
+0048 
+0049 <span class="comment">%   'uh'            uicontrol button height, in pixels; default = 22.</span>
+0050 <span class="comment">%   'fus'           frame/uicontrol spacing, in pixels; default = 8.</span>
+0051 <span class="comment">%   'ffs'           frame/figure spacing, in pixels; default = 8.</span>
+0052 
+0053 <span class="comment">% simple test:</span>
+0054 <span class="comment">%</span>
+0055 <span class="comment">% d = dir; [s,v] = listdlg('PromptString','Select a file:','ListString',{d.name});</span>
+0056 <span class="comment">%</span>
+0057 
+0058 <span class="comment">% Generate a warning in -nodisplay and -noFigureWindows mode.</span>
+0059 warnfiguredialog(<span class="string">'listdlg'</span>);
+0060 
+0061 error(nargchk(1,inf,nargin))
+0062 
+0063 figname = <span class="string">''</span>;
+0064 smode = 2;   <span class="comment">% (multiple)</span>
+0065 promptstring = {};
+0066 liststring = [];
+0067 listsize = [160 300];
+0068 initialvalue = [];
+0069 okstring = getString(message(<span class="string">'MATLAB:uistring:popupdialogs:OK'</span>));
+0070 cancelstring = getString(message(<span class="string">'MATLAB:uistring:popupdialogs:Cancel'</span>));
+0071 fus = 8;
+0072 ffs = 8;
+0073 uh = 22;
+0074 
+0075 <span class="keyword">if</span> mod(length(varargin),2) ~= 0
+0076     <span class="comment">% input args have not com in pairs, woe is me</span>
+0077     error(message(<span class="string">'MATLAB:listdlg:InvalidArgument'</span>))
+0078 <span class="keyword">end</span>
+0079 <span class="keyword">for</span> i=1:2:length(varargin)
+0080     <span class="keyword">switch</span> lower(varargin{i})
+0081      <span class="keyword">case</span> <span class="string">'name'</span>
+0082       figname = varargin{i+1};
+0083      <span class="keyword">case</span> <span class="string">'promptstring'</span>
+0084       promptstring = varargin{i+1};
+0085      <span class="keyword">case</span> <span class="string">'selectionmode'</span>
+0086       <span class="keyword">switch</span> lower(varargin{i+1})
+0087        <span class="keyword">case</span> <span class="string">'single'</span>
+0088         smode = 1;
+0089        <span class="keyword">case</span> <span class="string">'multiple'</span>
+0090         smode = 2;
+0091       <span class="keyword">end</span>
+0092      <span class="keyword">case</span> <span class="string">'listsize'</span>
+0093       listsize = varargin{i+1};
+0094      <span class="keyword">case</span> <span class="string">'liststring'</span>
+0095       liststring = varargin{i+1};
+0096      <span class="keyword">case</span> <span class="string">'initialvalue'</span>
+0097       initialvalue = varargin{i+1};
+0098      <span class="keyword">case</span> <span class="string">'uh'</span>
+0099       uh = varargin{i+1};
+0100      <span class="keyword">case</span> <span class="string">'fus'</span>
+0101       fus = varargin{i+1};
+0102      <span class="keyword">case</span> <span class="string">'ffs'</span>
+0103       ffs = varargin{i+1};
+0104      <span class="keyword">case</span> <span class="string">'okstring'</span>
+0105       okstring = varargin{i+1};
+0106      <span class="keyword">case</span> <span class="string">'cancelstring'</span>
+0107       cancelstring = varargin{i+1};
+0108      <span class="keyword">otherwise</span>
+0109       error(message(<span class="string">'MATLAB:listdlg:UnknownParameter'</span>, varargin{ i }))
+0110     <span class="keyword">end</span>
+0111 <span class="keyword">end</span>
+0112 
+0113 <span class="keyword">if</span> ischar(promptstring)
+0114     promptstring = cellstr(promptstring); 
+0115 <span class="keyword">end</span>
+0116 
+0117 <span class="keyword">if</span> isempty(initialvalue)
+0118     initialvalue = 1;
+0119 <span class="keyword">end</span>
+0120 
+0121 <span class="keyword">if</span> isempty(liststring)
+0122     error(message(<span class="string">'MATLAB:listdlg:NeedParameter'</span>))
+0123 <span class="keyword">end</span>
+0124 
+0125 ex = get(0,<span class="string">'DefaultUicontrolFontSize'</span>)*1.7;  <span class="comment">% height extent per line of uicontrol text (approx)</span>
+0126 
+0127 fp = get(0,<span class="string">'DefaultFigurePosition'</span>);
+0128 w = 2*(fus+ffs)+listsize(1);
+0129 h = 2*ffs+6*fus+ex*length(promptstring)+listsize(2)+uh+(smode==2)*(fus+uh);
+0130 fp = [fp(1) fp(2)+fp(4)-h w h];  <span class="comment">% keep upper left corner fixed</span>
+0131 
+0132 fig_props = { <span class="keyword">...</span>
+0133     <span class="string">'name'</span>                   figname <span class="keyword">...</span>
+0134     <span class="string">'color'</span>                  get(0,<span class="string">'DefaultUicontrolBackgroundColor'</span>) <span class="keyword">...</span>
+0135     <span class="string">'resize'</span>                 <span class="string">'off'</span> <span class="keyword">...</span>
+0136     <span class="string">'numbertitle'</span>            <span class="string">'off'</span> <span class="keyword">...</span>
+0137     <span class="string">'menubar'</span>                <span class="string">'none'</span> <span class="keyword">...</span>
+0138     <span class="string">'windowstyle'</span>            <span class="string">'normal'</span> <span class="keyword">...</span>
+0139     <span class="string">'visible'</span>                <span class="string">'off'</span> <span class="keyword">...</span>
+0140     <span class="string">'createfcn'</span>              <span class="string">''</span>    <span class="keyword">...</span>
+0141     <span class="string">'position'</span>               fp   <span class="keyword">...</span>
+0142     <span class="string">'closerequestfcn'</span>        <span class="string">'delete(gcbf)'</span> <span class="keyword">...</span>
+0143             };
+0144 
+0145 liststring=cellstr(liststring);
+0146 
+0147 fig = figure(fig_props{:});
+0148 
+0149 <span class="keyword">if</span> length(promptstring)&gt;0
+0150     prompt_text = uicontrol(<span class="string">'Style'</span>,<span class="string">'text'</span>,<span class="string">'String'</span>,promptstring,<span class="keyword">...</span>
+0151         <span class="string">'HorizontalAlignment'</span>,<span class="string">'left'</span>,<span class="keyword">...</span>
+0152         <span class="string">'Position'</span>,[ffs+fus fp(4)-(ffs+fus+ex*length(promptstring)) <span class="keyword">...</span>
+0153         listsize(1) ex*length(promptstring)]); <span class="comment">%#ok</span>
+0154 <span class="keyword">end</span>
+0155 
+0156 btn_wid = (fp(3)-2*(ffs+fus)-fus)/2;
+0157 
+0158 listbox = uicontrol(<span class="string">'Style'</span>,<span class="string">'listbox'</span>,<span class="keyword">...</span>
+0159                     <span class="string">'Position'</span>,[ffs+fus ffs+uh+4*fus+(smode==2)*(fus+uh) listsize],<span class="keyword">...</span>
+0160                     <span class="string">'String'</span>,liststring,<span class="keyword">...</span>
+0161                     <span class="string">'BackgroundColor'</span>,<span class="string">'w'</span>,<span class="keyword">...</span>
+0162                     <span class="string">'Max'</span>,smode,<span class="keyword">...</span>
+0163                     <span class="string">'Tag'</span>,<span class="string">'listbox'</span>,<span class="keyword">...</span>
+0164                     <span class="string">'Value'</span>,initialvalue, <span class="keyword">...</span>
+0165                     <span class="string">'Callback'</span>, {@<a href="#_sub6" class="code" title="subfunction doListboxClick(listbox, evd, selectall_btn) ">doListboxClick</a>});
+0166 
+0167 ok_btn = uicontrol(<span class="string">'Style'</span>,<span class="string">'pushbutton'</span>,<span class="keyword">...</span>
+0168                    <span class="string">'String'</span>,okstring,<span class="keyword">...</span>
+0169                    <span class="string">'Position'</span>,[ffs+fus ffs+fus btn_wid uh],<span class="keyword">...</span>
+0170                    <span class="string">'Tag'</span>,<span class="string">'ok_btn'</span>,<span class="keyword">...</span>
+0171                    <span class="string">'Callback'</span>,{@<a href="#_sub3" class="code" title="subfunction doOK(ok_btn, evd, listbox) ">doOK</a>,listbox});
+0172 
+0173 cancel_btn = uicontrol(<span class="string">'Style'</span>,<span class="string">'pushbutton'</span>,<span class="keyword">...</span>
+0174                        <span class="string">'String'</span>,cancelstring,<span class="keyword">...</span>
+0175                        <span class="string">'Position'</span>,[ffs+2*fus+btn_wid ffs+fus btn_wid uh],<span class="keyword">...</span>
+0176                        <span class="string">'Tag'</span>,<span class="string">'cancel_btn'</span>,<span class="keyword">...</span>
+0177                        <span class="string">'Callback'</span>,{@<a href="#_sub4" class="code" title="subfunction doCancel(cancel_btn, evd, listbox) ">doCancel</a>,listbox});
+0178 
+0179 <span class="keyword">if</span> smode == 2
+0180     selectall_btn = uicontrol(<span class="string">'Style'</span>,<span class="string">'pushbutton'</span>,<span class="keyword">...</span>
+0181                               <span class="string">'String'</span>,getString(message(<span class="string">'MATLAB:uistring:popupdialogs:SelectAll'</span>)),<span class="keyword">...</span>
+0182                               <span class="string">'Position'</span>,[ffs+fus 4*fus+ffs+uh listsize(1) uh],<span class="keyword">...</span>
+0183                               <span class="string">'Tag'</span>,<span class="string">'selectall_btn'</span>,<span class="keyword">...</span>
+0184                               <span class="string">'Callback'</span>,{@<a href="#_sub5" class="code" title="subfunction doSelectAll(selectall_btn, evd, listbox) ">doSelectAll</a>, listbox});
+0185 
+0186     <span class="keyword">if</span> length(initialvalue) == length(liststring)
+0187         set(selectall_btn,<span class="string">'Enable'</span>,<span class="string">'off'</span>)
+0188     <span class="keyword">end</span>
+0189     set(listbox,<span class="string">'Callback'</span>,{@<a href="#_sub6" class="code" title="subfunction doListboxClick(listbox, evd, selectall_btn) ">doListboxClick</a>, selectall_btn})
+0190 <span class="keyword">end</span>
+0191 
+0192 set([fig, ok_btn, cancel_btn, listbox], <span class="string">'KeyPressFcn'</span>, {@<a href="#_sub2" class="code" title="subfunction doKeypress(src, evd, listbox) ">doKeypress</a>, listbox});
+0193 
+0194 set(fig,<span class="string">'Position'</span>,<a href="getnicedialoglocation.html" class="code" title="function figure_size = getnicedialoglocation(figure_size, figure_units)">getnicedialoglocation</a>(fp, get(fig,<span class="string">'Units'</span>)));
+0195 <span class="comment">% Make ok_btn the default button.</span>
+0196 setdefaultbutton(fig, ok_btn);
+0197 
+0198 <span class="comment">% make sure we are on screen</span>
+0199 movegui(fig)
+0200 set(fig, <span class="string">'Visible'</span>,<span class="string">'on'</span>); drawnow;
+0201 
+0202 <span class="keyword">try</span>
+0203     <span class="comment">% Give default focus to the listbox *after* the figure is made visible</span>
+0204     uicontrol(listbox);
+0205     uiwait(fig);
+0206 <span class="keyword">catch</span>
+0207     <span class="keyword">if</span> ishghandle(fig)
+0208         delete(fig)
+0209     <span class="keyword">end</span>
+0210 <span class="keyword">end</span>
+0211 
+0212 <span class="keyword">if</span> isappdata(0,<span class="string">'ListDialogAppData__'</span>)
+0213     ad = getappdata(0,<span class="string">'ListDialogAppData__'</span>);
+0214     selection = ad.selection;
+0215     value = ad.value;
+0216     rmappdata(0,<span class="string">'ListDialogAppData__'</span>)
+0217 <span class="keyword">else</span>
+0218     <span class="comment">% figure was deleted</span>
+0219     selection = [];
+0220     value = 0;
+0221 <span class="keyword">end</span>
+0222 
+0223 <span class="comment">%% figure, OK and Cancel KeyPressFcn</span>
+0224 <a name="_sub1" href="#_subfunctions" class="code">function doKeypress(src, evd, listbox) </a><span class="comment">%#ok</span>
+0225 <span class="keyword">switch</span> evd.Key
+0226  <span class="keyword">case</span> <span class="string">'escape'</span>
+0227   <a href="#_sub4" class="code" title="subfunction doCancel(cancel_btn, evd, listbox) ">doCancel</a>([],[],listbox);
+0228 <span class="keyword">end</span>
+0229 
+0230 <span class="comment">%% OK callback</span>
+0231 <a name="_sub2" href="#_subfunctions" class="code">function doOK(ok_btn, evd, listbox) </a><span class="comment">%#ok</span>
+0232 <span class="keyword">if</span> (~isappdata(0, <span class="string">'ListDialogAppData__'</span>))
+0233     ad.value = 1;
+0234     ad.selection = get(listbox,<span class="string">'Value'</span>);
+0235     setappdata(0,<span class="string">'ListDialogAppData__'</span>,ad);
+0236     delete(gcbf);
+0237 <span class="keyword">end</span>
+0238 
+0239 <span class="comment">%% Cancel callback</span>
+0240 <a name="_sub3" href="#_subfunctions" class="code">function doCancel(cancel_btn, evd, listbox) </a><span class="comment">%#ok</span>
+0241 ad.value = 0;
+0242 ad.selection = [];
+0243 setappdata(0,<span class="string">'ListDialogAppData__'</span>,ad)
+0244 delete(gcbf);
+0245 
+0246 <span class="comment">%% SelectAll callback</span>
+0247 <a name="_sub4" href="#_subfunctions" class="code">function doSelectAll(selectall_btn, evd, listbox) </a><span class="comment">%#ok</span>
+0248 set(selectall_btn,<span class="string">'Enable'</span>,<span class="string">'off'</span>)
+0249 set(listbox,<span class="string">'Value'</span>,1:length(get(listbox,<span class="string">'String'</span>)));
+0250 
+0251 <span class="comment">%% Listbox callback</span>
+0252 <a name="_sub5" href="#_subfunctions" class="code">function doListboxClick(listbox, evd, selectall_btn) </a><span class="comment">%#ok</span>
+0253 <span class="comment">% if this is a doubleclick, doOK</span>
+0254 <span class="keyword">if</span> strcmp(get(gcbf,<span class="string">'SelectionType'</span>),<span class="string">'open'</span>)
+0255     <a href="#_sub3" class="code" title="subfunction doOK(ok_btn, evd, listbox) ">doOK</a>([],[],listbox);
+0256 <span class="keyword">elseif</span> nargin == 3
+0257     <span class="keyword">if</span> length(get(listbox,<span class="string">'String'</span>))==length(get(listbox,<span class="string">'Value'</span>))
+0258         set(selectall_btn,<span class="string">'Enable'</span>,<span class="string">'off'</span>)
+0259     <span class="keyword">else</span>
+0260         set(selectall_btn,<span class="string">'Enable'</span>,<span class="string">'on'</span>)
+0261     <span class="keyword">end</span>
+0262 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

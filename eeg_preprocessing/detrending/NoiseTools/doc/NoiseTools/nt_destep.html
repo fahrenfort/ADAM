@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_destep</title>
+  <meta name="keywords" content="nt_destep">
+  <meta name="description" content="[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_destep.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_destep
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data
+
+  y: step-removed data
+  stepList: indices of steps
+
+  x: data to clean (time * channels)
+  thresh: threshold for variance reduction [default: 0.1]
+  guard: minimum duration of stable interval in samples [default: 1000]
+  depth: recursion depth for nt_split [default:6], determines number of steps
+  minstep: if step size smaller skip step
+
+ Searches for large steps, removes them if variance ratio less than 
+ &quot;thresh&quot;, and both intervals shorter than &quot;guard&quot;.
+
+ See also <a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>, nt_deglitch, <a href="nt_split.html" class="code" title="function [idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep)">nt_split</a>.
+
+ NoiseTools.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_banner.html" class="code" title="function h=nt_banner(text)">nt_banner</a>	h=nt_banner(text,varargin) - annotate with text at head of figure</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>	[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_split.html" class="code" title="function [idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep)">nt_split</a>	[idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep) - split time series into intervals</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>	[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);</a>
+0002 <span class="comment">%[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: step-removed data</span>
+0005 <span class="comment">%  stepList: indices of steps</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data to clean (time * channels)</span>
+0008 <span class="comment">%  thresh: threshold for variance reduction [default: 0.1]</span>
+0009 <span class="comment">%  guard: minimum duration of stable interval in samples [default: 1000]</span>
+0010 <span class="comment">%  depth: recursion depth for nt_split [default:6], determines number of steps</span>
+0011 <span class="comment">%  minstep: if step size smaller skip step</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% Searches for large steps, removes them if variance ratio less than</span>
+0014 <span class="comment">% &quot;thresh&quot;, and both intervals shorter than &quot;guard&quot;.</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% See also nt_detrend, nt_deglitch, nt_split.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% NoiseTools.</span>
+0019 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0020 
+0021 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0022 <span class="keyword">if</span> nargin&lt;2||isempty(thresh); thresh=0.1; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> nargin&lt;3||isempty(guard); guard=100; <span class="keyword">end</span>
+0024 <span class="keyword">if</span> nargin&lt;4 || isempty(depth); depth=6; <span class="keyword">end</span>
+0025 <span class="keyword">if</span> nargin&lt;5 ; minstep=[]; <span class="keyword">end</span>
+0026 
+0027 <span class="keyword">if</span> isempty(minstep); minstep=(max(x(:))-min(x(:)))*0.0000001; <span class="keyword">end</span>
+0028 y=x;
+0029 
+0030 disp(numel(thresh))
+0031 
+0032 <span class="keyword">for</span> iChan=1:size(x,2)
+0033     <span class="comment">% find step indices</span>
+0034     [stepList,score_vector,score]=<a href="nt_split.html" class="code" title="function [idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep)">nt_split</a>(x(:,iChan),depth,thresh,guard,minstep);
+0035     
+0036     <span class="keyword">if</span> ~isempty(stepList)
+0037         stepList=[0,stepList,size(x,1)];
+0038         <span class="keyword">for</span> iSplit=2:numel(stepList)-1
+0039             y1=y(stepList(iSplit-1)+1:stepList(iSplit),iChan); <span class="comment">% plateau before</span>
+0040             y2=y(stepList(iSplit)+1:stepList(iSplit+1),iChan); <span class="comment">% plateau after</span>
+0041             step=(mean(y2)-mean(y1));
+0042             y(stepList(iSplit)+1:<span class="keyword">end</span>,iChan)=y(stepList(iSplit)+1:<span class="keyword">end</span>,iChan)-step;
+0043         <span class="keyword">end</span>
+0044     <span class="keyword">end</span>
+0045 <span class="keyword">end</span>
+0046 stepList=stepList(2:end-1);
+0047 
+0048 
+0049 <span class="keyword">if</span> ~nargout
+0050     <span class="comment">% don't return values, just plot</span>
+0051     disp([<span class="string">'steps at: '</span>, num2str(stepList(2:end-1))]);
+0052     figure(1); clf; <a href="nt_banner.html" class="code" title="function h=nt_banner(text)">nt_banner</a>(<span class="string">'nt_destep'</span>);
+0053     xx=[x(:),y(:)];
+0054     lim=[min(xx(:)),max(xx(:))]; lim=[lim(1)-0.1*(lim(2)-lim(1)), lim(2)+0.1*(lim(2)-lim(1))];
+0055     subplot 211; plot([x,y]); xlabel(<span class="string">'samples'</span>); ylim(lim); legend(<span class="string">'raw'</span>,<span class="string">'clean'</span>); legend boxoff
+0056     subplot 212;     plot(y,<span class="string">'r'</span>); xlabel(<span class="string">'samples'</span>); legend(<span class="string">'clean'</span>); legend boxoff
+0057     clear y, stepList;
+0058 <span class="keyword">end</span>
+0059 
+0060 
+0061 
+0062 <span class="comment">% test code</span>
+0063 <span class="comment">% if 0</span>
+0064 <span class="comment">%     N=8;</span>
+0065 <span class="comment">%     Wn=0.25; % CTF corner frequency is 1/4 of sampling rate</span>
+0066 <span class="comment">%     nsamples=100;</span>
+0067 <span class="comment">%     [B,A] = butter(N,Wn);</span>
+0068 <span class="comment">%     y=filter(B,A,ones(nsamples,1));</span>
+0069 <span class="comment">%     BETA0=[1, zeros(1,8), 1, zeros(1,8)];</span>
+0070 <span class="comment">%     fun = @(beta,x)(filter([beta(1),beta(2),beta(3),beta(4),beta(5),beta(6),beta(7),beta(8),beta(9)],...</span>
+0071 <span class="comment">%         [beta(10),beta(11),beta(12),beta(13),beta(14),beta(15),beta(16),beta(17),beta(18)],x));</span>
+0072 <span class="comment">%     x=ones(nsamples,1);</span>
+0073 <span class="comment">%     BETA = nlinfit(x,y,fun,BETA0);</span>
+0074 <span class="comment">%     BETA=BETA/BETA(10);</span>
+0075 <span class="comment">%     BB=BETA(1:9); AA=BETA(10:end);</span>
+0076 <span class="comment">%     figure(1); clf;</span>
+0077 <span class="comment">%     plot([y,filter(BB,AA,ones(size(y)))])</span>
+0078 <span class="comment">% end</span>
+0079 <span class="keyword">if</span> 0
+0080     N=8;
+0081     Wn=0.25; <span class="comment">% CTF corner frequency is 1/4 of sampling rate</span>
+0082     [B,A] = butter(N,Wn);
+0083     x=[zeros(1100,1);ones(2000,1)];
+0084     x=filter(B,A,x);
+0085     x=x+0.01*randn(size(x));
+0086     [y,stepList]=<a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>(x);
+0087     figure(1); clf;
+0088     subplot 211;
+0089     plot([x,y]); legend(<span class="string">'raw'</span>,<span class="string">'destep'</span>);legend boxoff
+0090     subplot 212; 
+0091     plot([y,nt_deglitch(y,stepList)]); 
+0092     legend(<span class="string">'destep'</span>,<span class="string">'deglitch'</span>);legend boxoff
+0093 <span class="keyword">end</span>
+0094 <span class="keyword">if</span> 0
+0095     N=8;
+0096     Wn=0.25; <span class="comment">% CTF corner frequency is 1/4 of sampling rate</span>
+0097     [B,A] = butter(N,Wn);
+0098     x=[zeros(1000,1);ones(1000,1);2*ones(1000,1);3*ones(1000,1);4*ones(1000,1);0*ones(1000,1)];
+0099     x=filter(B,A,x);
+0100     x=x+0.0*randn(size(x));
+0101     [y,stepList]=<a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>(x);
+0102     figure(1); clf;
+0103     subplot 211;
+0104     plot([x,y]); legend(<span class="string">'raw'</span>,<span class="string">'destep'</span>); legend boxoff
+0105     subplot 212; 
+0106     plot([y,nt_deglitch(y,stepList)]); 
+0107     legend(<span class="string">'destep'</span>,<span class="string">'deglitch'</span>);legend boxoff
+0108 <span class="keyword">end</span>
+0109 <span class="keyword">if</span> 0
+0110     x=ft_read_data(<span class="string">'/data/meg/litvak/phantom090715_BrainampDBS_20150709_18.ds'</span>); x=permute(x,[2,1,3]); x=x(:,33:306,:);
+0111     x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x(1:2300,100,1));
+0112     x=x*10^12; <span class="comment">% --&gt;pT</span>
+0113     [y,stepList]=<a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>(x);
+0114     figure(1); clf;
+0115     subplot 211;
+0116     plot([x,y]); legend(<span class="string">'raw'</span>,<span class="string">'destep'</span>); legend boxoff
+0117     subplot 212; 
+0118     plot([y,nt_deglitch(y,stepList)]); 
+0119     legend(<span class="string">'destep'</span>,<span class="string">'deglitch'</span>);legend boxoff
+0120 <span class="keyword">end</span>
+0121 
+0122</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

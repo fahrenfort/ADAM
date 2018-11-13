@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_non_rep_power</title>
+  <meta name="keywords" content="nt_non_rep_power">
+  <meta name="description" content="[r,pwr0,pwr1]=nt_non_rep_power(x,nIterations,nComps) - find non repeating components">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_non_rep_power.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_non_rep_power
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[r,pwr0,pwr1]=nt_non_rep_power(x,nIterations,nComps) - find non repeating components</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [r,pwr0,pwr1]=nt_non_rep_power(x,nIterations) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[r,pwr0,pwr1]=nt_non_rep_power(x,nIterations,nComps) - find non repeating components
+
+  r: component matrix (time*comp*trial)
+  pwr0, pwr1: from DSS
+
+  x: data (time*comp*trial)
+  nIterations: number of times to iterate DSS [default: 2]
+  nComps: number of components to return [default: all]</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_normpage.html" class="code" title="function y=nt_normpage(x,w)">nt_normpage</a>	y=nt_normpage(x,w) - normalize each page so its weighted msq is 1</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [r,pwr0,pwr1]=nt_non_rep_power(x,nIterations)</a>
+0002 <span class="comment">%[r,pwr0,pwr1]=nt_non_rep_power(x,nIterations,nComps) - find non repeating components</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  r: component matrix (time*comp*trial)</span>
+0005 <span class="comment">%  pwr0, pwr1: from DSS</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data (time*comp*trial)</span>
+0008 <span class="comment">%  nIterations: number of times to iterate DSS [default: 2]</span>
+0009 <span class="comment">%  nComps: number of components to return [default: all]</span>
+0010 <span class="comment">%</span>
+0011 
+0012 <span class="keyword">if</span> nargin&lt;3||isempty(nComps); nComps=inf; <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin&lt;2||isempty(nIterations); nIterations=2; <span class="keyword">end</span>
+0014 
+0015 <span class="keyword">if</span> ~iscell(x) ; x={x}; <span class="keyword">end</span>
+0016 
+0017 
+0018 
+0019 <span class="keyword">for</span> k=1:nIterations
+0020     [m,n,o]=size(x{1});
+0021     c0=zeros(n);
+0022     c1=zeros(n);
+0023     <span class="keyword">for</span> k=1:numel(x)
+0024         x{k}=x{k}/sqrt(mean(x{k}(:).^2)); <span class="comment">% divide by total power over this condition</span>
+0025         c0=c0+<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(<a href="nt_normpage.html" class="code" title="function y=nt_normpage(x,w)">nt_normpage</a>(x{k}));
+0026         c1=c1+<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x{k});
+0027     <span class="keyword">end</span>
+0028     [todss,pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0029     <span class="keyword">for</span> k=1:numel(x)
+0030         x{k}=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x{k},todss);
+0031     <span class="keyword">end</span>
+0032 <span class="keyword">end</span>
+0033 
+0034 r=x;</pre></div>
+<hr><address>Generated on Wed 19-Feb-2014 10:52:00 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

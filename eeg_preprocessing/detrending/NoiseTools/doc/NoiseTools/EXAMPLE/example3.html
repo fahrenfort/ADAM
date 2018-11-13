@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of example3</title>
+  <meta name="keywords" content="example3">
+  <meta name="description" content="Find linear combination of LFPs that maximizes selectivity to stimulus">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">EXAMPLE</a> &gt; example3.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/EXAMPLE&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>example3
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>Find linear combination of LFPs that maximizes selectivity to stimulus</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Find linear combination of LFPs that maximizes selectivity to stimulus
+ frequency.  Data are from a 16-channel electrode array in guinea pig
+ auditory cortex. Stimuli are tone pips with frequencies from 0.56 to 36
+ kHz in 6% steps (97 frequencies), each presented 8 times in pseudorandom
+ order.
+
+ Uses nt_dss0().</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% Find linear combination of LFPs that maximizes selectivity to stimulus</span>
+0002 <span class="comment">% frequency.  Data are from a 16-channel electrode array in guinea pig</span>
+0003 <span class="comment">% auditory cortex. Stimuli are tone pips with frequencies from 0.56 to 36</span>
+0004 <span class="comment">% kHz in 6% steps (97 frequencies), each presented 8 times in pseudorandom</span>
+0005 <span class="comment">% order.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Uses nt_dss0().</span>
+0008 
+0009 clear;
+0010 disp(mfilename);
+0011 help(mfilename)
+0012 
+0013 FNAME=[fileparts(which(<span class="string">'nt_version'</span>)), <span class="string">'/DATA/Fichier_1815_lfp.mat'</span>];
+0014 <span class="keyword">if</span> ~exist(FNAME); 
+0015     disp([<span class="string">'file '</span>,FNAME,<span class="string">' not found, get it at http://cognition.ens.fr/Audition/adc/NoiseTools/DATA/'</span>]);
+0016     <span class="keyword">return</span>
+0017 <span class="keyword">end</span>
+0018 
+0019 load (FNAME);   <span class="comment">% loads LFPSampleRate, frequencies, xx</span>
+0020 x=xx; clear xx
+0021 sr=LFPSampleRate;
+0022 [nsample,nchan,ntrial,nfreq]=size(x);
+0023 t=(0:nsample-1)'/sr;
+0024 
+0025 <span class="comment">% average over repeats, trim to first 100 ms</span>
+0026 x=squeeze(mean(x,3)); <span class="comment">% --&gt; time * channels * frequency</span>
+0027 x=x(find(t&lt;=0.1),:,:,:);
+0028 nsample=size(x,1);
+0029 x=nt_demean(x);
+0030 
+0031 
+0032 <span class="comment">% Component analysis:</span>
+0033 <span class="comment">% For each frequency, find the matrix that defines the linear combination of channels that</span>
+0034 <span class="comment">% maximizes response at that frequency relative to all others</span>
+0035 to_otc=zeros(nchan,nfreq);
+0036 c0=nt_cov(x); 
+0037 <span class="keyword">for</span> iBias=1:nfreq
+0038     c1=nt_cov(x(:,:,iBias));
+0039     [todss]=nt_dss0(c0,c1);
+0040     todss=todss(:,1); <span class="comment">% keep best</span>
+0041     to_otc(:,iBias)=todss;
+0042 <span class="keyword">end</span>
+0043 
+0044 <span class="comment">% apply that matrix to get components</span>
+0045 otc=zeros(nsample,nfreq,nfreq);    
+0046 <span class="keyword">for</span> iBias=1:nfreq
+0047     z=nt_mmat(x,to_otc(:,iBias));
+0048     otc(:,iBias,:)=z; <span class="comment">% optimally tuned component (time*bias*freq)</span>
+0049 <span class="keyword">end</span>
+0050 
+0051 <span class="comment">% for convenience, flip signs so all components are similar</span>
+0052 a=nt_unfold(otc);
+0053 aa=nt_pca(a);
+0054 <span class="keyword">for</span> iBias=1:nfreq
+0055     <span class="keyword">if</span> aa(:,1)'*a(:,iBias)&lt;0
+0056         otc(:,iBias,:)=-otc(:,iBias,:);
+0057         to_otc(:,iBias)=-to_otc(:,iBias);
+0058     <span class="keyword">end</span>
+0059 <span class="keyword">end</span>
+0060 
+0061 
+0062 
+0063 <span class="comment">% Display results.</span>
+0064 
+0065 <span class="comment">% Tuning curves for electrodes and components</span>
+0066 
+0067 <span class="comment">% RMS over time --&gt; stim bias freq * stim freq</span>
+0068 zz=squeeze(sqrt(mean(otc.^2,1)));
+0069 zz=nt_normcol(zz);
+0070 
+0071 <span class="comment">% same for electrode signals --&gt; stim freq * electrodes</span>
+0072 xx=squeeze(sqrt(mean(x.^2)))';
+0073 xx=nt_normcol(xx);
+0074 
+0075 figure(1); clf
+0076 subplot 211
+0077 nt_imagescc(xx'); title(<span class="string">'electrode tuning curves'</span>);
+0078 xlabel(<span class="string">'stim freq (.56 - 36 kHz)'</span>);
+0079 ylabel(<span class="string">'electrode'</span>);
+0080 
+0081 subplot 212
+0082 nt_imagescc(zz); title(<span class="string">'optimally tuned components'</span>);
+0083 xlabel(<span class="string">'stim freq (.56 - 36 kHz)'</span>);
+0084 ylabel(<span class="string">'bias freq (.56 - 36 kHz)'</span>);
+0085 
+0086 
+0087 figure(2); clf
+0088 plot([xx(:,11), zz(:,70)]);
+0089 xlabel(<span class="string">'stim freq (.56 - 36 kHz)'</span>);
+0090 nt_linecolors([],[1 3]);
+0091 legend(<span class="string">'electrode #11'</span>,<span class="string">'component #70'</span>, <span class="string">'location'</span>, <span class="string">'northwest'</span>); legend boxoff
+0092 title(<span class="string">'example tuning curves'</span>);
+0093 
+0094 figure(3); clf
+0095 subplot 121; 
+0096 nt_imagescc(squeeze(x(:,11,:)))
+0097 xlabel(<span class="string">'stim freq (.56 - 36 kHz)'</span>);
+0098 ylabel(<span class="string">'time (0-100ms)'</span>);
+0099 title(<span class="string">'electrode 11'</span>);
+0100 subplot 122; 
+0101 nt_imagescc(squeeze(otc(:,72,:)))
+0102 xlabel(<span class="string">'stim freq (.56 - 36 kHz)'</span>);
+0103 ylabel(<span class="string">'time (0-100ms)'</span>);
+0104 title(<span class="string">'component 72'</span>);
+0105 
+0106 figure(4); clf
+0107 nt_imagescc(to_otc)
+0108 xlabel(<span class="string">'bias freq (.56 - 36 kHz)'</span>);
+0109 ylabel(<span class="string">'electrode'</span>); 
+0110 title(<span class="string">'weights for each component'</span>);
+0111</pre></div>
+<hr><address>Generated on Wed 29-Nov-2017 23:17:18 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

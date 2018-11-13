@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_fold</title>
+  <meta name="keywords" content="nt_fold">
+  <meta name="description" content="y=fold(x,epochsize) - fold 2D to 3D">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_fold.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_fold
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=fold(x,epochsize) - fold 2D to 3D</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function x=fold(x,epochsize) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=fold(x,epochsize) - fold 2D to 3D 
+
+  y: 3D matrix of (time * channel * trial)
+
+  x: 2D matrix of concatentated data (time * channel)
+  epochsize: number of samples in each trial
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_fixsign.html" class="code" title="function x=nt_fixsign(x)">nt_fixsign</a>	y=nt_fixsign(x) - flip signs to maximize inter-component correlation</li><li><a href="nt_growmask.html" class="code" title="function w=nt_growmask(w,margin)">nt_growmask</a>	ww=nt_growmask(w,margin) - widen mask</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>	[b,z]=nt_regw(y,x,w) - weighted regression</li><li><a href="nt_sns.html" class="code" title="function y=nt_sns(x,nneighbors,skip,w)">nt_sns</a>	y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression</li><li><a href="nt_sns_cluster.html" class="code" title="function x=nt_sns_cluster(x,nneighbors,cluster_size)">nt_sns_cluster</a>	y=nt_sns_cluster(x,nneigbors,cluster_size) - sensor noise suppression within clusters</li><li><a href="nt_star.html" class="code" title="function [x,w,ww]=nt_star(x,thresh,closest,depth)">nt_star</a>	[y,w,ww]=nt_star(x,thresh,closest,depth) - sensor noise suppression</li><li><a href="nt_star2.html" class="code" title="function [x,w,ww]=nt_star2(x,thresh,closest,w)">nt_star2</a>	[y,w,ww]=nt_star2(x,thresh,closest,w) - sensor noise suppression</li><li><a href="nt_tsregress.html" class="code" title="function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)">nt_tsregress</a>	[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression</li><li><a href="nt_tsxcov.html" class="code" title="function [c,tw]=nt_tsxcov(x,y,shifts,w);">nt_tsxcov</a>	[c,tw]=nt_tsxcov(x,y,shifts,w) - cross-covariance of X and time-shifted Y</li><li><a href="nt_vecadd.html" class="code" title="function x=nt_vecadd(x,v)">nt_vecadd</a>	y=nt_vecadd(x,v) - add vector to all rows or columns of matrix</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li><li><a href="nt_xcov.html" class="code" title="function [c,tw]=nt_xcov(x,y,shifts,w);">nt_xcov</a>	[c,tw]=nt_xcov(x,y,shifts,w) - cross-covariance of X and time-shifted Y</li><li><a href="nt_xprod.html" class="code" title="function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)">nt_xprod</a>	[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts</li><li><a href="nt_xprod2.html" class="code" title="function [y]=nt_xprod2(x1,x2,dsratio)">nt_xprod2</a>	[y,ind]=nt_xprod(x1,x2,dsratio) - form all crossproducts</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function x=fold(x,epochsize)</a>
+0002 <span class="comment">%y=fold(x,epochsize) - fold 2D to 3D</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: 3D matrix of (time * channel * trial)</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: 2D matrix of concatentated data (time * channel)</span>
+0007 <span class="comment">%  epochsize: number of samples in each trial</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% NoiseTools</span>
+0010 
+0011 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0012 
+0013 <span class="keyword">if</span> isempty(x); 
+0014     x=[]; 
+0015 <span class="keyword">else</span>
+0016     <span class="keyword">if</span> size(x,1)/epochsize&gt;1
+0017         x=permute(reshape(x,[epochsize, size(x,1)/epochsize, size(x,2)]), [1 3 2]);
+0018     <span class="keyword">else</span>
+0019         x=x;
+0020     <span class="keyword">end</span>
+0021 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

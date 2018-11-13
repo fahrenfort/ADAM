@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_find_triggers</title>
+  <meta name="keywords" content="nt_find_triggers">
+  <meta name="description" content="tidx=nt_find_triggers(x,threshold,type,guard) - find triggers">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_find_triggers.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_find_triggers
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>tidx=nt_find_triggers(x,threshold,type,guard) - find triggers</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function tidx=nt_find_triggers(x,threshold,type,guard) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">tidx=nt_find_triggers(x,threshold,type,guard) - find triggers
+
+  tlist: array of trigger indices
+
+  x: trigger channel waveform
+  threshold: trigger threshold
+  type: type of trigger ('up' or 'down',guard);
+  guard: (samples) dead interval to avoid rebound</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_find_triggers.html" class="code" title="function tidx=nt_find_triggers(x,threshold,type,guard)">nt_find_triggers</a>	tidx=nt_find_triggers(x,threshold,type,guard) - find triggers</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_find_triggers.html" class="code" title="function tidx=nt_find_triggers(x,threshold,type,guard)">nt_find_triggers</a>	tidx=nt_find_triggers(x,threshold,type,guard) - find triggers</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function tidx=nt_find_triggers(x,threshold,type,guard)</a>
+0002 <span class="comment">%tidx=nt_find_triggers(x,threshold,type,guard) - find triggers</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  tlist: array of trigger indices</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: trigger channel waveform</span>
+0007 <span class="comment">%  threshold: trigger threshold</span>
+0008 <span class="comment">%  type: type of trigger ('up' or 'down',guard);</span>
+0009 <span class="comment">%  guard: (samples) dead interval to avoid rebound</span>
+0010 
+0011 
+0012 <span class="keyword">if</span> nargin&lt;4 || isempty(guard) ; guard=0; <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin&lt;3 || isempty(type) ; type=<span class="string">'up'</span>; <span class="keyword">end</span>
+0014 <span class="keyword">if</span> nargin&lt;2 threshold=[]; <span class="keyword">end</span>
+0015 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0016 
+0017 <span class="keyword">if</span> strcmp(type,<span class="string">'down'</span>);
+0018     tidx=<a href="nt_find_triggers.html" class="code" title="function tidx=nt_find_triggers(x,threshold,type,guard)">nt_find_triggers</a>(-x,threshold,<span class="string">'up'</span>,guard);
+0019     <span class="keyword">return</span>;
+0020 <span class="keyword">end</span>
+0021 
+0022 <span class="keyword">if</span> ~strcmp(type,<span class="string">'up'</span>); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0023 
+0024 <span class="keyword">if</span> x ~= x(:); error(<span class="string">'trigger waveform should be column vector'</span>); <span class="keyword">end</span>
+0025 
+0026 <span class="keyword">if</span> isempty(threshold); 
+0027     threshold=(max(x)+min(x))/2;
+0028 <span class="keyword">end</span>
+0029 
+0030 xx=x(1:end-1)&lt;threshold &amp; x(2:end)&gt;=threshold;
+0031 
+0032 
+0033 
+0034 
+0035 tidx=find(xx);</pre></div>
+<hr><address>Generated on Tue 09-May-2017 13:19:57 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

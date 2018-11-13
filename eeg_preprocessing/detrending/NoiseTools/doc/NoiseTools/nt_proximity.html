@@ -1,0 +1,966 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_proximity</title>
+  <meta name="keywords" content="nt_proximity">
+  <meta name="description" content="[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_proximity.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_proximity
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [closest,d]=nt_proximity(coordinates,N) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels
+
+  closest: indices of closest channels
+  d: table of distances from each channel (row) to other channels (column)
+
+  coordinates: spatial coordinates of each channel
+  N: consider only N nearest neighbors
+ 
+ If coordinates is a n*2 or n*3 matrix, it is iterpreted as cartesian coordinates
+ in the plane or 3D space. A n*q matrix indicates coordinates in a qD space.
+ If coordinates is a list of strings, it is interpreted as a list of standard 
+ 10-20 positions.  
+ If coordinates is a single string (e.g. 'biosemi128') it is interpreted as the 
+ name of a standard layout file .
+ If coordinates is a pair of numbers, it is interpreted as the dimensions in pixels 
+ of a rectangle. Pixels are listed by columns. 
+ If coordinates is a triplet, it is interpreted as the dimensions of a cuboid. 
+  
+ Examples:
+ 10 closest channels in a 64-channel biosemi cap:
+  [closest,d]=nt_proximity('biosemi64.lay',10);
+ 10 closest channels based on cosine distance between signals:
+  [closest,d]=nt_proximity(nt_normcol(x)',10);
+ 10 closest pixels in a 120 rows * 100 column image:
+  [closest,d]=nt_proximity([120,100],10);
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a>	[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_interpolate_bad_channels.html" class="code" title="function [toGood,fromGood]=interpolate_bad_channels(x,iBad,coordinates,n)">nt_interpolate_bad_channels</a>	y=interpolate_bad_channels(x,iBad,coordinates,n) - interpolate bad channels from good</li><li><a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a>	[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels</li><li><a href="nt_video_sns.html" class="code" title="function y=nt_video_sns(x,nneighbors)">nt_video_sns</a>	y=nt_video_sns(x,nneighbors) - apply SNS locally</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function [elec] = elec_1020all_cart</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [closest,d]=nt_proximity(coordinates,N)</a>
+0002 <span class="comment">%[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  closest: indices of closest channels</span>
+0005 <span class="comment">%  d: table of distances from each channel (row) to other channels (column)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  coordinates: spatial coordinates of each channel</span>
+0008 <span class="comment">%  N: consider only N nearest neighbors</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% If coordinates is a n*2 or n*3 matrix, it is iterpreted as cartesian coordinates</span>
+0011 <span class="comment">% in the plane or 3D space. A n*q matrix indicates coordinates in a qD space.</span>
+0012 <span class="comment">% If coordinates is a list of strings, it is interpreted as a list of standard</span>
+0013 <span class="comment">% 10-20 positions.</span>
+0014 <span class="comment">% If coordinates is a single string (e.g. 'biosemi128') it is interpreted as the</span>
+0015 <span class="comment">% name of a standard layout file .</span>
+0016 <span class="comment">% If coordinates is a pair of numbers, it is interpreted as the dimensions in pixels</span>
+0017 <span class="comment">% of a rectangle. Pixels are listed by columns.</span>
+0018 <span class="comment">% If coordinates is a triplet, it is interpreted as the dimensions of a cuboid.</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Examples:</span>
+0021 <span class="comment">% 10 closest channels in a 64-channel biosemi cap:</span>
+0022 <span class="comment">%  [closest,d]=nt_proximity('biosemi64.lay',10);</span>
+0023 <span class="comment">% 10 closest channels based on cosine distance between signals:</span>
+0024 <span class="comment">%  [closest,d]=nt_proximity(nt_normcol(x)',10);</span>
+0025 <span class="comment">% 10 closest pixels in a 120 rows * 100 column image:</span>
+0026 <span class="comment">%  [closest,d]=nt_proximity([120,100],10);</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% NoiseTools</span>
+0029 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>();
+0030 
+0031 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0032 <span class="keyword">if</span> nargin&lt;2; N=[]; <span class="keyword">end</span>
+0033 <span class="keyword">if</span> isempty(coordinates); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0034 
+0035 <span class="keyword">if</span> ischar(coordinates)
+0036     <span class="keyword">switch</span> coordinates
+0037         <span class="keyword">case</span> {<span class="string">'biosemi256.lay'</span>,<span class="string">'biosemi160.lay'</span>,<span class="string">'biosemi128.lay'</span>, <span class="string">'biosemi64.lay'</span>, <span class="string">'biosemi32.lay'</span>, <span class="string">'biosemi16.lay'</span>};
+0038             cfg.layout=coordinates; 
+0039             layout=ft_prepare_layout(cfg);
+0040             coordinates=layout.pos;
+0041             coordinates=coordinates(1:end-2,:); <span class="comment">% remove last two rows (COMNT, SCALE)</span>
+0042         <span class="keyword">otherwise</span>
+0043             <span class="keyword">if</span> exist (coordinates,<span class="string">'file'</span>) &amp;&amp; numel(coordinates)&gt;4 &amp;&amp; all(coordinates(end-3:end)==<span class="string">'.lay'</span>) 
+0044                 fid=fopen(coordinates);
+0045                 a=textscan(fid, <span class="string">'%d %f %f %f %f %s'</span>);
+0046                 fclose(fid);
+0047                 coordinates=[a{2},a{3}];
+0048             <span class="keyword">elseif</span> exist (coordinates,<span class="string">'file'</span>) &amp;&amp; numel(coordinates)&gt;4 &amp;&amp; all(coordinates(end-3:end)==<span class="string">'.ced'</span>) 
+0049                 fid=fopen(coordinates);
+0050                 a=textscan(fid,<span class="string">'%d%s%f%f%f%f%f%f%f%d'</span>, <span class="string">'headerlines'</span>, 1);
+0051                 fclose(fid);
+0052                 coordinates=[a{5},a{6},a{7}];
+0053             <span class="keyword">elseif</span> exist (coordinates,<span class="string">'file'</span>) &amp;&amp; numel(coordinates)&gt;4 &amp;&amp; all(coordinates(end-3:end)==<span class="string">'.loc'</span>) 
+0054                 fid=fopen(coordinates);
+0055                 a=textscan(fid, <span class="string">'%d %f %f %s'</span>);
+0056                 fclose(fid);
+0057                 coordinates=[a{2},a{3}];
+0058             <span class="keyword">elseif</span> exist (coordinates,<span class="string">'file'</span>) &amp;&amp; numel(coordinates)&gt;4 &amp;&amp; all(coordinates(end-3:end)==<span class="string">'.mat'</span>) 
+0059                 load (coordinates);
+0060                 coordinates=lay.pos;
+0061                 coordinates=coordinates(1:end-2,:); <span class="comment">% remove last two rows (COMNT, SCALE)</span>
+0062              <span class="keyword">end</span>                
+0063     <span class="keyword">end</span>
+0064 <span class="keyword">end</span>
+0065 
+0066 <span class="keyword">if</span> isnumeric(coordinates)
+0067     <span class="keyword">if</span> size(coordinates,1)==1
+0068         <span class="keyword">if</span> numel(coordinates)==2 <span class="comment">% dimensions in pixels of a rectangle</span>
+0069             nrows=coordinates(1); ncols=coordinates(2);
+0070             a=repmat(1:nrows,ncols,1); b=repmat((1:ncols)',1,nrows); c=[a(:),b(:)];
+0071             [closest,d]=knnsearch(c,c,<span class="string">'K'</span>,N+1);
+0072             closest=closest(:,2:end);
+0073             d=d(:,2:end);
+0074         <span class="keyword">else</span>
+0075             error(<span class="string">'cuboids, etc not yet implemented'</span>);
+0076         <span class="keyword">end</span>
+0077     <span class="keyword">else</span>
+0078         [nchans, ~]=size(coordinates);
+0079         d=zeros(nchans);
+0080         closest=zeros(nchans);
+0081         <span class="keyword">for</span> iChan=1:nchans
+0082             d(iChan,:)=sqrt( sum( bsxfun(@minus,coordinates, coordinates(iChan,:)).^2, 2) )';
+0083             [~,closest(iChan,:)]=sort(d(iChan,:)',<span class="string">'ascend'</span>);
+0084         <span class="keyword">end</span>
+0085         closest=closest(:,2:end);
+0086     <span class="keyword">end</span>
+0087 <span class="keyword">elseif</span> iscell(coordinates) &amp;&amp; ischar(coordinates{1});
+0088     nchans=numel(coordinates);
+0089     elec=<a href="#_sub1" class="code" title="subfunction [elec] = elec_1020all_cart">elec_1020all_cart</a>;
+0090     labels={elec(:).labels};
+0091     c=[];
+0092     <span class="keyword">for</span> iChan=1:nchans
+0093         idx=find(strcmp(deblank(coordinates{iChan}),deblank(labels)));
+0094         <span class="keyword">if</span> numel(idx) ~= 1; error([<span class="string">'label not recognized: '</span>,coordinates{iChan}]); <span class="keyword">end</span>
+0095         c=[c;[elec(idx).X, elec(idx).Y, elec(idx).Z]];
+0096     <span class="keyword">end</span>
+0097     [closest,d]=<a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a>(c);
+0098 <span class="keyword">else</span>
+0099     error(<span class="string">'coordinates should be numeric or cell array of strings'</span>);
+0100 <span class="keyword">end</span>
+0101 
+0102 <span class="keyword">if</span> ~isempty(N);
+0103     closest=closest(:,1:N); 
+0104     d=d(:,1:N);
+0105 <span class="keyword">end</span>
+0106 
+0107 
+0108 <span class="comment">% modified from https://sccn.ucsd.edu/svn/software/branches/eeglab9/plugins/ctfimport1.03/elec_1020all_cart.m</span>
+0109 <a name="_sub1" href="#_subfunctions" class="code">function [elec] = elec_1020all_cart</a>
+0110 
+0111 <span class="comment">% elec_1020all_cart - all 10-20 electrode Cartesian coordinates</span>
+0112 <span class="comment">%</span>
+0113 <span class="comment">% [elec] = elec_1020all_cart</span>
+0114 <span class="comment">%</span>
+0115 <span class="comment">% elec is a struct array with fields:</span>
+0116 <span class="comment">%</span>
+0117 <span class="comment">% elec.labels</span>
+0118 <span class="comment">% elec.X</span>
+0119 <span class="comment">% elec.Y</span>
+0120 <span class="comment">% elec.Z</span>
+0121 <span class="comment">%</span>
+0122 <span class="comment">% We gratefully acknowledge the provision of this data from</span>
+0123 <span class="comment">% Robert Oostenveld.  The elec struct contains all channel names and</span>
+0124 <span class="comment">% locations for the International 10-20 electrode placement system, please</span>
+0125 <span class="comment">% see details in:</span>
+0126 <span class="comment">%</span>
+0127 <span class="comment">% Oostenveld, R. &amp; Praamstra, P. (2001). The five percent electrode system</span>
+0128 <span class="comment">% for high-resolution EEG and ERP measurements. Clinical Neurophysiology,</span>
+0129 <span class="comment">% 112:713-719.</span>
+0130 <span class="comment">%</span>
+0131 
+0132 <span class="comment">% $Revision: 1.1 $ $Date: 2009-01-30 03:49:27 $</span>
+0133 
+0134 <span class="comment">% Copyright (C) 2005  Darren L. Weber</span>
+0135 <span class="comment">%</span>
+0136 <span class="comment">% This program is free software; you can redistribute it and/or</span>
+0137 <span class="comment">% modify it under the terms of the GNU General Public License</span>
+0138 <span class="comment">% as published by the Free Software Foundation; either version 2</span>
+0139 <span class="comment">% of the License, or (at your option) any later version.</span>
+0140 <span class="comment">%</span>
+0141 <span class="comment">% This program is distributed in the hope that it will be useful,</span>
+0142 <span class="comment">% but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+0143 <span class="comment">% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+0144 <span class="comment">% GNU General Public License for more details.</span>
+0145 <span class="comment">%</span>
+0146 <span class="comment">% You should have received a copy of the GNU General Public License</span>
+0147 <span class="comment">% along with this program; if not, write to the Free Software</span>
+0148 <span class="comment">% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.</span>
+0149 
+0150 <span class="comment">% Modified: 02/2004, Darren.Weber_at_radiology.ucsf.edu</span>
+0151 <span class="comment">%</span>
+0152 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0153 
+0154 
+0155 <span class="comment">% ver = '$Revision: 1.1 $ $Date: 2009-01-30 03:49:27 $';</span>
+0156 <span class="comment">% fprintf('\nELEC_1020ALL_CART [v %s]\n',ver(11:15));</span>
+0157 <span class="comment">%</span>
+0158 
+0159 names = {<span class="string">'LPA'</span>,<span class="string">'RPA'</span>,<span class="string">'Nz'</span>,<span class="string">'Fp1'</span>,<span class="string">'Fpz'</span>,<span class="string">'Fp2'</span>,<span class="string">'AF9'</span>,<span class="string">'AF7'</span>,<span class="string">'AF5'</span>,<span class="string">'AF3'</span>,<span class="keyword">...</span>
+0160     <span class="string">'AF1'</span>,<span class="string">'AFz'</span>,<span class="string">'AF2'</span>,<span class="string">'AF4'</span>,<span class="string">'AF6'</span>,<span class="string">'AF8'</span>,<span class="string">'AF10'</span>,<span class="string">'F9'</span>,<span class="string">'F7'</span>,<span class="string">'F5'</span>,<span class="string">'F3'</span>,<span class="string">'F1'</span>,<span class="keyword">...</span>
+0161     <span class="string">'Fz'</span>,<span class="string">'F2'</span>,<span class="string">'F4'</span>,<span class="string">'F6'</span>,<span class="string">'F8'</span>,<span class="string">'F10'</span>,<span class="string">'FT9'</span>,<span class="string">'FT7'</span>,<span class="string">'FC5'</span>,<span class="string">'FC3'</span>,<span class="string">'FC1'</span>,<span class="string">'FCz'</span>,<span class="keyword">...</span>
+0162     <span class="string">'FC2'</span>,<span class="string">'FC4'</span>,<span class="string">'FC6'</span>,<span class="string">'FT8'</span>,<span class="string">'FT10'</span>,<span class="string">'T9'</span>,<span class="string">'T7'</span>,<span class="string">'C5'</span>,<span class="string">'C3'</span>,<span class="string">'C1'</span>,<span class="string">'Cz'</span>,<span class="string">'C2'</span>,<span class="keyword">...</span>
+0163     <span class="string">'C4'</span>,<span class="string">'C6'</span>,<span class="string">'T8'</span>,<span class="string">'T10'</span>,<span class="string">'TP9'</span>,<span class="string">'TP7'</span>,<span class="string">'CP5'</span>,<span class="string">'CP3'</span>,<span class="string">'CP1'</span>,<span class="string">'CPz'</span>,<span class="string">'CP2'</span>,<span class="string">'CP4'</span>,<span class="keyword">...</span>
+0164     <span class="string">'CP6'</span>,<span class="string">'TP8'</span>,<span class="string">'TP10'</span>,<span class="string">'P9'</span>,<span class="string">'P7'</span>,<span class="string">'P5'</span>,<span class="string">'P3'</span>,<span class="string">'P1'</span>,<span class="string">'Pz'</span>,<span class="string">'P2'</span>,<span class="string">'P4'</span>,<span class="string">'P6'</span>,<span class="string">'P8'</span>,<span class="keyword">...</span>
+0165     <span class="string">'P10'</span>,<span class="string">'PO9'</span>,<span class="string">'PO7'</span>,<span class="string">'PO5'</span>,<span class="string">'PO3'</span>,<span class="string">'PO1'</span>,<span class="string">'POz'</span>,<span class="string">'PO2'</span>,<span class="string">'PO4'</span>,<span class="string">'PO6'</span>,<span class="string">'PO8'</span>,<span class="keyword">...</span>
+0166     <span class="string">'PO10'</span>,<span class="string">'O1'</span>,<span class="string">'Oz'</span>,<span class="string">'O2'</span>,<span class="string">'I1'</span>,<span class="string">'Iz'</span>,<span class="string">'I2'</span>,<span class="string">'AFp9h'</span>,<span class="string">'AFp7h'</span>,<span class="string">'AFp5h'</span>,<span class="string">'AFp3h'</span>,<span class="keyword">...</span>
+0167     <span class="string">'AFp1h'</span>,<span class="string">'AFp2h'</span>,<span class="string">'AFp4h'</span>,<span class="string">'AFp6h'</span>,<span class="string">'AFp8h'</span>,<span class="string">'AFp10h'</span>,<span class="string">'AFF9h'</span>,<span class="string">'AFF7h'</span>,<span class="keyword">...</span>
+0168     <span class="string">'AFF5h'</span>,<span class="string">'AFF3h'</span>,<span class="string">'AFF1h'</span>,<span class="string">'AFF2h'</span>,<span class="string">'AFF4h'</span>,<span class="string">'AFF6h'</span>,<span class="string">'AFF8h'</span>,<span class="string">'AFF10h'</span>,<span class="keyword">...</span>
+0169     <span class="string">'FFT9h'</span>,<span class="string">'FFT7h'</span>,<span class="string">'FFC5h'</span>,<span class="string">'FFC3h'</span>,<span class="string">'FFC1h'</span>,<span class="string">'FFC2h'</span>,<span class="string">'FFC4h'</span>,<span class="string">'FFC6h'</span>,<span class="keyword">...</span>
+0170     <span class="string">'FFT8h'</span>,<span class="string">'FFT10h'</span>,<span class="string">'FTT9h'</span>,<span class="string">'FTT7h'</span>,<span class="string">'FCC5h'</span>,<span class="string">'FCC3h'</span>,<span class="string">'FCC1h'</span>,<span class="string">'FCC2h'</span>,<span class="keyword">...</span>
+0171     <span class="string">'FCC4h'</span>,<span class="string">'FCC6h'</span>,<span class="string">'FTT8h'</span>,<span class="string">'FTT10h'</span>,<span class="string">'TTP9h'</span>,<span class="string">'TTP7h'</span>,<span class="string">'CCP5h'</span>,<span class="string">'CCP3h'</span>,<span class="keyword">...</span>
+0172     <span class="string">'CCP1h'</span>,<span class="string">'CCP2h'</span>,<span class="string">'CCP4h'</span>,<span class="string">'CCP6h'</span>,<span class="string">'TTP8h'</span>,<span class="string">'TTP10h'</span>,<span class="string">'TPP9h'</span>,<span class="string">'TPP7h'</span>,<span class="keyword">...</span>
+0173     <span class="string">'CPP5h'</span>,<span class="string">'CPP3h'</span>,<span class="string">'CPP1h'</span>,<span class="string">'CPP2h'</span>,<span class="string">'CPP4h'</span>,<span class="string">'CPP6h'</span>,<span class="string">'TPP8h'</span>,<span class="string">'TPP10h'</span>,<span class="keyword">...</span>
+0174     <span class="string">'PPO9h'</span>,<span class="string">'PPO7h'</span>,<span class="string">'PPO5h'</span>,<span class="string">'PPO3h'</span>,<span class="string">'PPO1h'</span>,<span class="string">'PPO2h'</span>,<span class="string">'PPO4h'</span>,<span class="string">'PPO6h'</span>,<span class="keyword">...</span>
+0175     <span class="string">'PPO8h'</span>,<span class="string">'PPO10h'</span>,<span class="string">'POO9h'</span>,<span class="string">'POO7h'</span>,<span class="string">'POO5h'</span>,<span class="string">'POO3h'</span>,<span class="string">'POO1h'</span>,<span class="string">'POO2h'</span>,<span class="keyword">...</span>
+0176     <span class="string">'POO4h'</span>,<span class="string">'POO6h'</span>,<span class="string">'POO8h'</span>,<span class="string">'POO10h'</span>,<span class="string">'OI1h'</span>,<span class="string">'OI2h'</span>,<span class="string">'Fp1h'</span>,<span class="string">'Fp2h'</span>,<span class="string">'AF9h'</span>,<span class="keyword">...</span>
+0177     <span class="string">'AF7h'</span>,<span class="string">'AF5h'</span>,<span class="string">'AF3h'</span>,<span class="string">'AF1h'</span>,<span class="string">'AF2h'</span>,<span class="string">'AF4h'</span>,<span class="string">'AF6h'</span>,<span class="string">'AF8h'</span>,<span class="string">'AF10h'</span>,<span class="keyword">...</span>
+0178     <span class="string">'F9h'</span>,<span class="string">'F7h'</span>,<span class="string">'F5h'</span>,<span class="string">'F3h'</span>,<span class="string">'F1h'</span>,<span class="string">'F2h'</span>,<span class="string">'F4h'</span>,<span class="string">'F6h'</span>,<span class="string">'F8h'</span>,<span class="string">'F10h'</span>,<span class="string">'FT9h'</span>,<span class="keyword">...</span>
+0179     <span class="string">'FT7h'</span>,<span class="string">'FC5h'</span>,<span class="string">'FC3h'</span>,<span class="string">'FC1h'</span>,<span class="string">'FC2h'</span>,<span class="string">'FC4h'</span>,<span class="string">'FC6h'</span>,<span class="string">'FT8h'</span>,<span class="string">'FT10h'</span>,<span class="keyword">...</span>
+0180     <span class="string">'T9h'</span>,<span class="string">'T7h'</span>,<span class="string">'C5h'</span>,<span class="string">'C3h'</span>,<span class="string">'C1h'</span>,<span class="string">'C2h'</span>,<span class="string">'C4h'</span>,<span class="string">'C6h'</span>,<span class="string">'T8h'</span>,<span class="string">'T10h'</span>,<span class="string">'TP9h'</span>,<span class="keyword">...</span>
+0181     <span class="string">'TP7h'</span>,<span class="string">'CP5h'</span>,<span class="string">'CP3h'</span>,<span class="string">'CP1h'</span>,<span class="string">'CP2h'</span>,<span class="string">'CP4h'</span>,<span class="string">'CP6h'</span>,<span class="string">'TP8h'</span>,<span class="string">'TP10h'</span>,<span class="keyword">...</span>
+0182     <span class="string">'P9h'</span>,<span class="string">'P7h'</span>,<span class="string">'P5h'</span>,<span class="string">'P3h'</span>,<span class="string">'P1h'</span>,<span class="string">'P2h'</span>,<span class="string">'P4h'</span>,<span class="string">'P6h'</span>,<span class="string">'P8h'</span>,<span class="string">'P10h'</span>,<span class="string">'PO9h'</span>,<span class="keyword">...</span>
+0183     <span class="string">'PO7h'</span>,<span class="string">'PO5h'</span>,<span class="string">'PO3h'</span>,<span class="string">'PO1h'</span>,<span class="string">'PO2h'</span>,<span class="string">'PO4h'</span>,<span class="string">'PO6h'</span>,<span class="string">'PO8h'</span>,<span class="string">'PO10h'</span>,<span class="string">'O1h'</span>,<span class="keyword">...</span>
+0184     <span class="string">'O2h'</span>,<span class="string">'I1h'</span>,<span class="string">'I2h'</span>,<span class="string">'AFp9'</span>,<span class="string">'AFp7'</span>,<span class="string">'AFp5'</span>,<span class="string">'AFp3'</span>,<span class="string">'AFp1'</span>,<span class="string">'AFpz'</span>,<span class="string">'AFp2'</span>,<span class="keyword">...</span>
+0185     <span class="string">'AFp4'</span>,<span class="string">'AFp6'</span>,<span class="string">'AFp8'</span>,<span class="string">'AFp10'</span>,<span class="string">'AFF9'</span>,<span class="string">'AFF7'</span>,<span class="string">'AFF5'</span>,<span class="string">'AFF3'</span>,<span class="string">'AFF1'</span>,<span class="keyword">...</span>
+0186     <span class="string">'AFFz'</span>,<span class="string">'AFF2'</span>,<span class="string">'AFF4'</span>,<span class="string">'AFF6'</span>,<span class="string">'AFF8'</span>,<span class="string">'AFF10'</span>,<span class="string">'FFT9'</span>,<span class="string">'FFT7'</span>,<span class="string">'FFC5'</span>,<span class="keyword">...</span>
+0187     <span class="string">'FFC3'</span>,<span class="string">'FFC1'</span>,<span class="string">'FFCz'</span>,<span class="string">'FFC2'</span>,<span class="string">'FFC4'</span>,<span class="string">'FFC6'</span>,<span class="string">'FFT8'</span>,<span class="string">'FFT10'</span>,<span class="string">'FTT9'</span>,<span class="keyword">...</span>
+0188     <span class="string">'FTT7'</span>,<span class="string">'FCC5'</span>,<span class="string">'FCC3'</span>,<span class="string">'FCC1'</span>,<span class="string">'FCCz'</span>,<span class="string">'FCC2'</span>,<span class="string">'FCC4'</span>,<span class="string">'FCC6'</span>,<span class="string">'FTT8'</span>,<span class="keyword">...</span>
+0189     <span class="string">'FTT10'</span>,<span class="string">'TTP9'</span>,<span class="string">'TTP7'</span>,<span class="string">'CCP5'</span>,<span class="string">'CCP3'</span>,<span class="string">'CCP1'</span>,<span class="string">'CCPz'</span>,<span class="string">'CCP2'</span>,<span class="string">'CCP4'</span>,<span class="keyword">...</span>
+0190     <span class="string">'CCP6'</span>,<span class="string">'TTP8'</span>,<span class="string">'TTP10'</span>,<span class="string">'TPP9'</span>,<span class="string">'TPP7'</span>,<span class="string">'CPP5'</span>,<span class="string">'CPP3'</span>,<span class="string">'CPP1'</span>,<span class="string">'CPPz'</span>,<span class="keyword">...</span>
+0191     <span class="string">'CPP2'</span>,<span class="string">'CPP4'</span>,<span class="string">'CPP6'</span>,<span class="string">'TPP8'</span>,<span class="string">'TPP10'</span>,<span class="string">'PPO9'</span>,<span class="string">'PPO7'</span>,<span class="string">'PPO5'</span>,<span class="string">'PPO3'</span>,<span class="keyword">...</span>
+0192     <span class="string">'PPO1'</span>,<span class="string">'PPOz'</span>,<span class="string">'PPO2'</span>,<span class="string">'PPO4'</span>,<span class="string">'PPO6'</span>,<span class="string">'PPO8'</span>,<span class="string">'PPO10'</span>,<span class="string">'POO9'</span>,<span class="string">'POO7'</span>,<span class="keyword">...</span>
+0193     <span class="string">'POO5'</span>,<span class="string">'POO3'</span>,<span class="string">'POO1'</span>,<span class="string">'POOz'</span>,<span class="string">'POO2'</span>,<span class="string">'POO4'</span>,<span class="string">'POO6'</span>,<span class="string">'POO8'</span>,<span class="string">'POO10'</span>,<span class="keyword">...</span>
+0194     <span class="string">'OI1'</span>,<span class="string">'OIz'</span>,<span class="string">'OI2'</span>,<span class="string">'T3'</span>,<span class="string">'T5'</span>,<span class="string">'T4'</span>,<span class="string">'T6'</span>};
+0195 
+0196 xyz = [ <span class="keyword">...</span>
+0197 0.0000    0.9237    -0.3826    ;
+0198 0.0000    -0.9237    -0.3826    ;
+0199 0.9230    0.0000    -0.3824    ;
+0200 0.9511    0.3090    0.0001    ;
+0201 1.0000    0.0000    0.0001    ;
+0202 0.9511    -0.3091    0.0000    ;
+0203 0.7467    0.5425    -0.3825    ;
+0204 0.8090    0.5878    0.0000    ;
+0205 0.8553    0.4926    0.1552    ;
+0206 0.8920    0.3554    0.2782    ;
+0207 0.9150    0.1857    0.3558    ;
+0208 0.9230    0.0000    0.3824    ;
+0209 0.9150    -0.1857    0.3558    ;
+0210 0.8919    -0.3553    0.2783    ;
+0211 0.8553    -0.4926    0.1552    ;
+0212 0.8090    -0.5878    0.0000    ;
+0213 0.7467    -0.5425    -0.3825    ;
+0214 0.5430    0.7472    -0.3826    ;
+0215 0.5878    0.8090    0.0000    ;
+0216 0.6343    0.7210    0.2764    ;
+0217 0.6726    0.5399    0.5043    ;
+0218 0.6979    0.2888    0.6542    ;
+0219 0.7067    0.0000    0.7067    ;
+0220 0.6979    -0.2888    0.6542    ;
+0221 0.6726    -0.5399    0.5043    ;
+0222 0.6343    -0.7210    0.2764    ;
+0223 0.5878    -0.8090    0.0000    ;
+0224 0.5429    -0.7472    -0.3826    ;
+0225 0.2852    0.8777    -0.3826    ;
+0226 0.3090    0.9511    0.0000    ;
+0227 0.3373    0.8709    0.3549    ;
+0228 0.3612    0.6638    0.6545    ;
+0229 0.3770    0.3581    0.8532    ;
+0230 0.3826    0.0000    0.9233    ;
+0231 0.3770    -0.3581    0.8532    ;
+0232 0.3612    -0.6638    0.6545    ;
+0233 0.3373    -0.8709    0.3549    ;
+0234 0.3090    -0.9511    0.0000    ;
+0235 0.2852    -0.8777    -0.3826    ;
+0236 -0.0001    0.9237    -0.3826    ;
+0237 0.0000    1.0000    0.0000    ;
+0238 0.0001    0.9237    0.3826    ;
+0239 0.0001    0.7066    0.7066    ;
+0240 0.0002    0.3824    0.9231    ;
+0241 0.0002    0.0000    1.0000    ;
+0242 0.0001    -0.3824    0.9231    ;
+0243 0.0001    -0.7066    0.7066    ;
+0244 0.0001    -0.9237    0.3826    ;
+0245 0.0000    -1.0000    0.0000    ;
+0246 0.0000    -0.9237    -0.3826    ;
+0247 -0.2852    0.8777    -0.3826    ;
+0248 -0.3090    0.9511    -0.0001    ;
+0249 -0.3372    0.8712    0.3552    ;
+0250 -0.3609    0.6635    0.6543    ;
+0251 -0.3767    0.3580    0.8534    ;
+0252 -0.3822    0.0000    0.9231    ;
+0253 -0.3767    -0.3580    0.8534    ;
+0254 -0.3608    -0.6635    0.6543    ;
+0255 -0.3372    -0.8712    0.3552    ;
+0256 -0.3090    -0.9511    -0.0001    ;
+0257 -0.2853    -0.8777    -0.3826    ;
+0258 -0.5429    0.7472    -0.3826    ;
+0259 -0.5878    0.8090    -0.0001    ;
+0260 -0.6342    0.7211    0.2764    ;
+0261 -0.6724    0.5401    0.5045    ;
+0262 -0.6975    0.2889    0.6545    ;
+0263 -0.7063    0.0000    0.7065    ;
+0264 -0.6975    -0.2889    0.6545    ;
+0265 -0.6724    -0.5401    0.5045    ;
+0266 -0.6342    -0.7211    0.2764    ;
+0267 -0.5878    -0.8090    -0.0001    ;
+0268 -0.5429    -0.7472    -0.3826    ;
+0269 -0.7467    0.5425    -0.3825    ;
+0270 -0.8090    0.5878    0.0000    ;
+0271 -0.8553    0.4929    0.1555    ;
+0272 -0.8918    0.3549    0.2776    ;
+0273 -0.9151    0.1858    0.3559    ;
+0274 -0.9230    0.0000    0.3824    ;
+0275 -0.9151    -0.1859    0.3559    ;
+0276 -0.8918    -0.3549    0.2776    ;
+0277 -0.8553    -0.4929    0.1555    ;
+0278 -0.8090    -0.5878    0.0000    ;
+0279 -0.7467    -0.5425    -0.3825    ;
+0280 -0.9511    0.3090    0.0000    ;
+0281 -1.0000    0.0000    0.0000    ;
+0282 -0.9511    -0.3090    0.0000    ;
+0283 -0.8785    0.2854    -0.3824    ;
+0284 -0.9230    0.0000    -0.3823    ;
+0285 -0.8785    -0.2854    -0.3824    ;
+0286 0.8732    0.4449    -0.1949    ;
+0287 0.9105    0.4093    0.0428    ;
+0288 0.9438    0.3079    0.1159    ;
+0289 0.9669    0.1910    0.1666    ;
+0290 0.9785    0.0647    0.1919    ;
+0291 0.9785    -0.0647    0.1919    ;
+0292 0.9669    -0.1910    0.1666    ;
+0293 0.9438    -0.3079    0.1159    ;
+0294 0.9105    -0.4093    0.0428    ;
+0295 0.8732    -0.4449    -0.1949    ;
+0296 0.6929    0.6929    -0.1949    ;
+0297 0.7325    0.6697    0.1137    ;
+0298 0.7777    0.5417    0.3163    ;
+0299 0.8111    0.3520    0.4658    ;
+0300 0.8289    0.1220    0.5452    ;
+0301 0.8289    -0.1220    0.5452    ;
+0302 0.8111    -0.3520    0.4658    ;
+0303 0.7777    -0.5417    0.3163    ;
+0304 0.7325    -0.6697    0.1138    ;
+0305 0.6929    -0.6929    -0.1949    ;
+0306 0.4448    0.8730    -0.1950    ;
+0307 0.4741    0.8642    0.1647    ;
+0308 0.5107    0.7218    0.4651    ;
+0309 0.5384    0.4782    0.6925    ;
+0310 0.5533    0.1672    0.8148    ;
+0311 0.5533    -0.1672    0.8148    ;
+0312 0.5384    -0.4782    0.6925    ;
+0313 0.5107    -0.7218    0.4651    ;
+0314 0.4741    -0.8642    0.1647    ;
+0315 0.4448    -0.8730    -0.1950    ;
+0316 0.1533    0.9678    -0.1950    ;
+0317 0.1640    0.9669    0.1915    ;
+0318 0.1779    0.8184    0.5448    ;
+0319 0.1887    0.5466    0.8154    ;
+0320 0.1944    0.1919    0.9615    ;
+0321 0.1944    -0.1919    0.9615    ;
+0322 0.1887    -0.5466    0.8154    ;
+0323 0.1779    -0.8184    0.5448    ;
+0324 0.1640    -0.9669    0.1915    ;
+0325 0.1533    -0.9678    -0.1950    ;
+0326 -0.1532    0.9678    -0.1950    ;
+0327 -0.1639    0.9669    0.1915    ;
+0328 -0.1778    0.8185    0.5449    ;
+0329 -0.1883    0.5465    0.8153    ;
+0330 -0.1940    0.1918    0.9611    ;
+0331 -0.1940    -0.1918    0.9611    ;
+0332 -0.1884    -0.5465    0.8153    ;
+0333 -0.1778    -0.8185    0.5449    ;
+0334 -0.1639    -0.9669    0.1915    ;
+0335 -0.1533    -0.9678    -0.1950    ;
+0336 -0.4448    0.8731    -0.1950    ;
+0337 -0.4740    0.8639    0.1646    ;
+0338 -0.5106    0.7220    0.4653    ;
+0339 -0.5384    0.4786    0.6933    ;
+0340 -0.5532    0.1673    0.8155    ;
+0341 -0.5532    -0.1673    0.8155    ;
+0342 -0.5384    -0.4786    0.6933    ;
+0343 -0.5106    -0.7220    0.4653    ;
+0344 -0.4740    -0.8638    0.1646    ;
+0345 -0.4449    -0.8731    -0.1950    ;
+0346 -0.6928    0.6928    -0.1950    ;
+0347 -0.7324    0.6700    0.1139    ;
+0348 -0.7776    0.5420    0.3167    ;
+0349 -0.8108    0.3520    0.4659    ;
+0350 -0.8284    0.1220    0.5453    ;
+0351 -0.8284    -0.1220    0.5453    ;
+0352 -0.8108    -0.3519    0.4659    ;
+0353 -0.7775    -0.5421    0.3167    ;
+0354 -0.7324    -0.6700    0.1139    ;
+0355 -0.6928    -0.6928    -0.1950    ;
+0356 -0.8730    0.4448    -0.1950    ;
+0357 -0.9106    0.4097    0.0430    ;
+0358 -0.9438    0.3080    0.1160    ;
+0359 -0.9665    0.1908    0.1657    ;
+0360 -0.9783    0.0647    0.1918    ;
+0361 -0.9783    -0.0647    0.1918    ;
+0362 -0.9665    -0.1908    0.1657    ;
+0363 -0.9438    -0.3080    0.1160    ;
+0364 -0.9106    -0.4097    0.0430    ;
+0365 -0.8730    -0.4448    -0.1950    ;
+0366 -0.9679    0.1533    -0.1950    ;
+0367 -0.9679    -0.1533    -0.1950    ;
+0368 0.9877    0.1564    0.0001    ;
+0369 0.9877    -0.1564    0.0001    ;
+0370 0.7928    0.5759    -0.1949    ;
+0371 0.8332    0.5463    0.0810    ;
+0372 0.8750    0.4284    0.2213    ;
+0373 0.9053    0.2735    0.3231    ;
+0374 0.9211    0.0939    0.3758    ;
+0375 0.9210    -0.0939    0.3758    ;
+0376 0.9053    -0.2735    0.3231    ;
+0377 0.8750    -0.4284    0.2212    ;
+0378 0.8332    -0.5463    0.0810    ;
+0379 0.7927    -0.5759    -0.1949    ;
+0380 0.5761    0.7929    -0.1949    ;
+0381 0.6117    0.7772    0.1420    ;
+0382 0.6549    0.6412    0.3987    ;
+0383 0.6872    0.4214    0.5906    ;
+0384 0.7045    0.1468    0.6933    ;
+0385 0.7045    -0.1468    0.6933    ;
+0386 0.6872    -0.4214    0.5906    ;
+0387 0.6549    -0.6412    0.3987    ;
+0388 0.6117    -0.7772    0.1420    ;
+0389 0.5761    -0.7929    -0.1949    ;
+0390 0.3027    0.9317    -0.1950    ;
+0391 0.3235    0.9280    0.1813    ;
+0392 0.3500    0.7817    0.5146    ;
+0393 0.3703    0.5207    0.7687    ;
+0394 0.3811    0.1824    0.9054    ;
+0395 0.3811    -0.1824    0.9054    ;
+0396 0.3703    -0.5207    0.7687    ;
+0397 0.3500    -0.7817    0.5146    ;
+0398 0.3235    -0.9280    0.1813    ;
+0399 0.3028    -0.9317    -0.1950    ;
+0400 0.0000    0.9801    -0.1950    ;
+0401 0.0000    0.9801    0.1949    ;
+0402 0.0001    0.8311    0.5552    ;
+0403 0.0002    0.5550    0.8306    ;
+0404 0.0001    0.1950    0.9801    ;
+0405 0.0002    -0.1950    0.9801    ;
+0406 0.0002    -0.5550    0.8306    ;
+0407 0.0001    -0.8311    0.5552    ;
+0408 0.0000    -0.9801    0.1949    ;
+0409 0.0000    -0.9801    -0.1950    ;
+0410 -0.3028    0.9319    -0.1949    ;
+0411 -0.3234    0.9278    0.1813    ;
+0412 -0.3498    0.7818    0.5148    ;
+0413 -0.3699    0.5206    0.7688    ;
+0414 -0.3808    0.1825    0.9059    ;
+0415 -0.3808    -0.1825    0.9059    ;
+0416 -0.3699    -0.5206    0.7688    ;
+0417 -0.3498    -0.7818    0.5148    ;
+0418 -0.3234    -0.9278    0.1813    ;
+0419 -0.3028    -0.9319    -0.1949    ;
+0420 -0.5761    0.7929    -0.1950    ;
+0421 -0.6116    0.7771    0.1420    ;
+0422 -0.6546    0.6411    0.3985    ;
+0423 -0.6869    0.4217    0.5912    ;
+0424 -0.7041    0.1469    0.6934    ;
+0425 -0.7041    -0.1469    0.6934    ;
+0426 -0.6870    -0.4216    0.5912    ;
+0427 -0.6546    -0.6411    0.3985    ;
+0428 -0.6116    -0.7771    0.1420    ;
+0429 -0.5761    -0.7929    -0.1950    ;
+0430 -0.7926    0.5759    -0.1950    ;
+0431 -0.8331    0.5459    0.0809    ;
+0432 -0.8752    0.4292    0.2219    ;
+0433 -0.9054    0.2737    0.3233    ;
+0434 -0.9210    0.0939    0.3757    ;
+0435 -0.9210    -0.0940    0.3757    ;
+0436 -0.9054    -0.2737    0.3233    ;
+0437 -0.8752    -0.4292    0.2219    ;
+0438 -0.8331    -0.5459    0.0809    ;
+0439 -0.7926    -0.5758    -0.1950    ;
+0440 -0.9877    0.1564    0.0000    ;
+0441 -0.9877    -0.1564    0.0000    ;
+0442 -0.9118    0.1444    -0.3824    ;
+0443 -0.9118    -0.1444    -0.3824    ;
+0444 0.8225    0.4190    -0.3825    ;
+0445 0.8910    0.4540    0.0000    ;
+0446 0.9282    0.3606    0.0817    ;
+0447 0.9565    0.2508    0.1438    ;
+0448 0.9743    0.1287    0.1828    ;
+0449 0.9799    0.0000    0.1949    ;
+0450 0.9743    -0.1287    0.1828    ;
+0451 0.9565    -0.2508    0.1437    ;
+0452 0.9282    -0.3606    0.0817    ;
+0453 0.8910    -0.4540    0.0000    ;
+0454 0.8225    -0.4191    -0.3825    ;
+0455 0.6527    0.6527    -0.3825    ;
+0456 0.7071    0.7071    0.0000    ;
+0457 0.7564    0.6149    0.2206    ;
+0458 0.7962    0.4535    0.3990    ;
+0459 0.8221    0.2404    0.5148    ;
+0460 0.8312    0.0000    0.5554    ;
+0461 0.8221    -0.2404    0.5148    ;
+0462 0.7962    -0.4535    0.3990    ;
+0463 0.7564    -0.6149    0.2206    ;
+0464 0.7071    -0.7071    0.0000    ;
+0465 0.6527    -0.6527    -0.3825    ;
+0466 0.4192    0.8226    -0.3826    ;
+0467 0.4540    0.8910    0.0000    ;
+0468 0.4932    0.8072    0.3215    ;
+0469 0.5260    0.6110    0.5905    ;
+0470 0.5477    0.3286    0.7685    ;
+0471 0.5553    0.0000    0.8310    ;
+0472 0.5477    -0.3286    0.7685    ;
+0473 0.5260    -0.6110    0.5905    ;
+0474 0.4932    -0.8072    0.3216    ;
+0475 0.4540    -0.8910    0.0000    ;
+0476 0.4192    -0.8226    -0.3826    ;
+0477 0.1444    0.9119    -0.3826    ;
+0478 0.1565    0.9877    0.0000    ;
+0479 0.1713    0.9099    0.3754    ;
+0480 0.1838    0.6957    0.6933    ;
+0481 0.1922    0.3764    0.9059    ;
+0482 0.1951    0.0000    0.9804    ;
+0483 0.1922    -0.3764    0.9059    ;
+0484 0.1838    -0.6957    0.6933    ;
+0485 0.1713    -0.9099    0.3754    ;
+0486 0.1564    -0.9877    0.0000    ;
+0487 0.1444    -0.9119    -0.3826    ;
+0488 -0.1444    0.9117    -0.3826    ;
+0489 -0.1564    0.9877    -0.0001    ;
+0490 -0.1711    0.9100    0.3754    ;
+0491 -0.1836    0.6959    0.6936    ;
+0492 -0.1918    0.3763    0.9056    ;
+0493 -0.1948    0.0000    0.9800    ;
+0494 -0.1919    -0.3763    0.9056    ;
+0495 -0.1836    -0.6959    0.6936    ;
+0496 -0.1711    -0.9100    0.3754    ;
+0497 -0.1564    -0.9877    -0.0001    ;
+0498 -0.1444    -0.9117    -0.3826    ;
+0499 -0.4191    0.8225    -0.3826    ;
+0500 -0.4540    0.8910    -0.0001    ;
+0501 -0.4931    0.8073    0.3216    ;
+0502 -0.5259    0.6109    0.5904    ;
+0503 -0.5476    0.3285    0.7685    ;
+0504 -0.5551    0.0000    0.8311    ;
+0505 -0.5475    -0.3286    0.7685    ;
+0506 -0.5258    -0.6109    0.5904    ;
+0507 -0.4931    -0.8073    0.3216    ;
+0508 -0.4540    -0.8910    -0.0001    ;
+0509 -0.4191    -0.8225    -0.3826    ;
+0510 -0.6529    0.6529    -0.3825    ;
+0511 -0.7071    0.7071    0.0000    ;
+0512 -0.7561    0.6147    0.2205    ;
+0513 -0.7960    0.4537    0.3995    ;
+0514 -0.8218    0.2405    0.5152    ;
+0515 -0.8306    0.0000    0.5551    ;
+0516 -0.8218    -0.2405    0.5152    ;
+0517 -0.7960    -0.4537    0.3995    ;
+0518 -0.7562    -0.6147    0.2205    ;
+0519 -0.7071    -0.7071    0.0000    ;
+0520 -0.6529    -0.6529    -0.3825    ;
+0521 -0.8228    0.4191    -0.3824    ;
+0522 -0.8910    0.4540    0.0000    ;
+0523 -0.9283    0.3608    0.0818    ;
+0524 -0.9567    0.2511    0.1442    ;
+0525 -0.9739    0.1285    0.1822    ;
+0526 -0.9797    0.0000    0.1949    ;
+0527 -0.9739    -0.1286    0.1822    ;
+0528 -0.9567    -0.2511    0.1442    ;
+0529 -0.9283    -0.3608    0.0818    ;
+0530 -0.8910    -0.4540    0.0000    ;
+0531 -0.8228    -0.4191    -0.3824    ;
+0532 -0.9322    0.3029    -0.1949    ;
+0533 -0.9799    0.0000    -0.1949    ;
+0534 -0.9322    -0.3029    -0.1949    ;
+0535 0.0000    1.0000    0.0000    ;
+0536 -0.5878    0.8090    -0.0001    ;
+0537 0.0000    -1.0000    0.0000    ;
+0538 -0.5878    -0.8090    -0.0001    ]';
+0539 
+0540 
+0541 elec = struct(<span class="keyword">...</span>
+0542     <span class="string">'labels'</span>,names,<span class="keyword">...</span>
+0543     <span class="string">'X'</span>,num2cell(xyz(1,:)),<span class="keyword">...</span>
+0544     <span class="string">'Y'</span>,num2cell(xyz(2,:)),<span class="keyword">...</span>
+0545     <span class="string">'Z'</span>,num2cell(xyz(3,:)));
+0546 
+0547 
+0548 <span class="keyword">return</span>
+0549 
+0550 <span class="comment">% LPA       0.0000  0.9237 -0.3826</span>
+0551 <span class="comment">% RPA       0.0000 -0.9237 -0.3826</span>
+0552 <span class="comment">% Nz        0.9230  0.0000 -0.3824</span>
+0553 <span class="comment">% Fp1       0.9511  0.3090  0.0001</span>
+0554 <span class="comment">% Fpz       1.0000 -0.0000  0.0001</span>
+0555 <span class="comment">% Fp2       0.9511 -0.3091  0.0000</span>
+0556 <span class="comment">% AF9       0.7467  0.5425 -0.3825</span>
+0557 <span class="comment">% AF7       0.8090  0.5878  0.0000</span>
+0558 <span class="comment">% AF5       0.8553  0.4926  0.1552</span>
+0559 <span class="comment">% AF3       0.8920  0.3554  0.2782</span>
+0560 <span class="comment">% AF1       0.9150  0.1857  0.3558</span>
+0561 <span class="comment">% AFz       0.9230  0.0000  0.3824</span>
+0562 <span class="comment">% AF2       0.9150 -0.1857  0.3558</span>
+0563 <span class="comment">% AF4       0.8919 -0.3553  0.2783</span>
+0564 <span class="comment">% AF6       0.8553 -0.4926  0.1552</span>
+0565 <span class="comment">% AF8       0.8090 -0.5878  0.0000</span>
+0566 <span class="comment">% AF10      0.7467 -0.5425 -0.3825</span>
+0567 <span class="comment">% F9        0.5430  0.7472 -0.3826</span>
+0568 <span class="comment">% F7        0.5878  0.8090  0.0000</span>
+0569 <span class="comment">% F5        0.6343  0.7210  0.2764</span>
+0570 <span class="comment">% F3        0.6726  0.5399  0.5043</span>
+0571 <span class="comment">% F1        0.6979  0.2888  0.6542</span>
+0572 <span class="comment">% Fz        0.7067  0.0000  0.7067</span>
+0573 <span class="comment">% F2        0.6979 -0.2888  0.6542</span>
+0574 <span class="comment">% F4        0.6726 -0.5399  0.5043</span>
+0575 <span class="comment">% F6        0.6343 -0.7210  0.2764</span>
+0576 <span class="comment">% F8        0.5878 -0.8090  0.0000</span>
+0577 <span class="comment">% F10       0.5429 -0.7472 -0.3826</span>
+0578 <span class="comment">% FT9       0.2852  0.8777 -0.3826</span>
+0579 <span class="comment">% FT7       0.3090  0.9511  0.0000</span>
+0580 <span class="comment">% FC5       0.3373  0.8709  0.3549</span>
+0581 <span class="comment">% FC3       0.3612  0.6638  0.6545</span>
+0582 <span class="comment">% FC1       0.3770  0.3581  0.8532</span>
+0583 <span class="comment">% FCz       0.3826  0.0000  0.9233</span>
+0584 <span class="comment">% FC2       0.3770 -0.3581  0.8532</span>
+0585 <span class="comment">% FC4       0.3612 -0.6638  0.6545</span>
+0586 <span class="comment">% FC6       0.3373 -0.8709  0.3549</span>
+0587 <span class="comment">% FT8       0.3090 -0.9511  0.0000</span>
+0588 <span class="comment">% FT10      0.2852 -0.8777 -0.3826</span>
+0589 <span class="comment">% T9       -0.0001  0.9237 -0.3826</span>
+0590 <span class="comment">% T7        0.0000  1.0000  0.0000</span>
+0591 <span class="comment">% C5        0.0001  0.9237  0.3826</span>
+0592 <span class="comment">% C3        0.0001  0.7066  0.7066</span>
+0593 <span class="comment">% C1        0.0002  0.3824  0.9231</span>
+0594 <span class="comment">% Cz        0.0002  0.0000  1.0000</span>
+0595 <span class="comment">% C2        0.0001 -0.3824  0.9231</span>
+0596 <span class="comment">% C4        0.0001 -0.7066  0.7066</span>
+0597 <span class="comment">% C6        0.0001 -0.9237  0.3826</span>
+0598 <span class="comment">% T8        0.0000 -1.0000  0.0000</span>
+0599 <span class="comment">% T10       0.0000 -0.9237 -0.3826</span>
+0600 <span class="comment">% TP9      -0.2852  0.8777 -0.3826</span>
+0601 <span class="comment">% TP7      -0.3090  0.9511 -0.0001</span>
+0602 <span class="comment">% CP5      -0.3372  0.8712  0.3552</span>
+0603 <span class="comment">% CP3      -0.3609  0.6635  0.6543</span>
+0604 <span class="comment">% CP1      -0.3767  0.3580  0.8534</span>
+0605 <span class="comment">% CPz      -0.3822  0.0000  0.9231</span>
+0606 <span class="comment">% CP2      -0.3767 -0.3580  0.8534</span>
+0607 <span class="comment">% CP4      -0.3608 -0.6635  0.6543</span>
+0608 <span class="comment">% CP6      -0.3372 -0.8712  0.3552</span>
+0609 <span class="comment">% TP8      -0.3090 -0.9511 -0.0001</span>
+0610 <span class="comment">% TP10     -0.2853 -0.8777 -0.3826</span>
+0611 <span class="comment">% P9       -0.5429  0.7472 -0.3826</span>
+0612 <span class="comment">% P7       -0.5878  0.8090 -0.0001</span>
+0613 <span class="comment">% P5       -0.6342  0.7211  0.2764</span>
+0614 <span class="comment">% P3       -0.6724  0.5401  0.5045</span>
+0615 <span class="comment">% P1       -0.6975  0.2889  0.6545</span>
+0616 <span class="comment">% Pz       -0.7063  0.0000  0.7065</span>
+0617 <span class="comment">% P2       -0.6975 -0.2889  0.6545</span>
+0618 <span class="comment">% P4       -0.6724 -0.5401  0.5045</span>
+0619 <span class="comment">% P6       -0.6342 -0.7211  0.2764</span>
+0620 <span class="comment">% P8       -0.5878 -0.8090 -0.0001</span>
+0621 <span class="comment">% P10      -0.5429 -0.7472 -0.3826</span>
+0622 <span class="comment">% PO9      -0.7467  0.5425 -0.3825</span>
+0623 <span class="comment">% PO7      -0.8090  0.5878  0.0000</span>
+0624 <span class="comment">% PO5      -0.8553  0.4929  0.1555</span>
+0625 <span class="comment">% PO3      -0.8918  0.3549  0.2776</span>
+0626 <span class="comment">% PO1      -0.9151  0.1858  0.3559</span>
+0627 <span class="comment">% POz      -0.9230 -0.0000  0.3824</span>
+0628 <span class="comment">% PO2      -0.9151 -0.1859  0.3559</span>
+0629 <span class="comment">% PO4      -0.8918 -0.3549  0.2776</span>
+0630 <span class="comment">% PO6      -0.8553 -0.4929  0.1555</span>
+0631 <span class="comment">% PO8      -0.8090 -0.5878  0.0000</span>
+0632 <span class="comment">% PO10     -0.7467 -0.5425 -0.3825</span>
+0633 <span class="comment">% O1       -0.9511  0.3090  0.0000</span>
+0634 <span class="comment">% Oz       -1.0000  0.0000  0.0000</span>
+0635 <span class="comment">% O2       -0.9511 -0.3090  0.0000</span>
+0636 <span class="comment">% I1       -0.8785  0.2854 -0.3824</span>
+0637 <span class="comment">% Iz       -0.9230  0.0000 -0.3823</span>
+0638 <span class="comment">% I2       -0.8785 -0.2854 -0.3824</span>
+0639 <span class="comment">% AFp9h     0.8732  0.4449 -0.1949</span>
+0640 <span class="comment">% AFp7h     0.9105  0.4093  0.0428</span>
+0641 <span class="comment">% AFp5h     0.9438  0.3079  0.1159</span>
+0642 <span class="comment">% AFp3h     0.9669  0.1910  0.1666</span>
+0643 <span class="comment">% AFp1h     0.9785  0.0647  0.1919</span>
+0644 <span class="comment">% AFp2h     0.9785 -0.0647  0.1919</span>
+0645 <span class="comment">% AFp4h     0.9669 -0.1910  0.1666</span>
+0646 <span class="comment">% AFp6h     0.9438 -0.3079  0.1159</span>
+0647 <span class="comment">% AFp8h     0.9105 -0.4093  0.0428</span>
+0648 <span class="comment">% AFp10h    0.8732 -0.4449 -0.1949</span>
+0649 <span class="comment">% AFF9h     0.6929  0.6929 -0.1949</span>
+0650 <span class="comment">% AFF7h     0.7325  0.6697  0.1137</span>
+0651 <span class="comment">% AFF5h     0.7777  0.5417  0.3163</span>
+0652 <span class="comment">% AFF3h     0.8111  0.3520  0.4658</span>
+0653 <span class="comment">% AFF1h     0.8289  0.1220  0.5452</span>
+0654 <span class="comment">% AFF2h     0.8289 -0.1220  0.5452</span>
+0655 <span class="comment">% AFF4h     0.8111 -0.3520  0.4658</span>
+0656 <span class="comment">% AFF6h     0.7777 -0.5417  0.3163</span>
+0657 <span class="comment">% AFF8h     0.7325 -0.6697  0.1138</span>
+0658 <span class="comment">% AFF10h    0.6929 -0.6929 -0.1949</span>
+0659 <span class="comment">% FFT9h     0.4448  0.8730 -0.1950</span>
+0660 <span class="comment">% FFT7h     0.4741  0.8642  0.1647</span>
+0661 <span class="comment">% FFC5h     0.5107  0.7218  0.4651</span>
+0662 <span class="comment">% FFC3h     0.5384  0.4782  0.6925</span>
+0663 <span class="comment">% FFC1h     0.5533  0.1672  0.8148</span>
+0664 <span class="comment">% FFC2h     0.5533 -0.1672  0.8148</span>
+0665 <span class="comment">% FFC4h     0.5384 -0.4782  0.6925</span>
+0666 <span class="comment">% FFC6h     0.5107 -0.7218  0.4651</span>
+0667 <span class="comment">% FFT8h     0.4741 -0.8642  0.1647</span>
+0668 <span class="comment">% FFT10h    0.4448 -0.8730 -0.1950</span>
+0669 <span class="comment">% FTT9h     0.1533  0.9678 -0.1950</span>
+0670 <span class="comment">% FTT7h     0.1640  0.9669  0.1915</span>
+0671 <span class="comment">% FCC5h     0.1779  0.8184  0.5448</span>
+0672 <span class="comment">% FCC3h     0.1887  0.5466  0.8154</span>
+0673 <span class="comment">% FCC1h     0.1944  0.1919  0.9615</span>
+0674 <span class="comment">% FCC2h     0.1944 -0.1919  0.9615</span>
+0675 <span class="comment">% FCC4h     0.1887 -0.5466  0.8154</span>
+0676 <span class="comment">% FCC6h     0.1779 -0.8184  0.5448</span>
+0677 <span class="comment">% FTT8h     0.1640 -0.9669  0.1915</span>
+0678 <span class="comment">% FTT10h    0.1533 -0.9678 -0.1950</span>
+0679 <span class="comment">% TTP9h    -0.1532  0.9678 -0.1950</span>
+0680 <span class="comment">% TTP7h    -0.1639  0.9669  0.1915</span>
+0681 <span class="comment">% CCP5h    -0.1778  0.8185  0.5449</span>
+0682 <span class="comment">% CCP3h    -0.1883  0.5465  0.8153</span>
+0683 <span class="comment">% CCP1h    -0.1940  0.1918  0.9611</span>
+0684 <span class="comment">% CCP2h    -0.1940 -0.1918  0.9611</span>
+0685 <span class="comment">% CCP4h    -0.1884 -0.5465  0.8153</span>
+0686 <span class="comment">% CCP6h    -0.1778 -0.8185  0.5449</span>
+0687 <span class="comment">% TTP8h    -0.1639 -0.9669  0.1915</span>
+0688 <span class="comment">% TTP10h   -0.1533 -0.9678 -0.1950</span>
+0689 <span class="comment">% TPP9h    -0.4448  0.8731 -0.1950</span>
+0690 <span class="comment">% TPP7h    -0.4740  0.8639  0.1646</span>
+0691 <span class="comment">% CPP5h    -0.5106  0.7220  0.4653</span>
+0692 <span class="comment">% CPP3h    -0.5384  0.4786  0.6933</span>
+0693 <span class="comment">% CPP1h    -0.5532  0.1673  0.8155</span>
+0694 <span class="comment">% CPP2h    -0.5532 -0.1673  0.8155</span>
+0695 <span class="comment">% CPP4h    -0.5384 -0.4786  0.6933</span>
+0696 <span class="comment">% CPP6h    -0.5106 -0.7220  0.4653</span>
+0697 <span class="comment">% TPP8h    -0.4740 -0.8638  0.1646</span>
+0698 <span class="comment">% TPP10h   -0.4449 -0.8731 -0.1950</span>
+0699 <span class="comment">% PPO9h    -0.6928  0.6928 -0.1950</span>
+0700 <span class="comment">% PPO7h    -0.7324  0.6700  0.1139</span>
+0701 <span class="comment">% PPO5h    -0.7776  0.5420  0.3167</span>
+0702 <span class="comment">% PPO3h    -0.8108  0.3520  0.4659</span>
+0703 <span class="comment">% PPO1h    -0.8284  0.1220  0.5453</span>
+0704 <span class="comment">% PPO2h    -0.8284 -0.1220  0.5453</span>
+0705 <span class="comment">% PPO4h    -0.8108 -0.3519  0.4659</span>
+0706 <span class="comment">% PPO6h    -0.7775 -0.5421  0.3167</span>
+0707 <span class="comment">% PPO8h    -0.7324 -0.6700  0.1139</span>
+0708 <span class="comment">% PPO10h   -0.6928 -0.6928 -0.1950</span>
+0709 <span class="comment">% POO9h    -0.8730  0.4448 -0.1950</span>
+0710 <span class="comment">% POO7h    -0.9106  0.4097  0.0430</span>
+0711 <span class="comment">% POO5h    -0.9438  0.3080  0.1160</span>
+0712 <span class="comment">% POO3h    -0.9665  0.1908  0.1657</span>
+0713 <span class="comment">% POO1h    -0.9783  0.0647  0.1918</span>
+0714 <span class="comment">% POO2h    -0.9783 -0.0647  0.1918</span>
+0715 <span class="comment">% POO4h    -0.9665 -0.1908  0.1657</span>
+0716 <span class="comment">% POO6h    -0.9438 -0.3080  0.1160</span>
+0717 <span class="comment">% POO8h    -0.9106 -0.4097  0.0430</span>
+0718 <span class="comment">% POO10h   -0.8730 -0.4448 -0.1950</span>
+0719 <span class="comment">% OI1h     -0.9679  0.1533 -0.1950</span>
+0720 <span class="comment">% OI2h     -0.9679 -0.1533 -0.1950</span>
+0721 <span class="comment">% Fp1h      0.9877  0.1564  0.0001</span>
+0722 <span class="comment">% Fp2h      0.9877 -0.1564  0.0001</span>
+0723 <span class="comment">% AF9h      0.7928  0.5759 -0.1949</span>
+0724 <span class="comment">% AF7h      0.8332  0.5463  0.0810</span>
+0725 <span class="comment">% AF5h      0.8750  0.4284  0.2213</span>
+0726 <span class="comment">% AF3h      0.9053  0.2735  0.3231</span>
+0727 <span class="comment">% AF1h      0.9211  0.0939  0.3758</span>
+0728 <span class="comment">% AF2h      0.9210 -0.0939  0.3758</span>
+0729 <span class="comment">% AF4h      0.9053 -0.2735  0.3231</span>
+0730 <span class="comment">% AF6h      0.8750 -0.4284  0.2212</span>
+0731 <span class="comment">% AF8h      0.8332 -0.5463  0.0810</span>
+0732 <span class="comment">% AF10h     0.7927 -0.5759 -0.1949</span>
+0733 <span class="comment">% F9h       0.5761  0.7929 -0.1949</span>
+0734 <span class="comment">% F7h       0.6117  0.7772  0.1420</span>
+0735 <span class="comment">% F5h       0.6549  0.6412  0.3987</span>
+0736 <span class="comment">% F3h       0.6872  0.4214  0.5906</span>
+0737 <span class="comment">% F1h       0.7045  0.1468  0.6933</span>
+0738 <span class="comment">% F2h       0.7045 -0.1468  0.6933</span>
+0739 <span class="comment">% F4h       0.6872 -0.4214  0.5906</span>
+0740 <span class="comment">% F6h       0.6549 -0.6412  0.3987</span>
+0741 <span class="comment">% F8h       0.6117 -0.7772  0.1420</span>
+0742 <span class="comment">% F10h      0.5761 -0.7929 -0.1949</span>
+0743 <span class="comment">% FT9h      0.3027  0.9317 -0.1950</span>
+0744 <span class="comment">% FT7h      0.3235  0.9280  0.1813</span>
+0745 <span class="comment">% FC5h      0.3500  0.7817  0.5146</span>
+0746 <span class="comment">% FC3h      0.3703  0.5207  0.7687</span>
+0747 <span class="comment">% FC1h      0.3811  0.1824  0.9054</span>
+0748 <span class="comment">% FC2h      0.3811 -0.1824  0.9054</span>
+0749 <span class="comment">% FC4h      0.3703 -0.5207  0.7687</span>
+0750 <span class="comment">% FC6h      0.3500 -0.7817  0.5146</span>
+0751 <span class="comment">% FT8h      0.3235 -0.9280  0.1813</span>
+0752 <span class="comment">% FT10h     0.3028 -0.9317 -0.1950</span>
+0753 <span class="comment">% T9h       0.0000  0.9801 -0.1950</span>
+0754 <span class="comment">% T7h       0.0000  0.9801  0.1949</span>
+0755 <span class="comment">% C5h       0.0001  0.8311  0.5552</span>
+0756 <span class="comment">% C3h       0.0002  0.5550  0.8306</span>
+0757 <span class="comment">% C1h       0.0001  0.1950  0.9801</span>
+0758 <span class="comment">% C2h       0.0002 -0.1950  0.9801</span>
+0759 <span class="comment">% C4h       0.0002 -0.5550  0.8306</span>
+0760 <span class="comment">% C6h       0.0001 -0.8311  0.5552</span>
+0761 <span class="comment">% T8h       0.0000 -0.9801  0.1949</span>
+0762 <span class="comment">% T10h      0.0000 -0.9801 -0.1950</span>
+0763 <span class="comment">% TP9h     -0.3028  0.9319 -0.1949</span>
+0764 <span class="comment">% TP7h     -0.3234  0.9278  0.1813</span>
+0765 <span class="comment">% CP5h     -0.3498  0.7818  0.5148</span>
+0766 <span class="comment">% CP3h     -0.3699  0.5206  0.7688</span>
+0767 <span class="comment">% CP1h     -0.3808  0.1825  0.9059</span>
+0768 <span class="comment">% CP2h     -0.3808 -0.1825  0.9059</span>
+0769 <span class="comment">% CP4h     -0.3699 -0.5206  0.7688</span>
+0770 <span class="comment">% CP6h     -0.3498 -0.7818  0.5148</span>
+0771 <span class="comment">% TP8h     -0.3234 -0.9278  0.1813</span>
+0772 <span class="comment">% TP10h    -0.3028 -0.9319 -0.1949</span>
+0773 <span class="comment">% P9h      -0.5761  0.7929 -0.1950</span>
+0774 <span class="comment">% P7h      -0.6116  0.7771  0.1420</span>
+0775 <span class="comment">% P5h      -0.6546  0.6411  0.3985</span>
+0776 <span class="comment">% P3h      -0.6869  0.4217  0.5912</span>
+0777 <span class="comment">% P1h      -0.7041  0.1469  0.6934</span>
+0778 <span class="comment">% P2h      -0.7041 -0.1469  0.6934</span>
+0779 <span class="comment">% P4h      -0.6870 -0.4216  0.5912</span>
+0780 <span class="comment">% P6h      -0.6546 -0.6411  0.3985</span>
+0781 <span class="comment">% P8h      -0.6116 -0.7771  0.1420</span>
+0782 <span class="comment">% P10h     -0.5761 -0.7929 -0.1950</span>
+0783 <span class="comment">% PO9h     -0.7926  0.5759 -0.1950</span>
+0784 <span class="comment">% PO7h     -0.8331  0.5459  0.0809</span>
+0785 <span class="comment">% PO5h     -0.8752  0.4292  0.2219</span>
+0786 <span class="comment">% PO3h     -0.9054  0.2737  0.3233</span>
+0787 <span class="comment">% PO1h     -0.9210  0.0939  0.3757</span>
+0788 <span class="comment">% PO2h     -0.9210 -0.0940  0.3757</span>
+0789 <span class="comment">% PO4h     -0.9054 -0.2737  0.3233</span>
+0790 <span class="comment">% PO6h     -0.8752 -0.4292  0.2219</span>
+0791 <span class="comment">% PO8h     -0.8331 -0.5459  0.0809</span>
+0792 <span class="comment">% PO10h    -0.7926 -0.5758 -0.1950</span>
+0793 <span class="comment">% O1h      -0.9877  0.1564  0.0000</span>
+0794 <span class="comment">% O2h      -0.9877 -0.1564  0.0000</span>
+0795 <span class="comment">% I1h      -0.9118  0.1444 -0.3824</span>
+0796 <span class="comment">% I2h      -0.9118 -0.1444 -0.3824</span>
+0797 <span class="comment">% AFp9      0.8225  0.4190 -0.3825</span>
+0798 <span class="comment">% AFp7      0.8910  0.4540  0.0000</span>
+0799 <span class="comment">% AFp5      0.9282  0.3606  0.0817</span>
+0800 <span class="comment">% AFp3      0.9565  0.2508  0.1438</span>
+0801 <span class="comment">% AFp1      0.9743  0.1287  0.1828</span>
+0802 <span class="comment">% AFpz      0.9799 -0.0000  0.1949</span>
+0803 <span class="comment">% AFp2      0.9743 -0.1287  0.1828</span>
+0804 <span class="comment">% AFp4      0.9565 -0.2508  0.1437</span>
+0805 <span class="comment">% AFp6      0.9282 -0.3606  0.0817</span>
+0806 <span class="comment">% AFp8      0.8910 -0.4540  0.0000</span>
+0807 <span class="comment">% AFp10     0.8225 -0.4191 -0.3825</span>
+0808 <span class="comment">% AFF9      0.6527  0.6527 -0.3825</span>
+0809 <span class="comment">% AFF7      0.7071  0.7071  0.0000</span>
+0810 <span class="comment">% AFF5      0.7564  0.6149  0.2206</span>
+0811 <span class="comment">% AFF3      0.7962  0.4535  0.3990</span>
+0812 <span class="comment">% AFF1      0.8221  0.2404  0.5148</span>
+0813 <span class="comment">% AFFz      0.8312  0.0000  0.5554</span>
+0814 <span class="comment">% AFF2      0.8221 -0.2404  0.5148</span>
+0815 <span class="comment">% AFF4      0.7962 -0.4535  0.3990</span>
+0816 <span class="comment">% AFF6      0.7564 -0.6149  0.2206</span>
+0817 <span class="comment">% AFF8      0.7071 -0.7071  0.0000</span>
+0818 <span class="comment">% AFF10     0.6527 -0.6527 -0.3825</span>
+0819 <span class="comment">% FFT9      0.4192  0.8226 -0.3826</span>
+0820 <span class="comment">% FFT7      0.4540  0.8910  0.0000</span>
+0821 <span class="comment">% FFC5      0.4932  0.8072  0.3215</span>
+0822 <span class="comment">% FFC3      0.5260  0.6110  0.5905</span>
+0823 <span class="comment">% FFC1      0.5477  0.3286  0.7685</span>
+0824 <span class="comment">% FFCz      0.5553  0.0000  0.8310</span>
+0825 <span class="comment">% FFC2      0.5477 -0.3286  0.7685</span>
+0826 <span class="comment">% FFC4      0.5260 -0.6110  0.5905</span>
+0827 <span class="comment">% FFC6      0.4932 -0.8072  0.3216</span>
+0828 <span class="comment">% FFT8      0.4540 -0.8910  0.0000</span>
+0829 <span class="comment">% FFT10     0.4192 -0.8226 -0.3826</span>
+0830 <span class="comment">% FTT9      0.1444  0.9119 -0.3826</span>
+0831 <span class="comment">% FTT7      0.1565  0.9877  0.0000</span>
+0832 <span class="comment">% FCC5      0.1713  0.9099  0.3754</span>
+0833 <span class="comment">% FCC3      0.1838  0.6957  0.6933</span>
+0834 <span class="comment">% FCC1      0.1922  0.3764  0.9059</span>
+0835 <span class="comment">% FCCz      0.1951  0.0000  0.9804</span>
+0836 <span class="comment">% FCC2      0.1922 -0.3764  0.9059</span>
+0837 <span class="comment">% FCC4      0.1838 -0.6957  0.6933</span>
+0838 <span class="comment">% FCC6      0.1713 -0.9099  0.3754</span>
+0839 <span class="comment">% FTT8      0.1564 -0.9877  0.0000</span>
+0840 <span class="comment">% FTT10     0.1444 -0.9119 -0.3826</span>
+0841 <span class="comment">% TTP9     -0.1444  0.9117 -0.3826</span>
+0842 <span class="comment">% TTP7     -0.1564  0.9877 -0.0001</span>
+0843 <span class="comment">% CCP5     -0.1711  0.9100  0.3754</span>
+0844 <span class="comment">% CCP3     -0.1836  0.6959  0.6936</span>
+0845 <span class="comment">% CCP1     -0.1918  0.3763  0.9056</span>
+0846 <span class="comment">% CCPz     -0.1948  0.0000  0.9800</span>
+0847 <span class="comment">% CCP2     -0.1919 -0.3763  0.9056</span>
+0848 <span class="comment">% CCP4     -0.1836 -0.6959  0.6936</span>
+0849 <span class="comment">% CCP6     -0.1711 -0.9100  0.3754</span>
+0850 <span class="comment">% TTP8     -0.1564 -0.9877 -0.0001</span>
+0851 <span class="comment">% TTP10    -0.1444 -0.9117 -0.3826</span>
+0852 <span class="comment">% TPP9     -0.4191  0.8225 -0.3826</span>
+0853 <span class="comment">% TPP7     -0.4540  0.8910 -0.0001</span>
+0854 <span class="comment">% CPP5     -0.4931  0.8073  0.3216</span>
+0855 <span class="comment">% CPP3     -0.5259  0.6109  0.5904</span>
+0856 <span class="comment">% CPP1     -0.5476  0.3285  0.7685</span>
+0857 <span class="comment">% CPPz     -0.5551  0.0000  0.8311</span>
+0858 <span class="comment">% CPP2     -0.5475 -0.3286  0.7685</span>
+0859 <span class="comment">% CPP4     -0.5258 -0.6109  0.5904</span>
+0860 <span class="comment">% CPP6     -0.4931 -0.8073  0.3216</span>
+0861 <span class="comment">% TPP8     -0.4540 -0.8910 -0.0001</span>
+0862 <span class="comment">% TPP10    -0.4191 -0.8225 -0.3826</span>
+0863 <span class="comment">% PPO9     -0.6529  0.6529 -0.3825</span>
+0864 <span class="comment">% PPO7     -0.7071  0.7071  0.0000</span>
+0865 <span class="comment">% PPO5     -0.7561  0.6147  0.2205</span>
+0866 <span class="comment">% PPO3     -0.7960  0.4537  0.3995</span>
+0867 <span class="comment">% PPO1     -0.8218  0.2405  0.5152</span>
+0868 <span class="comment">% PPOz     -0.8306  0.0000  0.5551</span>
+0869 <span class="comment">% PPO2     -0.8218 -0.2405  0.5152</span>
+0870 <span class="comment">% PPO4     -0.7960 -0.4537  0.3995</span>
+0871 <span class="comment">% PPO6     -0.7562 -0.6147  0.2205</span>
+0872 <span class="comment">% PPO8     -0.7071 -0.7071  0.0000</span>
+0873 <span class="comment">% PPO10    -0.6529 -0.6529 -0.3825</span>
+0874 <span class="comment">% POO9     -0.8228  0.4191 -0.3824</span>
+0875 <span class="comment">% POO7     -0.8910  0.4540  0.0000</span>
+0876 <span class="comment">% POO5     -0.9283  0.3608  0.0818</span>
+0877 <span class="comment">% POO3     -0.9567  0.2511  0.1442</span>
+0878 <span class="comment">% POO1     -0.9739  0.1285  0.1822</span>
+0879 <span class="comment">% POOz     -0.9797 -0.0000  0.1949</span>
+0880 <span class="comment">% POO2     -0.9739 -0.1286  0.1822</span>
+0881 <span class="comment">% POO4     -0.9567 -0.2511  0.1442</span>
+0882 <span class="comment">% POO6     -0.9283 -0.3608  0.0818</span>
+0883 <span class="comment">% POO8     -0.8910 -0.4540  0.0000</span>
+0884 <span class="comment">% POO10    -0.8228 -0.4191 -0.3824</span>
+0885 <span class="comment">% OI1      -0.9322  0.3029 -0.1949</span>
+0886 <span class="comment">% OIz      -0.9799  0.0000 -0.1949</span>
+0887 <span class="comment">% OI2      -0.9322 -0.3029 -0.1949</span>
+0888 <span class="comment">% T3        0.0000  1.0000  0.0000</span>
+0889 <span class="comment">% T5       -0.5878  0.8090 -0.0001</span>
+0890 <span class="comment">% T4        0.0000 -1.0000  0.0000</span>
+0891 <span class="comment">% T6       -0.5878 -0.8090 -0.0001</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

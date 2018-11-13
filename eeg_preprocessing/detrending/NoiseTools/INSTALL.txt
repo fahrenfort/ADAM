@@ -1,0 +1,6 @@
+Put this directory (../NoiseTools/) in your matlab path.  You may need also to add ../compat.
+
+Functions in the main directory are prefixed 'nt_' to reduce likelihood of name conflicts
+with other tooboxes. Functions in compat/ lack the 'nt_' prefix and may conflict.  If so
+remove compat/ from the path or remove the offending function.
+

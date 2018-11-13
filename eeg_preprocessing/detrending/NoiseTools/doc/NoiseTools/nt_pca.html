@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_pca</title>
+  <meta name="keywords" content="nt_pca">
+  <meta name="description" content="[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_pca.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_pca
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca
+
+  z: pcs
+  idx: x(idx) maps to z
+
+  x: data matrix
+  shifts: array of shifts to apply
+  keep: number of components shifted regressor PCs to keep (default: all)
+  threshold: discard PCs with eigenvalues below this (default: 0)
+  w: weights
+
+ Beware: mean is NOT removed prior to processing.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>	z=nt_multishift(x,shifts,amplitudes) - apply multiple shifts to matrix</li><li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_fixsign.html" class="code" title="function x=nt_fixsign(x)">nt_fixsign</a>	y=nt_fixsign(x) - flip signs to maximize inter-component correlation</li><li><a href="nt_sns1.html" class="code" title="function x=nt_sns1(x,nneighbors,skip,w,threshold)">nt_sns1</a>	y=nt_sns1(x,nneigbors,skip,w,threshold) - sensor noise suppression</li><li><a href="nt_split_jd.html" class="code" title="function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);">nt_split_jd</a>	[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization</li><li><a href="nt_tsr.html" class="code" title="function [y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh)">nt_tsr</a>	[y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)</a>
+0002 <span class="comment">%[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  z: pcs</span>
+0005 <span class="comment">%  idx: x(idx) maps to z</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data matrix</span>
+0008 <span class="comment">%  shifts: array of shifts to apply</span>
+0009 <span class="comment">%  keep: number of components shifted regressor PCs to keep (default: all)</span>
+0010 <span class="comment">%  threshold: discard PCs with eigenvalues below this (default: 0)</span>
+0011 <span class="comment">%  w: weights</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% Beware: mean is NOT removed prior to processing.</span>
+0014 
+0015 <span class="comment">% TODO: reimplement using nt_pca0</span>
+0016 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0017 
+0018 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0019 <span class="keyword">if</span> nargin&lt;2||isempty(shifts); shifts=[0]; <span class="keyword">end</span>
+0020 <span class="keyword">if</span> nargin&lt;3; nkeep=[]; <span class="keyword">end</span>
+0021 <span class="keyword">if</span> nargin&lt;4; threshold=[]; <span class="keyword">end</span>
+0022 <span class="keyword">if</span> nargin&lt;5; w=[]; <span class="keyword">end</span>
+0023 
+0024 <span class="keyword">if</span> isnumeric(x)
+0025     [m,n,o]=size(x);
+0026 <span class="keyword">else</span>
+0027     [m,n]=size(x{1});
+0028     o=length(x);
+0029 <span class="keyword">end</span>
+0030 
+0031 
+0032 <span class="comment">% offset of z relative to x</span>
+0033 offset=max(0,-min(shifts));
+0034 shifts=shifts+offset;           <span class="comment">% adjust shifts to make them nonnegative</span>
+0035 idx=offset+(1:m-max(shifts));   <span class="comment">% x(idx) maps to z</span>
+0036 
+0037 <span class="comment">% % remove mean</span>
+0038 <span class="comment">% x=nt_fold(nt_demean(nt_unfold(x),w),m);</span>
+0039 
+0040 <span class="comment">% covariance</span>
+0041 c=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x,shifts,w);
+0042 
+0043 <span class="comment">% PCA matrix</span>
+0044 [topcs,evs]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>(c,nkeep,threshold);
+0045 
+0046 <span class="comment">%clf; plot(evs); set(gca,'yscale','log'); pause</span>
+0047 
+0048 <span class="comment">% apply PCA matrix to time-shifted data</span>
+0049 <span class="keyword">if</span> isnumeric(x)
+0050     z=zeros(numel(idx),size(topcs,2),o);
+0051     <span class="keyword">for</span> k=1:o
+0052         z(:,:,k)=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(x(:,:,k),shifts)*topcs;
+0053     <span class="keyword">end</span>
+0054 <span class="keyword">else</span>
+0055     z=[];
+0056     <span class="keyword">for</span> k=1:o
+0057         z{k}(:,:)=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(x{k}(:,:),shifts)*topcs;
+0058     <span class="keyword">end</span>
+0059 <span class="keyword">end</span>
+0060 
+0061</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

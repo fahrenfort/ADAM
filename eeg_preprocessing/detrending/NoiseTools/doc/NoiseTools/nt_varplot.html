@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_varplot</title>
+  <meta name="keywords" content="nt_varplot">
+  <meta name="description" content="varplot(x,mode) - plot variance maps (time*trials, time*chans, chans*trials)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_varplot.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_varplot
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>varplot(x,mode) - plot variance maps (time*trials, time*chans, chans*trials)</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function varplot(x,mode) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">varplot(x,mode) - plot variance maps (time*trials, time*chans, chans*trials)
+
+  x: data (time * channels * trials)
+  mode: 0:imagescc (default), 1:plot</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function varplot(x,mode)</a>
+0002 <span class="comment">%varplot(x,mode) - plot variance maps (time*trials, time*chans, chans*trials)</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  x: data (time * channels * trials)</span>
+0005 <span class="comment">%  mode: 0:imagescc (default), 1:plot</span>
+0006 
+0007 <span class="keyword">if</span> nargin&lt;2; mode=0; <span class="keyword">end</span>
+0008 
+0009 <span class="keyword">if</span> ~mode
+0010 
+0011 
+0012     subplot 221; 
+0013     imagescc(sqrt(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x.^2)));
+0014     ylabel(<span class="string">'unfolded time (samples)'</span>); xlabel(<span class="string">'channels'</span>);
+0015 
+0016     subplot 222; 
+0017     imagescc(sqrt(squeeze(sum(x.^2,2))));
+0018     ylabel(<span class="string">'epoch time (samples)'</span>); xlabel(<span class="string">'trials'</span>);
+0019 
+0020     subplot 223; 
+0021     imagescc(sqrt(squeeze(sum(x.^2,3))));
+0022     ylabel(<span class="string">'epoch time (samples)'</span>); xlabel(<span class="string">'channels'</span>);
+0023 
+0024     subplot 224; 
+0025     imagescc(sqrt(squeeze(sum(x.^2,1))));
+0026     ylabel(<span class="string">'channels'</span>); xlabel(<span class="string">'trials'</span>);
+0027 
+0028 <span class="keyword">else</span>
+0029     
+0030     subplot 221; 
+0031     plot(sqrt(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x.^2)));
+0032     xlabel(<span class="string">'unfolded time (samples)'</span>); title(<span class="string">'channels'</span>) 
+0033     
+0034     subplot 222; 
+0035     plot(sqrt(squeeze(sum(x.^2,2)))); title(<span class="string">'trials'</span>)
+0036     xlabel(<span class="string">'epoch time (samples)'</span>); 
+0037 
+0038     subplot 223; 
+0039     plot(sqrt(squeeze(sum(x.^2,3)))); title(<span class="string">'channels'</span>)
+0040     xlabel(<span class="string">'epoch time (samples)'</span>); 
+0041 
+0042     subplot 224; 
+0043     plot(sqrt(squeeze(sum(x.^2,1)))'); title(<span class="string">'channels'</span>)
+0044     xlabel(<span class="string">'trials'</span>); 
+0045     
+0046 <span class="keyword">end</span>
+0047</pre></div>
+<hr><address>Generated on Tue 09-May-2017 13:19:57 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

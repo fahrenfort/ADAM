@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_regcov</title>
+  <meta name="keywords" content="nt_regcov">
+  <meta name="description" content="r=nt_regcov(cxy,cyy,keep,threshold) - regression matrix from cross covariance">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_regcov.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_regcov
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>r=nt_regcov(cxy,cyy,keep,threshold) - regression matrix from cross covariance</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function r=nt_regcov(cxy,cyy,keep,threshold) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">r=nt_regcov(cxy,cyy,keep,threshold) - regression matrix from cross covariance
+
+  r: matrix to apply to regressor to best model data
+
+  cxy: cross-covariance matrix between data and regressor
+  cyy: covariance matrix of regressor
+  keep: number of regressor PCs to keep (default: all)
+  threshold: eigenvalue threshold for discarding regressor PCs (default: 0)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_tsr.html" class="code" title="function [y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh)">nt_tsr</a>	[y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</li><li><a href="nt_tsr_nodemean.html" class="code" title="function [y,idx,w]=nt_tsr_nodemean(x,ref,shifts,wx,wref,keep,thresh)">nt_tsr_nodemean</a>	[y,idx,w]=nt_tsr_nodemean(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</li><li><a href="nt_tsregress.html" class="code" title="function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)">nt_tsregress</a>	[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function r=nt_regcov(cxy,cyy,keep,threshold)</a>
+0002 <span class="comment">%r=nt_regcov(cxy,cyy,keep,threshold) - regression matrix from cross covariance</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  r: matrix to apply to regressor to best model data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  cxy: cross-covariance matrix between data and regressor</span>
+0007 <span class="comment">%  cyy: covariance matrix of regressor</span>
+0008 <span class="comment">%  keep: number of regressor PCs to keep (default: all)</span>
+0009 <span class="comment">%  threshold: eigenvalue threshold for discarding regressor PCs (default: 0)</span>
+0010 
+0011 <span class="keyword">if</span> nargin&lt;4; threshold=[]; <span class="keyword">end</span>
+0012 <span class="keyword">if</span> nargin&lt;3; keep=[]; <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0014 
+0015 <span class="comment">% PCA of regressor</span>
+0016 [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>(cyy);
+0017 
+0018 <span class="comment">% discard negligible regressor PCs</span>
+0019 <span class="keyword">if</span> ~isempty(keep)
+0020     keep=max(keep,size(topcs,2));
+0021     topcs=topcs(:,1:keep);
+0022     eigenvalues=eigenvalues(1:keep);
+0023 <span class="keyword">end</span>
+0024 <span class="keyword">if</span> ~isempty(threshold)
+0025     idx=find(eigenvalues/max(eigenvalues)&gt;threshold);
+0026     topcs=topcs(:,idx);
+0027     eigenvalues=eigenvalues(idx);
+0028 <span class="keyword">end</span>
+0029 
+0030 <span class="comment">% cross-covariance between data and regressor PCs</span>
+0031 cxy=cxy';
+0032 r=topcs'*cxy;
+0033 
+0034 <span class="comment">% projection matrix from regressor PCs</span>
+0035 r=<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(r,1./eigenvalues');
+0036 
+0037 <span class="comment">% projection matrix from regressors</span>
+0038 r=topcs*r;
+0039 
+0040 <span class="keyword">return</span>
+0041 
+0042 
+0043 
+0044</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

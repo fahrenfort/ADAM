@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_xprod2</title>
+  <meta name="keywords" content="nt_xprod2">
+  <meta name="description" content="[y,ind]=nt_xprod(x1,x2,dsratio) - form all crossproducts">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_xprod2.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_xprod2
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,ind]=nt_xprod(x1,x2,dsratio) - form all crossproducts</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y]=nt_xprod2(x1,x2,dsratio) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,ind]=nt_xprod(x1,x2,dsratio) - form all crossproducts
+
+  y: crossproducts 
+ 
+  x1,x2: data (time*channels*trials)
+  dsratio: ratio by which to downsample cross-product.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dsample.html" class="code" title="function x=nt_dsample(x,factor)">nt_dsample</a>	y=nt_dsample(x,factor) - downsample by averaging neighboring samples</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li><li><a href="nt_xprod2.html" class="code" title="function [y]=nt_xprod2(x1,x2,dsratio)">nt_xprod2</a>	[y,ind]=nt_xprod(x1,x2,dsratio) - form all crossproducts</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_xprod2.html" class="code" title="function [y]=nt_xprod2(x1,x2,dsratio)">nt_xprod2</a>	[y,ind]=nt_xprod(x1,x2,dsratio) - form all crossproducts</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y]=nt_xprod2(x1,x2,dsratio)</a>
+0002 <span class="comment">%[y,ind]=nt_xprod(x1,x2,dsratio) - form all crossproducts</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: crossproducts</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x1,x2: data (time*channels*trials)</span>
+0007 <span class="comment">%  dsratio: ratio by which to downsample cross-product.</span>
+0008 
+0009 <span class="keyword">if</span> nargin&lt;3 || isempty(dsratio); dsratio=1; <span class="keyword">end</span>
+0010 <span class="keyword">if</span> nargin&lt;2 ; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0011 
+0012 <span class="keyword">if</span> ndims(x1) ~= ndims(x2); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0013 <span class="keyword">if</span> size(x1,1)~=size(x2,1); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0014 
+0015 <span class="keyword">if</span> ndims(x1)==3
+0016     y=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(<a href="nt_xprod2.html" class="code" title="function [y]=nt_xprod2(x1,x2,dsratio)">nt_xprod2</a>(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x1),<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x2),dsratio),size(x1,1));
+0017 <span class="keyword">else</span>
+0018     [nsamples,nchans1]=size(x1);
+0019     [nsamples,nchans2]=size(x2);
+0020     nsamples=floor(nsamples/dsratio);
+0021 
+0022     <span class="keyword">for</span> iChan1=1:nchans1
+0023         xx=bsxfun(@times,x2,x1(:,iChan1));
+0024         y(:,(iChan1-1)*nchans2+(1:nchans2))=<a href="nt_dsample.html" class="code" title="function x=nt_dsample(x,factor)">nt_dsample</a>(xx,dsratio);
+0025     <span class="keyword">end</span>
+0026 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

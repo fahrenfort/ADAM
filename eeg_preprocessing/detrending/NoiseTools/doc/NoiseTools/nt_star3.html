@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_star3</title>
+  <meta name="keywords" content="nt_star3">
+  <meta name="description" content="[y,w,ww]=nt_star3(x,thresh,closest,w) - sensor noise suppression">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_star3.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_star3
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,w,ww]=nt_star3(x,thresh,closest,w) - sensor noise suppression</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [x,w,ww]=nt_star3(x,thresh,closest,w) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> [y,w,ww]=nt_star3(x,thresh,closest,w) - sensor noise suppression
+
+  y: denoised data 
+  w: 0 for parts that needed fixing, 1 elsewhere (time*1)
+  ww: 0 for parts that needed fixing, 1 elsewhere (time*chans)
+
+  x: data to denoise (time*chans or time*chans*trials)
+  thresh: threshold for excentricity measure (default:1);
+  closest: indices of channels that are closest to each channel (default: all)
+ 
+ See also: <a href="nt_sns.html" class="code" title="function y=nt_sns(x,nneighbors,skip,w)">nt_sns</a>, <a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance</li><li><a href="nt_star3.html" class="code" title="function [x,w,ww]=nt_star3(x,thresh,closest,w)">nt_star3</a>	[y,w,ww]=nt_star3(x,thresh,closest,w) - sensor noise suppression</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li><li><a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>	[y,tweight]=nt_wpwr(x,w) - weighted power</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_star3.html" class="code" title="function [x,w,ww]=nt_star3(x,thresh,closest,w)">nt_star3</a>	[y,w,ww]=nt_star3(x,thresh,closest,w) - sensor noise suppression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [x,w,ww]=nt_star3(x,thresh,closest,w)</a>
+0002 <span class="comment">% [y,w,ww]=nt_star3(x,thresh,closest,w) - sensor noise suppression</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: denoised data</span>
+0005 <span class="comment">%  w: 0 for parts that needed fixing, 1 elsewhere (time*1)</span>
+0006 <span class="comment">%  ww: 0 for parts that needed fixing, 1 elsewhere (time*chans)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  x: data to denoise (time*chans or time*chans*trials)</span>
+0009 <span class="comment">%  thresh: threshold for excentricity measure (default:1);</span>
+0010 <span class="comment">%  closest: indices of channels that are closest to each channel (default: all)</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% See also: nt_sns, nt_proximity</span>
+0013 
+0014 <span class="comment">%{</span>
+0015 26 Jan 2017
+0016 Regress also on polynomial to handle trends.
+0017 <span class="comment">%}</span>
+0018 
+0019 
+0020 
+0021 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0022 
+0023 PCA_THRESH=10^-15;  <span class="comment">% threshold for discarding weak PCs</span>
+0024 NSMOOTH=10;         <span class="comment">% samples, smoothing to apply to excentricity</span>
+0025 MINPROP=0.3;        <span class="comment">% minimum proportion of artifact free at first iteration</span>
+0026 NITER=3;            <span class="comment">% iterations to refine c0</span>
+0027 VERBOSE=1;          <span class="comment">% set to 0 to shut up</span>
+0028 
+0029 <span class="keyword">if</span> nargin&lt;1; error; <span class="keyword">end</span>
+0030 <span class="keyword">if</span> nargin&lt;2 || isempty(thresh); thresh=1; <span class="keyword">end</span>
+0031 <span class="keyword">if</span> nargin&lt;3; closest=[]; <span class="keyword">end</span>
+0032 <span class="keyword">if</span> ~isempty(closest)&amp;&amp;size(closest,1)~=size(x,2);
+0033     error(<span class="string">'closest array should have as many rows as channels of x'</span>); 
+0034 <span class="keyword">end</span>
+0035 <span class="keyword">if</span> nargin&lt;4 || isempty(w); w=1; <span class="keyword">end</span>
+0036 
+0037 <span class="keyword">if</span> nargout==0 <span class="comment">% plot, don't return result</span>
+0038     [y,w,ww]=<a href="nt_star3.html" class="code" title="function [x,w,ww]=nt_star3(x,thresh,closest,w)">nt_star3</a>(x,thresh,closest,w);
+0039     disp([mean(w(:)), mean(ww(:))])
+0040     figure(1); clf;
+0041     subplot 311; plot(x);
+0042     subplot 312; plot(y);
+0043     subplot 313; plot(w, <span class="string">'.-'</span>); ylim([0 1.1]);
+0044     clear x w ww
+0045     <span class="keyword">return</span>
+0046 <span class="keyword">end</span>
+0047     
+0048 
+0049 [nsample,nchan,~]=size(x);
+0050 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0051 
+0052 p0=<a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>(x);
+0053 mn=mean(x); <span class="comment">% save means</span>
+0054 x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0055 nn=sqrt(mean(x.^2)); <span class="comment">% save norm</span>
+0056 x=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x);
+0057 p00=<a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>(x);
+0058 
+0059 <span class="comment">% NaN and zero channels are set to rand, which effectively excludes them</span>
+0060 iNan=find(all(isnan(x)));
+0061 iZero=find(all(x==0));
+0062 x(:,iNan)=randn(size(x,1),numel(iNan));
+0063 x(:,iZero)=randn(size(x,1),numel(iZero));
+0064 
+0065 order=1;
+0066 r=zeros(size(x,1),numel(order));
+0067 lin=linspace(-1,1,size(x,1));
+0068 <span class="keyword">for</span> k=1:order
+0069     r(:,k)=lin.^k;
+0070 <span class="keyword">end</span>
+0071 
+0072 x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0073 c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x); <span class="comment">% initial covariance estimate</span>
+0074 
+0075 <span class="comment">%{</span>
+0076 Find time intervals where at least one channel is excentric --&gt; w==0.
+0077 <span class="comment">%}</span>
+0078 
+0079 iIter=NITER;
+0080 <span class="keyword">while</span> iIter&gt;0
+0081     
+0082     
+0083     w=ones(size(x,1),1);
+0084     <span class="keyword">for</span> iChan=1:nchan
+0085 
+0086         <span class="comment">% other channels</span>
+0087         <span class="keyword">if</span> ~isempty(closest); 
+0088             oChan=closest(iChan,:);
+0089         <span class="keyword">else</span>
+0090             oChan=setdiff(1:nchan,iChan);
+0091         <span class="keyword">end</span>
+0092         oChan(oChan&gt;nchan)=[];
+0093         
+0094         <span class="comment">% PCA other channels to remove weak dimensions</span>
+0095         [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>(c0(oChan,oChan)); <span class="comment">% PCA</span>
+0096         idx=find(eigenvalues/max(eigenvalues) &gt; PCA_THRESH); <span class="comment">% discard weak dims</span>
+0097         topcs=topcs(:,idx);
+0098         
+0099         <span class="comment">% project this channel on other channels</span>
+0100         b=c0(iChan,oChan)*topcs/(topcs'*c0(oChan,oChan)*topcs); <span class="comment">% projection matrix</span>
+0101         y=x(:,oChan)*(topcs*b'); <span class="comment">% projection</span>
+0102         dx=abs(y-x(:,iChan));   <span class="comment">% difference from projection</span>
+0103         dx=dx+eps;              <span class="comment">% avoids error on simulated data</span>
+0104         
+0105         d=dx/mean(dx(find(w))); <span class="comment">% excentricity measure</span>
+0106         <span class="keyword">if</span> NSMOOTH&gt;0; 
+0107             d=filtfilt(ones(NSMOOTH,1)/NSMOOTH,1,d);
+0108         <span class="keyword">end</span>
+0109         
+0110         d=d/thresh;
+0111         w=min(w,(d&lt;1)); <span class="comment">% w==0 for artifact part</span>
+0112         
+0113     <span class="keyword">end</span>    
+0114     
+0115     prop=mean(w);
+0116     <span class="keyword">if</span> VERBOSE&gt;0; disp([<span class="string">'proportion artifact free: '</span>, num2str(prop)]); <span class="keyword">end</span>
+0117     
+0118     <span class="keyword">if</span> iIter==NITER &amp;&amp; prop&lt;MINPROP
+0119         thresh=thresh*1.1;
+0120         <span class="keyword">if</span> VERBOSE&gt;0; disp([<span class="string">'Warning: nt_star increasing threshold to '</span>, num2str(thresh)]); <span class="keyword">end</span>
+0121         w=ones(size(w));
+0122     <span class="keyword">else</span>
+0123         iIter=iIter-1;
+0124     <span class="keyword">end</span>
+0125     
+0126     x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,w);
+0127     c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x,[],w); <span class="comment">% restrict covariance estimate to non-artifact part</span>
+0128 <span class="keyword">end</span>
+0129 
+0130 <span class="comment">%{</span>
+0131 We now know which part contains channel-specific artifacts (w==0 <span class="keyword">for</span> artifact part), 
+0132 and we have an estimate of the covariance matrix of the artifact-free part.
+0133 <span class="comment">%}</span>
+0134 
+0135 <span class="comment">%{</span>
+0136 Find which channel is most excentric at each time point.
+0137 Here we use an excentricity measure based on the absolute value of the signal,
+0138 rather than the difference between signal and projection.
+0139 <span class="comment">%}</span>
+0140 
+0141 xx=abs(x);
+0142 xx=bsxfun(@times,xx, 1 ./ sqrt(mean(xx(find(w),:).^2))); <span class="comment">% divide by std over non-artifact part</span>
+0143 <span class="keyword">if</span> NSMOOTH&gt;0; 
+0144     xx=filtfilt(ones(NSMOOTH,1)/NSMOOTH,1,xx);
+0145 <span class="keyword">end</span>
+0146 [~,rank]=sort(xx',<span class="string">'descend'</span>); 
+0147 rank=rank';
+0148 rank(find(w),:)=0;      <span class="comment">% exclude parts that were not judged excentric</span>
+0149 
+0150 depth=1;
+0151 depth=min(depth,nchan-1);
+0152 ww=ones(size(x));
+0153 <span class="keyword">for</span> iDepth=1:depth
+0154 
+0155     <span class="comment">%{</span>
+0156     Fix each channel by projecting on other channels.
+0157     <span class="comment">%}</span>
+0158     
+0159     iFixed=nchan;
+0160     nFixed=0;
+0161     <span class="keyword">for</span> iChan=1:nchan
+0162 
+0163         bad_samples=find(iChan==rank(:,iDepth)); <span class="comment">% samples where this channel is the most excentric</span>
+0164         <span class="keyword">if</span> iDepth ~=1; 
+0165             bad_samples(find(xx(bad_samples,iChan)&lt;thresh)) =[]; <span class="comment">% exclude if not very bad</span>
+0166         <span class="keyword">end</span>
+0167         
+0168         nFixed=nFixed+numel(bad_samples);
+0169         <span class="keyword">if</span> isempty(bad_samples); 
+0170             iFixed=iFixed-1;
+0171             <span class="keyword">continue</span>;
+0172         <span class="keyword">end</span>
+0173         ww(bad_samples,iChan)=0;
+0174 
+0175         <span class="comment">% other channels</span>
+0176         <span class="keyword">if</span> ~isempty(closest); 
+0177             oChan=closest(iChan,:);
+0178         <span class="keyword">else</span>
+0179             oChan=setdiff(1:nchan,iChan);
+0180         <span class="keyword">end</span>
+0181         oChan(oChan&gt;nchan)=[]; <span class="comment">% in case closest includes channels not in data</span>
+0182 
+0183         <span class="comment">% PCA other channels to remove weak dimensions</span>
+0184         [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>(c0(oChan,oChan)); <span class="comment">% PCA</span>
+0185         idx=find(eigenvalues/max(eigenvalues) &gt; PCA_THRESH); <span class="comment">% discard weak dims</span>
+0186         topcs=topcs(:,idx);
+0187 
+0188         <span class="comment">% project this channel on other channels</span>
+0189         b=c0(iChan,oChan)*topcs/(topcs'*c0(oChan,oChan)*topcs); <span class="comment">% projection matrix</span>
+0190         y=x(bad_samples,oChan)*(topcs*b'); <span class="comment">% projection</span>
+0191 
+0192         x(bad_samples,iChan)=y(:); <span class="comment">% fix</span>
+0193 
+0194     <span class="keyword">end</span>
+0195     
+0196     <span class="keyword">if</span> VERBOSE&gt;0; 
+0197         disp([<span class="string">'depth: '</span>, num2str(iDepth), <span class="string">', n fixed channels: '</span>,num2str(iFixed),<span class="keyword">...</span>
+0198             <span class="string">', n fixed samples: '</span>, num2str(nFixed), <span class="string">', ratio: '</span>,num2str(<a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>(x)/p00)]);
+0199     <span class="keyword">end</span>
+0200 <span class="keyword">end</span>
+0201 
+0202 x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0203 x=bsxfun(@times,x,nn);
+0204 x=bsxfun(@plus,x,mn);
+0205 
+0206 x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(x,nsample);
+0207 w=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(w,nsample);
+0208 ww=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(ww,nsample);
+0209 
+0210 
+0211 
+0212 
+0213 x(:,iNan)=nan;
+0214 x(:,iZero)=0;
+0215 
+0216 <span class="keyword">if</span> VERBOSE&gt;0; disp([<span class="string">'power ratio: '</span>, num2str(<a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>(x)/p0)]); <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-May-2017 13:19:57 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

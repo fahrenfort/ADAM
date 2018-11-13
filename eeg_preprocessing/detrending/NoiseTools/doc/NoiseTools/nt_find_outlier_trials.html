@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_find_outlier_trials</title>
+  <meta name="keywords" content="nt_find_outlier_trials">
+  <meta name="description" content="[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,plot,regress_flag) - find outlier trials">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_find_outlier_trials.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_find_outlier_trials
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,plot,regress_flag) - find outlier trials</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [idx,d]=nt_find_outlier_trials(x,criterion,disp_flag,regress_flag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,plot,regress_flag) - find outlier trials
+
+  idx: indices of trials to keep
+  d: relative deviations from mean
+  
+  x: data (time * channels * trials)
+  criterion: keep trials less than criterion from mean
+  disp: if true plot trial deviations before and after 
+  regress_flag: if true regress out mean, rather than subtract
+
+  For example criterion=2 rejects trials that deviate from the mean by
+  more than twice the average deviation from the mean.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_banner.html" class="code" title="function h=nt_banner(text)">nt_banner</a>	h=nt_banner(text,varargin) - annotate with text at head of figure</li><li><a href="nt_find_outlier_trials.html" class="code" title="function [idx,d]=nt_find_outlier_trials(x,criterion,disp_flag,regress_flag)">nt_find_outlier_trials</a>	[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,plot,regress_flag) - find outlier trials</li><li><a href="nt_tsregress.html" class="code" title="function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)">nt_tsregress</a>	[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_find_outlier_trials.html" class="code" title="function [idx,d]=nt_find_outlier_trials(x,criterion,disp_flag,regress_flag)">nt_find_outlier_trials</a>	[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,plot,regress_flag) - find outlier trials</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [idx,d]=nt_find_outlier_trials(x,criterion,disp_flag,regress_flag)</a>
+0002 <span class="comment">%[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,plot,regress_flag) - find outlier trials</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  idx: indices of trials to keep</span>
+0005 <span class="comment">%  d: relative deviations from mean</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data (time * channels * trials)</span>
+0008 <span class="comment">%  criterion: keep trials less than criterion from mean</span>
+0009 <span class="comment">%  disp: if true plot trial deviations before and after</span>
+0010 <span class="comment">%  regress_flag: if true regress out mean, rather than subtract</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">%  For example criterion=2 rejects trials that deviate from the mean by</span>
+0013 <span class="comment">%  more than twice the average deviation from the mean.</span>
+0014 <span class="comment">%</span>
+0015 
+0016 <span class="keyword">if</span> nargin&lt;2; criterion=inf; <span class="keyword">end</span>
+0017 <span class="keyword">if</span> nargin&lt;3; disp_flag=1; <span class="keyword">end</span>
+0018 <span class="keyword">if</span> nargin&lt;4; regress_flag=0; <span class="keyword">end</span>
+0019 <span class="keyword">if</span> ndims(x)&gt;3; error(<span class="string">'x should be 2D or 3D'</span>); <span class="keyword">end</span>
+0020 
+0021 <span class="keyword">if</span> ndims(x)==3;
+0022     [m,n,o]=size(x);
+0023     x=reshape(x,m*n,o);
+0024 <span class="keyword">else</span>
+0025     [~,o]=size(x);
+0026 <span class="keyword">end</span>
+0027 
+0028 mn=mean(x,2);
+0029 <span class="keyword">if</span> regress_flag
+0030     mn=<a href="nt_tsregress.html" class="code" title="function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)">nt_tsregress</a>(x,mean(x,2));  <span class="comment">% regression</span>
+0031 <span class="keyword">else</span>
+0032     mn=repmat(mn(:),1,o);       <span class="comment">% mean</span>
+0033 <span class="keyword">end</span>
+0034 d=x-mn; <span class="comment">% difference from mean</span>
+0035 dd=zeros(1,size(d,2));
+0036 <span class="keyword">for</span> k=1:size(d,2); dd(k)=sum(d(:,k).^2); <span class="keyword">end</span>
+0037 d=dd; clear dd;
+0038 d=d/(sum(x(:).^2)/o);
+0039 
+0040 idx=find(d&lt;criterion(1));
+0041 
+0042 <span class="keyword">if</span> nargout==0;
+0043     <span class="comment">% just plot deviations</span>
+0044     plot(d,<span class="string">'.-'</span>);
+0045     xlabel(<span class="string">'trial'</span>); ylabel(<span class="string">'normalized deviation from mean'</span>); 
+0046     clear idx d mn idx_unsorted
+0047 <span class="keyword">else</span>
+0048     <span class="keyword">if</span> disp_flag
+0049         <span class="comment">% plot deviations before &amp; after outlier removal</span>
+0050         figure(100); clf
+0051         <a href="nt_banner.html" class="code" title="function h=nt_banner(text)">nt_banner</a>(<span class="string">'outlier trials'</span>);
+0052         
+0053         subplot 121; 
+0054         plot(d,<span class="string">'.-'</span>); hold on; 
+0055         plot(setdiff(1:o,idx), d(setdiff(1:o,idx)), <span class="string">'.r'</span>);
+0056         xlabel(<span class="string">'trial'</span>); ylabel(<span class="string">'normalized deviation from mean'</span>); title([<span class="string">'before, '</span>,num2str(numel(d))]);
+0057         drawnow
+0058         
+0059         subplot 122; 
+0060         [~,dd]=<a href="nt_find_outlier_trials.html" class="code" title="function [idx,d]=nt_find_outlier_trials(x,criterion,disp_flag,regress_flag)">nt_find_outlier_trials</a>(x(:,idx),0,[]);
+0061         plot(dd,<span class="string">'.-'</span>);
+0062         xlabel(<span class="string">'trial'</span>); ylabel(<span class="string">'normalized deviation from mean'</span>); title([<span class="string">'after, '</span>,num2str(numel(idx))]);
+0063         drawnow
+0064     <span class="keyword">end</span>
+0065     
+0066 <span class="keyword">end</span>
+0067      
+0068 criterion=criterion(2:end);
+0069 <span class="keyword">if</span> ~isempty(criterion)
+0070     idx=<a href="nt_find_outlier_trials.html" class="code" title="function [idx,d]=nt_find_outlier_trials(x,criterion,disp_flag,regress_flag)">nt_find_outlier_trials</a>(x(:,idx),criterion,disp_flag,regress_flag);
+0071     idx = idx(idx2); <span class="comment">% otherwise, idx doesn?t correspond to original matrix anymore</span>
+0072 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

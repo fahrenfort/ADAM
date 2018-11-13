@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of test_nt_peaky2</title>
+  <meta name="keywords" content="test_nt_peaky2">
+  <meta name="description" content="Test of nt_peaky_DA on the EEG data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">TEST</a> &gt; test_nt_peaky2.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/TEST&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>test_nt_peaky2
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>Test of nt_peaky_DA on the EEG data</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Test of nt_peaky_DA on the EEG data</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% Test of nt_peaky_DA on the EEG data</span>
+0002 
+0003 <span class="comment">%clear</span>
+0004 <span class="comment">%close all</span>
+0005 
+0006 <span class="comment">%dname='C:\Users\Trevor\Documents\Data\';</span>
+0007 dname=<span class="string">'/data/meg/arzounian/DA_131218/'</span>;
+0008 
+0009 <span class="comment">% fnames={</span>
+0010 <span class="comment">%     'DA_131218_p11\DA_131218_p11_001_spontan_open'</span>
+0011 <span class="comment">%     'DA_131218_p11\DA_131218_p11_002_spontan_closed'</span>
+0012 <span class="comment">%     'DA_131218_p11\DA_131218_p11_003_spontan_closed_off'</span>
+0013 <span class="comment">%     };</span>
+0014 fnames={
+0015     <span class="string">'DA_131218_p14_001_spontan_open'</span>
+0016     <span class="string">'DA_131218_002_spontan_closed'</span>
+0017     <span class="string">'DA_131218_003_spontan_closed_off'</span>
+0018     };
+0019 
+0020 start=[65 40 120];
+0021 stop=[925 760 1900];
+0022 
+0023 iFile=3;
+0024 fname=fnames{iFile};
+0025 
+0026 disp(<span class="string">'read data...'</span>);
+0027 h=sopen([dname,fname]);
+0028 sr=h.SampleRate;
+0029 x=sread(h);
+0030 sclose(h);
+0031 disp(<span class="string">'done'</span>)
+0032 
+0033 <span class="comment">% exclude last channels (unused), first and last chunks (artifacted)</span>
+0034 x=x(start(iFile)*sr:stop(iFile)*sr,1:37);    
+0035 
+0036 <span class="comment">% high-pass</span>
+0037 HPF=15;
+0038 x=nt_demean(x,1:round(sr/HPF));
+0039 [B,A]=butter(2,HPF/(sr/2),<span class="string">'high'</span>);
+0040 x=filter(B,A,x);
+0041 x=x(round(sr/HPF)+1:<span class="keyword">end</span>,:);
+0042 
+0043 
+0044 <span class="comment">% down-sample</span>
+0045 DSR=sr/256;
+0046 x=nt_dsample(x,DSR);
+0047 sr=sr/DSR;
+0048 
+0049 
+0050 window=30*sr;   <span class="comment">% effective integration window size(samples)</span>
+0051 T=10*sr; <span class="comment">% Time resolution (samples)</span>
+0052 nSmooth=floor(window/T);
+0053 
+0054 tic
+0055 x0=x;
+0056 x=nt_pca(x);
+0057 [tocomps,ii]=nt_peaky([],x,T,nSmooth);
+0058 [~,idx]=sort(ii);
+0059 <span class="comment">%tocomps=tocomps(:,idx);</span>
+0060 
+0061 zz=nt_mmat(x,tocomps);
+0062 zz=nt_normcol(zz);
+0063 
+0064 figure(1);
+0065 imagescc((filter(ones(round(10*sr),1),1,abs(zz)).^0.5)'); title(<span class="string">'all'</span>)
+0066 title(<span class="string">'Reconstruction'</span>)
+0067 toc
+0068 
+0069 figure(2); clf
+0070 subplot 121; plot(kurtosis(zz), <span class="string">'.-'</span>); title(<span class="string">'kurtosis'</span>); xlabel(<span class="string">'component'</span>)
+0071 subplot 122; imagescc(nt_cov(zz)); title(<span class="string">'covariance matrix'</span>); xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'component'</span>);
+0072 
+0073 figure(3); clf
+0074 imagescc(nt_xcov(nt_normcol(x0),nt_normcol(zz))); 
+0075 xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'electrode'</span>); title(<span class="string">'electrode/component covariance'</span>);
+0076 
+0077 figure(4); clf;
+0078 nt_spect_plot2(nt_dsample(zz,2),1024,[],[],sr/2)
+0079 title(<span class="string">'spectra of components'</span>);
+0080 
+0081</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

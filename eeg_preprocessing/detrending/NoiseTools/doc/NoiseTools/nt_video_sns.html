@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_video_sns</title>
+  <meta name="keywords" content="nt_video_sns">
+  <meta name="description" content="y=nt_video_sns(x,nneighbors) - apply SNS locally">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_video_sns.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_video_sns
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_video_sns(x,nneighbors) - apply SNS locally</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_video_sns(x,nneighbors) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_video_sns(x,nneighbors) - apply SNS locally
+
+  y: processed data
+
+  x: data to process (time * nrows * ncols)
+  nneighbors: number of neighbors to incluce for each pixel
+
+ Each channel is projected on its nneighbors closest neighbors, 
+ and the channel is replaced by its projection.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a>	[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y=nt_video_sns(x,nneighbors)</a>
+0002 <span class="comment">%y=nt_video_sns(x,nneighbors) - apply SNS locally</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: processed data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data to process (time * nrows * ncols)</span>
+0007 <span class="comment">%  nneighbors: number of neighbors to incluce for each pixel</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% Each channel is projected on its nneighbors closest neighbors,</span>
+0010 <span class="comment">% and the channel is replaced by its projection.</span>
+0011 
+0012 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0013 
+0014 <span class="keyword">if</span> nargin&lt;2||isempty(nneighbors);
+0015     disp(<span class="string">'default nneighbors = 10'</span>);
+0016     nneighbors=10;
+0017 <span class="keyword">end</span>
+0018 
+0019 [nframes,nrows,ncols]=size(x);
+0020 x=x(:,:); 
+0021 y=nan(size(x));
+0022 
+0023 closest=<a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a>([nrows,ncols],nneighbors);
+0024 <span class="keyword">for</span> iPixel=1:size(closest,1)
+0025     <span class="comment">%disp(iPixel)</span>
+0026     xx=x(:,closest(iPixel,:));
+0027     <span class="comment">%[~,a]=nt_regw(x(:,iPixel),xx);</span>
+0028     <span class="comment">%y(:,iPixel)=a;</span>
+0029     [V,D]=eig(xx'*xx); V=real(V); D=real(D);
+0030     PCA_THRESH=10^-8;
+0031     topcs=V(:,find(D/max(D) &gt; PCA_THRESH)); <span class="comment">% discard weak dims</span>
+0032     xxx=xx*topcs;
+0033     b=( x(:,iPixel)'*xxx ) / (xxx'*xxx);    
+0034     y(:,iPixel)=xxx*b';
+0035 <span class="keyword">end</span>
+0036 y=reshape(y,[nframes,nrows,ncols]);
+0037 
+0038</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

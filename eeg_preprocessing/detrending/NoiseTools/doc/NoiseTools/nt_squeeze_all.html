@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_squeeze_all</title>
+  <meta name="keywords" content="nt_squeeze_all">
+  <meta name="description" content="y=nt_squeeze_all(x) - squeeze structs and cell arrays">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_squeeze_all.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_squeeze_all
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_squeeze_all(x) - squeeze structs and cell arrays</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_squeeze_all(x) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_squeeze_all(x) - squeeze structs and cell arrays
+
+  x: object to squeeze
+  
+  y: result of squeezing
+
+ If x is a struct, all fields and subfields will be concatenated.  If x is
+ a cell array, all elements will be concatenated.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_squeeze_all.html" class="code" title="function y=nt_squeeze_all(x)">nt_squeeze_all</a>	y=nt_squeeze_all(x) - squeeze structs and cell arrays</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_squeeze_all.html" class="code" title="function y=nt_squeeze_all(x)">nt_squeeze_all</a>	y=nt_squeeze_all(x) - squeeze structs and cell arrays</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y=nt_squeeze_all(x)</a>
+0002 <span class="comment">%y=nt_squeeze_all(x) - squeeze structs and cell arrays</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  x: object to squeeze</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  y: result of squeezing</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% If x is a struct, all fields and subfields will be concatenated.  If x is</span>
+0009 <span class="comment">% a cell array, all elements will be concatenated.</span>
+0010 
+0011 VERBOSE=1;
+0012 
+0013 x=squeeze(x);
+0014 
+0015 <span class="keyword">if</span> isnumeric (x)
+0016     y=x;
+0017     <span class="keyword">return</span>;
+0018 <span class="keyword">elseif</span> iscell(x);
+0019     <span class="keyword">if</span> VERBOSE; disp(<span class="string">'cell to matrix'</span>); <span class="keyword">end</span>
+0020     <span class="keyword">try</span>
+0021         y=cell2mat(x);
+0022     <span class="keyword">catch</span>
+0023         error(<span class="string">'could not convert cell array to matrix'</span>); 
+0024     <span class="keyword">end</span>
+0025 <span class="keyword">elseif</span> isstruct(x);
+0026     <span class="keyword">if</span> VERBOSE; disp(<span class="string">'struct to cell'</span>); <span class="keyword">end</span>
+0027     <span class="keyword">try</span>
+0028         y=struct2cell(x);
+0029     <span class="keyword">catch</span>
+0030         error(<span class="string">'could not convert structure to cell array'</span>);
+0031     <span class="keyword">end</span>
+0032 <span class="keyword">else</span>
+0033     error(<span class="string">'!'</span>);
+0034 <span class="keyword">end</span>
+0035 
+0036 y=<a href="nt_squeeze_all.html" class="code" title="function y=nt_squeeze_all(x)">nt_squeeze_all</a>(y);</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

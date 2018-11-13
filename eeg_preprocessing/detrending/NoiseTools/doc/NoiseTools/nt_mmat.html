@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_mmat</title>
+  <meta name="keywords" content="nt_mmat">
+  <meta name="description" content="y=nt_mmat(x,m) -  matrix multiplication (with convolution)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_mmat.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_mmat
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_mmat(x,m) -  matrix multiplication (with convolution)</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_mmat(x,m) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_mmat(x,m) -  matrix multiplication (with convolution)
+
+  y: result
+ 
+  x: input data (2D or more)
+  m: matrix to apply (2D: right multiply, 3D: same with convolution)
+
+  If m is 3D, the last index (k) is lag.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bias_cluster.html" class="code" title="function [c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags)">nt_bias_cluster</a>	[c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags) - cluster covariance</li><li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li><li><a href="nt_dprime.html" class="code" title="function [d,err_rate,perm_rate,area_roc,roc]=nt_dprime(x,y,jd_flag)">nt_dprime</a>	[d,err_rate,perm,area_roc,roc]=nt_dprime(x,y,jd_flag) - calculate d' (discriminability) of two distributions</li><li><a href="nt_dss1.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2)">nt_dss1</a>	[todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2) - evoked-biased DSS denoising</li><li><a href="nt_dss_repeat_cluster.html" class="code" title="function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)">nt_dss_repeat_cluster</a>	y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_narrowband_scan.html" class="code" title="function A=nt_narrowband_scan(x,freqs,sr,Q,plotflag,yulewalk_order)">nt_narrowband_scan</a>	A=nt_narrowband_scan(x,freqs,sr,Q,plotflag) - scan for narrowband components using DSS</li><li><a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>	[topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_pca_kmeans.html" class="code" title="function [topcs,pwr]=nt_pca_kmeans(x,shifts,nkeep)">nt_pca_kmeans</a>	[topcs,pwr]=nt_pca_kmeans(x,nkeep) - PCA preceded by kmeans for speed</li><li><a href="nt_qca.html" class="code" title="function [squares,quads,D]=nt_qca(x,npcs,nsmooth,nquads)">nt_qca</a>	[squares,quads,D]=nt_qca(x,npcs,nsmooth,nquads) - maximize induced power using quadratic component analysis</li><li><a href="nt_qca0.html" class="code" title="function [tosquares,quads,D]=nt_qca0(x,npcs,nsmooth,nquads)">nt_qca0</a>	[tosquares,quads,D]=nt_qca0(x,npcs,nsmooth,nquads) - maximize induced power using quadratic component analysis</li><li><a href="nt_qca02.html" class="code" title="function [tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth)">nt_qca02</a>	[tosquare,quad,tosquare2,quad2,D]=nt_qca02(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</li><li><a href="nt_qca2.html" class="code" title="function [squares,quad,squares2,quad2,D]=nt_qca2(x,npcs,nsmooth)">nt_qca2</a>	[square,quad,square2,quad2,D]=nt_qca(x,npcs,nsmooth) - maximize induced power using quadratic component analysis</li><li><a href="nt_qpca.html" class="code" title="function [squares,quads,D]=nt_qpca(x,npcs,nsmooth,nquads)">nt_qpca</a>	[squares,quads]=nt_qpca(x,npcs,nsmooth,nquads) - quadratic PCA</li><li><a href="nt_qpca0.html" class="code" title="function [tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads)">nt_qpca0</a>	[tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads) - quadratic PCA</li><li><a href="nt_split_jd.html" class="code" title="function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);">nt_split_jd</a>	[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function x=nt_mmat0(x,m)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y=nt_mmat(x,m)</a>
+0002 <span class="comment">%y=nt_mmat(x,m) -  matrix multiplication (with convolution)</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: result</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: input data (2D or more)</span>
+0007 <span class="comment">%  m: matrix to apply (2D: right multiply, 3D: same with convolution)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">%  If m is 3D, the last index (k) is lag.</span>
+0010 
+0011 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0012 
+0013 <span class="keyword">if</span> iscell(x)
+0014     <span class="keyword">for</span> iCell=1:length(x)
+0015         y{iCell}=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x{iCell},m);
+0016     <span class="keyword">end</span>
+0017     <span class="keyword">return</span>;
+0018 <span class="keyword">end</span>
+0019 
+0020 <span class="keyword">if</span> ndims(x)&gt;3
+0021     <span class="comment">% concatenate the last dimensions, process, then de-concatenate</span>
+0022     sz=size(x);
+0023     x=reshape(x,[sz(1),sz(2),prod(sz(3:end))]);
+0024     x=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,m);
+0025     x=reshape(x,[size(x,1),sz(2),sz(3:end)]);
+0026 
+0027 <span class="keyword">else</span>
+0028 
+0029     <span class="keyword">if</span> ndims(m)==2;
+0030         <span class="comment">% no convolution</span>
+0031         y=<a href="#_sub1" class="code" title="subfunction x=nt_mmat0(x,m)">nt_mmat0</a>(x,m); 
+0032     
+0033     <span class="keyword">else</span>
+0034         
+0035 <span class="comment">% does anyone use this ?????</span>
+0036 
+0037         [nRows,nCols,nLags]=size(m);
+0038         [nSamples,nChans,nTrials]=size(x);
+0039         <span class="keyword">if</span> nChans~=nRows; 
+0040             error(<span class="string">'ncols(x) ~= nrows(m)'</span>);
+0041         <span class="keyword">end</span>
+0042         <span class="comment">% convolution: for each k, multiply x by m(:,:,k) and add with</span>
+0043         <span class="comment">% shift of (k-1)</span>
+0044         y=zeros(nSamples+nLags-1,nCols,nTrials);
+0045         <span class="keyword">for</span> iLag=1:nLags
+0046             y(iLag:iLag+nSamples-1,:,:) = y(iLag:iLag+nSamples-1,:,:) + <a href="#_sub1" class="code" title="subfunction x=nt_mmat0(x,m)">nt_mmat0</a>(x,m(:,:,iLag));
+0047         <span class="keyword">end</span>
+0048         
+0049     <span class="keyword">end</span>
+0050 <span class="keyword">end</span>    
+0051 
+0052 <a name="_sub1" href="#_subfunctions" class="code">function x=nt_mmat0(x,m)</a>
+0053 x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x)*m,size(x,1));</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

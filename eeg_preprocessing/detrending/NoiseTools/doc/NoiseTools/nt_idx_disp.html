@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_idx_disp</title>
+  <meta name="keywords" content="nt_idx_disp">
+  <meta name="description" content="nt_idx_disp(name,field,explainflag) - display contents of index file">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_idx_disp.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_idx_disp
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>nt_idx_disp(name,field,explainflag) - display contents of index file</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function nt_idx_disp(name,field,explainflag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">nt_idx_disp(name,field,explainflag) - display contents of index file
+
+  name: name of file
+  field: field to display in detail
+  explainflag: if true, explain contents of each field
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function nt_idx_disp(name,field,explainflag)</a>
+0002 <span class="comment">%nt_idx_disp(name,field,explainflag) - display contents of index file</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  name: name of file</span>
+0005 <span class="comment">%  field: field to display in detail</span>
+0006 <span class="comment">%  explainflag: if true, explain contents of each field</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% NoiseTools</span>
+0009 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0010 
+0011 <span class="keyword">if</span> nargin&lt;1; name=pwd; <span class="keyword">end</span>
+0012 <span class="keyword">if</span> nargin&lt;2; field=[]; <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin&lt;3; explainflag=0; <span class="keyword">end</span>
+0014 
+0015 <span class="comment">% check name, parse into path, etc.</span>
+0016 <span class="keyword">if</span> ~ischar(name); error(<span class="string">'name should be a string'</span>); <span class="keyword">end</span>
+0017 avoid=[<span class="string">'['</span>,1:31, 127,<span class="string">']'</span>];
+0018 <span class="keyword">if</span> regexp(name,avoid); 
+0019     disp(<span class="string">'bad character in file name, skip:'</span>); disp([<span class="string">'   &gt;'</span>,name,<span class="string">'&lt;'</span>]); 
+0020     <span class="keyword">return</span>; 
+0021 <span class="keyword">end</span>
+0022 <span class="keyword">if</span> name==<span class="string">'.'</span>; name=pwd; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> name(end)==<span class="string">'/'</span>; name=name(1:end-1); <span class="keyword">end</span> <span class="comment">% remove trailing slash</span>
+0024 [PATHSTR,NAME,EXT]=fileparts(name);
+0025 <span class="keyword">if</span> strcmp(EXT,<span class="string">'idx'</span>); 
+0026     disp([<span class="string">'warning: '</span>, name, <span class="string">' might be index file'</span>]); 
+0027 <span class="keyword">end</span>
+0028 <span class="keyword">if</span> isempty(PATHSTR); <span class="comment">% interpret relative to current directory</span>
+0029     name=[pwd,filesep,name]; <span class="comment">% full path, safe to use 'exist'</span>
+0030 <span class="keyword">end</span>
+0031 [PATHSTR,NAME,EXT]=fileparts(name); 
+0032 <span class="keyword">if</span> 2==exist(name) 
+0033     d=dir(name);
+0034     filename=d.name;            <span class="comment">% match case to file system</span>
+0035     PATHSTR=cd(cd(PATHSTR));    <span class="comment">% match case to file system</span>
+0036     name=[PATHSTR,filesep,filename];
+0037 <span class="keyword">elseif</span> 7==exist(name)
+0038     name=cd(cd(name));          <span class="comment">% match case to file system</span>
+0039     [PATHSTR,NAME,EXT]=fileparts(name); 
+0040 <span class="keyword">else</span>
+0041     disp(name);
+0042     error(<span class="string">'...is neither file nor directory'</span>);
+0043 <span class="keyword">end</span>
+0044 
+0045 idxDir=[PATHSTR,filesep,<span class="string">'nt_idx'</span>];
+0046 idxFile=[idxDir,filesep,NAME,EXT,<span class="string">'.idx'</span>];
+0047 
+0048 <span class="keyword">if</span> 2~=exist(idxFile); 
+0049     disp(idxFile)
+0050     disp(<span class="string">'index file not found'</span>);
+0051     <span class="keyword">return</span>
+0052 <span class="keyword">end</span>
+0053 
+0054 load(<span class="string">'-mat'</span>,idxFile);  <span class="comment">% loads hh, ii</span>
+0055 a.hh=hh;
+0056 a.ii=ii;
+0057 
+0058 <span class="keyword">if</span> ~isempty(field)
+0059     eval([<span class="string">'a=a.'</span>,field,<span class="string">';'</span>]);
+0060 <span class="keyword">end</span>
+0061 
+0062 <span class="keyword">if</span> ~explainflag
+0063     <span class="keyword">if</span> isnumeric(a)
+0064         figure(100); clf; plot(<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(a)); 
+0065     <span class="keyword">else</span>
+0066         disp(a);
+0067     <span class="keyword">end</span>
+0068 <span class="keyword">elseif</span> ~isempty(a)
+0069     fieldNames=fieldnames(a);
+0070     <span class="keyword">for</span> iFieldName=1:numel(fieldNames)
+0071         fieldName=fieldNames{iFieldName};
+0072         <span class="keyword">switch</span> fieldName
+0073             <span class="keyword">case</span> <span class="string">'hh'</span>
+0074                 disp(<span class="string">'hh: header and metadata'</span>);
+0075             <span class="keyword">case</span> <span class="string">'ii'</span>
+0076                 disp(<span class="string">'ii: index describing the data'</span>)
+0077             <span class="keyword">case</span> <span class="string">'name'</span>
+0078                 disp(<span class="string">'name: name of file or directory that was indexed'</span>);
+0079             <span class="keyword">case</span> <span class="string">'idxName'</span>
+0080                 disp(<span class="string">'idxName: name of index file'</span>);
+0081             <span class="keyword">case</span> <span class="string">'time_indexed'</span>
+0082                 disp(<span class="string">'time_indexed: date/time at which this was indexed (datenumber)'</span>);
+0083             <span class="keyword">case</span> <span class="string">'failed'</span>
+0084                 disp(<span class="string">'failed: 1 = indexing failed'</span>);
+0085             <span class="keyword">case</span> <span class="string">'isdir'</span>
+0086                 disp(<span class="string">'isdir: 1 = directory'</span>);
+0087             <span class="keyword">case</span> <span class="string">'dir'</span>
+0088                 disp(<span class="string">'dir: directory list (for directory) or entry (for file)'</span>) 
+0089             <span class="keyword">case</span> <span class="string">'filelist'</span>
+0090                 disp(<span class="string">'filelist: info for each file in this directory'</span>);
+0091             <span class="keyword">case</span> <span class="string">'isdata'</span>
+0092                 disp(<span class="string">'isdata: 1 = file was recognized as containing indexable data'</span>);
+0093             <span class="keyword">case</span> <span class="string">'nfiles'</span>
+0094                 disp(<span class="string">'nfiles: total number of indexed files within this directory &amp; subdirectories'</span>);
+0095             <span class="keyword">case</span> <span class="string">'bytes'</span>
+0096                 disp(<span class="string">'bytes: total number of bytes within this file or directory &amp; subdirectories'</span>);
+0097             <span class="keyword">case</span> <span class="string">'date'</span>
+0098                 disp(<span class="string">'date: directory date field for this file or directory'</span>);
+0099             <span class="keyword">case</span> <span class="string">'sr'</span>
+0100                 disp(<span class="string">'sr: sampling rate, if known'</span>);
+0101             <span class="keyword">case</span> <span class="string">'depth'</span>
+0102                 disp(<span class="string">'depth: depth of the subdirectory hierarchy'</span>);
+0103             <span class="keyword">case</span> <span class="string">'ndirs'</span>
+0104                 disp(<span class="string">'ndirs: total number of directories within this directory &amp; subdirectories'</span>);
+0105             <span class="keyword">case</span> <span class="string">'nbad'</span>
+0106                 disp(<span class="string">'nbad: dunno what this means...'</span>);
+0107             <span class="keyword">case</span> <span class="string">'ndata'</span>
+0108                 disp(<span class="string">'ndata: total number of data files in this directory &amp; subdirectories'</span>);
+0109             <span class="keyword">case</span> <span class="string">'nskip'</span>
+0110                 disp(<span class="string">'nskip: total number of files that were skipped in this directory &amp; subdirectories'</span>);
+0111             <span class="keyword">case</span> <span class="string">'ext'</span>
+0112                 disp(<span class="string">'ext: extension of this file''s name'</span>);
+0113             <span class="keyword">case</span> <span class="string">'type'</span>
+0114                 disp(<span class="string">'type: type of this data file'</span>);
+0115             <span class="keyword">case</span> <span class="string">'ntypes'</span>
+0116                 disp(<span class="string">'ntypes: number of files of each type in this directory &amp; subdirectories'</span>);
+0117             <span class="keyword">case</span> <span class="string">'size'</span>
+0118                 disp(<span class="string">'size: dimensions of matrix being indexed'</span>)
+0119             <span class="keyword">case</span> <span class="string">'originalsize'</span>
+0120                 disp(<span class="string">'originalsize: original dimensions before transposing'</span>);
+0121             <span class="keyword">case</span> <span class="string">'min'</span>
+0122                 disp(<span class="string">'min: minimum over interval of samples'</span>);
+0123             <span class="keyword">case</span> <span class="string">'max'</span>
+0124                 disp(<span class="string">'max: maximum over interval of samples'</span>);
+0125             <span class="keyword">case</span> <span class="string">'mean'</span>
+0126                 disp(<span class="string">'mean: mean over interval of samples'</span>);
+0127             <span class="keyword">case</span> <span class="string">'var'</span>
+0128                 disp(<span class="string">'var: variance over interval of samples'</span>)
+0129             <span class="keyword">case</span> <span class="string">'card'</span>
+0130                 disp(<span class="string">'card: cardinality of interval of samples'</span>);
+0131             <span class="keyword">otherwise</span>
+0132                 disp([fieldName,<span class="string">': ?'</span>]);
+0133         <span class="keyword">end</span>
+0134     <span class="keyword">end</span>
+0135 <span class="keyword">end</span>
+0136               
+0137</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

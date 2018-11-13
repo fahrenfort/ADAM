@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_bsmean</title>
+  <meta name="keywords" content="nt_bsmean">
+  <meta name="description" content="[mn,sd,all]=nt_bsmean(x,N,w) - calculate mean, estimate sd using bootstrap">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_bsmean.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_bsmean
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[mn,sd,all]=nt_bsmean(x,N,w) - calculate mean, estimate sd using bootstrap</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [mn,sd,all]=nt_bsmean(x,N,w) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[mn,sd,all]=nt_bsmean(x,N,w) - calculate mean, estimate sd using bootstrap
+
+  mn: mean of x over second dimension
+  sd: standard deviation from mn of bootstrap trials
+  all: matrix of all bootstrap trials
+  
+  x: matrix of observations (time X repetitions)
+  N: number of bootstrap trials [default: 100]
+  w: weight matrix (time X repetitions)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_wmean.html" class="code" title="function y=nt_wmean(x,w,dim)">nt_wmean</a>	y=nt_wmean(x,w,dim) - weighted average</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bsplot.html" class="code" title="function nt_bsplot(x,w,style,abscissa,zeroflag,rmsflag)">nt_bsplot</a>	nt_bsplot(x,sds,style,abscissa,zeroflag,rmsflag) - plot average with bootstrap standard deviation</li><li><a href="nt_bsplot2.html" class="code" title="function nt_bsplot2(x,percentile,style,abscissa,zeroflag,rmsflag)">nt_bsplot2</a>	nt_bsplot(x,percentile,style,abscissa,zeroflag,rmsflag) - plot average with confidence interval</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [mn,sd,all]=nt_bsmean(x,N,w)</a>
+0002 <span class="comment">%[mn,sd,all]=nt_bsmean(x,N,w) - calculate mean, estimate sd using bootstrap</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  mn: mean of x over second dimension</span>
+0005 <span class="comment">%  sd: standard deviation from mn of bootstrap trials</span>
+0006 <span class="comment">%  all: matrix of all bootstrap trials</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  x: matrix of observations (time X repetitions)</span>
+0009 <span class="comment">%  N: number of bootstrap trials [default: 100]</span>
+0010 <span class="comment">%  w: weight matrix (time X repetitions)</span>
+0011 
+0012 <span class="keyword">if</span> nargin &lt;2; N=100; <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin &lt;3; w=[]; <span class="keyword">end</span>
+0014 
+0015 <span class="keyword">if</span> ndims(x)&gt;2; 
+0016     x=squeeze(x);
+0017     <span class="keyword">if</span> ndims(x)&gt;2; 
+0018         error(<span class="string">'data must be at most 2D'</span>); 
+0019     <span class="keyword">end</span>
+0020 <span class="keyword">end</span>
+0021 <span class="keyword">if</span> numel(N)&gt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0022 
+0023 <span class="keyword">if</span> isempty(w) <span class="comment">% special case for speed</span>
+0024     [m,n]=size(x);
+0025     all=zeros(m,N);
+0026     <span class="keyword">for</span> k=1:N
+0027         idx=ceil(n*rand(1,n));
+0028         all(:,k)=mean(x(:,idx),2);
+0029     <span class="keyword">end</span>
+0030     mn=mean(x,2);
+0031     sd=sqrt(mean((all-repmat(mn,1,N)).^2,2));
+0032 <span class="keyword">else</span>
+0033     <span class="keyword">if</span> size(w,2)==1; w=repmat(w,1,size(x,2)); <span class="keyword">end</span>
+0034     <span class="keyword">if</span> size(w) ~= size(x); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0035     [m,n]=size(x);
+0036     all=zeros(m,N);
+0037     <span class="keyword">for</span> k=1:N
+0038         idx=ceil(n*rand(1,n));
+0039         all(:,k)=<a href="nt_wmean.html" class="code" title="function y=nt_wmean(x,w,dim)">nt_wmean</a>(x(:,idx),w(:,idx),2);
+0040     <span class="keyword">end</span>
+0041     mn=<a href="nt_wmean.html" class="code" title="function y=nt_wmean(x,w,dim)">nt_wmean</a>(x,w,2);
+0042     sd=sqrt( mean((all-repmat(mn,1,N)).^2, 2));
+0043 <span class="keyword">end</span>
+0044     
+0045 
+0046</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

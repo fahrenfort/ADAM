@@ -1,0 +1,262 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_resample</title>
+  <meta name="keywords" content="nt_resample">
+  <meta name="description" content="RESAMPLE  Change the sampling rate of a signal.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_resample.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_resample
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>RESAMPLE  Change the sampling rate of a signal.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function  [y, h] = resample( x, p, q, N, bta ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">RESAMPLE  Change the sampling rate of a signal.  
+
+!!!!! 
+ Lower LP corner than Matlab's resample (Matlab's gives inadequate
+ antialias filtering). 
+ Works with multidimensional arrays (Matlab's doesn't).
+!!!!!
+
+   Y = RESAMPLE(X,P,Q) resamples the sequence in vector X at P/Q times
+   the original sample rate using a polyphase implementation.  Y is P/Q 
+   times the length of X (or the ceiling of this if P/Q is not an integer).  
+   P and Q must be positive integers.
+
+   RESAMPLE applies an anti-aliasing (lowpass) FIR filter to X during the 
+   resampling process, and compensates for the filter's delay.  The filter 
+   is designed using FIRLS.  RESAMPLE provides an easy-to-use alternative
+   to UPFIRDN, relieving the user of the need to supply a filter or
+   compensate for the signal delay introduced by filtering.
+
+   In its filtering process, RESAMPLE assumes the samples at times before
+   and after the given samples in X are equal to zero. Thus large
+   deviations from zero at the end points of the sequence X can cause
+   inaccuracies in Y at its end points.
+
+   Y = RESAMPLE(X,P,Q,N) uses a weighted sum of 2*N*max(1,Q/P) samples of X 
+   to compute each sample of Y.  The length of the FIR filter RESAMPLE applies
+   is proportional to N; by increasing N you will get better accuracy at the 
+   expense of a longer computation time.  If you don't specify N, RESAMPLE uses
+   N = 10 by default.  If you let N = 0, RESAMPLE performs a nearest
+   neighbor interpolation; that is, the output Y(n) is X(round((n-1)*Q/P)+1)
+   ( Y(n) = 0 if round((n-1)*Q/P)+1 &gt; length(X) ).
+
+   Y = RESAMPLE(X,P,Q,N,BTA) uses BTA as the BETA design parameter for the 
+   Kaiser window used to design the filter.  RESAMPLE uses BTA = 5 if
+   you don't specify a value.
+
+   Y = RESAMPLE(X,P,Q,B) uses B to filter X (after upsampling) if B is a 
+   vector of filter coefficients.  RESAMPLE assumes B has odd length and
+   linear phase when compensating for the filter's delay; for even length 
+   filters, the delay is overcompensated by 1/2 sample.  For non-linear 
+   phase filters consider using UPFIRDN.
+
+   [Y,B] = RESAMPLE(X,P,Q,...) returns in B the coefficients of the filter
+   applied to X during the resampling process (after upsampling).
+
+   If X is a matrix, RESAMPLE resamples the columns of X.
+
+   % Example:
+   %   Resample a sinusoid at 3/2 the original rate.
+
+   tx = 3:3:300;           % Time vector for original signal
+   x = sin(2*pi*tx/300);   % Define a sinusoid 
+   ty = 2:2:300;           % Time vector for resampled signal        
+   y = resample(x,3,2);    % Change sampling rate
+   plot(tx,x,'+-',ty,y,'o:')
+   legend('original','resampled'); xlabel('Time')
+
+   See also UPFIRDN, INTERP, DECIMATE, FIRLS, KAISER, INTFILT.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function  [y, h] = resample( x, p, q, N, bta )</a>
+0002 <span class="comment">%RESAMPLE  Change the sampling rate of a signal.</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%!!!!!</span>
+0005 <span class="comment">% Lower LP corner than Matlab's resample (Matlab's gives inadequate</span>
+0006 <span class="comment">% antialias filtering).</span>
+0007 <span class="comment">% Works with multidimensional arrays (Matlab's doesn't).</span>
+0008 <span class="comment">%!!!!!</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">%   Y = RESAMPLE(X,P,Q) resamples the sequence in vector X at P/Q times</span>
+0011 <span class="comment">%   the original sample rate using a polyphase implementation.  Y is P/Q</span>
+0012 <span class="comment">%   times the length of X (or the ceiling of this if P/Q is not an integer).</span>
+0013 <span class="comment">%   P and Q must be positive integers.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">%   RESAMPLE applies an anti-aliasing (lowpass) FIR filter to X during the</span>
+0016 <span class="comment">%   resampling process, and compensates for the filter's delay.  The filter</span>
+0017 <span class="comment">%   is designed using FIRLS.  RESAMPLE provides an easy-to-use alternative</span>
+0018 <span class="comment">%   to UPFIRDN, relieving the user of the need to supply a filter or</span>
+0019 <span class="comment">%   compensate for the signal delay introduced by filtering.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">%   In its filtering process, RESAMPLE assumes the samples at times before</span>
+0022 <span class="comment">%   and after the given samples in X are equal to zero. Thus large</span>
+0023 <span class="comment">%   deviations from zero at the end points of the sequence X can cause</span>
+0024 <span class="comment">%   inaccuracies in Y at its end points.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">%   Y = RESAMPLE(X,P,Q,N) uses a weighted sum of 2*N*max(1,Q/P) samples of X</span>
+0027 <span class="comment">%   to compute each sample of Y.  The length of the FIR filter RESAMPLE applies</span>
+0028 <span class="comment">%   is proportional to N; by increasing N you will get better accuracy at the</span>
+0029 <span class="comment">%   expense of a longer computation time.  If you don't specify N, RESAMPLE uses</span>
+0030 <span class="comment">%   N = 10 by default.  If you let N = 0, RESAMPLE performs a nearest</span>
+0031 <span class="comment">%   neighbor interpolation; that is, the output Y(n) is X(round((n-1)*Q/P)+1)</span>
+0032 <span class="comment">%   ( Y(n) = 0 if round((n-1)*Q/P)+1 &gt; length(X) ).</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">%   Y = RESAMPLE(X,P,Q,N,BTA) uses BTA as the BETA design parameter for the</span>
+0035 <span class="comment">%   Kaiser window used to design the filter.  RESAMPLE uses BTA = 5 if</span>
+0036 <span class="comment">%   you don't specify a value.</span>
+0037 <span class="comment">%</span>
+0038 <span class="comment">%   Y = RESAMPLE(X,P,Q,B) uses B to filter X (after upsampling) if B is a</span>
+0039 <span class="comment">%   vector of filter coefficients.  RESAMPLE assumes B has odd length and</span>
+0040 <span class="comment">%   linear phase when compensating for the filter's delay; for even length</span>
+0041 <span class="comment">%   filters, the delay is overcompensated by 1/2 sample.  For non-linear</span>
+0042 <span class="comment">%   phase filters consider using UPFIRDN.</span>
+0043 <span class="comment">%</span>
+0044 <span class="comment">%   [Y,B] = RESAMPLE(X,P,Q,...) returns in B the coefficients of the filter</span>
+0045 <span class="comment">%   applied to X during the resampling process (after upsampling).</span>
+0046 <span class="comment">%</span>
+0047 <span class="comment">%   If X is a matrix, RESAMPLE resamples the columns of X.</span>
+0048 <span class="comment">%</span>
+0049 <span class="comment">%   % Example:</span>
+0050 <span class="comment">%   %   Resample a sinusoid at 3/2 the original rate.</span>
+0051 <span class="comment">%</span>
+0052 <span class="comment">%   tx = 3:3:300;           % Time vector for original signal</span>
+0053 <span class="comment">%   x = sin(2*pi*tx/300);   % Define a sinusoid</span>
+0054 <span class="comment">%   ty = 2:2:300;           % Time vector for resampled signal</span>
+0055 <span class="comment">%   y = resample(x,3,2);    % Change sampling rate</span>
+0056 <span class="comment">%   plot(tx,x,'+-',ty,y,'o:')</span>
+0057 <span class="comment">%   legend('original','resampled'); xlabel('Time')</span>
+0058 <span class="comment">%</span>
+0059 <span class="comment">%   See also UPFIRDN, INTERP, DECIMATE, FIRLS, KAISER, INTFILT.</span>
+0060 
+0061 <span class="comment">%   NOTE-1: digital anti-alias filter is desiged via windowing</span>
+0062 
+0063 <span class="comment">%   Author(s): James McClellan, 6-11-93</span>
+0064 <span class="comment">%              Modified to use upfirdn, T. Krauss, 2-27-96</span>
+0065 <span class="comment">%   Copyright 1988-2011 The MathWorks, Inc.</span>
+0066 <span class="comment">%</span>
+0067 
+0068 <span class="keyword">if</span> nargin &lt; 5,  bta = 5;  <span class="keyword">end</span>   <span class="comment">%--- design parameter for Kaiser window LPF</span>
+0069 <span class="keyword">if</span> nargin &lt; 4,   N = 10;   <span class="keyword">end</span>
+0070 <span class="keyword">if</span> abs(round(p))~=p || p==0
+0071   error(message(<span class="string">'signal:resample:MustBePosInteger'</span>, <span class="string">'P'</span>));
+0072 <span class="keyword">end</span>
+0073 <span class="keyword">if</span> abs(round(q))~=q || q==0
+0074   error(message(<span class="string">'signal:resample:MustBePosInteger'</span>, <span class="string">'Q'</span>));
+0075 <span class="keyword">end</span>
+0076 
+0077 sz=size(x);
+0078 <span class="keyword">if</span> numel(sz)&gt;2
+0079     x=reshape(x,sz(1),prod(sz(2:end)));
+0080 <span class="keyword">end</span>
+0081 
+0082 [p,q] = rat( p/q, 1e-12 );  <span class="comment">%--- reduce to lowest terms</span>
+0083    <span class="comment">% (usually exact, sometimes not; loses at most 1 second every 10^12 seconds)</span>
+0084 <span class="keyword">if</span> (p==1) &amp;&amp; (q==1)
+0085     y = x; 
+0086     h = 1;
+0087     <span class="keyword">if</span> numel(sz)&gt;2
+0088         y=reshape(y,[size(y,1),sz(2:end)]);
+0089     <span class="keyword">end</span>
+0090     <span class="keyword">return</span>
+0091 <span class="keyword">end</span>
+0092 pqmax = max(p,q);
+0093 <span class="keyword">if</span> length(N)&gt;1      <span class="comment">% use input filter</span>
+0094    L = length(N);
+0095    h = N;
+0096 <span class="keyword">else</span>                <span class="comment">% design filter</span>
+0097    <span class="keyword">if</span>( N&gt;0 )
+0098       fc = 1/2/pqmax;
+0099       FCFACTOR=0.8; <span class="comment">% put corner at Nyquist * 0.8</span>
+0100       fc=fc*FCFACTOR;
+0101       L = 2*N*pqmax + 1;
+0102       h = p*firls( L-1, [0 2*fc 2*fc 1], [1 1 0 0]).*kaiser(L,bta)' ;
+0103       <span class="comment">% h = p*fir1( L-1, 2*fc, kaiser(L,bta)) ;</span>
+0104    <span class="keyword">else</span>
+0105       L = p;
+0106       h = ones(1,p);
+0107    <span class="keyword">end</span>
+0108 <span class="keyword">end</span>
+0109 
+0110 Lhalf = (L-1)/2;
+0111 isvect = any(size(x)==1);
+0112 <span class="keyword">if</span> isvect
+0113     Lx = length(x);
+0114 <span class="keyword">else</span>
+0115     Lx = size(x, 1);
+0116 <span class="keyword">end</span>
+0117 
+0118 <span class="comment">% Need to delay output so that downsampling by q hits center tap of filter.</span>
+0119 nz = floor(q-mod(Lhalf,q));
+0120 z = zeros(1,nz);
+0121 h = [z h(:).'];  <span class="comment">% ensure that h is a row vector.</span>
+0122 Lhalf = Lhalf + nz;
+0123 
+0124 <span class="comment">% Number of samples removed from beginning of output sequence</span>
+0125 <span class="comment">% to compensate for delay of linear phase filter:</span>
+0126 delay = floor(ceil(Lhalf)/q);
+0127 
+0128 <span class="comment">% Need to zero-pad so output length is exactly ceil(Lx*p/q).</span>
+0129 nz1 = 0;
+0130 <span class="keyword">while</span> ceil( ((Lx-1)*p+length(h)+nz1 )/q ) - delay &lt; ceil(Lx*p/q)
+0131     nz1 = nz1+1;
+0132 <span class="keyword">end</span>
+0133 h = [h zeros(1,nz1)];
+0134 
+0135 <span class="comment">% ----  HERE'S THE CALL TO UPFIRDN  ----------------------------</span>
+0136 y = upfirdn(x,h,p,q);
+0137 
+0138 <span class="comment">% Get rid of trailing and leading data so input and output signals line up</span>
+0139 <span class="comment">% temporally:</span>
+0140 Ly = ceil(Lx*p/q);  <span class="comment">% output length</span>
+0141 <span class="comment">% Ly = floor((Lx-1)*p/q+1);  &lt;-- alternately, to prevent &quot;running-off&quot; the</span>
+0142 <span class="comment">%                                data (extrapolation)</span>
+0143 <span class="keyword">if</span> isvect
+0144     y(1:delay) = [];
+0145     y(Ly+1:end) = [];
+0146 <span class="keyword">else</span>
+0147     y(1:delay,:) = [];
+0148     y(Ly+1:<span class="keyword">end</span>,:) = [];
+0149 <span class="keyword">end</span>
+0150 
+0151 h([1:nz (end-nz1+1):end]) = [];  <span class="comment">% get rid of leading and trailing zeros</span>
+0152                                  <span class="comment">% in case filter is output</span>
+0153 
+0154                                 
+0155 <span class="keyword">if</span> numel(sz)&gt;2
+0156     y=reshape(y,[size(y,1),sz(2:end)]);
+0157 <span class="keyword">end</span>
+0158</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

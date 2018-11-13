@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_narrowband_scan</title>
+  <meta name="keywords" content="nt_narrowband_scan">
+  <meta name="description" content="A=nt_narrowband_scan(x,freqs,sr,Q,plotflag) - scan for narrowband components using DSS">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_narrowband_scan.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_narrowband_scan
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>A=nt_narrowband_scan(x,freqs,sr,Q,plotflag) - scan for narrowband components using DSS</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function A=nt_narrowband_scan(x,freqs,sr,Q,plotflag,yulewalk_order) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">A=nt_narrowband_scan(x,freqs,sr,Q,plotflag) - scan for narrowband components using DSS
+
+  A: cell array of DSS matrices
+
+  x: data (time*channels or time*channels*trials)
+  freqs: Hz, array of bias frequencies
+  sr: Hz, sampling rate
+  Q: quality factors of scanning filter (default: [8 4])
+  plotflag: if true plot (default: 1)
+  yulewalk_order: if present apply inverse filtering with this order
+
+ If no output arguments, plots spectra of first DSS components for each
+ bias</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bias_filter.html" class="code" title="function [c0,c1]=nt_bias_filter(x,B,A)">nt_bias_filter</a>	[c0,c1]=nt_bias_filter(x,B,A) - covariance with and w/o filter bias</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_filter_peak.html" class="code" title="function [B,A] = nt_filter_peak(Wo,Q)">nt_filter_peak</a>	[B,A] = nt_filter_peak(Wo,Q) - second order resonator filter</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_spect_plot2.html" class="code" title="function varargout=nt_spect_plot2(x,varargin)">nt_spect_plot2</a>	nt_spect_plot2 - plot power spectrum</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function A=nt_narrowband_scan(x,freqs,sr,Q,plotflag,yulewalk_order)</a>
+0002 <span class="comment">%A=nt_narrowband_scan(x,freqs,sr,Q,plotflag) - scan for narrowband components using DSS</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  A: cell array of DSS matrices</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data (time*channels or time*channels*trials)</span>
+0007 <span class="comment">%  freqs: Hz, array of bias frequencies</span>
+0008 <span class="comment">%  sr: Hz, sampling rate</span>
+0009 <span class="comment">%  Q: quality factors of scanning filter (default: [8 4])</span>
+0010 <span class="comment">%  plotflag: if true plot (default: 1)</span>
+0011 <span class="comment">%  yulewalk_order: if present apply inverse filtering with this order</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% If no output arguments, plots spectra of first DSS components for each</span>
+0014 <span class="comment">% bias</span>
+0015 <span class="comment">%</span>
+0016 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0017 
+0018 <span class="keyword">if</span> nargin&lt;6; yulewalk_order=[]; <span class="keyword">end</span>
+0019 <span class="keyword">if</span> nargin&lt;5; plotflag=[]; <span class="keyword">end</span>
+0020 <span class="keyword">if</span> nargin&lt;4||isempty(Q); Q=[8 4]; <span class="keyword">end</span>
+0021 <span class="keyword">if</span> nargin&lt;3; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0022 
+0023 freqs=freqs(:);
+0024 
+0025 
+0026 current_figure=get(0,<span class="string">'CurrentFigure'</span>);
+0027 A={};
+0028 <span class="keyword">for</span> iFreqs=1:numel(freqs)
+0029     freq=freqs(iFreqs);
+0030     [b,a]=<a href="nt_filter_peak.html" class="code" title="function [B,A] = nt_filter_peak(Wo,Q)">nt_filter_peak</a>(freq/(sr/2),Q(1));
+0031     [c0,c1]=<a href="nt_bias_filter.html" class="code" title="function [c0,c1]=nt_bias_filter(x,B,A)">nt_bias_filter</a>(x,b,a);
+0032     <span class="keyword">if</span> numel(Q)==2
+0033         [b,a]=<a href="nt_filter_peak.html" class="code" title="function [B,A] = nt_filter_peak(Wo,Q)">nt_filter_peak</a>(freq/(sr/2),Q(2));
+0034         [~,c0]=<a href="nt_bias_filter.html" class="code" title="function [c0,c1]=nt_bias_filter(x,B,A)">nt_bias_filter</a>(x,b,a);
+0035     <span class="keyword">end</span>
+0036     [todss,pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0037     
+0038     <span class="keyword">if</span> 1; figure(100); clf; plot(pwr1./pwr0,<span class="string">'.-'</span>); title([num2str(freq), <span class="string">'Hz bias'</span>]); ylabel(<span class="string">'score'</span>);  drawnow;<span class="keyword">end</span>
+0039     
+0040     A{iFreqs}=todss;
+0041 <span class="keyword">end</span>
+0042 
+0043 
+0044 <span class="keyword">if</span> ~nargout || ~isempty(plotflag)
+0045     <span class="keyword">if</span> isempty(current_figure);
+0046         figure; 
+0047     <span class="keyword">else</span>
+0048         figure(current_figure);
+0049     <span class="keyword">end</span>
+0050     AA=zeros(size(x,2),numel(freqs));
+0051     <span class="keyword">for</span> iFreqs=1:numel(freqs)
+0052         AA(:,iFreqs)=A{iFreqs}(:,1);
+0053     <span class="keyword">end</span>
+0054     x=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,AA);
+0055     nfft=2.^nextpow2(size(x,1)+1)/2;
+0056     MAX_NFFT=1024;  
+0057     nfft=min(nfft,MAX_NFFT);
+0058     <a href="nt_spect_plot2.html" class="code" title="function varargout=nt_spect_plot2(x,varargin)">nt_spect_plot2</a>(<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x),nfft,[],[],sr);
+0059     K=round(numel(freqs)/6);
+0060     set(gca,<span class="string">'ytick'</span>,1:K:numel(freqs), <span class="string">'yticklabel'</span>,num2str(freqs(1:K:end), <span class="string">'%.3g'</span>)); ylabel(<span class="string">'Hz'</span>);
+0061     set(gca,<span class="string">'xgrid'</span>,<span class="string">'on'</span>,<span class="string">'xminortick'</span>,<span class="string">'on'</span>);
+0062     drawnow;
+0063 <span class="keyword">end</span>
+0064 
+0065 <span class="keyword">if</span> ~nargout;     clear A; <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_cluster_jd</title>
+  <meta name="keywords" content="nt_cluster_jd">
+  <meta name="description" content="[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_cluster_jd.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_cluster_jd
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization
+
+  IDX: cluster ownership (IDX{1}: low amp, IDX{2{: high amp)
+  TODSS: DSS matrix (1st column --&gt; discriminating component)
+  SCORE: score (smaller means better contrast)
+  COVS: covariance for each cluster
+
+  x: data (time*channel% s)
+  dsr: downsample ratio for cross product series
+  smooth: further smoothing of cross-product series
+  flags: see below
+  init: provide initial clustering
+  verbose: display &amp; plot (default=no)
+  depth: cluster recursively into 2^depth clusters
+  N: target number of clusters [default: depth^2]
+
+ Flags:
+  'norm', 'norm2': give each slice the same weight
+  'amp', 'pwr': cluster amplitude or power instead of log (default)
+ See nt_bias_cluster, nt_cluster1D</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cluster1D.html" class="code" title="function [C,A,score]=nt_cluster1D_b(x);">nt_cluster1D</a>	[C,A,score]=nt_cluster1D_b(x) - cluster 1D data into 2 clusters</li><li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li><li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_linecolors.html" class="code" title="function nt_colorlines(h,permutation)">nt_linecolors</a>	nt_colorlines(h,permutation) - apply different colors to lines of plot</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_normrow.html" class="code" title="function x=nt_normrow(x)">nt_normrow</a>	y=nt_normcol(x) - normalize each row so its msq is 1</li><li><a href="nt_sgram.html" class="code" title="function [s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags)">nt_sgram</a>	[s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags) - spectrogram</li><li><a href="nt_smooth.html" class="code" title="function x=nt_smooth(x,T,nIterations,nodelayflag)">nt_smooth</a>	y=nt_smooth(x,T,nIterations,nodelayflag) - smooth by convolution with square window</li><li><a href="nt_spect_plot.html" class="code" title="function varargout=nt_spect_plot(x,varargin)">nt_spect_plot</a>	nt_spect_plot - plot power spectrum</li><li><a href="nt_whoss.html" class="code" title="function varargout=nt_whoss">nt_whoss</a>	size=nt_whoss - total Gbytes used by variables</li><li><a href="nt_xprod.html" class="code" title="function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)">nt_xprod</a>	[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function y=norm2(x,nchans,ind)</a></li><li><a href="#_sub2" class="code">function B=covdists(C)</a></li><li><a href="#_sub3" class="code">function checkindex(IDX,n)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)</a>
+0002 <span class="comment">%[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  IDX: cluster ownership (IDX{1}: low amp, IDX{2{: high amp)</span>
+0005 <span class="comment">%  TODSS: DSS matrix (1st column --&gt; discriminating component)</span>
+0006 <span class="comment">%  SCORE: score (smaller means better contrast)</span>
+0007 <span class="comment">%  COVS: covariance for each cluster</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">%  x: data (time*channel% s)</span>
+0010 <span class="comment">%  dsr: downsample ratio for cross product series</span>
+0011 <span class="comment">%  smooth: further smoothing of cross-product series</span>
+0012 <span class="comment">%  flags: see below</span>
+0013 <span class="comment">%  init: provide initial clustering</span>
+0014 <span class="comment">%  verbose: display &amp; plot (default=no)</span>
+0015 <span class="comment">%  depth: cluster recursively into 2^depth clusters</span>
+0016 <span class="comment">%  N: target number of clusters [default: depth^2]</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% Flags:</span>
+0019 <span class="comment">%  'norm', 'norm2': give each slice the same weight</span>
+0020 <span class="comment">%  'amp', 'pwr': cluster amplitude or power instead of log (default)</span>
+0021 <span class="comment">% See nt_bias_cluster, nt_cluster1D</span>
+0022 
+0023 
+0024 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0025 <span class="keyword">if</span> nargin&lt;3 ||isempty(smooth); smooth=1; <span class="keyword">end</span>
+0026 <span class="keyword">if</span> nargin&lt;4 ||isempty(flags); flags=[]; <span class="keyword">end</span>
+0027 <span class="keyword">if</span> nargin&lt;5; init=[]; <span class="keyword">end</span>
+0028 <span class="keyword">if</span> nargin&lt;6||isempty(verbose); verbose=0; <span class="keyword">end</span>
+0029 <span class="keyword">if</span> nargin&lt;7||isempty(depth); depth=1; <span class="keyword">end</span>
+0030 <span class="keyword">if</span> nargin&lt;8||isempty(N); N=2^depth; <span class="keyword">end</span>
+0031 
+0032 <span class="keyword">if</span> ndims(x)&gt;2 || size(x,2) ==1;
+0033     error(<span class="string">'should be 2D matrix'</span>);
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="keyword">if</span> depth&gt;1;
+0037     <span class="comment">% split into 2 clusters</span>
+0038     I=<a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>(x,dsr,smooth,flags,init,verbose,1);
+0039     
+0040     <span class="comment">% recurse on first</span>
+0041     <span class="keyword">if</span> numel(I{1})&gt;2*dsr; 
+0042         I1=<a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>(x(I{1},:),dsr,smooth,flags,init,verbose,depth-1); <span class="comment">% recurse</span>
+0043     <span class="keyword">else</span>
+0044         I1={(1:numel(I{1}))}; <span class="comment">% too small</span>
+0045     <span class="keyword">end</span>
+0046     
+0047     <span class="comment">% recurse on second (if exists)</span>
+0048     <span class="keyword">if</span> numel(I)&gt;1; 
+0049         <span class="keyword">if</span> numel(I{2})&gt;2*dsr; I2=<a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>(x(I{2},:),dsr,smooth,flags,init,verbose,depth-1); <span class="keyword">else</span> I2={(1:numel(I{2}))}; <span class="keyword">end</span>
+0050     <span class="keyword">end</span>
+0051     
+0052     <span class="comment">% resolve the cluster indices</span>
+0053     IDX1={};
+0054     <span class="keyword">for</span> k=1:numel(I1)
+0055         IDX1=[IDX1, I{1}(I1{k})];
+0056     <span class="keyword">end</span>
+0057     IDX2={};
+0058     <span class="keyword">if</span> numel(I)&gt;1
+0059         <span class="keyword">for</span> k=1:numel(I2)
+0060             IDX2=[IDX2, I{2}(I2{k})];
+0061         <span class="keyword">end</span>
+0062     <span class="keyword">end</span>
+0063     IDX=[IDX1 IDX2];
+0064     <a href="#_sub3" class="code" title="subfunction checkindex(IDX,n)">checkindex</a>(IDX,size(x,1))
+0065     
+0066     <span class="keyword">while</span> numel(IDX)&gt;N;
+0067         <span class="comment">% merge clusters</span>
+0068         COVS=[];
+0069         <span class="keyword">for</span> k=1:numel(IDX)
+0070             COVS{k}=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(IDX{k},:))/size(x(IDX{k},:),1);
+0071         <span class="keyword">end</span>
+0072         B=<a href="#_sub2" class="code" title="subfunction B=covdists(C) ">covdists</a>(COVS);
+0073         [a,idx]=min(B(:));
+0074         [k1,k2]=ind2sub([size(B,1), size(B,1)],idx);
+0075         
+0076         <span class="comment">%figure(1); clf; nt_imagescc(B);title (num2str([max(B(:)), a, k1, k2, size(B,1)])); pause</span>
+0077         IDX{k1}=[IDX{k1};IDX{k2}]; 
+0078         IDX(k2)=[];
+0079         <a href="#_sub3" class="code" title="subfunction checkindex(IDX,n)">checkindex</a>(IDX,size(x,1))
+0080     <span class="keyword">end</span>
+0081     <span class="keyword">if</span> nargout&gt;1;
+0082         c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x)/size(x,1);
+0083         <span class="keyword">for</span> k=1:numel(IDX)
+0084             c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(IDX{k},:))/size(x(IDX{k},:),1);
+0085             [TODSS{k},pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0086             SCORE(k,1:numel(pwr1))=pwr1./pwr0;
+0087             COVS{k}=c1;
+0088         <span class="keyword">end</span>
+0089     <span class="keyword">end</span>
+0090     <span class="keyword">return</span>
+0091 <span class="keyword">end</span>    
+0092 
+0093 <span class="comment">%{</span>
+0094  Calculate the time series of cross products (terms of the covariance matrix).
+0095  This time series has coarser temporal resolution than x by a factor dsr.
+0096 <span class="comment">%}</span>
+0097 [xx,ind]=<a href="nt_xprod.html" class="code" title="function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)">nt_xprod</a>(x,<span class="string">'lower'</span>,dsr);
+0098 <span class="keyword">if</span> 0
+0099     disp([num2str(size(xx,2)), <span class="string">' crossproducts'</span>]);
+0100     <a href="nt_whoss.html" class="code" title="function varargout=nt_whoss">nt_whoss</a>;
+0101 <span class="keyword">end</span>
+0102 
+0103 <span class="comment">% figure(2); clf;</span>
+0104 <span class="comment">% subplot 211;</span>
+0105 <span class="comment">% plot(xx)</span>
+0106 
+0107 <span class="comment">% option: give each slice the same weight (counters amplitude variations)</span>
+0108 <span class="keyword">if</span> find(strcmp(flags,<span class="string">'norm'</span>))
+0109     xx=<a href="nt_normrow.html" class="code" title="function x=nt_normrow(x)">nt_normrow</a>(xx);
+0110 <span class="keyword">end</span>
+0111 <span class="keyword">if</span> find(strcmp(flags,<span class="string">'norm2'</span>))
+0112     xx=<a href="#_sub1" class="code" title="subfunction y=norm2(x,nchans,ind)">norm2</a>(xx,size(x,2),ind);
+0113 <span class="keyword">end</span>
+0114 
+0115 <span class="comment">% subplot 212;</span>
+0116 <span class="comment">% plot(xx);</span>
+0117 <span class="comment">% pause;</span>
+0118 
+0119 xx=<a href="nt_smooth.html" class="code" title="function x=nt_smooth(x,T,nIterations,nodelayflag)">nt_smooth</a>(xx,smooth,[],1);
+0120 
+0121 <span class="comment">%{</span>
+0122 Cluster each column the time series of cross products, 
+0123 choose the column with best score (reduction in energy), 
+0124 and use it's cluster index to initialize the first JD analysis.
+0125 <span class="comment">%}</span>
+0126 
+0127 <span class="comment">% initial clustering, DSS</span>
+0128 <span class="keyword">if</span> isempty(init)
+0129     [C,A,score]=<a href="nt_cluster1D.html" class="code" title="function [C,A,score]=nt_cluster1D_b(x);">nt_cluster1D</a>(xx); <span class="comment">% cluster all columns of cross products</span>
+0130     [~,idx]=min(score); <span class="comment">% select column with best score (tightest clusters)</span>
+0131     A=A(:,idx); 
+0132         
+0133     <span class="comment">% upsample the cluster ownership index so we can apply it to x</span>
+0134     A=repmat(A',[dsr,1]);
+0135     A=A(:);
+0136     A(end:size(x,1))=A(end);
+0137     IDX{1}=find(A==0);
+0138 <span class="keyword">else</span>
+0139     IDX{1}=init;
+0140 <span class="keyword">end</span>
+0141 
+0142 <span class="keyword">if</span> isempty(IDX{1}) <span class="comment">% clustering failed, return just one cluster</span>
+0143     IDX{1}=1:size(x,1);
+0144     TODSS{1}=nan;
+0145     SCORE{1}=nan;
+0146     COVS{1}=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x);
+0147     <span class="keyword">return</span>
+0148 <span class="keyword">end</span>
+0149    
+0150 c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x);
+0151 c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(IDX{1},:));
+0152 [todss,pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0153 z=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,todss(:,[1 end])); <span class="comment">% keep only first and last components</span>
+0154 
+0155 PLOT_FIG2=0;
+0156 <span class="keyword">if</span> PLOT_FIG2
+0157     figure(2);  clf; set(gcf, <span class="string">'name'</span>,<span class="string">'in nt_cluster_jd'</span>);
+0158     A=zeros(size(x,1),1); A(IDX{1})=1;
+0159     subplot 511; plot(x); title(<span class="string">'data'</span>);
+0160     subplot 512; plot(A,<span class="string">'.-'</span>); title(<span class="string">'initial cluster map'</span>);
+0161     subplot 513; plot(z(:,1)); title(<span class="string">'initial DSS1'</span>);
+0162     subplot 514; plot(z(:,2)); title(<span class="string">'initial DSS2'</span>);
+0163     drawnow; pause;
+0164 <span class="keyword">end</span>
+0165 
+0166 <span class="comment">% iterate until stable</span>
+0167 old_IDX=IDX{1};
+0168 <span class="keyword">for</span> k=1:10
+0169 
+0170     [zz,ind]=<a href="nt_xprod.html" class="code" title="function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)">nt_xprod</a>(z,[],dsr);
+0171     zz=zz(:,1:2);       <span class="comment">% keep only the squares</span>
+0172     
+0173     <span class="keyword">if</span> find(strcmp(flags,<span class="string">'pwr'</span>)); <span class="comment">% cluster in power</span>
+0174         [C,A]=<a href="nt_cluster1D.html" class="code" title="function [C,A,score]=nt_cluster1D_b(x);">nt_cluster1D</a>(zz);
+0175         [~,idx]= max(abs(diff(log2(C+eps)))); <span class="comment">% choose first or last</span>
+0176     <span class="keyword">elseif</span> find(strcmp(flags,<span class="string">'amp'</span>)); <span class="comment">% cluster in amplitude</span>
+0177         [C,A]=<a href="nt_cluster1D.html" class="code" title="function [C,A,score]=nt_cluster1D_b(x);">nt_cluster1D</a>(sqrt(zz));
+0178         [~,idx]= max(abs(diff(log2(C+eps)))); <span class="comment">% choose first or last</span>
+0179     <span class="keyword">else</span>  <span class="comment">% cluster in log domain</span>
+0180         [C,A]=<a href="nt_cluster1D.html" class="code" title="function [C,A,score]=nt_cluster1D_b(x);">nt_cluster1D</a>(log2(zz+eps));
+0181         [~,idx]= max(abs(diff(C))); <span class="comment">% choose first or last</span>
+0182     <span class="keyword">end</span>
+0183     A=A(:,idx);
+0184     <span class="comment">%disp(C);</span>
+0185     C=C(:,idx);
+0186     <span class="comment">%disp(C); pause</span>
+0187     <span class="keyword">if</span> C(1)&lt;C(2); A=1-A; <span class="keyword">end</span> <span class="comment">% ensure that first cluster has low amplitude</span>
+0188     
+0189     A=double(<a href="nt_smooth.html" class="code" title="function x=nt_smooth(x,T,nIterations,nodelayflag)">nt_smooth</a>(A,smooth, [],1)&gt;=1/smooth); <span class="comment">% extend ownership to include effect of smoothing</span>
+0190 
+0191     <span class="comment">% upsample the cluster ownership index so we can apply it to x</span>
+0192     A=repmat(A',[dsr,1]); <span class="comment">% upsample</span>
+0193     A=A(:); 
+0194     A(end:size(x,1))=A(end);
+0195     IDX{1}=find(A==0); <span class="comment">% 0: low values, 1: high values</span>
+0196     
+0197     <span class="keyword">if</span> isempty(IDX{1}) <span class="comment">% clustering failed, return just one cluster</span>
+0198         IDX{1}=1:size(x,1);
+0199         TODSS{1}=nan;
+0200         SCORE{1}=nan;
+0201         COVS{1}=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x);
+0202         <span class="keyword">return</span>
+0203     <span class="keyword">end</span>
+0204 
+0205     <span class="comment">% DSS to contrast clusters</span>
+0206     c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x)/size(x,1);
+0207     c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(IDX{1},:))/size(x(IDX{1},:),1);
+0208     [todss,pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0209     z=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,todss(:,[1 end])); <span class="comment">% keep first and last</span>
+0210 
+0211     <span class="keyword">if</span> ~nargout||verbose; 
+0212         disp([<span class="string">'low amp cluster: '</span>, num2str((100*numel(IDX{1})/size(x,1)), 2), <span class="string">' % of samples, power ratio: '</span> num2str(pwr1(end)/pwr0(end), 3)]); 
+0213         disp([<span class="string">'hi amp cluster: '</span>, num2str((100-100*numel(IDX{1})/size(x,1)), 2), <span class="string">' % of samples, power ratio: '</span> num2str(pwr1(1)/pwr0(1), 3)]); 
+0214     <span class="keyword">end</span>
+0215 
+0216     <span class="keyword">if</span> PLOT_FIG2
+0217         figure(2);  
+0218         subplot 515; plot(A,<span class="string">'.-'</span>); title(<span class="string">'final cluster map'</span>); pause
+0219     <span class="keyword">end</span>
+0220     <span class="keyword">if</span> all(size(old_IDX)==size(IDX{1})) &amp;&amp; all(old_IDX==IDX{1}); <span class="keyword">break</span>; <span class="keyword">end</span>
+0221     old_IDX=IDX{1};
+0222 <span class="keyword">end</span> 
+0223 IDX{2}=setdiff((1:size(x,1))', IDX{1});
+0224 
+0225 
+0226 <span class="comment">% final DSS</span>
+0227 c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x)/size(x,1);
+0228 c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(IDX{1},:))/size(x(IDX{1},:),1);
+0229 COVS{1}=c1;
+0230 [TODSS{1},pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0231 SCORE(1,1:numel(pwr1))=pwr1./pwr0;
+0232 c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x(IDX{2},:))/size(x(IDX{2},:),1);
+0233 COVS{2}=c1;
+0234 [TODSS{2},pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0235 SCORE(2,1:numel(pwr1))=pwr1./pwr0;
+0236 
+0237 <span class="keyword">if</span> nargout==0||verbose;
+0238     
+0239     <span class="comment">% no output, just plot</span>
+0240 
+0241     z1=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,TODSS{1}(:,1));
+0242 
+0243     figure(101); clf ;
+0244     subplot 221;
+0245     plot(pwr1./pwr0,<span class="string">'.-'</span>); xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'score'</span>); title(<span class="string">'DSS cluster vs all'</span>);
+0246     subplot 222;
+0247     wsize=min(1024,size(z1,1));
+0248     hold on
+0249     <a href="nt_spect_plot.html" class="code" title="function varargout=nt_spect_plot(x,varargin)">nt_spect_plot</a>(z1/sqrt(mean(z1(:).^2)),wsize,[],[],1);
+0250     <a href="nt_spect_plot.html" class="code" title="function varargout=nt_spect_plot(x,varargin)">nt_spect_plot</a>(x/sqrt(mean(x(:).^2)),wsize,[],[],1);
+0251     xlim([0 .5]);
+0252     <a href="nt_linecolors.html" class="code" title="function nt_colorlines(h,permutation)">nt_linecolors</a>([],[1 3 2]);
+0253     legend(<span class="string">'cluster'</span>,<span class="string">'all'</span>); legend boxoff
+0254     hold off
+0255 
+0256     z=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,todss); 
+0257     z=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(z);
+0258     subplot 223; imagescc(<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(z(IDX{1},:))); title(<span class="string">'cluster 1'</span>); 
+0259     subplot 224; imagescc(<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(z)-<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(z(IDX{1},:))); title(<span class="string">'cluster 2'</span>);
+0260 
+0261     
+0262     figure(102); clf
+0263     <span class="keyword">if</span> 0
+0264         subplot 211;
+0265         plot(x); hold on
+0266         xx=x; xx(IDX{1},:)=nan;
+0267         plot(xx,<span class="string">'k'</span>);
+0268         axis tight
+0269         title(<span class="string">'black: cluster [high amp]'</span>);
+0270         subplot 212;
+0271         plot(z1); axis tight
+0272         title(<span class="string">'first DSS component'</span>);
+0273     <span class="keyword">else</span>
+0274         subplot 311;
+0275         plot(x); hold on
+0276         xx=x; xx(IDX{1},:)=nan;
+0277         plot(xx,<span class="string">'k'</span>);
+0278         axis tight
+0279         title(<span class="string">'black: cluster [high amp]'</span>);
+0280         subplot 312;
+0281         plot(z1); axis tight
+0282         title(<span class="string">'DSS 1'</span>);
+0283         subplot 313;
+0284         <a href="nt_sgram.html" class="code" title="function [s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags)">nt_sgram</a>(z1,128,1); axis tight
+0285         title(<span class="string">'DSS 1'</span>);
+0286     <span class="keyword">end</span>
+0287     
+0288     <span class="keyword">if</span> 0 
+0289         figure(105); clf
+0290         <a href="nt_sgram.html" class="code" title="function [s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags)">nt_sgram</a>(z1,1024,32,[],1);
+0291         title(<span class="string">'DSS1'</span>);
+0292     <span class="keyword">end</span>
+0293     <span class="keyword">if</span> nargout==0; clear IDX SCORE TODSS; <span class="keyword">end</span>
+0294     
+0295 <span class="keyword">end</span>
+0296 
+0297 <span class="comment">% can't rememember what this is supposed to do...</span>
+0298 <a name="_sub1" href="#_subfunctions" class="code">function y=norm2(x,nchans,ind)</a>
+0299 [I,J]=ind2sub([nchans,nchans],ind); <span class="comment">% linear --&gt; matrix indices</span>
+0300 <span class="keyword">for</span> k=1:size(x,1)
+0301     a=x(k,1:nchans);
+0302     b=sqrt(a(I).*a(J));
+0303     y(k,:)=x(k,:)./b;
+0304 <span class="keyword">end</span>
+0305 
+0306 <span class="comment">% matrix of covariance distances</span>
+0307 <a name="_sub2" href="#_subfunctions" class="code">function B=covdists(C) </a><span class="comment">% B: matrix of distances, C: array of covariance matrices</span>
+0308 B=nan(numel(C));
+0309 CC=zeros(size(C{1}));
+0310 <span class="keyword">for</span> k=1:numel(C); CC=CC+C{k}; <span class="keyword">end</span>
+0311 <span class="keyword">for</span> k=1:numel(C)
+0312     <span class="keyword">for</span> j=1:k-1
+0313         [E]=eig(abs(C{j}-C{k}),CC);
+0314         B(j,k)=max(abs(log2(E)));
+0315         B(k,j)=B(j,k);
+0316     <span class="keyword">end</span>
+0317 <span class="keyword">end</span>
+0318     
+0319 <a name="_sub3" href="#_subfunctions" class="code">function checkindex(IDX,n)</a>
+0320 a=zeros(n,1);
+0321 <span class="keyword">for</span> k=1:numel(IDX)
+0322     <span class="keyword">if</span> any(a(IDX{k})); 
+0323         error(<span class="string">'!'</span>);
+0324     <span class="keyword">end</span>
+0325     a(IDX{k})=1;
+0326 <span class="keyword">end</span>
+0327     
+0328</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

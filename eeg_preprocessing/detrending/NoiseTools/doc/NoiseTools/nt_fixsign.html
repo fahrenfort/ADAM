@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_fixsign</title>
+  <meta name="keywords" content="nt_fixsign">
+  <meta name="description" content="y=nt_fixsign(x) - flip signs to maximize inter-component correlation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_fixsign.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_fixsign
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_fixsign(x) - flip signs to maximize inter-component correlation</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function x=nt_fixsign(x) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_fixsign(x) - flip signs to maximize inter-component correlation</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_fixsign.html" class="code" title="function x=nt_fixsign(x)">nt_fixsign</a>	y=nt_fixsign(x) - flip signs to maximize inter-component correlation</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>	[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_fixsign.html" class="code" title="function x=nt_fixsign(x)">nt_fixsign</a>	y=nt_fixsign(x) - flip signs to maximize inter-component correlation</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function x=nt_fixsign(x)</a>
+0002 <span class="comment">%y=nt_fixsign(x) - flip signs to maximize inter-component correlation</span>
+0003 
+0004 <span class="keyword">if</span> ndims(x)&lt;3;
+0005     y=<a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>(x);
+0006     y=y(:,1)'*x; <span class="comment">% correlation with PC</span>
+0007     x=x*sign(diag(y));
+0008 <span class="keyword">else</span>
+0009     [m,n,o]=size(x);
+0010     <span class="keyword">if</span> 0
+0011         <span class="comment">% can't remember the logic of this...</span>
+0012         <span class="keyword">for</span> k=1:n
+0013             x(:,k,:)=reshape(<a href="nt_fixsign.html" class="code" title="function x=nt_fixsign(x)">nt_fixsign</a>(squeeze(x(:,k,:))), [m,1,o]);
+0014         <span class="keyword">end</span>
+0015     <span class="keyword">else</span>
+0016         x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(<a href="nt_fixsign.html" class="code" title="function x=nt_fixsign(x)">nt_fixsign</a>(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x)),m);
+0017     <span class="keyword">end</span>
+0018 <span class="keyword">end</span>
+0019     
+0020 <span class="comment">% flip whold matrix so highest peak is positive</span>
+0021 <span class="keyword">if</span> abs(max(x(:)))&lt;abs(min(x(:)))
+0022     x=-x;
+0023 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_split_jd</title>
+  <meta name="keywords" content="nt_split_jd">
+  <meta name="description" content="[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_split_jd.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_split_jd
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization
+
+  idx: index at which to split
+  score_vector: from nt_split
+  todss: DSS matrix
+
+  x: data
+  thresh: truncation threshold for PCA
+  depth: recursion depth</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_mark.html" class="code" title="function nt_mark(idx,labels,line_params,text_params)">nt_mark</a>	nt_mark(idx,labels,line_params,text_params)</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>	[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>	[topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_split.html" class="code" title="function [idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep)">nt_split</a>	[idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep) - split time series into intervals</li><li><a href="nt_split_jd.html" class="code" title="function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);">nt_split_jd</a>	[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_split_jd.html" class="code" title="function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);">nt_split_jd</a>	[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);</a>
+0002 <span class="comment">%[idx,score_vector,todss]=nt_split_dss(x,thresh,depth) - segmentation based on joint diagonalization</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  idx: index at which to split</span>
+0005 <span class="comment">%  score_vector: from nt_split</span>
+0006 <span class="comment">%  todss: DSS matrix</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  x: data</span>
+0009 <span class="comment">%  thresh: truncation threshold for PCA</span>
+0010 <span class="comment">%  depth: recursion depth</span>
+0011 
+0012 <span class="keyword">if</span> nargin&lt;3||isempty(depth); depth=1; <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin&lt;2||isempty(thresh); thresh=0; <span class="keyword">end</span>
+0014 <span class="keyword">if</span> isempty(x); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0015 <span class="keyword">if</span> ndims(x)&gt;2; error(<span class="string">'x should be 2D'</span>); <span class="keyword">end</span>
+0016 
+0017 [m,n]=size(x);
+0018 
+0019 <span class="comment">% initial PCA to remove below-threshold dimensions</span>
+0020 topcs=<a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>(x);
+0021 z=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,topcs);
+0022 keep=find(mean(z.^2)/mean(z(:,1).^2)&gt;thresh);
+0023 z=z(:,keep);
+0024 
+0025 <span class="keyword">if</span> m&lt;=2; warning(<span class="string">'m=='</span>,num2str(m)); <span class="keyword">end</span>
+0026 
+0027 idx=ceil(m/2); <span class="comment">% initial split into two arbitrary intervals</span>
+0028 <span class="comment">% iterate until stable</span>
+0029 <span class="keyword">for</span> k=1:10
+0030     c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(z(1:idx,:));
+0031     c0=c1+<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(z(idx+1:<span class="keyword">end</span>,:));
+0032     todss=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0033     zz=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(z,todss(:,[1,end]));
+0034     zz=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(zz);
+0035     old_idx=idx;
+0036     [idx,score_vector]=<a href="nt_split.html" class="code" title="function [idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep)">nt_split</a>(<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(zz.^2)));
+0037     <span class="comment">%figure(1); clf; subplot 211; plot(zz(:,1));subplot 212; plot(zz(:,2)); idx, pause</span>
+0038     <span class="keyword">if</span> idx==old_idx; <span class="keyword">break</span>; <span class="keyword">end</span>
+0039     disp(num2str([idx,old_idx]));
+0040 <span class="keyword">end</span>
+0041 todss=topcs(:,keep)*todss; <span class="comment">% to return</span>
+0042 
+0043 <span class="keyword">if</span> depth&gt;1
+0044     [a]=<a href="nt_split_jd.html" class="code" title="function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);">nt_split_jd</a>(x(1:idx,:),thresh, depth-1);
+0045     [b]=<a href="nt_split_jd.html" class="code" title="function [idx,score_vector,todss]=nt_split_jd(x,thresh,depth);">nt_split_jd</a>(x(idx+1:<span class="keyword">end</span>,:), thresh,depth-1);
+0046     idx=[a,idx,idx+b];
+0047     idx=unique(idx);
+0048 <span class="keyword">end</span>
+0049 
+0050 <span class="comment">% disp(['depth, ndims: ' num2str([depth, size(z,2)])])</span>
+0051 <span class="comment">% disp(['idx: ' num2str([idx])])</span>
+0052 <span class="comment">% nt_split(nt_normcol(nt_demean(zz.^2)));</span>
+0053 
+0054 disp([<span class="string">'nt_split_jd nargout: '</span>, num2str(nargout)])
+0055 
+0056 <span class="keyword">if</span> nargout==0;
+0057     disp([<span class="string">'split at '</span>, num2str(idx)]);
+0058     disp([<span class="string">'(%: '</span>, num2str(100*idx/m, <span class="string">'  %.01f'</span>), <span class="string">')'</span>])
+0059     nd=zeros(1,size(x,1));
+0060     figure(201); clf
+0061 
+0062     subplot 312
+0063     plot(score_vector);  xlim([1 size(x,1)]); ylim([0 1]); drawnow
+0064     <a href="nt_mark.html" class="code" title="function nt_mark(idx,labels,line_params,text_params)">nt_mark</a>(idx);
+0065     ylabel(<span class="string">'score'</span>)
+0066 
+0067     subplot 313
+0068     colors=<span class="string">'brgcmyk'</span>;
+0069     hold on
+0070     idx2=unique([idx,size(x,1)]); <span class="comment">% add on the last sample</span>
+0071     old_idx=0;
+0072     <span class="keyword">for</span> iInterval=1:numel(idx2)
+0073         z=<a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>(x(old_idx+1:idx2(iInterval),:));
+0074         dim= numel(find( mean(z.^2)/mean(z(:,1).^2) &gt; thresh));
+0075         nd(old_idx+1:idx2(iInterval))=dim;
+0076         old_idx=idx2(iInterval);
+0077     <span class="keyword">end</span>
+0078     z=<a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>(x);
+0079     nd0=numel(find( mean(z.^2)/mean(z(:,1).^2)&gt;thresh));drawnow;
+0080     hold on
+0081     plot(nd0*ones(size(x,1),1), <span class="string">'k--'</span>)
+0082     plot(nd,<span class="string">'b'</span>); 
+0083     xlim([1 size(x,1)]); ylim([0 max([nd0,nd])+1]); drawnow
+0084     <a href="nt_mark.html" class="code" title="function nt_mark(idx,labels,line_params,text_params)">nt_mark</a>(idx);
+0085     ylabel(<span class="string">'ndims'</span>);
+0086     
+0087     subplot 311
+0088     plot(x);  xlim([1 size(x,1)]); drawnow
+0089     <a href="nt_mark.html" class="code" title="function nt_mark(idx,labels,line_params,text_params)">nt_mark</a>(idx);
+0090     <span class="keyword">if</span> numel(idx)&gt;1; disp([<span class="string">'smallest interval: '</span>, num2str(min(diff(idx)))]); <span class="keyword">end</span>
+0091 <span class="keyword">end</span>
+0092</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

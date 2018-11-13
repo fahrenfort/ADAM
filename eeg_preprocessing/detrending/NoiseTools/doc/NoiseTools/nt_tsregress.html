@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_tsregress</title>
+  <meta name="keywords" content="nt_tsregress">
+  <meta name="description" content="[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_tsregress.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_tsregress
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression
+
+  z: part of x modeled by time-shifted y
+  idx: x(idx) maps to z
+
+  x: data to model
+  y: regressor
+  shifts: array of shifts to apply (default: [0])
+  xw: weights to apply to x
+  yw: weights to apply to y
+  keep: number of components of shifted regressor PCs to keep (default: all)
+  threshold: discard PCs with eigenvalues below this (default: 0)
+
+ Data X are regressed on time-shifted versions of Y. X and Y are initially 
+ time-aligned, but because of the shifts, Z is shorter than X.  Z is
+ time-aligned with X(IDX).</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_cov2.html" class="code" title="function [c,tw]=nt_cov2(x,w);">nt_cov2</a>	[c,tw]=nt_cov2(x,w) - weighted covariance</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_regcov.html" class="code" title="function r=nt_regcov(cxy,cyy,keep,threshold)">nt_regcov</a>	r=nt_regcov(cxy,cyy,keep,threshold) - regression matrix from cross covariance</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_find_outlier_trials.html" class="code" title="function [idx,d]=nt_find_outlier_trials(x,criterion,disp_flag,regress_flag)">nt_find_outlier_trials</a>	[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,plot,regress_flag) - find outlier trials</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)</a>
+0002 <span class="comment">%[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  z: part of x modeled by time-shifted y</span>
+0005 <span class="comment">%  idx: x(idx) maps to z</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data to model</span>
+0008 <span class="comment">%  y: regressor</span>
+0009 <span class="comment">%  shifts: array of shifts to apply (default: [0])</span>
+0010 <span class="comment">%  xw: weights to apply to x</span>
+0011 <span class="comment">%  yw: weights to apply to y</span>
+0012 <span class="comment">%  keep: number of components of shifted regressor PCs to keep (default: all)</span>
+0013 <span class="comment">%  threshold: discard PCs with eigenvalues below this (default: 0)</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% Data X are regressed on time-shifted versions of Y. X and Y are initially</span>
+0016 <span class="comment">% time-aligned, but because of the shifts, Z is shorter than X.  Z is</span>
+0017 <span class="comment">% time-aligned with X(IDX).</span>
+0018 
+0019 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0020 <span class="keyword">if</span> nargin&lt;3||isempty(shifts); shifts=[0]; <span class="keyword">end</span>
+0021 <span class="keyword">if</span> nargin&lt;4; xw=[]; <span class="keyword">end</span>
+0022 <span class="keyword">if</span> nargin&lt;5; yw=[]; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> nargin&lt;6; keep=[]; <span class="keyword">end</span>
+0024 <span class="keyword">if</span> nargin&lt;7; threshold=[]; <span class="keyword">end</span>
+0025 
+0026 <span class="keyword">if</span> size(x,1) ~= size(y,1); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0027 
+0028 <span class="comment">% shifts must be non-negative</span>
+0029 mn=min(shifts);
+0030 <span class="keyword">if</span> mn&lt;0; 
+0031     shifts=shifts-mn; 
+0032     x=x(-mn+1:<span class="keyword">end</span>,:,:);
+0033     y=y(-mn+1:<span class="keyword">end</span>,:,:);
+0034 <span class="keyword">end</span>
+0035 nshifts=numel(shifts);
+0036 
+0037 <span class="comment">% % flag outliers in x and y</span>
+0038 <span class="comment">% if ~isempty(toobig1) || ~isempty(toobig2)</span>
+0039 <span class="comment">%     xw=nt_find_outliers(x,toobig1,toobig2);</span>
+0040 <span class="comment">%     yw=nt_find_outliers(y,toobig1,toobig2);</span>
+0041 <span class="comment">% else</span>
+0042 <span class="comment">%     xw=[];yw=[];</span>
+0043 <span class="comment">%     %xw=ones(size(x)); yw=ones(size(y));</span>
+0044 <span class="comment">% end</span>
+0045 
+0046 <span class="comment">% subtract weighted means</span>
+0047 
+0048 <span class="keyword">if</span> ndims(x)==3    
+0049     [Mx,Nx,Ox]=size(x);
+0050     [My,Ny,Oy]=size(y);
+0051     x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0052     y=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(y);
+0053     [x,xmn]=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,xw);
+0054     [y,ymn]=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(y,yw);
+0055     x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(x,Mx);
+0056     y=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(y,My);
+0057 <span class="keyword">else</span>
+0058     [x,xmn]=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,xw);
+0059     [y,ymn]=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(y,yw);
+0060 <span class="keyword">end</span>
+0061 
+0062 
+0063 <span class="comment">% covariance of y</span>
+0064 [cyy,totalweight]=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(y,shifts',yw);
+0065 cyy=cyy./totalweight;
+0066 
+0067 <span class="comment">% cross-covariance of x and y</span>
+0068 [cxy, totalweight]=<a href="nt_cov2.html" class="code" title="function [c,tw]=nt_cov2(x,w);">nt_cov2</a>(x,y,shifts',xw,yw);
+0069 disp(<span class="string">'!!!!!!!!!   WARNING: calling obsolete code  !!!!!!!!!!!!!!!!'</span>);
+0070 <span class="comment">%[cxy, totalweight]=nt_xcov(x,y,shifts',xw,yw);</span>
+0071 cxy=cxy./totalweight;
+0072 
+0073 <span class="comment">% regression matrix</span>
+0074 r=<a href="nt_regcov.html" class="code" title="function r=nt_regcov(cxy,cyy,keep,threshold)">nt_regcov</a>(cxy,cyy,keep,threshold);
+0075     
+0076 <span class="comment">% regression</span>
+0077 <span class="keyword">if</span> ndims(x)==3
+0078     x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0079     y=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(y);
+0080     [m,n]=size(x);
+0081     mm=m-max(shifts);
+0082     z=zeros(size(x));
+0083     <span class="keyword">for</span> k=1:nshifts
+0084         kk=shifts(k);
+0085         idx1=kk+1:kk+mm;
+0086         idx2=k+(0:size(y,2)-1)*nshifts;
+0087         z(1:mm,:)=z(1:mm,:)+y(idx1,:)*r(idx2,:);
+0088     <span class="keyword">end</span>
+0089     z=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(z,Mx);
+0090     z=z(1:end-max(shifts),:,:);
+0091 <span class="keyword">else</span>
+0092     [m,n]=size(x);
+0093     z=zeros(m-max(shifts),n);
+0094     <span class="keyword">for</span> k=1:nshifts
+0095         kk=shifts(k);
+0096         idx1=kk+1:kk+size(z,1);
+0097         <span class="comment">%idx2=k*size(y,2)+1:(k+1)*size(y,2);</span>
+0098         idx2=k+(0:size(y,2)-1)*nshifts;
+0099         z=z+y(idx1,:)*r(idx2,:);
+0100     <span class="keyword">end</span>
+0101 <span class="keyword">end</span>
+0102 
+0103 <span class="comment">% idx allows x to be aligned with z</span>
+0104 offset=max(0,-mn);
+0105 idx=offset+1:offset+size(z,1);
+0106 
+0107 <span class="comment">%elseif ndims(x)==3</span>
+0108     
+0109 <span class="comment">%end</span>
+0110</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

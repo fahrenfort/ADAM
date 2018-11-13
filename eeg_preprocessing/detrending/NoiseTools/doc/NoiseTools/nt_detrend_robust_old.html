@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_detrend_robust_old</title>
+  <meta name="keywords" content="nt_detrend_robust_old">
+  <meta name="description" content="[y,w]=nt_detrend_robust(x,order,w,basis,thresh,percentage) - remove polynomial or sinusoidal trend">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_detrend_robust_old.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_detrend_robust_old
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,w]=nt_detrend_robust(x,order,w,basis,thresh,percentage) - remove polynomial or sinusoidal trend</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [x,w]=ntdetrend_robust(x,order,w,basis,thresh,niter) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,w]=nt_detrend_robust(x,order,w,basis,thresh,percentage) - remove polynomial or sinusoidal trend
+ 
+  y: detrended data
+
+  x: raw data
+  order: order of polynomial
+  w: weight
+  basis: 'polynomials' [default] or 'sinusoids'
+  thresh: threshold for outliers [default: 2 sd]
+  niter: number of iterations [default: 2]</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_detrend_robust.html" class="code" title="function [x,w]=ntdetrend_robust(x,order,w,basis,thresh,niter)">nt_detrend_robust</a>	[y,w]=nt_detrend_robust(x,order,w,basis,thresh,niter) - remove polynomial or sinusoidal trend</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [x,w]=ntdetrend_robust(x,order,w,basis,thresh,niter)</a>
+0002 <span class="comment">%[y,w]=nt_detrend_robust(x,order,w,basis,thresh,percentage) - remove polynomial or sinusoidal trend</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: detrended data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: raw data</span>
+0007 <span class="comment">%  order: order of polynomial</span>
+0008 <span class="comment">%  w: weight</span>
+0009 <span class="comment">%  basis: 'polynomials' [default] or 'sinusoids'</span>
+0010 <span class="comment">%  thresh: threshold for outliers [default: 2 sd]</span>
+0011 <span class="comment">%  niter: number of iterations [default: 2]</span>
+0012 
+0013 
+0014 
+0015 <span class="comment">%% arguments</span>
+0016 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0017 <span class="keyword">if</span> nargin&lt;3; w=[]; <span class="keyword">end</span>
+0018 <span class="keyword">if</span> nargin&lt;4||isempty(basis); basis=<span class="string">'polynomials'</span>; <span class="keyword">end</span>
+0019 <span class="keyword">if</span> nargin&lt;5||isempty(thresh); thresh=1.5; <span class="keyword">end</span>
+0020 <span class="keyword">if</span> nargin&lt;6||isempty(niter); niter=4; <span class="keyword">end</span>
+0021 
+0022 dims=size(x);
+0023 x=x(:,:); <span class="comment">% concatenates dims &gt;= 2</span>
+0024 
+0025 <span class="comment">%% regressors</span>
+0026 <span class="keyword">switch</span> basis
+0027     <span class="keyword">case</span> <span class="string">'polynomials'</span>
+0028         r=zeros(size(x,1),numel(order));
+0029         lin=linspace(-1,1,size(x,1));
+0030         <span class="keyword">for</span> k=1:order
+0031             r(:,k)=lin.^k;
+0032         <span class="keyword">end</span>
+0033     <span class="keyword">case</span> <span class="string">'sinusoids'</span>
+0034         r=zeros(size(x,1),numel(order)*2);
+0035         lin=linspace(-1,1,size(x,1));
+0036         <span class="keyword">for</span> k=1:order
+0037             r(:,2*k-1)=sin(2*pi*k*lin/2);
+0038             r(:,2*k)=cos(2*pi*k*lin/2);
+0039         <span class="keyword">end</span>
+0040     <span class="keyword">otherwise</span>
+0041         error(<span class="string">'!'</span>);
+0042 <span class="keyword">end</span>
+0043 r=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(r);
+0044 r=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(r);
+0045 
+0046 <span class="comment">%% give weights same geometry as data</span>
+0047 <span class="keyword">if</span> size(w)==size(x)
+0048     ; <span class="comment">% OK</span>
+0049 <span class="keyword">elseif</span> isempty(w)
+0050     w=ones(size(x));
+0051 <span class="keyword">else</span>
+0052     w=repmat(w,1,size(x,2)); <span class="comment">% to each channel its own weight</span>
+0053 <span class="keyword">end</span>
+0054 
+0055 figure(1); clf; 
+0056 figure(2); clf; 
+0057 <span class="comment">%% remove trends</span>
+0058 <span class="keyword">for</span> iChan=1:size(x,2) <span class="comment">% detrend each channel individually</span>
+0059     xx=x(:,iChan);
+0060     ww=w(:,iChan);
+0061     <span class="keyword">for</span> iIter=1:niter
+0062     
+0063         
+0064         www=ww; 
+0065         <span class="keyword">for</span> iRegressor = 1:size(r,2) <span class="comment">% remove regressors one by one</span>
+0066             <span class="comment">% weight data, remove mean</span>
+0067             xxx=xx.*www;
+0068             avg=sum(xxx)/sum(www);
+0069             xxx=xxx-avg;
+0070             xxx=xxx.*www;
+0071             <span class="comment">% weight basis, remove mean, PCA, normalize</span>
+0072             rr=r(:,iRegressor);
+0073             rr=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(rr,www);
+0074             rr=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(rr,www);
+0075             a=xxx' * rr / sum(www); <span class="comment">% cross product with basis</span>
+0076             y=rr*a'; <span class="comment">% project</span>
+0077             
+0078             y=y+avg; <span class="comment">% restore mean</span>
+0079             d=xx-y;
+0080             xx=d;
+0081             www=min(www,(abs(d)&lt;=thresh*std(d)));
+0082             figure(1)
+0083             subplot 311; plot([xx,y]); 
+0084             subplot 312; plot(d); hold on
+0085             subplot 313; plot(www); ylim([-0.1 1.1]); pause
+0086             disp(mean(d.^2.*www))
+0087         <span class="keyword">end</span>
+0088         ww=min(ww,www);
+0089         xx=xx-y;
+0090         <span class="comment">%figure(2); plot([xx]); hold on</span>
+0091     <span class="keyword">end</span>
+0092     x(:,iChan)=xx;
+0093     w(:,iChan)=ww;
+0094 <span class="keyword">end</span>
+0095 
+0096 x=reshape (x,dims);
+0097 
+0098 <span class="comment">%% test code</span>
+0099 <span class="keyword">if</span> 0
+0100     x=(1:100)';
+0101     <a href="nt_detrend_robust.html" class="code" title="function [x,w]=ntdetrend_robust(x,order,w,basis,thresh,niter)">nt_detrend_robust</a>(x,2,[],[],[],[],[]);
+0102    
+0103 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 12-Oct-2016 15:09:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

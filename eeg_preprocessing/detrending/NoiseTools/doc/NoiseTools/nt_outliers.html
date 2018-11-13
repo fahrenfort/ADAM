@@ -1,0 +1,417 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_outliers</title>
+  <meta name="keywords" content="nt_outliers">
+  <meta name="description" content="[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_outliers.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_outliers
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [w,y]=nt_outliers(x,w,thresh,niter) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure
+
+  w: weights (indicates outliers)
+  y: interpolated data
+
+  x: data matrix
+  w: initial weights
+  thresh: threshold for declaring an outlier [default: 2]
+  niter: number of iterations [default: 3]
+
+
+ Noisetools.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>	[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>	nt_imagescc - plot image with symmetric scaling</li><li><a href="nt_inpaint.html" class="code" title="function [y,yy]=nt_inpaint(x,w)">nt_inpaint</a>	function y=nt_inpaint(x,w) - weighted interpolation based on correlation structure</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>	[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</li><li><a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>	[topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance</li><li><a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>	[p,data]=nt_read_data(fname,flag) - read data from file</li><li><a href="nt_unique.html" class="code" title="function [C,IA,IC,N] = nt_unique(A, varargin)">nt_unique</a>	[C,IA,IC,N] = nt_unique(A, varargin) - unique with counts</li><li><a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>	[y,tweight]=nt_wpwr(x,w) - weighted power</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>	[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function [y,w]=fillgap(x,w,maxGapSize)</a></li><li><a href="#_sub2" class="code">function [ww,nOccurrences,iBack]=patternDict(w)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001  <a name="_sub0" href="#_subfunctions" class="code">function [w,y]=nt_outliers(x,w,thresh,niter)</a>
+0002 <span class="comment">%[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  w: weights (indicates outliers)</span>
+0005 <span class="comment">%  y: interpolated data</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data matrix</span>
+0008 <span class="comment">%  w: initial weights</span>
+0009 <span class="comment">%  thresh: threshold for declaring an outlier [default: 2]</span>
+0010 <span class="comment">%  niter: number of iterations [default: 3]</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% Noisetools.</span>
+0014 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0015 
+0016 PCA_THRESH=10^-15;
+0017 nClosest=min(10,size(x,2)-1); <span class="comment">% limit the number of neighbors to consider</span>
+0018 <span class="comment">%nClosest=40;</span>
+0019 
+0020 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0021 <span class="keyword">if</span> nargin&lt;2||isempty(w); w=ones(size(x)); <span class="keyword">end</span>
+0022 <span class="keyword">if</span> nargin&lt;3||isempty(thresh); thresh=2; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> nargin&lt;4||isempty(niter); niter=4; <span class="keyword">end</span>
+0024 <span class="keyword">if</span> ndims(x)&gt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0025 <span class="keyword">if</span> ~all(size(x)==size(w)); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0026 [nsamples,nchan]=size(x);
+0027 
+0028 
+0029 <span class="comment">%{</span>
+0030 On each iteration we reconstruct each channels based on other channels and
+0031 then flag the parts that mismatch as corrupt.
+0032 <span class="comment">%}</span>
+0033 x0=x;
+0034 
+0035 figure(200); clf
+0036 <span class="keyword">for</span> iIter=1:niter
+0037     
+0038     <span class="comment">%{</span>
+0039     We have multichannel data x and a multichannel weighting <span class="keyword">function</span> w (0 or
+0040     1). There are many configurations of valid/invalid channels to consider.
+0041     List them.
+0042     <span class="comment">%}</span>
+0043     
+0044     [ww,nOccurrences,iBack]=<a href="#_sub2" class="code" title="subfunction [ww,nOccurrences,iBack]=patternDict(w)">patternDict</a>(w); <span class="comment">% all patterns of good/bad channels</span>
+0045     nPatterns=size(ww,1);
+0046     <span class="comment">%disp('npatterns'); disp(nPatterns)</span>
+0047     <span class="comment">%{</span>
+0048     Now we have a list of all the different weight patterns: ww. The
+0049     vector iBack indicates which data samples fit each pattern: w = ww(iBack,:).
+0050     <span class="comment">%}</span>
+0051 
+0052     <span class="comment">%{</span>
+0053     Find which channels are <span class="string">'neighbors'</span> in terms of covariance.
+0054     <span class="comment">%}</span>
+0055 
+0056     <span class="comment">% weighted covariance matrix to determine which channels are close</span>
+0057     [x,save_mean]=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x0,w); 
+0058     [x,save_amp]=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x,w);
+0059     xx=x.*w;
+0060     c=(xx'*xx) ./ (w'*w); clear xx;
+0061     c=abs(c); 
+0062     sims=c+10*eye(size(c)); <span class="comment">% make sure self always scores highest so we can skip it</span>
+0063 
+0064     y=x;  
+0065 
+0066     <span class="comment">%{</span>
+0067     We now have a matrix indicating proximity between channels. 
+0068     <span class="comment">%}</span>
+0069 
+0070     <span class="comment">%{</span>
+0071     For each channel, we calculate the projection matrix on the the subspace spanned 
+0072     by other *valid* channels.  There are as many projection matrices as patterns 
+0073     of valid/invalid channels.  Each projection matrix is estimated on data samples <span class="keyword">for</span>
+0074     which iChan is valid, and can be used to reconstruct data samples <span class="keyword">for</span> which it is 
+0075     invalid.
+0076     <span class="comment">%}</span>
+0077 
+0078     <span class="keyword">for</span> iChan=1:nchan
+0079 
+0080         <span class="comment">%{</span>
+0081         We want to avoid having to consider all patterns of valid/unvalid 
+0082         other channels. For that we'll group patterns. 
+0083         First we order the other channels by decreasing similarity, putting
+0084         invalid samples last. This needs to be done <span class="keyword">for</span> each pattern.
+0085         <span class="comment">%}</span>
+0086 
+0087         sim=sims(iChan,:);              <span class="comment">% list of similarities with all other channels</span>
+0088         sim=repmat(sim,nPatterns,1);    <span class="comment">% replicate so each pattern has own list</span>
+0089         sim((~ww))=0;                   <span class="comment">% for each list, give bad channels a low score</span>
+0090         [~,closest]=sort(abs(sim),2,<span class="string">'descend'</span>);     <span class="comment">% sort each list by decreasing similarity</span>
+0091         <span class="keyword">for</span> k=1:size(closest,1);
+0092             closest(k,find(sim(k,closest(k,:))==0))=0;     <span class="comment">% mark bad channels as 0</span>
+0093         <span class="keyword">end</span>
+0094         <span class="keyword">for</span> k=1:size(closest,1);
+0095             <span class="keyword">if</span> closest(k,1)==iChan; 
+0096                 closest(k,1:end-1)=closest(k,2:end);
+0097              <span class="keyword">else</span>
+0098                 <span class="comment">% iChan was bad so not first</span>
+0099             <span class="keyword">end</span>
+0100         <span class="keyword">end</span>
+0101         closest=closest(:,1:end-1);     <span class="comment">% last not valid if first skipped</span>
+0102 
+0103         <span class="comment">%{</span>
+0104         We now have, <span class="keyword">for</span> each pattern, a list of channels closest to iChan. 
+0105         There are a lot of different patterns, so we merge those <span class="keyword">for</span> which the nClosest 
+0106         channels are the same.
+0107         <span class="comment">%}</span>
+0108 
+0109         <span class="comment">% group patterns for which the nClosest most similar channels are the same</span>
+0110         [C,IA,IC]=unique(closest(:,1:nClosest),<span class="string">'rows'</span>);
+0111         iBack2=IC(iBack);       <span class="comment">% maps each pattern to the data that fit it</span>
+0112 
+0113         <span class="comment">%{</span>
+0114         We now have a smaller array C of reduced patterns. The
+0115         vector iBack2 indicates which data samples correspond to each pattern.
+0116         <span class="comment">%}</span>
+0117 
+0118         <span class="comment">%{</span>
+0119         For some patterns, only a few samples are invalid. Skip these
+0120         and iterpolate later using serial interpolation.
+0121         <span class="comment">%}</span>
+0122         
+0123 
+0124         toFix=[];
+0125         NSKIP=4; <span class="comment">% skip if fewer samples</span>
+0126         www=ones(size(x,1),1);
+0127         <span class="keyword">for</span> iPattern=1:size(C,1)
+0128             mySamples=find(iBack2==iPattern); 
+0129             <span class="keyword">if</span> numel(mySamples)&lt;=NSKIP
+0130                 www(mySamples)=0;
+0131             <span class="keyword">else</span>
+0132                 toFix=[toFix,iPattern];
+0133             <span class="keyword">end</span>
+0134         <span class="keyword">end</span>
+0135         C=C(toFix,:);
+0136 
+0137         <span class="comment">%disp(size(C,1))</span>
+0138 
+0139         <span class="keyword">for</span> iPattern=1:size(C,1)
+0140 
+0141             <span class="comment">%{</span>
+0142             Estimate matrix to project iChan on the other channels listed in this
+0143             pattern. 
+0144             <span class="comment">%}</span>
+0145 
+0146             <span class="comment">%disp([iChan iPattern])</span>
+0147             oChan=C(iPattern,:);
+0148             <span class="comment">%disp(oChan)</span>
+0149             oChan(find(oChan==0))=[]; <span class="comment">% exclude bad channels</span>
+0150             
+0151             <span class="keyword">if</span> any(iChan==oChan); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0152 
+0153             <span class="comment">% samples corresponding to this pattern</span>
+0154             mySamples=find(iBack2==toFix(iPattern)); 
+0155 
+0156             <span class="comment">% select data for which iChan *and* oChan are valid</span>
+0157             iBothValid=all(w(:,[iChan,oChan]),2);        
+0158             xxx=x(iBothValid, [iChan,oChan]);  
+0159             <span class="comment">%figure(3); clf; plot (iBothValid); title([iChan oChan]);</span>
+0160 
+0161             <span class="comment">%%% --&gt; we should be able to avoid this situation</span>
+0162             <span class="keyword">if</span> isempty(xxx); 
+0163                 disp([iChan, iPattern]); disp(<span class="string">'empty'</span>); 
+0164                 <span class="keyword">continue</span>; <span class="comment">% we won't estimate or fix anything</span>
+0165             <span class="keyword">end</span>
+0166 
+0167             <span class="comment">% calculate covariance matrix</span>
+0168             mn=mean(xxx,1);
+0169             xxx=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(xxx); <span class="comment">% remove mean first</span>
+0170             ccc=xxx'*xxx;
+0171 
+0172             <span class="comment">% PCA other channels to remove weak dimensions</span>
+0173             [topcs,eigenvalues]=<a href="nt_pcarot.html" class="code" title="function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)">nt_pcarot</a>(ccc(2:<span class="keyword">end</span>,2:end));
+0174             idx=find(eigenvalues/max(eigenvalues) &gt; PCA_THRESH); <span class="comment">% discard weak dims</span>
+0175             topcs=topcs(:,idx);
+0176 
+0177             <span class="comment">% projection matrix</span>
+0178             b=ccc(1,2:end)*topcs / (topcs'*ccc(2:<span class="keyword">end</span>,2:end)*topcs);  
+0179             
+0180             <span class="comment">%{</span>
+0181             We now have the projection matrix to project channel iChan on channels oChan,
+0182             applicable to samples corresponding to this pattern.  We can use it
+0183             to fix samples <span class="keyword">for</span> which iChan is invalid.
+0184             <span class="comment">%}</span>
+0185             
+0186             y(mySamples,iChan) = <span class="keyword">...</span>
+0187                (x(mySamples,oChan) - repmat(mn(2:end),numel(mySamples),1))<span class="keyword">...</span><span class="comment"> % first remove mean of other chans...</span>
+0188                 *(topcs*b') <span class="keyword">...</span>
+0189                 + mn(1); <span class="comment">% ... then restore mean of this channel</span>
+0190             
+0191         <span class="keyword">end</span>
+0192 
+0193         <span class="comment">%{</span>
+0194         Now we fix the isolated samples that we skipped, using serial interpolation.
+0195         <span class="comment">%}</span>
+0196 
+0197         MAXGAPSIZE=100;
+0198         y(:,iChan)=<a href="#_sub1" class="code" title="subfunction [y,w]=fillgap(x,w,maxGapSize)">fillgap</a>(y(:,iChan),www,MAXGAPSIZE);
+0199 
+0200     <span class="keyword">end</span>
+0201 
+0202 
+0203     y=bsxfun(@times,y,save_amp); <span class="comment">% restore the initial amplitude</span>
+0204     y=bsxfun(@plus,y,save_mean); <span class="comment">% restore the initial mean</span>
+0205     
+0206     v=min(std(x0(find(w))),std(y(find(w))));
+0207     d = abs(y-x0); 
+0208     w=double( (d/v &lt; thresh) );
+0209     score=mean( (d.*w)) ./ mean(w);
+0210     disp([num2str(iIter), <span class="string">', score: '</span>,num2str(sum(score))]);
+0211     
+0212     ch=33; FOCUS=1:size(x,1);
+0213     figure(200);
+0214     <span class="comment">%plot(x0(FOCUS,ch), 'k'); hold on</span>
+0215     <span class="comment">%plot(w(FOCUS,ch) .* (y(FOCUS,ch)-x0(FOCUS,ch)));  hold on; drawnow</span>
+0216     plot(score); hold on; drawnow
+0217     
+0218 <span class="keyword">end</span> <span class="comment">% iterations</span>
+0219 
+0220 
+0221 <span class="keyword">if</span> ~nargout
+0222     <span class="comment">% plot, don't return values</span>
+0223     disp(<a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>(y)/<a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>(x));
+0224     figure(11); clf;
+0225     subplot 311; plot(x0); title(<span class="string">'raw'</span>); xlim([1 size(x0,1)]);
+0226     subplot 312; plot(y); title(<span class="string">'projected on other channels'</span>); xlim([1 size(x0,1)]);
+0227     subplot 313; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(w'); title(<span class="string">'weight'</span>);
+0228     clear w
+0229 <span class="keyword">end</span>
+0230 
+0231 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0232 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0233 <a name="_sub1" href="#_subfunctions" class="code">function [y,w]=fillgap(x,w,maxGapSize)</a>
+0234 <span class="comment">%y=fillgap(x,w,maxGapSize) - fill gaps using simple interpolation</span>
+0235 <span class="comment">%</span>
+0236 <span class="comment">%  y: interpolated data</span>
+0237 <span class="comment">%</span>
+0238 <span class="comment">%  x: data to interpolate</span>
+0239 <span class="comment">%  w: weighting function</span>
+0240 <span class="comment">%  maxGapSize: largest expected gap size</span>
+0241 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0242 <span class="keyword">if</span> nargin&lt;3||isempty(maxGapSize); maxGapSize=1; <span class="keyword">end</span>
+0243 <span class="keyword">if</span> size(x,2)&gt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0244 <span class="keyword">if</span> size(x) ~= size(w); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0245 y=x;
+0246 <span class="keyword">if</span> all(w); <span class="keyword">return</span>; <span class="keyword">end</span>
+0247 <span class="comment">% simple case size one</span>
+0248 iToFix=1+find(~w(2:end-1)&amp;w(1:end-2)&amp;w(3:end)); 
+0249 y(iToFix)=(y(iToFix-1)+y(iToFix+1))/2;
+0250 w(iToFix)=1; 
+0251 <span class="comment">% general case size &gt; 1</span>
+0252 iStart=find(w(1:end-2) &amp; ~w(2:end-1));  <span class="comment">% position preceding gap</span>
+0253 iStop=find(~w(1:end-1) &amp; w(2:end));     <span class="comment">% last position in gap</span>
+0254 <span class="keyword">if</span> isempty(iStart)||isempty(iStop); <span class="keyword">return</span>; <span class="keyword">end</span>
+0255 <span class="keyword">if</span> iStop(1)&lt;iStart(1);
+0256     iStop=iStop(2:end);                 <span class="comment">% ignore gap at beginning</span>
+0257 <span class="keyword">end</span>
+0258 iStart=iStart(1:numel(iStop));          <span class="comment">% ignore gap at end</span>
+0259 <span class="keyword">for</span> gapSize=2:maxGapSize
+0260     idx=find(iStop-iStart==gapSize);
+0261     <span class="keyword">for</span> k=1:gapSize
+0262         <span class="comment">% interpolate between samples on either side of gap</span>
+0263         y(iStart(idx)+k) = ( y(iStart(idx)) * (gapSize-k+1) + y(iStart(idx)+gapSize+1) * k ) / (gapSize+1);
+0264         w(iStart(idx)+k) = 1;
+0265     <span class="keyword">end</span>
+0266 <span class="keyword">end</span>
+0267 
+0268 
+0269 
+0270 <span class="comment">% create a dictionary of weight patterns</span>
+0271 <a name="_sub2" href="#_subfunctions" class="code">function [ww,nOccurrences,iBack]=patternDict(w)</a>
+0272 <span class="comment">% ww: dictionary of patterns</span>
+0273 <span class="comment">% nOccurrences: number of times each pattern occurred</span>
+0274 <span class="comment">% iBack: index to reconstruct input from dictionary</span>
+0275 [ww,~,IC,nOccurrences]=<a href="nt_unique.html" class="code" title="function [C,IA,IC,N] = nt_unique(A, varargin)">nt_unique</a>(w,<span class="string">'rows'</span>);
+0276 [nOccurrences,iSort]=sort(nOccurrences, <span class="string">'descend'</span>); <span class="comment">% sort by decreasing number</span>
+0277 [~,iReverse]=sort(iSort); <span class="comment">%</span>
+0278 ww=ww(iSort,:); <span class="comment">% same order for patterns, w = ww(iReverse1(IC),:)</span>
+0279 iBack=iReverse(IC); <span class="comment">% w = ww(iBack,:)</span>
+0280 
+0281 <span class="comment">%%% TEST %%%</span>
+0282 <span class="keyword">if</span> 0
+0283     nsources=3;
+0284     x0=sin(2*pi*(1:10000)'*(1:nsources)/10000);
+0285     x=x0*<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(randn(nsources,6));
+0286     w=ones(size(x));
+0287     x(1:1000,1)=10; w(1:1000,1)=0;
+0288     x(2001:3000,1)=10; w(2001:3000,1)=0;
+0289     x(1:2000,2)=10; w(1:2000,2)=0;
+0290     <span class="comment">%x=x+0.1*randn(size(x));</span>
+0291     <span class="comment">%y=nt_inpaint(x,w);</span>
+0292     [ww,yy]=<a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>(x,[],1);
+0293     figure(1); clf
+0294     subplot 311; plot(x); title(<span class="string">'raw'</span>);  subplot 312; plot(yy); title(<span class="string">'interpolated'</span>); subplot 313; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(w'); title(<span class="string">'weights'</span>);
+0295 <span class="keyword">end</span>
+0296 <span class="keyword">if</span> 0
+0297     N=20;
+0298     nchans=50;
+0299     x=zeros(1100,N);
+0300     <span class="keyword">for</span> k=1:N
+0301         x(:,k)=sin(2*pi*k*(1:1100)'/1100);
+0302     <span class="keyword">end</span>
+0303     x=x*randn(N,nchans);
+0304     x=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x) + 0*randn(size(x));
+0305     w=ones(size(x));
+0306     x0=x;
+0307     a=30
+0308     <span class="keyword">for</span> k=1:nchans
+0309         x(k*20+(1:a),k)=20*randn(a,1);
+0310         w(k*20+(1:a),k)=0;
+0311     <span class="keyword">end</span>
+0312     [ww,yy]=<a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>(x,[],1);
+0313     figure(1); clf
+0314     subplot 311; plot(x); title(<span class="string">'raw'</span>);  
+0315     subplot 312; plot(yy); title(<span class="string">'interpolated'</span>); subplot 313; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(ww'); title(<span class="string">'weights'</span>);
+0316 <span class="keyword">end</span>
+0317 <span class="keyword">if</span> 0
+0318     N=10;
+0319     nchans=20;
+0320     nsamples=1100;
+0321     x=zeros(nsamples,N);
+0322     <span class="keyword">for</span> k=1:N
+0323         x(:,k)=sin(2*pi*k*(1:nsamples)'/nsamples);
+0324     <span class="keyword">end</span>
+0325     x=x*randn(N,nchans);
+0326 <span class="comment">%    x=x+1*randn(size(x)); % add noise</span>
+0327     w=ones(size(x));
+0328     x0=x;
+0329     <span class="keyword">for</span> k=1:nchans
+0330         x(500+k*20+(1:40),k)=10;
+0331         w(500+k*20+(1:40),k)=0;
+0332     <span class="keyword">end</span>
+0333     [ww,y]=<a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>(x,[],1);
+0334     figure(1); clf;
+0335     subplot 412; plot(x); title (<span class="string">'raw'</span>);
+0336     subplot 413; plot (y); title (<span class="string">'interpolated'</span>); 
+0337     subplot 414; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(ww'); title (<span class="string">'weights'</span>);
+0338 <span class="keyword">end</span>
+0339 <span class="keyword">if</span> 0
+0340     [p,x]=<a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>(<span class="string">'/data/meg/theoldmanandthesea/eeg/mc/MC_aespa_speech_45.mat'</span>); x=x'; x=x(:,1:128); x=x(0000+(1:6000),:);
+0341     <span class="comment">%[p,x]=nt_read_data('/data/meg/arzounian/ADC_DA_140521_p20/ADC_DA_140521_p20_01_calib'); x=x'; x=x(1:10000,:);</span>
+0342     
+0343     x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0344     [x,w]=<a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>(x,3,[],[],3);   
+0345     profile on; y=<a href="nt_inpaint.html" class="code" title="function [y,yy]=nt_inpaint(x,w)">nt_inpaint</a>(x,w); profile report;
+0346     figure(1); clf
+0347     subplot 311; plot(x); title(<span class="string">'raw'</span>);  subplot 312; plot(y); title(<span class="string">'clean'</span>); subplot 313; plot(x-y); title(<span class="string">'raw-clean'</span>);
+0348     figure(2); clf
+0349     ch=35;subplot 311; plot([x(:,ch),y(:,ch)]); subplot 312; plot(x(:,ch)-y(:,ch)); subplot 313; plot(w(:,ch), <span class="string">'.-'</span>);
+0350     [ww,yy]=<a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>(x,[],1); drawnow;
+0351     figure(4); clf;
+0352     subplot 311; plot(x); 
+0353     subplot 312; plot(yy);
+0354     subplot 313; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(ww');
+0355 <span class="keyword">end</span>
+0356 
+0357</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>
