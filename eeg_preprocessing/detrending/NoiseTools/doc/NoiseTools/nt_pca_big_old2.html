@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_pca_big_old2</title>
+  <meta name="keywords" content="nt_pca_big_old2">
+  <meta name="description" content="[topcs,pwr,y]=nt_pca_big(x,chunksize,npcs,normflag) - approximate PCA of big data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_pca_big_old2.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_pca_big_old2
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[topcs,pwr,y]=nt_pca_big(x,chunksize,npcs,normflag) - approximate PCA of big data</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [topcs,pwr,y]=nt_pca_big(x,chunksize,npcs,aggregate,normflag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[topcs,pwr,y]=nt_pca_big(x,chunksize,npcs,normflag) - approximate PCA of big data
+
+  r: matrix to project to PCs
+  pwr: power per PC
+  y: PCs
+
+  x: data
+  chunksize: chunk size [default: 100]
+  npcs: number of PCs to return [default: chunksize]
+  aggregate: 'local' [default], 'global', or 'globmean'
+  normflag: normalize at each level [default: don't]
+
+ Data are processed recursively in chunks of N columns.  Each chunk is
+ submitted to PCA and either N/2 PCs are retained ('local') or 1 PC is
+ retained ('global').  If 'globmean' the data are averaged over chunks 
+ of nchans/N channels, then PCA
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_imagescc.html" class="code" title="function imagescc(a, b, c)">nt_imagescc</a>	imagescc - plot image with symmetric scaling</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>	[topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>	[topcs,pwr,y]=nt_pca_big(x,N,normflag) - approximate PCA of big data</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [topcs,pwr,y]=nt_pca_big(x,chunksize,npcs,aggregate,normflag)</a>
+0002 <span class="comment">%[topcs,pwr,y]=nt_pca_big(x,chunksize,npcs,normflag) - approximate PCA of big data</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  r: matrix to project to PCs</span>
+0005 <span class="comment">%  pwr: power per PC</span>
+0006 <span class="comment">%  y: PCs</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  x: data</span>
+0009 <span class="comment">%  chunksize: chunk size [default: 100]</span>
+0010 <span class="comment">%  npcs: number of PCs to return [default: chunksize]</span>
+0011 <span class="comment">%  aggregate: 'local' [default], 'global', or 'globmean'</span>
+0012 <span class="comment">%  normflag: normalize at each level [default: don't]</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% Data are processed recursively in chunks of N columns.  Each chunk is</span>
+0015 <span class="comment">% submitted to PCA and either N/2 PCs are retained ('local') or 1 PC is</span>
+0016 <span class="comment">% retained ('global').  If 'globmean' the data are averaged over chunks</span>
+0017 <span class="comment">% of nchans/N channels, then PCA</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% NoiseTools</span>
+0020 
+0021 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>();
+0022 
+0023 <span class="comment">%disp([size(x,2),chunksize,npcs])</span>
+0024 
+0025 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0026 <span class="keyword">if</span> nargin&lt;2||isempty(chunksize); 
+0027     chunksize=100;
+0028     disp(<span class="string">'defaulting to chunksize=30'</span>);
+0029 <span class="keyword">end</span>
+0030 <span class="keyword">if</span> nargin&lt;3||isempty(npcs); 
+0031     npcs=chunksize;
+0032     disp(<span class="string">'defaulting to npcs=chunksize'</span>);
+0033 <span class="keyword">end</span>
+0034 <span class="keyword">if</span> nargin&lt;4||isempty(aggregate); aggregate=<span class="string">'local'</span>; <span class="keyword">end</span>
+0035 <span class="keyword">if</span> nargin&lt;5||isempty(normflag); normflag=0; <span class="keyword">end</span>
+0036 
+0037 [nsamples,nchans,ntrials]=size(x); 
+0038 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0039 
+0040 <span class="keyword">if</span> npcs ~= 2*round(npcs/2);
+0041     npcs=2*round(npcs/2);
+0042     disp([<span class="string">'npcs --&gt;'</span>,num2str(npcs)]);
+0043 <span class="keyword">end</span>
+0044 <span class="keyword">if</span> normflag;
+0045     tonorm=1./sqrt(mean(x.^2)); 
+0046     tonorm(find(isnan(tonorm)))=0;
+0047     x=bsxfun(@times,x,tonorm);
+0048 <span class="keyword">end</span>
+0049 <span class="keyword">if</span> ~ (strcmp(aggregate,<span class="string">'local'</span>) || strcmp(aggregate,<span class="string">'global'</span>) || strcmp(aggregate,<span class="string">'globmean'</span>))
+0050     error(<span class="string">'!'</span>);
+0051 <span class="keyword">end</span>
+0052 
+0053 <span class="keyword">if</span> nchans&lt;=chunksize; 
+0054     [topcs,pwr]=<a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>(x);
+0055 <span class="keyword">else</span>
+0056     <span class="keyword">if</span> strcmp(aggregate,<span class="string">'local'</span>)
+0057         topcs=zeros(nchans,npcs);
+0058         a=round(nchans/2);
+0059         tp=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x(:,1:a),chunksize,npcs,aggregate,normflag);
+0060         topcs(1:a,1:npcs/2)=tp(:,1:npcs/2);
+0061         tp=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x(:,a+1:end),chunksize,npcs,aggregate,normflag);
+0062         topcs(a+1:<span class="keyword">end</span>,npcs/2+1:end)=tp(:,1:npcs/2);
+0063         [topcs2,pwr,z]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x*topcs,chunksize,npcs,aggregate,normflag);
+0064         topcs=topcs*topcs2;
+0065     <span class="keyword">elseif</span> strcmp(aggregate,<span class="string">'global'</span>) 
+0066         nChunks=ceil(nchans/chunksize);
+0067         nKeep=ceil(npcs/nChunks);
+0068         topcs=zeros(nchans,npcs);
+0069         <span class="keyword">for</span> iChunk=1:nChunks
+0070             a=(iChunk-1)*chunksize;
+0071             idx=(a+1):min(a+chunksize,nchans);
+0072             tp=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x(:,idx),chunksize,npcs,aggregate,normflag);
+0073             topcs(idx,(iChunk-1)*nKeep+(1:nKeep))=tp(:,1:nKeep);
+0074         <span class="keyword">end</span>
+0075         figure(1); clf; <a href="nt_imagescc.html" class="code" title="function imagescc(a, b, c)">nt_imagescc</a>(topcs); pause
+0076         [topcs2,pwr,z]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x*topcs,chunksize,npcs,aggregate,normflag);
+0077         topcs=topcs*topcs2;
+0078     <span class="keyword">else</span> <span class="comment">% globmean</span>
+0079         nChunks=ceil(nchans/(chunksize));
+0080         topcs=zeros(nchans,npcs);
+0081         <span class="keyword">for</span> iChunk=1:nChunks
+0082             a=(iChunk-1)*chunksize;
+0083             idx=(a+1):min(a+chunksize,nchans);
+0084             topcs(idx,iChunk)=1/numel(idx);
+0085             <span class="comment">%disp(idx)</span>
+0086         <span class="keyword">end</span>
+0087         <span class="comment">%figure(1); clf; nt_imagescc(topcs);</span>
+0088         [topcs2,pwr,z]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x*topcs,chunksize,npcs,aggregate,normflag);
+0089         topcs=topcs*topcs2;
+0090     <span class="keyword">end</span>
+0091         
+0092 <span class="keyword">end</span>
+0093 <span class="keyword">if</span> size(topcs,2)&gt;=npcs; 
+0094     topcs=topcs(:,1:npcs); <span class="comment">% truncate to save space</span>
+0095     pwr=pwr(1:npcs);
+0096 <span class="keyword">else</span>
+0097     topcs(:,end:npcs)=0; <span class="comment">% should rarely happen</span>
+0098     pwr(end:npcs)=0;
+0099 <span class="keyword">end</span>
+0100    
+0101 <span class="comment">%disp([size(topcs)])</span>
+0102 
+0103 <span class="keyword">if</span> normflag; topcs=bsxfun(@times,topcs,tonorm'); <span class="keyword">end</span>
+0104 
+0105 <span class="keyword">if</span> nargout&gt;1; y=x*topcs; y=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(y,nsamples);<span class="keyword">end</span>
+0106 
+0107 <span class="keyword">if</span> ~nargout <span class="comment">% don't return, just plot something</span>
+0108     y=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(y);
+0109     semilogy(mean(y.^2), <span class="string">'.-'</span>);
+0110     xlabel(<span class="string">'pc'</span>); ylabel(<span class="string">'power'</span>);
+0111     figure(2); clf
+0112     plot(y); xlabel(<span class="string">'sample'</span>);
+0113     figure(3); clf
+0114     <a href="nt_imagescc.html" class="code" title="function imagescc(a, b, c)">nt_imagescc</a>(<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x'*y)'); 
+0115     ylabel(<span class="string">'pc'</span>); xlabel(<span class="string">'channel'</span>);
+0116     clear topcs y
+0117 <span class="keyword">end</span>
+0118 
+0119 
+0120 
+0121 
+0122 
+0123 
+0124 <span class="comment">%% test code</span>
+0125 <span class="keyword">if</span> 0
+0126     <span class="comment">% basic</span>
+0127     x=randn(10000,3000);
+0128     N=20; <span class="comment">% blocksize</span>
+0129     [topcs,pwr,y]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x,N,[],<span class="string">'local'</span>);
+0130     figure(1); clf; plot(pwr);
+0131     [topcs,pwr,y]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x,N,[],<span class="string">'global'</span>);
+0132     figure(2); clf; plot(pwr);
+0133     [topcs,pwr,y]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x,N,[],<span class="string">'globmean'</span>);
+0134     figure(3); clf; plot(pwr);
+0135 <span class="keyword">end</span>
+0136 <span class="keyword">if</span> 0 
+0137     x=sin(2*pi*3*(1:1000)'/1000)*randn(1,1000);
+0138     x=2*x + randn(size(x));
+0139     N=30; 
+0140     [topcs,pwr,y]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x,N);
+0141     figure(1); plot(pwr);
+0142     figure(2); subplot 121; plot(x); subplot 122; plot(x*topcs);
+0143 <span class="keyword">end</span>   
+0144 <span class="keyword">if</span> 0 
+0145     nchans=100000;
+0146     nnoise=900;
+0147     x=repmat(sin(2*pi*3*(1:1000)'/1000), 1, nchans);
+0148     x= 0.06*<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x) + <a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(randn(size(x,1),nnoise)*randn(nnoise,nchans));
+0149     N=200;
+0150     [topcs,pwr,y]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x,N,<span class="string">'global'</span>);
+0151     figure(1); plot(pwr);
+0152     figure(2); subplot 121; plot(x(:,1:100)); subplot 122; plot(y(:,1));
+0153 <span class="keyword">end</span>   
+0154 <span class="keyword">if</span> 0 
+0155     nchans=100000;
+0156     nnoise=900;
+0157     x=repmat(sin(2*pi*3*(1:1000)'/1000), 1, nchans);
+0158     x= 0.01*<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x) + <a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(randn(size(x,1),nnoise)*randn(nnoise,nchans));
+0159     [topcs,pwr,y]=<a href="nt_pca_big.html" class="code" title="function [topcs,pwr,y]=nt_pca_big(x,N,aggregate,normflag)">nt_pca_big</a>(x,100,<span class="string">'globmean'</span>);
+0160     figure(1); plot(pwr);
+0161     figure(2); subplot 121; plot(x(:,1:100)); subplot 122; plot(y(:,1));
+0162 <span class="keyword">end</span>   
+0163</pre></div>
+<hr><address>Generated on Fri 02-Dec-2016 14:27:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

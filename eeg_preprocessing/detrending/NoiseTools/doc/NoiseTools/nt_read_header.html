@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_read_header</title>
+  <meta name="keywords" content="nt_read_header">
+  <meta name="description" content="[h,readwith]=nt_read_header(fname,flag) - read data from file">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_read_header.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_read_header
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[h,readwith]=nt_read_header(fname,flag) - read data from file</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [h,readwith]=nt_read_header(fname) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[h,readwith]=nt_read_header(fname,flag) - read data from file
+
+  h: header
+  readwith: fieldtrip or biosemi
+ 
+  fname: file to read</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [h,readwith]=nt_read_header(fname)</a>
+0002 <span class="comment">%[h,readwith]=nt_read_header(fname,flag) - read data from file</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  h: header</span>
+0005 <span class="comment">%  readwith: fieldtrip or biosemi</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  fname: file to read</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">%</span>
+0010 <span class="keyword">if</span> nargin &lt; 1 ; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0011 <span class="keyword">if</span> ~isa(fname, <span class="string">'char'</span>); 
+0012     error(<span class="string">'filename is not char string'</span>);
+0013 <span class="keyword">end</span>
+0014 
+0015 [PATHSTR,NAME,EXT] = fileparts(fname);
+0016 <span class="keyword">if</span> isempty(PATHSTR); 
+0017     fname=[pwd,filesep,fname]; <span class="comment">% safe to use exist</span>
+0018 <span class="keyword">end</span>
+0019 
+0020 <span class="keyword">if</span> 7==exist(fname);
+0021     disp(fname);
+0022     error(<span class="string">'...is directory!'</span>)
+0023 <span class="keyword">end</span>
+0024 
+0025 <span class="keyword">if</span> exist(fname,<span class="string">'file'</span>)~=2; 
+0026     disp(fname)
+0027     error(<span class="string">'...not found'</span>);
+0028 <span class="keyword">end</span>
+0029 
+0030 <span class="keyword">if</span> numel(fname)&gt;4 &amp; fname(end-3:end)==<span class="string">'.mat'</span> <span class="comment">% intercept matlab files</span>
+0031     disp(fname)
+0032     error(<span class="string">'...is mat file'</span>);
+0033 <span class="keyword">end</span>   
+0034          
+0035 <span class="comment">% select file reader among those available</span>
+0036 <span class="keyword">persistent</span> nt_read_header_readwith
+0037 <span class="keyword">if</span> isempty(nt_read_header_readwith)
+0038     <span class="keyword">if</span> 2==exist(<span class="string">'ft_read_header'</span>);
+0039         nt_read_header_readwith=<span class="string">'fieldtrip'</span>;
+0040     <span class="keyword">else</span>
+0041         warning(<span class="string">'function ft_read_header() not found: download FieldTrip and/or adjust path'</span>);
+0042     <span class="keyword">end</span>
+0043 <span class="keyword">end</span>
+0044 <span class="keyword">if</span> isempty(nt_read_header_readwith)
+0045     <span class="keyword">if</span> 2==exist(<span class="string">'sopen'</span>);
+0046         nt_read_header_readwith=<span class="string">'biosig'</span>;
+0047     <span class="keyword">else</span>
+0048         warning(<span class="string">'function sopen() not found: download BIOSIG and/or adjust path'</span>);
+0049     <span class="keyword">end</span>
+0050 <span class="keyword">end</span>
+0051 <span class="keyword">if</span> isempty(nt_read_header_readwith); error(<span class="string">'no reading functions available'</span>); <span class="keyword">end</span>
+0052 
+0053 <span class="comment">% read the header</span>
+0054 <span class="keyword">if</span> strcmp(nt_read_header_readwith,<span class="string">'fieldtrip'</span>);
+0055     <span class="keyword">try</span>
+0056         h=ft_read_header(fname);
+0057     <span class="keyword">catch</span>
+0058         h=[];
+0059     <span class="keyword">end</span>
+0060 <span class="keyword">else</span>
+0061     <span class="keyword">try</span>
+0062         h=sopen(fname);
+0063         sclose(h);
+0064     <span class="keyword">catch</span>
+0065         h=[];
+0066     <span class="keyword">end</span>
+0067 <span class="keyword">end</span>
+0068 
+0069 readwith=nt_read_header_readwith;
+0070</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

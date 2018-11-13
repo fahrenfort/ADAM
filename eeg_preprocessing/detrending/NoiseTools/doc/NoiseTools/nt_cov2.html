@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_cov2</title>
+  <meta name="keywords" content="nt_cov2">
+  <meta name="description" content="[c,tw]=nt_cov2(x,w) - weighted covariance">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_cov2.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_cov2
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[c,tw]=nt_cov2(x,w) - weighted covariance</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [c,tw]=nt_cov2(x,w); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[c,tw]=nt_cov2(x,w) - weighted covariance
+
+  c: covariance matrix
+  tw: total weight 
+
+  x: data
+  w: weights
+  
+ X can be 1D, 2D or 3D.  
+ W can be 1D (if X is 1D or 2D) or 2D (if X is 3D). The same weight is
+ applied to each column.
+ 
+ Output is a 2D matrix with dimensions (ncols(X)*numel(SHIFTS))^2.
+ It is made up of an ncols(X)*ncols(X) matrix of submatrices, each of 
+ dimensions numel(SHIFTS)*numel(SHIFTS).
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_tsregress.html" class="code" title="function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)">nt_tsregress</a>	[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [c,tw]=nt_cov2(x,w);</a>
+0002 <span class="comment">%[c,tw]=nt_cov2(x,w) - weighted covariance</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  c: covariance matrix</span>
+0005 <span class="comment">%  tw: total weight</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data</span>
+0008 <span class="comment">%  w: weights</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% X can be 1D, 2D or 3D.</span>
+0011 <span class="comment">% W can be 1D (if X is 1D or 2D) or 2D (if X is 3D). The same weight is</span>
+0012 <span class="comment">% applied to each column.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% Output is a 2D matrix with dimensions (ncols(X)*numel(SHIFTS))^2.</span>
+0015 <span class="comment">% It is made up of an ncols(X)*ncols(X) matrix of submatrices, each of</span>
+0016 <span class="comment">% dimensions numel(SHIFTS)*numel(SHIFTS).</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% NoiseTools</span>
+0019 
+0020 <span class="keyword">if</span> nargin&lt;2; w=[]; <span class="keyword">end</span>;
+0021 <span class="keyword">if</span> prod(size(x))==0; error(<span class="string">'data empty'</span>); <span class="keyword">end</span>
+0022 
+0023 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0024 w=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(w);
+0025 
+0026 <span class="keyword">if</span> isempty(w); w=ones(size(x)); <span class="keyword">end</span>
+0027 <span class="keyword">if</span> size(w,1)~=size(x,1); error (<span class="string">'!'</span>); <span class="keyword">end</span>
+0028 <span class="keyword">if</span> size(w,2)==1;
+0029     w=repmat(w,[1,size(x,2)]);
+0030 <span class="keyword">elseif</span> size(w,2)~=size(x,2); 
+0031     error(<span class="string">'!'</span>);
+0032 <span class="keyword">end</span>
+0033 
+0034 c=zeros(size(x,2));
+0035 <span class="keyword">if</span> isempty(w)
+0036     <span class="comment">% no weights</span>
+0037     
+0038     c=x'*x;
+0039     tw=size(x,1)*ones(size(c));
+0040     
+0041 <span class="keyword">else</span>
+0042     <span class="comment">% weights</span>
+0043     x=x.*w;
+0044     c=x'*x;
+0045     tw=w'*w;
+0046 <span class="keyword">end</span>
+0047</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

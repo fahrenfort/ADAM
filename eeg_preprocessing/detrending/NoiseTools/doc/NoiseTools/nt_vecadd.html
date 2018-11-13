@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_vecadd</title>
+  <meta name="keywords" content="nt_vecadd">
+  <meta name="description" content="y=nt_vecadd(x,v) - add vector to all rows or columns of matrix">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_vecadd.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_vecadd
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_vecadd(x,v) - add vector to all rows or columns of matrix</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function x=nt_vecadd(x,v) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_vecadd(x,v) - add vector to all rows or columns of matrix 
+
+ See vecmult, bsxfun
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>	z=nt_multishift(x,shifts,amplitudes) - apply multiple shifts to matrix</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function x=nt_vecadd(x,v)</a>
+0002 <span class="comment">%y=nt_vecadd(x,v) - add vector to all rows or columns of matrix</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% See vecmult, bsxfun</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% NoiseTools</span>
+0007 
+0008 <span class="comment">% check once and for all to save time</span>
+0009 <span class="keyword">persistent</span> bsxfun_exists;
+0010 <span class="keyword">if</span> isempty(bsxfun_exists); 
+0011     bsxfun_exists=(exist(<span class="string">'bsxfun'</span>)==5); 
+0012     <span class="keyword">if</span> ~bsxfun_exists; 
+0013         warning(<span class="string">'bsxfun not found.  Using repmat'</span>);
+0014     <span class="keyword">end</span>
+0015 <span class="keyword">end</span>
+0016 
+0017 
+0018 [m,n,o]=size(x);
+0019 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0020 v=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(v);
+0021 
+0022 [mm,nn]=size(x);
+0023 <span class="keyword">if</span> numel(v)==1;
+0024     x=x+v;
+0025 <span class="keyword">elseif</span> size(v,1)==1
+0026     <span class="keyword">if</span> size(v,2)~=nn; error(<span class="string">'V should have same number of columns as X'</span>); <span class="keyword">end</span>
+0027     <span class="keyword">if</span> bsxfun_exists;
+0028         x=bsxfun(@plus,x,v);
+0029 <span class="comment">%        vecop_core(x, v, 2, 1);  % 1 is the opcode of addition in vecop_core</span>
+0030     <span class="keyword">else</span>
+0031         x=x + repmat(v,mm,1);
+0032     <span class="keyword">end</span>
+0033 <span class="keyword">elseif</span> size(v,2)==1
+0034     <span class="keyword">if</span> size(v,1)~=mm; error(<span class="string">'V should have same number of rows as X'</span>); <span class="keyword">end</span>
+0035     <span class="keyword">if</span> bsxfun_exists;
+0036         x=bsxfun(@plus,x,v);
+0037  <span class="comment">%       y=vecop_core(x, v, 1, 1);  % 1 is the opcode of addition in vecop_core</span>
+0038     <span class="keyword">else</span>
+0039         x=x + repmat(v,1,nn);
+0040     <span class="keyword">end</span>
+0041 <span class="keyword">end</span>
+0042 
+0043 x=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(x,m);</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

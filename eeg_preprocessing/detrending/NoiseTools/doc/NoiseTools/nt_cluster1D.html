@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_cluster1D</title>
+  <meta name="keywords" content="nt_cluster1D">
+  <meta name="description" content="[C,A,score]=nt_cluster1D_b(x) - cluster 1D data into 2 clusters">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_cluster1D.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_cluster1D
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[C,A,score]=nt_cluster1D_b(x) - cluster 1D data into 2 clusters</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [C,A,score]=nt_cluster1D_b(x); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[C,A,score]=nt_cluster1D_b(x) - cluster 1D data into 2 clusters
+
+  x: column vector or matrix of data to cluster
+
+  C: centroid pairs (one pair per column)
+  A: ownership matrix (0, 1)
+  score: energy/total energy, for each column</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_split.html" class="code" title="function [idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep)">nt_split</a>	[idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep) - split time series into intervals</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [C,A,score]=nt_cluster1D_b(x);</a>
+0002 <span class="comment">%[C,A,score]=nt_cluster1D_b(x) - cluster 1D data into 2 clusters</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  x: column vector or matrix of data to cluster</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  C: centroid pairs (one pair per column)</span>
+0007 <span class="comment">%  A: ownership matrix (0, 1)</span>
+0008 <span class="comment">%  score: energy/total energy, for each column</span>
+0009 
+0010 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0011 <span class="keyword">if</span> size(x,1)&lt;2; error(<span class="string">'too small to cluster'</span>); <span class="keyword">end</span>
+0012 
+0013 A=zeros(size(x));       <span class="comment">% cluster ownership labels</span>
+0014 C=zeros(2,size(x,2));   <span class="comment">% centroids</span>
+0015 
+0016 <span class="keyword">for</span> iCol=1:size(x,2)
+0017     
+0018     xx=x(:,iCol);
+0019     [xx,iSort]=sort(xx);
+0020     [idx,score_vector,score0]=<a href="nt_split.html" class="code" title="function [idx,score_vector,score]=nt_split(x,depth,thresh,guard,minstep)">nt_split</a>(xx);
+0021     score(:,iCol)=score0;
+0022     C(:,iCol)=[mean(xx(1:idx)),mean(xx(idx+1:end))];
+0023     t=1:size(xx,1);
+0024     A(t(iSort(idx+1:end)), iCol)=1; <span class="comment">% 0: low values, 1: high values</span>
+0025     
+0026 <span class="comment">%     figure(1); clf; subplot 211;</span>
+0027 <span class="comment">%     hold on; histogram(xx,-5:0.01:5, 'displaystyle','stairs' ); histogram(xx(1:idx),-5:0.01:5); plot(C(:,iCol),[500 500], '.r');</span>
+0028 <span class="comment">%     subplot 212; plot(x(:,iCol))</span>
+0029 <span class="comment">%     disp(score0)</span>
+0030 <span class="comment">%     pause</span>
+0031 <span class="keyword">end</span>
+0032 
+0033</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

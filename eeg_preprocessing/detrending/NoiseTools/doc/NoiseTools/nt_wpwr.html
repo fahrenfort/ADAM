@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_wpwr</title>
+  <meta name="keywords" content="nt_wpwr">
+  <meta name="description" content="[y,tweight]=nt_wpwr(x,w) - weighted power">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_wpwr.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_wpwr
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,tweight]=nt_wpwr(x,w) - weighted power</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y,tweight]=nt_wpwr(x,w) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,tweight]=nt_wpwr(x,w) - weighted power
+
+  y: weighted ssq of x
+  tweight: total weight
+
+  x: data
+  w: weight</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dss_repeat_cluster.html" class="code" title="function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)">nt_dss_repeat_cluster</a>	y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters</li><li><a href="nt_inpaint.html" class="code" title="function [y,yy]=nt_inpaint(x,w)">nt_inpaint</a>	function y=nt_inpaint(x,w) - weighted interpolation based on correlation structure</li><li><a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>	[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</li><li><a href="nt_sns_cluster.html" class="code" title="function x=nt_sns_cluster(x,nneighbors,cluster_size)">nt_sns_cluster</a>	y=nt_sns_cluster(x,nneigbors,cluster_size) - sensor noise suppression within clusters</li><li><a href="nt_star.html" class="code" title="function [x,w,ww]=nt_star(x,thresh,closest,depth)">nt_star</a>	[y,w,ww]=nt_star(x,thresh,closest,depth) - sensor noise suppression</li><li><a href="nt_star2.html" class="code" title="function [x,w,ww]=nt_star2(x,thresh,closest,w)">nt_star2</a>	[y,w,ww]=nt_star2(x,thresh,closest,w) - sensor noise suppression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,tweight]=nt_wpwr(x,w)</a>
+0002 <span class="comment">%[y,tweight]=nt_wpwr(x,w) - weighted power</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: weighted ssq of x</span>
+0005 <span class="comment">%  tweight: total weight</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data</span>
+0008 <span class="comment">%  w: weight</span>
+0009 <span class="comment">%</span>
+0010 
+0011 <span class="keyword">if</span> nargin&lt;2; w=[]; <span class="keyword">end</span>
+0012 
+0013 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0014 w=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(w);
+0015 
+0016 <span class="keyword">if</span> isempty(w)
+0017     y=sum(x(:).^2);
+0018     tweight=numel(x);
+0019 <span class="keyword">else</span>
+0020     x=<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(x,w);
+0021     y=sum(x(:).^2);
+0022     tweight=sum(w(:));
+0023 <span class="keyword">end</span>
+0024 
+0025 <span class="keyword">if</span> nargout==0; 
+0026     disp(num2str(y));
+0027     clear y tweight
+0028 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_sgram</title>
+  <meta name="keywords" content="nt_sgram">
+  <meta name="description" content="[s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags) - spectrogram">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_sgram.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_sgram
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags) - spectrogram</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags) - spectrogram
+
+ Without output arguments: plot cubic root of power spectrogram.
+ With output arguments: return power spectrogram.
+  s: spectrogram matrix (frequency X time)
+  f: array of frequencies
+  t: array of times
+
+  x: data (if multidimensional, power is averaged over higher dimensions)
+  window: size of hamming window in samples, if vector, shape of window
+  noverlap: frame period in samples
+  nfft: number of points in FFT (default 2^nextpow2(window size))
+  sr: sampling rate.
+  flags: 'nomean': remove mean of each window
+
+  NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>	nt_imagescc - plot image with symmetric scaling</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bias_cluster.html" class="code" title="function [c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags)">nt_bias_cluster</a>	[c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags) - cluster covariance</li><li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags)</a>
+0002 <span class="comment">%[s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags) - spectrogram</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% Without output arguments: plot cubic root of power spectrogram.</span>
+0005 <span class="comment">% With output arguments: return power spectrogram.</span>
+0006 <span class="comment">%  s: spectrogram matrix (frequency X time)</span>
+0007 <span class="comment">%  f: array of frequencies</span>
+0008 <span class="comment">%  t: array of times</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">%  x: data (if multidimensional, power is averaged over higher dimensions)</span>
+0011 <span class="comment">%  window: size of hamming window in samples, if vector, shape of window</span>
+0012 <span class="comment">%  noverlap: frame period in samples</span>
+0013 <span class="comment">%  nfft: number of points in FFT (default 2^nextpow2(window size))</span>
+0014 <span class="comment">%  sr: sampling rate.</span>
+0015 <span class="comment">%  flags: 'nomean': remove mean of each window</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">%  NoiseTools</span>
+0018 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0019 
+0020 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0021 <span class="keyword">if</span> nargin&lt;2; window=[]; <span class="keyword">end</span>
+0022 <span class="keyword">if</span> nargin&lt;3; noverlap=[]; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> nargin&lt;4; nfft=[]; <span class="keyword">end</span>
+0024 <span class="keyword">if</span> nargin&lt;5; sr=[]; <span class="keyword">end</span>
+0025 <span class="keyword">if</span> nargin&lt;6; flags=[]; <span class="keyword">end</span>
+0026 
+0027 <span class="keyword">if</span> isempty(window)
+0028     window=2^nextpow2(round(size(x,1)/8));
+0029 <span class="keyword">end</span>
+0030 window=window(:);
+0031 <span class="keyword">if</span> numel(window)==1;
+0032     window=hanning(window);
+0033 <span class="keyword">end</span>
+0034 <span class="keyword">if</span> isempty(noverlap)
+0035     noverlap=floor(numel(window)/2);
+0036 <span class="keyword">end</span>
+0037 <span class="keyword">if</span> isempty(nfft)
+0038     nfft=2^nextpow2(numel(window));
+0039 <span class="keyword">end</span>
+0040 <span class="keyword">if</span> isempty(sr)
+0041     sr=1;
+0042 <span class="keyword">end</span>
+0043 
+0044 
+0045 x=reshape(x,[size(x,1), prod(size(x))/size(x,1)]); <span class="comment">% fold all higher dimensions</span>
+0046 
+0047 nframes=floor( (size(x,1)-numel(window))/noverlap )  +  1;
+0048 <span class="keyword">if</span> nframes&lt;1; error(<span class="string">'data too short for window size'</span>); <span class="keyword">end</span>
+0049 
+0050 s=zeros(nfft/2+1,nframes);
+0051 
+0052 <span class="keyword">for</span> k=1:nframes
+0053     start=(k-1)*noverlap;
+0054     xx=<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(x(start+1:start+size(window),:),window); 
+0055     <span class="keyword">if</span> ~isempty(flags) &amp; strcmp(flags,<span class="string">'demean'</span>);
+0056         xx=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(xx);
+0057     <span class="keyword">end</span>
+0058     XX=abs(fft(xx,nfft)).^2;
+0059     s(:,k)=sum(XX(1:(nfft/2+1),:),2);
+0060 <span class="keyword">end</span>
+0061 
+0062 f=(0:nfft/2)*sr/nfft;
+0063 t= (numel(window)/2 + (0:nframes-1)*noverlap) / sr;
+0064 
+0065 
+0066 
+0067 <span class="keyword">if</span> nargout==0;
+0068     ss=s.^(1/5);
+0069     <span class="comment">%ss=ss-repmat(mean(ss,2),1,size(ss,2));</span>
+0070 
+0071     <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(ss);
+0072     ytick=niceticks(sr/2);
+0073     set(gca,<span class="string">'ytick'</span>,1+ytick*nfft/sr, <span class="string">'yticklabel'</span>,num2str(ytick'));
+0074     ylabel(<span class="string">'Hz'</span>);
+0075     xtick=niceticks(size(x,1)/sr);
+0076     set(gca,<span class="string">'xtick'</span>,1+xtick/noverlap*sr - nfft/2/noverlap, <span class="string">'xticklabel'</span>,num2str(xtick'));
+0077     xlabel(<span class="string">'s'</span>);
+0078     set(gca,<span class="string">'tickdir'</span>,<span class="string">'out'</span>)
+0079     s=[];t=[];f=[];
+0080     axis xy
+0081 <span class="keyword">end</span>
+0082 
+0083</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

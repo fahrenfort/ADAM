@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_detrend</title>
+  <meta name="keywords" content="nt_detrend">
+  <meta name="description" content="[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_detrend.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_detrend
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend
+ 
+  y: detrended data
+  w: updated weights
+  r: basis matrix used
+
+  x: raw data
+  order: order of polynomial or number of sin/cosine pairs
+  w: weights
+  basis: 'polynomials' [default] or 'sinusoids', or user-provided matrix
+  thresh: threshold for outliers [default: 3 sd]
+  niter: number of iterations [default: 5]
+
+ Noise tools
+ See nt_regw().
+
+ The data are fit to the basis using weighted least squares. The weight is
+ updated by setting samples for which the residual is greater than 'thresh' 
+ times its std to zero, and the fit is repeated at most 'niter'-1 times.
+
+ The choice of order (and basis) determines what complexity of the trend
+ that can be removed.  It may be useful to first detrend with a low order
+ to avoid fitting outliers, and then increase the order.
+
+ Examples:
+ Fit linear trend, ignoring samples &gt; 3*sd from it, and remove:
+   y=nt_detrend(x,1); 
+ Fit/remove polynomial order=5 with initial weighting w, threshold = 4*sd:
+   y=nt_detrend(x,5,w,[],4);
+ Fit/remove linear then 3rd order polynomial:
+   [y,w]=nt_detrend(x,1);
+   [yy,ww]=nt_detrend(y,3);</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>	[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>	nt_imagescc - plot image with symmetric scaling</li><li><a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>	[p,data]=nt_read_data(fname,flag) - read data from file</li><li><a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>	[b,z]=nt_regw(y,x,w) - weighted regression</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_deboing.html" class="code" title="function y=nt_deboing(x,events)">nt_deboing</a>	y=nt_deboing(x,events) - fit, remove ringing associated with events</li><li><a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>	[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</li><li><a href="nt_inpaint.html" class="code" title="function [y,yy]=nt_inpaint(x,w)">nt_inpaint</a>	function y=nt_inpaint(x,w) - weighted interpolation based on correlation structure</li><li><a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>	[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</li><li><a href="nt_star2.html" class="code" title="function [x,w,ww]=nt_star2(x,thresh,closest,w)">nt_star2</a>	[y,w,ww]=nt_star2(x,thresh,closest,w) - sensor noise suppression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)</a>
+0002 <span class="comment">%[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: detrended data</span>
+0005 <span class="comment">%  w: updated weights</span>
+0006 <span class="comment">%  r: basis matrix used</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  x: raw data</span>
+0009 <span class="comment">%  order: order of polynomial or number of sin/cosine pairs</span>
+0010 <span class="comment">%  w: weights</span>
+0011 <span class="comment">%  basis: 'polynomials' [default] or 'sinusoids', or user-provided matrix</span>
+0012 <span class="comment">%  thresh: threshold for outliers [default: 3 sd]</span>
+0013 <span class="comment">%  niter: number of iterations [default: 5]</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% Noise tools</span>
+0016 <span class="comment">% See nt_regw().</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% The data are fit to the basis using weighted least squares. The weight is</span>
+0019 <span class="comment">% updated by setting samples for which the residual is greater than 'thresh'</span>
+0020 <span class="comment">% times its std to zero, and the fit is repeated at most 'niter'-1 times.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% The choice of order (and basis) determines what complexity of the trend</span>
+0023 <span class="comment">% that can be removed.  It may be useful to first detrend with a low order</span>
+0024 <span class="comment">% to avoid fitting outliers, and then increase the order.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% Examples:</span>
+0027 <span class="comment">% Fit linear trend, ignoring samples &gt; 3*sd from it, and remove:</span>
+0028 <span class="comment">%   y=nt_detrend(x,1);</span>
+0029 <span class="comment">% Fit/remove polynomial order=5 with initial weighting w, threshold = 4*sd:</span>
+0030 <span class="comment">%   y=nt_detrend(x,5,w,[],4);</span>
+0031 <span class="comment">% Fit/remove linear then 3rd order polynomial:</span>
+0032 <span class="comment">%   [y,w]=nt_detrend(x,1);</span>
+0033 <span class="comment">%   [yy,ww]=nt_detrend(y,3);</span>
+0034 <span class="comment">%</span>
+0035 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0036 
+0037 <span class="comment">%% arguments</span>
+0038 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0039 <span class="keyword">if</span> nargin&lt;3; w=[]; <span class="keyword">end</span>
+0040 <span class="keyword">if</span> nargin&lt;4||isempty(basis); basis=<span class="string">'polynomials'</span>; <span class="keyword">end</span>
+0041 <span class="keyword">if</span> nargin&lt;5||isempty(thresh); thresh=3; <span class="keyword">end</span>
+0042 <span class="keyword">if</span> nargin&lt;6||isempty(niter); niter=4; <span class="keyword">end</span>
+0043 
+0044 <span class="keyword">if</span> thresh==0; error(<span class="string">'thresh=0 is not what you want...'</span>); <span class="keyword">end</span> <span class="comment">% common mistake</span>
+0045 
+0046 dims=size(x);
+0047 x=x(:,:); <span class="comment">% concatenates dims &gt;= 2</span>
+0048 w=w(:,:);
+0049 
+0050 <span class="keyword">if</span> size(w,2)==1; w=repmat(w,1,size(x,2)); <span class="keyword">end</span>
+0051 
+0052 <span class="comment">%% regressors</span>
+0053 <span class="keyword">if</span> isnumeric(basis)
+0054     r=basis;
+0055 <span class="keyword">else</span>
+0056     <span class="keyword">switch</span> basis
+0057         <span class="keyword">case</span> <span class="string">'polynomials'</span>
+0058             r=zeros(size(x,1),numel(order));
+0059             lin=linspace(-1,1,size(x,1));
+0060             <span class="keyword">for</span> k=1:order
+0061                 r(:,k)=lin.^k;
+0062             <span class="keyword">end</span>
+0063         <span class="keyword">case</span> <span class="string">'sinusoids'</span>
+0064             r=zeros(size(x,1),numel(order)*2);
+0065             lin=linspace(-1,1,size(x,1));
+0066             <span class="keyword">for</span> k=1:order
+0067                 r(:,2*k-1)=sin(2*pi*k*lin/2);
+0068                 r(:,2*k)=cos(2*pi*k*lin/2);
+0069             <span class="keyword">end</span>
+0070         <span class="keyword">otherwise</span>
+0071             error(<span class="string">'!'</span>);
+0072     <span class="keyword">end</span>
+0073 <span class="keyword">end</span>
+0074 <span class="comment">%r=nt_normcol(nt_demean(r));</span>
+0075 
+0076 <span class="comment">%% remove trends</span>
+0077 
+0078 <span class="comment">% The tricky bit is to ensure that weighted means are removed before</span>
+0079 <span class="comment">% calculating the regression (see nt_regw).</span>
+0080 
+0081 <span class="keyword">for</span> iIter=1:niter
+0082     
+0083     <span class="comment">%disp(iIter);</span>
+0084     <span class="comment">%nt_whoss;</span>
+0085     
+0086     <span class="comment">% weighted regression on basis</span>
+0087     [~,y]=<a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>(x,r,w);
+0088     
+0089     <span class="comment">% find outliers</span>
+0090     d=x-y; 
+0091     <span class="keyword">if</span> ~isempty(w); d=bsxfun(@times,d,w); <span class="keyword">end</span>
+0092     ww=ones(size(x));
+0093     ww(find(abs(d)&gt;thresh*repmat(std(d),size(x,1),1))) = 0;
+0094     clear d
+0095     
+0096     <span class="comment">% update weights</span>
+0097     <span class="keyword">if</span> isempty(w); 
+0098         w=ww;
+0099     <span class="keyword">else</span>
+0100         w=min(w,ww);
+0101     <span class="keyword">end</span>
+0102     clear ww;
+0103     
+0104 <span class="keyword">end</span>
+0105 
+0106 y=x-y;
+0107 y=reshape(y,dims);
+0108 w=reshape(w,dims);
+0109 
+0110 <span class="keyword">if</span> ~nargout
+0111     <span class="comment">% don't return, just plot</span>
+0112     figure(1); clf;
+0113     subplot 411; plot(x); title(<span class="string">'raw'</span>);
+0114     subplot 412; plot(y); title(<span class="string">'detrended'</span>);
+0115     subplot 413; plot(x-y); title(<span class="string">'trend'</span>);
+0116     subplot 414; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(w'); title(<span class="string">'weight'</span>);
+0117     clear y w r
+0118 <span class="keyword">end</span>
+0119 
+0120 
+0121 
+0122 
+0123 
+0124 <span class="comment">%% test code</span>
+0125 <span class="keyword">if</span> 0
+0126     <span class="comment">% basic</span>
+0127     x=(1:100)'; x=x+ randn(size(x));
+0128     y=<a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>(x,1);
+0129     figure(1); clf; plot([x,y]);
+0130 <span class="keyword">end</span>
+0131 <span class="keyword">if</span> 0
+0132     <span class="comment">% detrend biased random walk</span>
+0133     x=cumsum(randn(1000,1)+0.1);
+0134     y=<a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>(x,3,[]);
+0135     figure(1); clf; plot([x,y]); legend(<span class="string">'before'</span>, <span class="string">'after'</span>);
+0136 <span class="keyword">end</span>
+0137 <span class="keyword">if</span> 0
+0138     <span class="comment">% weights</span>
+0139     x=linspace(0,100,1000)';
+0140     x=x+3*randn(size(x));
+0141     x(1:100,:)=100;
+0142     w=ones(size(x)); w(1:100,:)=0;
+0143     y=<a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>(x,3,[],[],100);
+0144     yy=<a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>(x,3,w);
+0145     figure(1); clf; plot([x,y,yy]); legend(<span class="string">'before'</span>, <span class="string">'unweighted'</span>,<span class="string">'weighted'</span>);
+0146 <span class="keyword">end</span>
+0147 <span class="keyword">if</span> 0
+0148     [p,x]=<a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>(<span class="string">'/data/meg/theoldmanandthesea/eeg/mc/MC_aespa_speech_45.mat'</span>); x=x'; x=x(:,1:128); <span class="comment">%x=x(1:10000,:);</span>
+0149     <span class="comment">%[p,x]=nt_read_data('/data/meg/arzounian/ADC_DA_140521_p20/ADC_DA_140521_p20_01_calib'); x=x'; x=x(1:10000,:);</span>
+0150     
+0151     x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x);
+0152     <a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>(x,10);   
+0153 <span class="keyword">end</span>
+0154</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

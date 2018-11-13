@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_pca_kmeans</title>
+  <meta name="keywords" content="nt_pca_kmeans">
+  <meta name="description" content="[topcs,pwr]=nt_pca_kmeans(x,nkeep) - PCA preceded by kmeans for speed">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_pca_kmeans.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_pca_kmeans
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[topcs,pwr]=nt_pca_kmeans(x,nkeep) - PCA preceded by kmeans for speed</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [topcs,pwr]=nt_pca_kmeans(x,shifts,nkeep) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[topcs,pwr]=nt_pca_kmeans(x,nkeep) - PCA preceded by kmeans for speed
+
+  topcs: PCA matrix
+
+  x: data (time*channels or time*channels*trials)
+  nkeep: desired number of PCs
+
+ The kmeans implementation of VLFeat appears to be very efficient, 
+ so we use it to find a small set of clusters to which we apply PCA.
+
+ This differs from the usual way of combining PCA and kmeans, which is
+ to use PCA to initialize kmeans.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>	z=nt_multishift(x,shifts,amplitudes) - apply multiple shifts to matrix</li><li><a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>	[topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [topcs,pwr]=nt_pca_kmeans(x,shifts,nkeep)</a>
+0002 <span class="comment">%[topcs,pwr]=nt_pca_kmeans(x,nkeep) - PCA preceded by kmeans for speed</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  topcs: PCA matrix</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data (time*channels or time*channels*trials)</span>
+0007 <span class="comment">%  nkeep: desired number of PCs</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% The kmeans implementation of VLFeat appears to be very efficient,</span>
+0010 <span class="comment">% so we use it to find a small set of clusters to which we apply PCA.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% This differs from the usual way of combining PCA and kmeans, which is</span>
+0013 <span class="comment">% to use PCA to initialize kmeans.</span>
+0014 
+0015 <span class="keyword">if</span> nargin&lt;3; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0016 <span class="keyword">if</span> isempty(shifts); shifts=0; <span class="keyword">end</span>
+0017 <span class="keyword">if</span> shifts
+0018     x=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(x,shifts);
+0019 <span class="keyword">end</span>
+0020 <span class="keyword">if</span> nkeep&gt;size(x,2); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0021 
+0022 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0023 [nsamples,nchans]=size(x);
+0024 
+0025 <span class="keyword">if</span> nkeep&gt;nsamples; error(<span class="string">'nkeep greater than number of samples'</span>); <span class="keyword">end</span>
+0026 <span class="keyword">if</span> nkeep&gt;nchans; error(<span class="string">'nkeep greater than number of channels'</span>); <span class="keyword">end</span>
+0027 
+0028 
+0029 <span class="comment">% normalize channels</span>
+0030 nrm=sqrt(mean(x.^2));
+0031 tonrm=diag(1./nrm); <span class="comment">% normalization matrix</span>
+0032 tonrm(find(isnan(x)))=0;
+0033 x=x*tonrm;
+0034 
+0035 <span class="comment">% cluster</span>
+0036 nclusters=round(sqrt(nchans)); 
+0037 [C,A]=vl_kmeans(x,nclusters,<span class="string">'algorithm'</span>,<span class="string">'elkan'</span>);
+0038 
+0039 <span class="comment">% perform PCA on each cluster</span>
+0040 topcs1=zeros(nchans);
+0041 pwr=zeros(1,nchans);
+0042 idx=0;
+0043 <span class="keyword">for</span> k=1:nclusters
+0044     <span class="comment">%[nclusters k numel(find(A==k))]</span>
+0045     [m,p]=<a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>(x(:,find(A==k)));
+0046     topcs1(find(A==k),idx+(1:size(m,2))) = m;
+0047     pwr(idx+(1:size(m,2)))=p;
+0048     idx=idx+size(m,2);
+0049 <span class="keyword">end</span>
+0050 
+0051 <span class="comment">% sort by decreasing power</span>
+0052 [~,idx]=sort(pwr,<span class="string">'descend'</span>);
+0053 
+0054 topcs2=<a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>(<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,topcs1(:,idx(1:nkeep))));
+0055 
+0056 topcs=tonrm*(topcs1(:,idx(1:nkeep))*topcs2);
+0057 
+0058 
+0059 
+0060 
+0061 
+0062 
+0063 
+0064</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

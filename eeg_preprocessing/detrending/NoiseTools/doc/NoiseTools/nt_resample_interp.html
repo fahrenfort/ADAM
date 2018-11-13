@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_resample_interp</title>
+  <meta name="keywords" content="nt_resample_interp">
+  <meta name="description" content="y=nt_resample_interp(x,R,method) - resample with arbitrary ratio">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_resample_interp.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_resample_interp
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_resample_interp(x,R,method) - resample with arbitrary ratio</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_resample_interp(x,R,method); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> y=nt_resample_interp(x,R,method) - resample with arbitrary ratio
+
+  y: resampled data
+
+  x: data to resample (columnwise)
+  R: ratio of new/old sampling rates
+  method: method to give to interp1 [default: 'spline']</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y=nt_resample_interp(x,R,method);</a>
+0002 <span class="comment">% y=nt_resample_interp(x,R,method) - resample with arbitrary ratio</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: resampled data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data to resample (columnwise)</span>
+0007 <span class="comment">%  R: ratio of new/old sampling rates</span>
+0008 <span class="comment">%  method: method to give to interp1 [default: 'spline']</span>
+0009 <span class="comment">%</span>
+0010 
+0011 <span class="keyword">if</span> nargin&lt;3||isempty(method); method=<span class="string">'spline'</span> ; <span class="keyword">end</span>
+0012 
+0013 Xq=(1 : 1/R : size(x,1))';
+0014 y=interp1(1:size(x,1),x,Xq,method);
+0015</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

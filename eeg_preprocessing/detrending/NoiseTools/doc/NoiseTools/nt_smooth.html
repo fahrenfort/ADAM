@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_smooth</title>
+  <meta name="keywords" content="nt_smooth">
+  <meta name="description" content="y=nt_smooth(x,T,nIterations,nodelayflag) - smooth by convolution with square window">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_smooth.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_smooth
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_smooth(x,T,nIterations,nodelayflag) - smooth by convolution with square window</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function x=nt_smooth(x,T,nIterations,nodelayflag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_smooth(x,T,nIterations,nodelayflag) - smooth by convolution with square window
+
+  y: smoothed data
+ 
+  x: data to smooth
+  T: samples, size of window (can be fractionary)
+  nIterations: number of iterations of smoothing operation (large --&gt; gaussian kernel)
+  nodelayflag: if true, compensate for delay [default:false]</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_smooth.html" class="code" title="function x=nt_smooth(x,T,nIterations,nodelayflag)">nt_smooth</a>	y=nt_smooth(x,T,nIterations,nodelayflag) - smooth by convolution with square window</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li><li><a href="nt_multismooth.html" class="code" title="function z=nt_multismooth(x,smooth,alignment)">nt_multismooth</a>	z=nt_multismooth(x,smooth,alignment) - apply multiple smoothing kernels</li><li><a href="nt_smooth.html" class="code" title="function x=nt_smooth(x,T,nIterations,nodelayflag)">nt_smooth</a>	y=nt_smooth(x,T,nIterations,nodelayflag) - smooth by convolution with square window</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function x=nt_smooth(x,T,nIterations,nodelayflag)</a>
+0002 <span class="comment">%y=nt_smooth(x,T,nIterations,nodelayflag) - smooth by convolution with square window</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: smoothed data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data to smooth</span>
+0007 <span class="comment">%  T: samples, size of window (can be fractionary)</span>
+0008 <span class="comment">%  nIterations: number of iterations of smoothing operation (large --&gt; gaussian kernel)</span>
+0009 <span class="comment">%  nodelayflag: if true, compensate for delay [default:false]</span>
+0010 <span class="comment">%</span>
+0011 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0012 
+0013 <span class="keyword">if</span> nargin&lt;4||isempty(nodelayflag); nodelayflag=0; <span class="keyword">end</span>
+0014 <span class="keyword">if</span> nargin&lt;3||isempty(nIterations); nIterations=1; <span class="keyword">end</span>
+0015 <span class="keyword">if</span> nargin&lt;2; help <a href="nt_smooth.html" class="code" title="function x=nt_smooth(x,T,nIterations,nodelayflag)">nt_smooth</a> ; error; <span class="keyword">end</span>
+0016 
+0017 <span class="keyword">if</span> ndims(x)&gt;4; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0018 
+0019 integ=floor(T);
+0020 frac=T-integ;
+0021 
+0022 <span class="keyword">if</span> integ&gt;=size(x,1);
+0023     x=repmat(mean(x),[size(x,1),1,1,1]);
+0024     <span class="keyword">return</span>;
+0025 <span class="keyword">end</span>
+0026 
+0027 <span class="comment">% remove onset step</span>
+0028 mn=mean(x(1:(integ+1),:,:),1);
+0029 x=bsxfun(@minus,x,mn);
+0030 
+0031 <span class="keyword">if</span> nIterations==1 &amp;&amp; frac==0;
+0032     <span class="comment">% faster</span>
+0033     x=cumsum(x);
+0034     x(T+1:<span class="keyword">end</span>,:)=x(T+1:<span class="keyword">end</span>,:)-x(1:end-T,:);
+0035     x=x/T;
+0036 <span class="keyword">else</span>
+0037     <span class="comment">% filter kernel</span>
+0038     B=[ones(integ,1);frac]/T;
+0039     <span class="keyword">for</span> k=1:nIterations-1
+0040         B=conv(B,[ones(integ,1);frac]/T);
+0041     <span class="keyword">end</span>
+0042     x=filter(B,1,x);    
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="keyword">if</span> nodelayflag
+0046     shift=round(T/2*nIterations); <span class="comment">%[shift n*T]</span>
+0047     x=[x(shift+1:<span class="keyword">end</span>,:,:,:); zeros(shift,size(x,2),size(x,3),size(x,4))];
+0048 <span class="keyword">end</span>
+0049 
+0050 
+0051 <span class="comment">% restore DC</span>
+0052 x=bsxfun(@plus,x,mn);</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

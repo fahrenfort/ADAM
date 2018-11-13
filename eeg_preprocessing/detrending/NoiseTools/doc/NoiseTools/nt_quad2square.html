@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_quad2square</title>
+  <meta name="keywords" content="nt_quad2square">
+  <meta name="description" content="[tosquare,D]=nt_quad2square(toquad,order) - quadratic to squared linear component">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_quad2square.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_quad2square
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[tosquare,D]=nt_quad2square(toquad,order) - quadratic to squared linear component</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [tosquares,D]=nt_quad2square(toquad,order) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[tosquare,D]=nt_quad2square(toquad,order) - quadratic to squared linear component
+ 
+   tosquares: matrix to linear components with closest square
+   D: scores
+
+   toquad: matrix that defines quadratic component from cross products
+   order: order of cross products, 'colwise', 'diagwise' (default)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_qca0.html" class="code" title="function [tosquares,quads,D]=nt_qca0(x,npcs,nsmooth,nquads)">nt_qca0</a>	[tosquares,quads,D]=nt_qca0(x,npcs,nsmooth,nquads) - maximize induced power using quadratic component analysis</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [tosquares,D]=nt_quad2square(toquad,order)</a>
+0002 <span class="comment">%[tosquare,D]=nt_quad2square(toquad,order) - quadratic to squared linear component</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%   tosquares: matrix to linear components with closest square</span>
+0005 <span class="comment">%   D: scores</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%   toquad: matrix that defines quadratic component from cross products</span>
+0008 <span class="comment">%   order: order of cross products, 'colwise', 'diagwise' (default)</span>
+0009 
+0010 <span class="keyword">if</span> nargin&lt;2; order=<span class="string">'diagwise'</span>; <span class="keyword">end</span>
+0011 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0012 
+0013 <span class="keyword">if</span> size(toquad,2)~=1; error(<span class="string">'toquad should be column vector'</span>); <span class="keyword">end</span>
+0014 
+0015 nquads=size(toquad,1);
+0016 nchans=floor(sqrt(nquads*2));
+0017 <span class="keyword">if</span> nquads ~= nchans*(nchans+1)/2; 
+0018     [nchans nquads]
+0019     error(<span class="string">'unexpected size for toquad'</span>);
+0020 <span class="keyword">end</span>
+0021 
+0022 ii=1;
+0023 A=zeros(nchans);
+0024 <span class="keyword">switch</span> order
+0025     <span class="keyword">case</span> <span class="string">'colwise'</span>
+0026         <span class="keyword">for</span> iRow=1:nchans;
+0027             <span class="keyword">for</span> iCol=1:iRow
+0028                 <span class="keyword">if</span> iRow==iCol;
+0029                     A(iRow,iCol)=toquad(ii);
+0030                 <span class="keyword">else</span>
+0031                     A(iRow,iCol)=toquad(ii)/2;
+0032                     A(iCol,iRow)=toquad(ii)/2;
+0033                 <span class="keyword">end</span>
+0034                 ii=ii+1;
+0035             <span class="keyword">end</span>
+0036         <span class="keyword">end</span>
+0037     <span class="keyword">case</span> <span class="string">'diagwise'</span>
+0038         <span class="keyword">for</span> iDiag=0:nchans-1
+0039             <span class="keyword">for</span> kk=1:(nchans-iDiag)
+0040                 iRow=kk+iDiag;
+0041                 iCol=kk;
+0042                 <span class="keyword">if</span> iRow==iCol;
+0043                     A(iRow,iCol)=toquad(ii);
+0044                 <span class="keyword">else</span>
+0045                     A(iRow,iCol)=toquad(ii)/2;
+0046                     A(iCol,iRow)=toquad(ii)/2;
+0047                 <span class="keyword">end</span>
+0048                 ii=ii+1;
+0049             <span class="keyword">end</span>
+0050         <span class="keyword">end</span>
+0051     <span class="keyword">otherwise</span>
+0052         error(<span class="string">'unexpected order'</span>);
+0053 <span class="keyword">end</span>
+0054 
+0055 <span class="comment">% eigenvectors &amp; values</span>
+0056 [V,D]=eig(A);
+0057 D=diag(D);
+0058 [~,idx]=sort(abs(D),<span class="string">'descend'</span>); 
+0059 D=D.^2/sum(D.^2);
+0060 V=V(:,idx);
+0061 D=D(idx);
+0062 tosquares=V;</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_sparse_filter</title>
+  <meta name="keywords" content="nt_sparse_filter">
+  <meta name="description" content="y=nt_sparse_filter(x,T,A) - convolve multichannel data with sparse impulse response">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_sparse_filter.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_sparse_filter
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_sparse_filter(x,T,A) - convolve multichannel data with sparse impulse response</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_sparse_filter(x,T,A) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_sparse_filter(x,T,A) - convolve multichannel data with sparse impulse response
+
+  y: result
+
+  x: data to convolve (columnwise)
+  T: times of non-zero samples of IR (can be fractionnary)
+  A: amplitude of non-zero samples of IR (default: all 1)
+
+ T and A together describe the impulse response.  A must have same size
+ as T.
+
+ If T is a column vector it is applied to all columns of x.
+
+ If T is a 2D matrix or 1D cell array each column or cell is applied to a
+ column of x (dimensions must fit).
+
+ If T is a 2D cell array it is interpreted as defining a multichannel 
+ impulse response. The cell on row I and column J is applied to column I
+ of x and the result is added to column J of y.
+
+ Fractionary lags are implemented by linear interpolation.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>	y=nt_sparse_filter(x,T,A) - convolve multichannel data with sparse impulse response</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>	y=nt_sparse_filter(x,T,A) - convolve multichannel data with sparse impulse response</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y=nt_sparse_filter(x,T,A)</a>
+0002 <span class="comment">%y=nt_sparse_filter(x,T,A) - convolve multichannel data with sparse impulse response</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: result</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data to convolve (columnwise)</span>
+0007 <span class="comment">%  T: times of non-zero samples of IR (can be fractionnary)</span>
+0008 <span class="comment">%  A: amplitude of non-zero samples of IR (default: all 1)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% T and A together describe the impulse response.  A must have same size</span>
+0011 <span class="comment">% as T.</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% If T is a column vector it is applied to all columns of x.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% If T is a 2D matrix or 1D cell array each column or cell is applied to a</span>
+0016 <span class="comment">% column of x (dimensions must fit).</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% If T is a 2D cell array it is interpreted as defining a multichannel</span>
+0019 <span class="comment">% impulse response. The cell on row I and column J is applied to column I</span>
+0020 <span class="comment">% of x and the result is added to column J of y.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Fractionary lags are implemented by linear interpolation.</span>
+0023 
+0024 <span class="keyword">if</span> nargin&lt;3; A=[]; <span class="keyword">end</span>
+0025 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0026 
+0027 <span class="comment">% check A or create</span>
+0028 <span class="comment">%if isvector(T); T=T(:); A=A(:); end</span>
+0029 <span class="keyword">if</span> isnumeric(T)
+0030     <span class="keyword">if</span> isempty(A); A=ones(size(T)); <span class="keyword">end</span>
+0031     <span class="keyword">if</span> ~isnumeric(A); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0032     <span class="keyword">if</span> size(A) ~= size(T); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0033     <span class="keyword">if</span> size(A,2) ~= 1 || (size(A,2) ~= size(x,2) &amp;&amp; size(A,2)~=1); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0034 <span class="keyword">elseif</span> iscell(T)
+0035     <span class="keyword">if</span> isempty(A); 
+0036         A=cell(size(T));
+0037         <span class="keyword">for</span> iCell=1:numel(T); A{iCell}=ones(size(T{iCell})); <span class="keyword">end</span>
+0038     <span class="keyword">end</span>
+0039     <span class="keyword">if</span> ~iscell(A); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0040     <span class="keyword">if</span> size(A) ~= size(T); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0041     <span class="keyword">if</span> size(A,1)~=size(x,2); error(<span class="string">'number of rows of cell array of IRs should equal number of columns of x'</span>); <span class="keyword">end</span>
+0042 <span class="keyword">end</span>
+0043 
+0044 
+0045 <span class="comment">% handle negative lags</span>
+0046 <span class="keyword">if</span> isnumeric(T)
+0047     a=min(T(:));
+0048     <span class="keyword">if</span> a&lt;0
+0049         x=[zeros(ceil(-a)),size(x,2)];
+0050         T=T+ceil(-a);
+0051     <span class="keyword">end</span>
+0052 <span class="keyword">elseif</span> iscell(T)
+0053     a=min(T{1,1}); 
+0054     <span class="keyword">for</span> iCell=1:numel(T)
+0055         a=min(a,min(T{iCell}));
+0056     <span class="keyword">end</span>
+0057     <span class="keyword">if</span> a&lt;0
+0058         x=[zeros(ceil(-a)),size(x,2)];
+0059         <span class="keyword">for</span> iCell=1:numel(T)
+0060             T{iCell}=T{iCell}+ceil(-a);
+0061         <span class="keyword">end</span>
+0062     <span class="keyword">end</span>
+0063 <span class="keyword">else</span>; error(<span class="string">'!'</span>); <span class="keyword">end</span> <span class="comment">% neither matrix nor cell</span>
+0064 
+0065 <span class="comment">% estimate nrows of result</span>
+0066 <span class="keyword">if</span> isnumeric(T)
+0067     b=max(T(:));
+0068 <span class="keyword">else</span>
+0069     b=max(T{1,1});
+0070     <span class="keyword">for</span> iCell=1:numel(T)
+0071         b=max(b,max(T{iCell}));
+0072     <span class="keyword">end</span>
+0073 <span class="keyword">end</span>
+0074 b=ceil(b);
+0075 
+0076 [nsamples,ncolsx]=size(x);
+0077 
+0078 <span class="keyword">if</span> isnumeric(T) &amp;&amp; size(T,2)==1 
+0079     <span class="comment">% apply same IR to all columns of x</span>
+0080     y=zeros(nsamples+b, ncolsx);
+0081     <span class="keyword">for</span> iPulse=1:numel(T);
+0082         t=T(iPulse);
+0083         integT=floor(t); 
+0084         fracT=t-integT;
+0085         y(integT+(1:nsamples),:) = y(integT+(1:nsamples),:) + x*(1-fracT)*A(iPulse);
+0086         <span class="keyword">if</span> fracT; y(1+integT+(1:nsamples),:) = y(1+integT+(1:nsamples),:) + x*fracT*A(iPulse); <span class="keyword">end</span>
+0087     <span class="keyword">end</span>
+0088 <span class="keyword">end</span>
+0089 
+0090 <span class="keyword">if</span> isnumeric(T) &amp;&amp; size(T,2)&gt;1
+0091     <span class="comment">% apply different IR to each column of x</span>
+0092     y=zeros(nsamples+b, ncolsx);
+0093     <span class="keyword">for</span> iCol=1:ncolsx
+0094         <span class="keyword">for</span> iPulse=1:numel(T(:,iCol));
+0095             t=T(iPulse,iCol);
+0096             integT=floor(t); 
+0097             fracT=t-integT;
+0098             1-fracT
+0099             y(integT+(1:nsamples),iCol) = y(integT+(1:nsamples),iCol) + x(:,iCol)*(1-fracT)*A(iPulse,iCol);
+0100             <span class="keyword">if</span> fracT; y(1+integT+(1:nsamples),iCol) = y(1+integT+(1:nsamples),iCol) + x(:,iCol)*fracT*A(iPulse,iCol); <span class="keyword">end</span>
+0101         <span class="keyword">end</span>
+0102     <span class="keyword">end</span>
+0103 <span class="keyword">end</span>
+0104 
+0105 <span class="keyword">if</span> iscell(T) &amp;&amp; numel(T)==ncolsx
+0106     <span class="comment">% apply one IR to each column, no cross-terms</span>
+0107     y=zeros(nsamples+b, ncolsx);
+0108     <span class="keyword">for</span> iCol=1:ncolsx
+0109         <span class="keyword">for</span> iPulse=1:numel(T{iCol});
+0110             t=T{iCol}(iPulse);
+0111             integT=floor(t); 
+0112             fracT=t-integT;
+0113             y(integT+(1:nsamples),iCol) = y(integT+(1:nsamples),iCol) + x(:,iCol)*(1-fracT)*A{iCol}(iPulse);
+0114             <span class="keyword">if</span> fracT; y(1+integT+(1:nsamples),iCol) = y(1+integT+(1:nsamples),iCol) + x(:,iCol)*fracT*A{iCol}(iPulse); <span class="keyword">end</span>
+0115         <span class="keyword">end</span>
+0116     <span class="keyword">end</span>
+0117 <span class="keyword">end</span>
+0118 
+0119 <span class="keyword">if</span> iscell(T) &amp;&amp; size(T,1)==ncolsx 
+0120     ncolsy=size(T,2);
+0121     <span class="comment">% full multichannel IR with cross-terms</span>
+0122     y=zeros(nsamples+b, ncolsy);
+0123     <span class="keyword">for</span> iRow=1:ncolsx
+0124         <span class="keyword">for</span> iCol=1:ncolsy
+0125             <span class="keyword">for</span> iPulse=1:numel(T{iRow,iCol})
+0126                 t=T{iRow,iCol}(iPulse);
+0127                 integT=floor(t); 
+0128                 fracT=t-integT;
+0129                 y(integT+(1:nsamples),iCol) = y(integT+(1:nsamples),iCol) + x(:,iRow)*(1-fracT)*A{iRow,iCol}(iPulse);
+0130                 <span class="keyword">if</span> fracT; y(1+integT+(1:nsamples),iCol) = y(1+integT+(1:nsamples),iCol) + x(iRow)*fracT*A{iRow,iCol}(iPulse); <span class="keyword">end</span>
+0131             <span class="keyword">end</span>
+0132         <span class="keyword">end</span>
+0133     <span class="keyword">end</span>
+0134 <span class="keyword">end</span>
+0135 
+0136 
+0137 <span class="keyword">return</span>
+0138 
+0139 <span class="comment">% test code</span>
+0140 x=randn(1000,1);
+0141 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,[0]);
+0142 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0143 
+0144 x=randn(1000,1);
+0145 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,[0.5]);
+0146 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0147 
+0148 x=randn(1000,1);
+0149 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,[10]);
+0150 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0151 
+0152 x=randn(1000,1);
+0153 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,[1:10]);
+0154 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0155 
+0156 x=randn(1000,1);
+0157 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,[1:10], ones(1,10));
+0158 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0159 
+0160 x=randn(1000,2);
+0161 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,[1:10], ones(1,10));
+0162 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0163 
+0164 x=randn(1000,2);
+0165 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,[1:10], ones(2,10));
+0166 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0167 
+0168 x=randn(1000,2);
+0169 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,{ones(1,10),ones(1,10)});
+0170 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0171 
+0172 x=randn(1000,1);
+0173 y=<a href="nt_sparse_filter.html" class="code" title="function y=nt_sparse_filter(x,T,A)">nt_sparse_filter</a>(x,{ones(1,10),ones(1,10)});
+0174 figure(1); clf; subplot 211; plot(x); subplot 212; plot(y);
+0175 
+0176             
+0177</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

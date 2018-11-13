@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_spect_plot</title>
+  <meta name="keywords" content="nt_spect_plot">
+  <meta name="description" content="nt_spect_plot - plot power spectrum">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_spect_plot.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_spect_plot
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>nt_spect_plot - plot power spectrum</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function varargout=nt_spect_plot(x,varargin) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">nt_spect_plot - plot power spectrum
+
+  The power spectral densities of all columns (pages, etc.) are calculated
+  and added.  The result is divided by the number of columns and either
+  plotted or returned.
+ 
+ See pwelch for syntax.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bias_cluster.html" class="code" title="function [c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags)">nt_bias_cluster</a>	[c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags) - cluster covariance</li><li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li><li><a href="nt_spect_plot2.html" class="code" title="function varargout=nt_spect_plot2(x,varargin)">nt_spect_plot2</a>	nt_spect_plot2 - plot power spectrum</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function varargout=nt_spect_plot(x,varargin)</a>
+0002 <span class="comment">%nt_spect_plot - plot power spectrum</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  The power spectral densities of all columns (pages, etc.) are calculated</span>
+0005 <span class="comment">%  and added.  The result is divided by the number of columns and either</span>
+0006 <span class="comment">%  plotted or returned.</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% See pwelch for syntax.</span>
+0009 
+0010 <span class="keyword">if</span> numel(x)==0; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0011 
+0012 N=numel(x);
+0013 ncols=N/size(x,1);
+0014 x=reshape(x,size(x,1),ncols);
+0015 
+0016 [pxx,f]=pwelch(x(:,1),varargin{:});
+0017 
+0018 <span class="keyword">for</span> k=1:ncols
+0019     [a,b]=pwelch(x(:,k),varargin{:});
+0020     pxx=pxx+a;
+0021 <span class="keyword">end</span>
+0022 pxx=pxx/ncols;
+0023 
+0024 
+0025 <span class="keyword">if</span> nargout == 0;
+0026     plot(f,abs(pxx).^0.5);
+0027     set(gca,<span class="string">'yscale'</span>,<span class="string">'log'</span>);
+0028     xlim([f(1) f(end)]);
+0029     xlabel(<span class="string">'Hz'</span>); ylabel(<span class="string">'Hz^{-0.5}'</span>);
+0030     varargout={};
+0031 <span class="keyword">else</span>
+0032     varargout={pxx,f};
+0033 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

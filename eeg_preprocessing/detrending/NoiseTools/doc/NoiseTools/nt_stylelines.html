@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_stylelines</title>
+  <meta name="keywords" content="nt_stylelines">
+  <meta name="description" content="nt_stylelines(h,property,values) - apply different styles to lines of plot">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_stylelines.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_stylelines
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>nt_stylelines(h,property,values) - apply different styles to lines of plot</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function nt_stylelines(h,property,values) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">nt_stylelines(h,property,values) - apply different styles to lines of plot
+
+  h: handle to plot (default:gca)
+  property: property to set (default:linewidth)
+  values: cell array of values, one for each line
+
+ Values may be a numerical matrix, in which case each row is used as a
+ value.
+
+ Styles are applied to children of h in reverse order (ie in order of plot
+ commands).  May produce unexpected results if there are childern other
+ than plot lines.\
+ 
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function nt_stylelines(h,property,values)</a>
+0002 <span class="comment">%nt_stylelines(h,property,values) - apply different styles to lines of plot</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  h: handle to plot (default:gca)</span>
+0005 <span class="comment">%  property: property to set (default:linewidth)</span>
+0006 <span class="comment">%  values: cell array of values, one for each line</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% Values may be a numerical matrix, in which case each row is used as a</span>
+0009 <span class="comment">% value.</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% Styles are applied to children of h in reverse order (ie in order of plot</span>
+0012 <span class="comment">% commands).  May produce unexpected results if there are childern other</span>
+0013 <span class="comment">% than plot lines.\</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% NoiseTools</span>
+0016 
+0017 <span class="keyword">if</span> nargin&lt;1 || isempty(h); h=gca; <span class="keyword">end</span>
+0018 <span class="keyword">if</span> nargin&lt;2; property=[]; <span class="keyword">end</span>
+0019 <span class="keyword">if</span> nargin&lt;3; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0020 
+0021 <span class="keyword">if</span> isempty(property); property=<span class="string">'linewidth'</span>; <span class="keyword">end</span>
+0022 
+0023 c=get(h,<span class="string">'children'</span>);
+0024 
+0025 <span class="keyword">if</span> ~isa(values, <span class="string">'cell'</span>); 
+0026     values=num2cell(values,1);
+0027 <span class="keyword">end</span>
+0028 
+0029 
+0030 <span class="keyword">for</span> k=1:numel(c);
+0031     set(c(numel(c)-k+1),property,values{mod(k-1,numel(c))+1})
+0032 <span class="keyword">end</span>
+0033</pre></div>
+<hr><address>Generated on Mon 24-Feb-2014 14:13:21 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

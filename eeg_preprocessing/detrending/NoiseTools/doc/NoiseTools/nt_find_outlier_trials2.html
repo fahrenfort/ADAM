@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_find_outlier_trials2</title>
+  <meta name="keywords" content="nt_find_outlier_trials2">
+  <meta name="description" content="[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,mn,regress_flag) - find outlier trials">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_find_outlier_trials2.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_find_outlier_trials2
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,mn,regress_flag) - find outlier trials</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [idx,d]=nt_find_outlier_trials2(x,criterion,mn,regress_flag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,mn,regress_flag) - find outlier trials
+
+  idx: indices of trials to keep
+  d: relative deviations from mean
+  
+  x: data (time * channels * trials)
+  criterion: keep trials less than criterion from mean
+  mn: mean (default: calculate from data) 
+  regress_flag: if true regress out mean, rather than subtract
+
+  For example criterion=2 rejects trials that deviate from the mean by
+  more than twice the average deviation from the mean.
+
+  Use nt_find_outlier_trials instead to remove a fixed proportion of trials.
+
+  If no output arguments are specified, plots 'd'.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_find_outlier_trials2.html" class="code" title="function [idx,d]=nt_find_outlier_trials2(x,criterion,mn,regress_flag)">nt_find_outlier_trials2</a>	[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,mn,regress_flag) - find outlier trials</li><li><a href="nt_tsregress.html" class="code" title="function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)">nt_tsregress</a>	[z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold) - time-shift regression</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_find_outlier_trials2.html" class="code" title="function [idx,d]=nt_find_outlier_trials2(x,criterion,mn,regress_flag)">nt_find_outlier_trials2</a>	[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,mn,regress_flag) - find outlier trials</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [idx,d]=nt_find_outlier_trials2(x,criterion,mn,regress_flag)</a>
+0002 <span class="comment">%[idx,d,mn,idx_unsorted]=nt_find_outlier_trials(x,criterion,mn,regress_flag) - find outlier trials</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  idx: indices of trials to keep</span>
+0005 <span class="comment">%  d: relative deviations from mean</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data (time * channels * trials)</span>
+0008 <span class="comment">%  criterion: keep trials less than criterion from mean</span>
+0009 <span class="comment">%  mn: mean (default: calculate from data)</span>
+0010 <span class="comment">%  regress_flag: if true regress out mean, rather than subtract</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">%  For example criterion=2 rejects trials that deviate from the mean by</span>
+0013 <span class="comment">%  more than twice the average deviation from the mean.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">%  Use nt_find_outlier_trials instead to remove a fixed proportion of trials.</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">%  If no output arguments are specified, plots 'd'.</span>
+0018 <span class="comment">%</span>
+0019 
+0020 <span class="keyword">if</span> nargin&lt;2; criterion=inf; <span class="keyword">end</span>
+0021 <span class="keyword">if</span> nargin&lt;3; mn=[]; <span class="keyword">end</span>
+0022 <span class="keyword">if</span> nargin&lt;4; regress_flag=0; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> ndims(x)~=3; error(<span class="string">'x should be 3D'</span>); <span class="keyword">end</span>
+0024 
+0025 <span class="keyword">if</span> nargout==0;
+0026     [idx,d]=<a href="nt_find_outlier_trials2.html" class="code" title="function [idx,d]=nt_find_outlier_trials2(x,criterion,mn,regress_flag)">nt_find_outlier_trials2</a>(x,criterion,mn,regress_flag);
+0027     plot(d,<span class="string">'.-'</span>);
+0028     xlabel(<span class="string">'trial'</span>); ylabel(<span class="string">'normalized deviation from mean'</span>); 
+0029     clear idx d mn idx_unsorted
+0030     <span class="keyword">return</span>
+0031 <span class="keyword">end</span>
+0032 
+0033 [m,n,o]=size(x);
+0034 x=reshape(x,m*n,o);
+0035 
+0036 <span class="keyword">if</span> isempty(mn); mn=mean(x,2); <span class="keyword">end</span>
+0037 <span class="keyword">if</span> regress_flag
+0038     mn=<a href="nt_tsregress.html" class="code" title="function [z,idx]=nt_tsregress(x,y,shifts,xw,yw,keep,threshold)">nt_tsregress</a>(x,mean(x,2));  <span class="comment">% regression</span>
+0039 <span class="keyword">else</span>
+0040     mn=repmat(mn(:),1,o);       <span class="comment">% mean</span>
+0041 <span class="keyword">end</span>
+0042 d=x-mn; <span class="comment">% difference from mean</span>
+0043 <span class="keyword">if</span> 0 
+0044     d=sum(d.^2);
+0045 <span class="keyword">else</span> <span class="comment">% to save memory</span>
+0046     dd=zeros(1,size(d,2));
+0047     <span class="keyword">for</span> k=1:size(d,2); dd(k)=sum(d(:,k).^2); <span class="keyword">end</span>
+0048     d=dd; clear dd;
+0049 <span class="keyword">end</span>
+0050 d=d/(sum(x(:).^2)/o);
+0051 
+0052 <span class="comment">%</span>
+0053 <span class="comment">%</span>
+0054 <span class="comment">% if isempty(mn); mn=mean(x,2); end</span>
+0055 <span class="comment">% if isnan(mn)</span>
+0056 <span class="comment">%     mn=nt_tsregress(x,mean(x,2));  % distance from regression</span>
+0057 <span class="comment">% else</span>
+0058 <span class="comment">%     mn2=repmat(mn(:),1,o);       % distance from mean</span>
+0059 <span class="comment">% end</span>
+0060 <span class="comment">% d=x-mn2;</span>
+0061 
+0062 
+0063 <span class="comment">%d=mean(d.^2);</span>
+0064 <span class="comment">%d=d/sqrt(mean(d.^2));</span>
+0065 <span class="comment">%d=mean(d.^2)/mean(mn.^2);</span>
+0066 
+0067 idx=find(d&lt;criterion);
+0068 
+0069 <span class="comment">% [dd,idx]=sort(d,'ascend');</span>
+0070 <span class="comment">% idx=idx(find(dd&lt;criterion));</span>
+0071 <span class="comment">% idx_unsorted=idx;</span>
+0072 <span class="comment">% idx=sort(idx); % put them back in natural order</span>
+0073 <span class="comment">% mn=mean(x(:,idx),2);</span>
+0074 
+0075 
+0076 <span class="keyword">if</span> nargout==0;
+0077     plot(d);
+0078 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Mon 10-Nov-2014 14:40:42 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

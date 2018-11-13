@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of test_nt_star</title>
+  <meta name="keywords" content="test_nt_star">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">TEST</a> &gt; test_nt_star.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/TEST&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>test_nt_star
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 clear
+0002 
+0003 <span class="comment">%{</span>
+0004 Test 1:
+0005 N channels,  1 sinusoidal target, N-3 noise sources, temporally local
+0006 artifacts on each channel.
+0007 <span class="comment">%}</span>
+0008 
+0009 nsamples=1000;
+0010 f=2;
+0011 target=sin((1:nsamples)'/nsamples*2*pi*f);
+0012 nchans=10;
+0013 noise=randn(nsamples,nchans-3);
+0014 
+0015 SNR=sqrt(1);
+0016 x0=nt_normcol(noise*randn(size(noise,2),nchans))+ SNR * target*randn(1,nchans);
+0017 x0=nt_demean(x0);
+0018 artifact=zeros(size(x0));
+0019 <span class="keyword">for</span> k=1:nchans
+0020     artifact( (k-1)*100 + (1:20) , k)=1;
+0021 <span class="keyword">end</span>
+0022 x=x0+20*artifact;
+0023 
+0024 [y,w]=nt_star(x,2); 
+0025 figure(1); clf; subplot 311; plot(x); subplot 312;  plot(y); title([<span class="string">'SNR= '</span> ,num2str(SNR)]);
+0026 subplot 313; plot(nt_demean(y-x0));
+0027 
+0028 SNR=sqrt(10^-7);
+0029 x0=nt_normcol(noise*randn(size(noise,2),nchans))+ SNR * target*randn(1,nchans);
+0030 x0=nt_demean(x0);
+0031 artifact=zeros(size(x0));
+0032 <span class="keyword">for</span> k=1:nchans
+0033     artifact( (k-1)*100 + (1:20) , k)=1;
+0034 <span class="keyword">end</span>
+0035 x=x0+20*artifact;
+0036 
+0037 <span class="comment">%x=[x,x(:,1)]; % make data rank deficient</span>
+0038 
+0039 [y,w]=nt_star(x,2); 
+0040 
+0041 figure(2); clf; subplot 311; plot(x);title([<span class="string">'SNR= '</span> ,num2str(SNR)]);
+0042 subplot 312;  plot(y); title(<span class="string">'artifact removed'</span>);
+0043 subplot 313; plot(nt_demean(y-x0)); title(<span class="string">'error after artifact removal'</span>)
+0044 
+0045 
+0046 x=nt_demean(x);
+0047 y=nt_demean(y);
+0048 
+0049 c0=nt_cov(x);
+0050 c1=nt_cov(nt_detrend(x,2,[],<span class="string">'sinusoids'</span>));
+0051 todss=nt_dss0(c0,c1);
+0052 z1=nt_normcol(nt_mmat(x,todss));
+0053 c0=nt_cov(y);
+0054 c1=nt_cov(nt_detrend(y,2,[],<span class="string">'sinusoids'</span>));
+0055 todss=nt_dss0(c0,c1);
+0056 z2=nt_normcol(nt_mmat(y,todss));
+0057 
+0058 figure(3); clf; set(gcf, <span class="string">'color'</span>,[1 1 1], <span class="string">'position'</span>, [300   500   520 600])
+0059 
+0060 subplot 511
+0061 plot(target)
+0062 set(gca,<span class="string">'fontsize'</span>, 14, <span class="string">'xtick'</span>,[], <span class="string">'ytick'</span>, []);
+0063 ylim([-1.1 1.1]); title(<span class="string">'target'</span>)
+0064 
+0065 subplot 512
+0066 plot(x)
+0067 set(gca,<span class="string">'fontsize'</span>, 14, <span class="string">'xtick'</span>,[], <span class="string">'ytick'</span>, []);
+0068 mn=min(x(:)); mx=max(x(:));
+0069 ylim([mn-(mx-mn)*0.1, mx+(mx-mn)*0.1])
+0070 title(<span class="string">'mixed with noise and artifacts'</span>)
+0071 
+0072 subplot 513
+0073 plot(y)
+0074 set(gca,<span class="string">'fontsize'</span>, 14, <span class="string">'xtick'</span>,[], <span class="string">'ytick'</span>, []);
+0075 title(<span class="string">'STAR'</span>)
+0076 
+0077 subplot 515
+0078 plot(z2(:,end));
+0079 mn=min(z2(:,end)); mx=max(z2(:,end));
+0080 set(gca,<span class="string">'fontsize'</span>, 14, <span class="string">'ytick'</span>, []); xlabel(<span class="string">'samples'</span>);
+0081 ylim([mn-(mx-mn)*0.1, mx+(mx-mn)*0.1])
+0082 <span class="comment">%text(800,mx-(mx-mn)*0.1, 'SNR=10^-8','fontsize',14)</span>
+0083 title(<span class="string">'STAR + JD'</span>)
+0084 
+0085 subplot 514
+0086 plot(z1(:,end));
+0087 set(gca,<span class="string">'fontsize'</span>, 14, <span class="string">'xtick'</span>,[], <span class="string">'ytick'</span>, []);
+0088 mn=min(z1(:,end)); mx=max(z1(:,end));
+0089 ylim([mn-(mx-mn)*0.1, mx+(mx-mn)*0.1])
+0090 title(<span class="string">'JD'</span>)
+0091 
+0092 
+0093 
+0094</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

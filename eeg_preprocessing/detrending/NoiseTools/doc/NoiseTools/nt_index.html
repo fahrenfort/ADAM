@@ -1,0 +1,623 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_index</title>
+  <meta name="keywords" content="nt_index">
+  <meta name="description" content="[status,p]=nt_index(name,p,forceUpdate) - index data files &amp; directories">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_index.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_index
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[status,p]=nt_index(name,p,forceUpdate) - index data files &amp; directories</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [status,p]=nt_index(name,p,forceUpdate) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[status,p]=nt_index(name,p,forceUpdate) - index data files &amp; directories
+
+  status: 1: needed indexing, 0: didn't, -1: failed
+  p: parameter structure
+
+  name: name(s) of file(s) or directory to index
+  p: parameters
+  forceUpdate: if true force indexing [default: false]
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_idx.html" class="code" title="function i=nt_idx(x,scale,i)">nt_idx</a>	i=nt_idx(x,scale,i) - index a data matrix</li><li><a href="nt_index.html" class="code" title="function [status,p]=nt_index(name,p,forceUpdate)">nt_index</a>	[status,p]=nt_index(name,p,forceUpdate) - index data files & directories</li><li><a href="nt_whoss.html" class="code" title="function varargout=nt_whoss">nt_whoss</a>	size=nt_whoss - total Gbytes used by variables</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_index.html" class="code" title="function [status,p]=nt_index(name,p,forceUpdate)">nt_index</a>	[status,p]=nt_index(name,p,forceUpdate) - index data files & directories</li><li><a href="nt_iplot.html" class="code" title="function [hh,ii]=nt_iplot(name)">nt_iplot</a>	[hh,ii]=nt_iplot(fname) - plot data file based on index</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function ii=index(x,p)</a></li><li><a href="#_sub2" class="code">function date=dateModified(name)</a></li><li><a href="#_sub3" class="code">function [isdata,type]=filetype(name)</a></li><li><a href="#_sub4" class="code">function x=readmatlab(name,varname)</a></li><li><a href="#_sub5" class="code">function s=myfieldnamesr(x)</a></li><li><a href="#_sub6" class="code">function iii=merge_file_indexes(d, dname)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [status,p]=nt_index(name,p,forceUpdate)</a>
+0002 <span class="comment">%[status,p]=nt_index(name,p,forceUpdate) - index data files &amp; directories</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  status: 1: needed indexing, 0: didn't, -1: failed</span>
+0005 <span class="comment">%  p: parameter structure</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  name: name(s) of file(s) or directory to index</span>
+0008 <span class="comment">%  p: parameters</span>
+0009 <span class="comment">%  forceUpdate: if true force indexing [default: false]</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% NoiseTools</span>
+0012 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0013 
+0014 <span class="keyword">if</span> nargin&lt;3 || isempty(forceUpdate); forceUpdate=0; <span class="keyword">end</span> 
+0015 <span class="keyword">if</span> nargin&lt;2||isempty(p) <span class="comment">% set default parameters</span>
+0016     p=[];
+0017     p.scale=1000;
+0018     <span class="keyword">if</span> nargin &gt;= 1; p.name=name; <span class="keyword">end</span>    
+0019 <span class="keyword">end</span>
+0020 <span class="keyword">if</span> nargin&lt;1 || isempty(name)
+0021     p.name=[];
+0022     status=-1;
+0023     <span class="keyword">return</span>;  <span class="comment">% just return default parameters</span>
+0024 <span class="keyword">end</span>
+0025 
+0026 status=-1; <span class="comment">% failed by default</span>
+0027 updateFlag=0;   <span class="comment">% don't update unless necessary</span>
+0028 <span class="keyword">if</span> forceUpdate; updateFlag=1; <span class="keyword">end</span>
+0029 
+0030 <span class="comment">% parse 'name' into path, etc., check it for various issues</span>
+0031 <span class="keyword">if</span> ~ischar(name); error(<span class="string">'name should be a string'</span>); <span class="keyword">end</span>
+0032 avoid=[<span class="string">'['</span>,1:31, 127,<span class="string">']'</span>];
+0033 <span class="keyword">if</span> regexp(name,avoid) 
+0034     disp(<span class="string">'bad character in file name, skip:'</span>); disp([<span class="string">'   &gt;'</span>,name,<span class="string">'&lt;'</span>]); 
+0035     <span class="keyword">return</span>; 
+0036 <span class="keyword">end</span>
+0037 <span class="keyword">if</span> name==<span class="string">'.'</span>; name=pwd; <span class="keyword">end</span>
+0038 <span class="keyword">if</span> name(end)==<span class="string">'/'</span>; name=name(1:end-1); <span class="keyword">end</span> 
+0039 [PATHSTR,NAME,EXT]=fileparts(name);
+0040 <span class="keyword">if</span> strcmp(EXT,<span class="string">'idx'</span>)
+0041     disp([<span class="string">'warning: '</span>, name, <span class="string">' might be index file'</span>]); 
+0042 <span class="keyword">end</span>
+0043 <span class="keyword">if</span> isempty(PATHSTR)             <span class="comment">% interpret relative to current directory</span>
+0044     name=[pwd,filesep,name];    <span class="comment">% need full path to safely use 'exist'</span>
+0045 <span class="keyword">end</span>
+0046 [PATHSTR,NAME,EXT]=fileparts(name); 
+0047 <span class="keyword">if</span> 2==exist(name) 
+0048     d=dir(name);
+0049     filename=d.name;            <span class="comment">% --&gt; same case as file system</span>
+0050     PATHSTR=cd(cd(PATHSTR));    <span class="comment">% --&gt; same case as file system</span>
+0051     name=[PATHSTR,filesep,filename];
+0052 <span class="keyword">elseif</span> 7==exist(name)
+0053     name=cd(cd(name));          <span class="comment">% --&gt; same case as file system</span>
+0054     [PATHSTR,NAME,EXT]=fileparts(name); 
+0055 <span class="keyword">else</span>
+0056     disp(name);
+0057     error(<span class="string">'...is neither file nor directory'</span>);
+0058 <span class="keyword">end</span>
+0059 
+0060 
+0061 hhh=[]; <span class="comment">% this structure will contain info about this file or directory</span>
+0062 iii=[]; <span class="comment">% this structure will contain the data index</span>
+0063 hhh.name=name;
+0064 hhh.time_indexed=now;
+0065 hhh.failed=0; <span class="comment">% OK by default</span>
+0066 
+0067 <span class="comment">% test whether we're processing a file or a directory</span>
+0068 <span class="keyword">if</span> 2==exist(name) 
+0069     hhh.isdir=0;
+0070 <span class="keyword">elseif</span> 7==exist(name)
+0071     hhh.isdir=1;
+0072 <span class="keyword">else</span>
+0073     disp(name);
+0074     error(<span class="string">'...is neither file nor directory'</span>);
+0075 <span class="keyword">end</span>
+0076 
+0077 <span class="comment">% special case:</span>
+0078 <span class="comment">% CTF data are stored as directory, pretend it's a file</span>
+0079 <span class="keyword">if</span> numel(name&gt;=3) &amp;&amp; strcmp(name(end-2:end), <span class="string">'.ds'</span>)
+0080     hhh.isdir=0;
+0081 <span class="keyword">end</span>
+0082         
+0083 <span class="comment">% create an index directory if it doesn't exist</span>
+0084 idxDir=[PATHSTR,filesep,<span class="string">'nt_idx'</span>];
+0085 <span class="keyword">if</span> 7 ~= exist(idxDir) 
+0086     disp([<span class="string">'creating index directory '</span>, idxDir]);
+0087     mkdir (idxDir);
+0088     updateFlag=1;
+0089 <span class="keyword">end</span>
+0090 
+0091 <span class="comment">% check if there is already an up-to-date index file for 'name'</span>
+0092 idxName=[idxDir,filesep,NAME,EXT,<span class="string">'.idx'</span>];
+0093 hhh.idxName=idxName;
+0094 <span class="keyword">if</span> ~2==exist(idxName); updateFlag=1; <span class="keyword">end</span>
+0095 <span class="keyword">if</span> exist(idxName) &amp;&amp; (<a href="#_sub2" class="code" title="subfunction date=dateModified(name)">dateModified</a>(idxName) &lt; <a href="#_sub2" class="code" title="subfunction date=dateModified(name)">dateModified</a>(name)) <span class="comment">% out of dat</span>
+0096     updateFlag=1;
+0097 <span class="keyword">end</span>
+0098 
+0099 <span class="comment">%{</span>
+0100 Processing depends on whether <span class="string">'name'</span> is a file or a directory.
+0101 If a file, we calculate statistics to <a href="#_sub1" class="code" title="subfunction ii=index(x,p)">index</a> the data within that file.
+0102 If a directory, we aggregate statistics on its files and subdirectories. 
+0103 <span class="comment">%}</span>
+0104 
+0105 <span class="keyword">if</span> hhh.isdir <span class="comment">% directory</span>
+0106         
+0107     disp([name,filesep]);
+0108     
+0109     <span class="comment">% check that 'name' matches a name listed in parent directory (catch upper/lowercase inconsistencies)</span>
+0110     d=dir(PATHSTR);
+0111     OKflag=0;
+0112     <span class="keyword">for</span> iFile=1:numel(d)
+0113         <span class="keyword">if</span> strcmp(d(iFile).name,[NAME,EXT])
+0114             OKflag=1;
+0115         <span class="keyword">end</span>
+0116     <span class="keyword">end</span>
+0117     <span class="keyword">if</span> ~OKflag; error([<span class="string">''''</span>, NAME,EXT, <span class="string">''' does not match real file name'</span>]); <span class="keyword">end</span>   
+0118 
+0119     <span class="comment">% list items in this directory</span>
+0120     d=dir(name);
+0121     iGood=ones(numel(d),1);
+0122     nskip=0;
+0123     <span class="keyword">for</span> k=1:numel(iGood)       <span class="comment">% weed out irrelevant/bad files</span>
+0124         <span class="keyword">if</span> strcmp(d(k).name,<span class="string">'.'</span>) || strcmp(d(k).name,<span class="string">'..'</span>)  <span class="comment">% me &amp; parent dirs</span>
+0125             iGood(k)=0; 
+0126         <span class="keyword">elseif</span> d(k).name(1)==<span class="string">'.'</span>                           <span class="comment">% files starting with '.'</span>
+0127             iGood(k)=0; nskip = nskip+1; 
+0128             disp([<span class="string">'skip, starts with ''.'': '</span>,name,filesep,d(k).name]);
+0129         <span class="keyword">end</span>                             
+0130         <span class="keyword">if</span> strcmp(d(k).name,<span class="string">'nt_idx'</span>)                     <span class="comment">% index directory</span>
+0131             iGood(k)=0; nskip=nskip+1; 
+0132         <span class="keyword">end</span>      
+0133         <span class="keyword">if</span> any(d(k).name&lt;33) || any(d(k).name==127)      <span class="comment">% files with bad chars in names</span>
+0134             iGood(k)=0; nskip=nskip+1;
+0135             disp([<span class="string">'skip, bad char in name: '</span>,name,filesep,d(k).name]);
+0136         <span class="keyword">end</span> 
+0137         <span class="keyword">if</span> isempty(d(k).date)                            <span class="comment">% no date field ==&gt; invalid file (soft link?)</span>
+0138             iGood(k)=0; nskip=nskip+1; 
+0139             disp([<span class="string">'skip, invalid file: '</span>,name,filesep,d(k).name]);
+0140         <span class="keyword">end</span> 
+0141     <span class="keyword">end</span>
+0142     d=d(iGood~=0);
+0143     nfiles=numel(d);
+0144     
+0145     <span class="comment">% recursively index files in this directory</span>
+0146     <span class="keyword">for</span> iFile=1:nfiles
+0147         <span class="keyword">if</span> d(iFile).name(end)==<span class="string">'/'</span>
+0148             disp(d)
+0149         <span class="keyword">end</span>
+0150         <span class="keyword">if</span> 1==<a href="nt_index.html" class="code" title="function [status,p]=nt_index(name,p,forceUpdate)">nt_index</a>([name,filesep,d(iFile).name],p,forceUpdate) <span class="comment">% recurse</span>
+0151             updateFlag=1;  <span class="comment">% one of my files updated, update me too</span>
+0152         <span class="keyword">end</span>        
+0153     <span class="keyword">end</span>   
+0154     
+0155     <span class="comment">% purge my index directory of any orphan index files (no associated data file)</span>
+0156     dd=dir(idxDir);
+0157     iGood2=ones(numel(dd),1);
+0158     <span class="keyword">for</span> k=1:numel(iGood2)      
+0159         <span class="keyword">if</span> dd(k).name(1)==<span class="string">'.'</span>; iGood2(k)=0; <span class="keyword">end</span>             <span class="comment">% files starting with '.'</span>
+0160         <span class="keyword">if</span> strcmp(dd(k).name,<span class="string">'nt_idx'</span>); iGood2(k)=0; <span class="keyword">end</span>    <span class="comment">% index directory</span>
+0161     <span class="keyword">end</span>
+0162     dd=dd(iGood2~=0);
+0163     iGood3=ones(numel(dd),1);
+0164     <span class="keyword">for</span> iFile=1:numel(iGood3)
+0165         [~,NAME2,EXT2]=fileparts(dd(iFile).name);           <span class="comment">% name of index file</span>
+0166         theFile=[PATHSTR,filesep,NAME2];                    <span class="comment">% associate data file</span>
+0167         <span class="keyword">if</span> 2~=exist(theFile) <span class="keyword">...</span><span class="comment">        % neither file...</span>
+0168                 &amp;&amp; 7~=exist(theFile)    <span class="comment">% nor directory...</span>
+0169             disp([<span class="string">'&gt;'</span>,dd(iFile).name,<span class="string">'&lt;'</span>])
+0170             disp([theFile, <span class="string">' not found, '</span>]);
+0171             disp([<span class="string">'deleting orphan index file '</span>,[idxDir,filesep,dd(iFile).name]]);
+0172             delete([idxDir,filesep,dd(iFile).name]);
+0173             iGood3(iFile)=0;
+0174         <span class="keyword">end</span>
+0175     <span class="keyword">end</span>
+0176     dd=dd(iGood3~=0);
+0177     
+0178     <span class="comment">% all the files in this directory &amp; subdirectories are now checked/updated</span>
+0179     
+0180     <span class="comment">% merge info about this directory, files, &amp; subdirectories into index</span>
+0181     <span class="keyword">if</span> updateFlag
+0182         
+0183         <span class="comment">% info about this directory</span>
+0184         hhh.dir=d;                  <span class="comment">% my directory structure, excluding bad files</span>
+0185                 
+0186         <span class="comment">% init aggregated statistics</span>
+0187         hhh.nfiles=uint64(1);   <span class="comment">% number of files</span>
+0188         hhh.ndata=0;            <span class="comment">% number of data files</span>
+0189         hhh.nbad=0;             <span class="comment">% number of bad files</span>
+0190         hhh.nskip=nskip;        <span class="comment">% number of files skipped</span>
+0191         hhh.ndirs=uint64(1);    <span class="comment">% number of directories</span>
+0192         hhh.bytes=uint64(0);    <span class="comment">% number of bytes</span>
+0193         hhh.ntypes=[];          <span class="comment">% list with number of files of each type</span>
+0194         hhh.depth=1;            <span class="comment">% depth of hierarchy (1=leaf)</span>
+0195         
+0196         <span class="comment">% init info variables for each file/directory in this directory</span>
+0197         hhh.filelist.bytes=zeros(nfiles,1,<span class="string">'uint64'</span>);       <span class="comment">% bytes (file) or total bytes (directory)</span>
+0198         hhh.filelist.isdir=nan(nfiles,1);                  <span class="comment">% directory?</span>
+0199         hhh.filelist.nfiles=zeros(nfiles,1,<span class="string">'uint64'</span>);      <span class="comment">% number of files (including files in subdirectories)</span>
+0200         
+0201         <span class="comment">% visit each file or directory, aggregate information</span>
+0202         <span class="keyword">for</span> iFile=1:nfiles
+0203             
+0204             <span class="comment">% get info from this file's index file to save time</span>
+0205             load(<span class="string">'-mat'</span>,[name,filesep,<span class="string">'nt_idx'</span>,filesep,d(iFile).name,<span class="string">'.idx'</span>], <span class="string">'hh'</span>);  
+0206 
+0207             <span class="comment">% info specific to this file/directory</span>
+0208             hhh.filelist.bytes(iFile)=hh.bytes;
+0209             hhh.filelist.isdir(iFile)=hh.isdir;
+0210             hhh.filelist.nfiles(iFile)=hh.nfiles;
+0211             
+0212             <span class="comment">% aggregate info</span>
+0213             hhh.bytes=hhh.bytes+hh.bytes;
+0214             hhh.ndirs=hhh.ndirs+hh.ndirs;
+0215             hhh.ndata=hhh.ndata+hh.ndata;
+0216             hhh.nbad=hhh.nbad+hh.nbad;
+0217             hhh.nfiles=hhh.nfiles+hh.nfiles;   
+0218             hhh.bytes=hhh.bytes+hh.bytes;
+0219             hhh.nskip=hhh.nskip+hh.nskip;
+0220             hhh.depth=max(hhh.depth,1+hh.depth);
+0221             
+0222             <span class="comment">% aggregate counts of each file type</span>
+0223             types=<a href="#_sub5" class="code" title="subfunction s=myfieldnamesr(x)">myfieldnamesr</a>(hh.ntypes);
+0224             <span class="keyword">for</span> iType=1:numel(types)
+0225                 <span class="keyword">if</span> isfield(hhh.ntypes,types(iType))
+0226                     <span class="comment">%eval(['hhh.ntypes.',types{iType},'=hhh.ntypes.',types{iType},'+hh.ntypes.',types{iType},';']);</span>
+0227                     hhh.ntypes.(types{iType})=hhh.ntypes.(types{iType}) + hh.ntypes.(types{iType});
+0228                 <span class="keyword">else</span>
+0229                     eval([<span class="string">'hhh.ntypes.'</span>,types{iType},<span class="string">'=hh.ntypes.'</span>,types{iType},<span class="string">';'</span>]);
+0230 <span class="comment">%                   hhh.ntypes.(types{iType})= hh.ntypes.(types{iType}); dumb matlab can't do this properly</span>
+0231                 <span class="keyword">end</span>
+0232             <span class="keyword">end</span>
+0233             
+0234         <span class="keyword">end</span>
+0235         
+0236         <span class="comment">% merge the indexes of files &amp; subdirectories to create an aggregate index</span>
+0237         
+0238         iii=<a href="#_sub6" class="code" title="subfunction iii=merge_file_indexes(d, dname)">merge_file_indexes</a>(d,[PATHSTR,filesep,NAME]);
+0239         
+0240     <span class="keyword">end</span> <span class="comment">% if updateflag</span>
+0241         
+0242 <span class="keyword">else</span>  <span class="comment">% file</span>
+0243     
+0244     <span class="comment">%disp(name)</span>
+0245     hhh.isdata=0;
+0246     
+0247     <span class="keyword">if</span> numel(name&gt;=3) &amp;&amp; strcmp(name(end-2:end), <span class="string">'.ds'</span>) <span class="comment">% intercept CTF data</span>
+0248         [a,b,c] = fileparts(name);
+0249         name=[name,filesep,b,<span class="string">'.meg4'</span>];
+0250     <span class="keyword">end</span>
+0251        
+0252     <span class="keyword">if</span> updateFlag
+0253         
+0254         <span class="comment">% info common to all files</span>
+0255         hhh.nfiles=uint64(1); <span class="comment">% just me</span>
+0256         d=dir(name);
+0257         hhh.bytes=uint64(d.bytes);
+0258         hhh.sr=[];
+0259         hhh.depth=0;
+0260         
+0261         <span class="comment">% default values:</span>
+0262         hhh.ndirs=uint64(0); 
+0263         hhh.nbad=0; 
+0264         hhh.ndata=0;
+0265         hhh.nskip=0;
+0266         
+0267         <span class="comment">% determine file type</span>
+0268         [isdata,type]=<a href="#_sub3" class="code" title="subfunction [isdata,type]=filetype(name)">filetype</a>(name);
+0269         hhh.isdata=isdata;
+0270         hhh.type=type;
+0271         
+0272         <span class="comment">% set field in hhh.ntypes</span>
+0273         fixedtype=strrep(type,<span class="string">':'</span>,<span class="string">'___'</span>); <span class="comment">% biosig uses ':' in type names</span>
+0274         <span class="keyword">try</span>
+0275             eval([<span class="string">'hhh.ntypes.'</span>,fixedtype,<span class="string">'=1;'</span>]);
+0276         <span class="keyword">catch</span>
+0277             disp([<span class="string">'hhh.ntypes.'</span>,fixedtype,<span class="string">'=1;'</span>]);
+0278             disp(name);
+0279             disp(type);
+0280             warning(<span class="string">'eval failed'</span>);
+0281         <span class="keyword">end</span>
+0282         
+0283         <span class="comment">% data: read it</span>
+0284         <span class="keyword">if</span> hhh.isdata
+0285             x=[];
+0286             hhh.size=[];   
+0287             hhh.originalsize=[]; <span class="comment">% before reshape/transpose</span>
+0288             hhh.ndata=1;
+0289             [a,b,c]=fileparts(type);
+0290             <span class="keyword">if</span> strcmp(b,<span class="string">'matlab'</span>)
+0291                 <span class="comment">% read matlab variable from file</span>
+0292                 variable_name=c(2:end); <span class="comment">% was coded as extension to type</span>
+0293                 x=<a href="#_sub4" class="code" title="subfunction x=readmatlab(name,varname)">readmatlab</a>(name,variable_name);
+0294             <span class="keyword">elseif</span> strcmp(type,<span class="string">'unknown'</span>) || strcmp(type,<span class="string">'matlab_non_numeric'</span>)
+0295                 <span class="comment">% shouldn't happen</span>
+0296                 error(<span class="string">'!'</span>);
+0297             <span class="keyword">else</span>
+0298                 <span class="comment">% some data file, try to read with biosig</span>
+0299                 <span class="keyword">try</span>
+0300                     h=sopen(name);
+0301                     hhh.sr=h.SampleRate;
+0302                 <span class="keyword">catch</span> ME
+0303                     hhh.failed=1;
+0304                     disp(name);
+0305                     warning(<span class="string">'...sopen failed'</span>);
+0306                     disp(ME);
+0307                 <span class="keyword">end</span>
+0308                 <span class="keyword">try</span>
+0309                     x=sread(h);
+0310                 <span class="keyword">catch</span> ME
+0311                     hhh.failed=1;
+0312                     disp(name)
+0313                     disp(ME);
+0314                     warning(<span class="string">'...sread failed'</span>);
+0315                     x=sread(h);
+0316                 <span class="keyword">end</span>
+0317                 sclose(h);
+0318             <span class="keyword">end</span>
+0319             
+0320             <span class="comment">% transpose if appropriate (this is a kludge)</span>
+0321             hhh.originalsize=size(x);
+0322             <span class="keyword">if</span> ndims(x)&gt;2
+0323                 <span class="comment">% more than 3 dims, merge last dimensions</span>
+0324                 sizes=size(x);
+0325                 x=reshape(x,prod(sizes(1:end-1)),sizes(end));
+0326                 disp([<span class="string">'reshape --&gt;'</span>, num2str(size(x))]);
+0327             <span class="keyword">end</span>
+0328             <span class="keyword">if</span> size(x,1)&lt;size(x,2) 
+0329                 <span class="comment">% wider than tall: transpose</span>
+0330                 x=x'; 
+0331                 disp([<span class="string">'transpose --&gt; '</span>,num2str(size(x))]);
+0332             <span class="keyword">end</span>
+0333             hhh.size=size(x);
+0334             <a href="nt_whoss.html" class="code" title="function varargout=nt_whoss">nt_whoss</a>;
+0335 
+0336             <span class="keyword">if</span> ~isempty(x)
+0337                 <span class="comment">% calculate index</span>
+0338                 dsratio=100;
+0339                 iii.card=[]; iii.min=[]; iii.max=[]; iii.mean=[]; iii.ssq=[];
+0340                 iii=<a href="nt_idx.html" class="code" title="function i=nt_idx(x,scale,i)">nt_idx</a>(x,dsratio,iii);
+0341             <span class="keyword">end</span> <span class="comment">% else iii==[]</span>
+0342         <span class="keyword">end</span>
+0343     <span class="keyword">end</span>
+0344 <span class="keyword">end</span>   
+0345 
+0346 <span class="keyword">if</span> updateFlag
+0347     status=1;
+0348     hh=hhh; ii=iii;
+0349     save(idxName, <span class="string">'hh'</span>,<span class="string">'ii'</span>);
+0350     disp(idxName)
+0351 <span class="keyword">else</span> 
+0352     status=0;
+0353 <span class="keyword">end</span>
+0354 <span class="keyword">end</span> <span class="comment">% function [status,p]=nt_index(name,p,forceUpdate)</span>
+0355 
+0356 <a name="_sub1" href="#_subfunctions" class="code">function ii=index(x,p)</a>
+0357 <span class="comment">% index data</span>
+0358 <span class="keyword">if</span> ndims(x)&gt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0359 [ii.nsamples,ii.nchans]=size(x);
+0360 ii.scale=p.scale;
+0361 ii.p=p;
+0362 npairs=floor(ii.nsamples/p.scale);
+0363 size(x)
+0364 x_extra=x(npairs*p.scale+1:<span class="keyword">end</span>,:);
+0365 x=x(1:npairs*p.scale,:);
+0366 x=reshape(x,[p.scale,npairs,ii.nchans]);
+0367 ii.min=squeeze(min(x,[],1))';
+0368 ii.max=squeeze(max(x,[],1))';
+0369 <span class="keyword">if</span> ~isempty(x_extra)
+0370     [size(ii.min) size(x_extra)]
+0371     ii.min=[ii.min;min(x_extra,[],1)];
+0372     ii.max=[ii.max;max(x_extra,[],1)];
+0373 <span class="keyword">end</span>
+0374 <span class="keyword">end</span>
+0375 
+0376 <a name="_sub2" href="#_subfunctions" class="code">function date=dateModified(name)</a>
+0377 <span class="comment">% modification date of file or directory</span>
+0378 [PATHSTR,NAME,EXT]=fileparts(name);
+0379 <span class="keyword">if</span> isempty(PATHSTR); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0380 date=[];
+0381 <span class="keyword">if</span> 2==exist(name) <span class="comment">% I'm a file, I own my date.</span>
+0382     d=dir(name); <span class="comment">% get directly from file</span>
+0383     date=d.datenum;
+0384 <span class="keyword">elseif</span> 7==exist(name) <span class="comment">% I'm a directory, my parent own's my date</span>
+0385     d=dir(PATHSTR);
+0386     <span class="keyword">for</span> iFile=1:numel(d)
+0387         <span class="comment">%disp(d(iFile).name)</span>
+0388         <span class="keyword">if</span> strcmp(d(iFile).name,[NAME,EXT])
+0389             date=d(iFile).datenum; <span class="comment">% get indirectly from parent directory</span>
+0390             <span class="keyword">break</span>
+0391         <span class="keyword">end</span>
+0392     <span class="keyword">end</span>
+0393 <span class="keyword">else</span>
+0394     disp(name)
+0395     error(<span class="string">'!'</span>);
+0396 <span class="keyword">end</span>
+0397 <span class="keyword">if</span> isempty(date) 
+0398     disp([<span class="string">'&gt;'</span>,name,<span class="string">'&lt;'</span>]);
+0399     error(<span class="string">'!'</span>); 
+0400 <span class="keyword">end</span>
+0401 <span class="keyword">end</span> <span class="comment">% function date=dateModified(name)</span>
+0402 
+0403         
+0404 
+0405 <a name="_sub3" href="#_subfunctions" class="code">function [isdata,type]=filetype(name)</a>
+0406 <span class="comment">% try to guess type and whether it's data</span>
+0407 EXTENSIONS_TO_SKIP={<span class="string">'.idx'</span>, <span class="string">'.zip'</span>,<span class="string">'.txt'</span>,<span class="string">'.pdf'</span>,<span class="string">'.doc'</span>,<span class="string">'.docx'</span>,<span class="string">'.ppt'</span>,<span class="string">'.pptx'</span>,<span class="string">'.xls'</span>,<span class="string">'.html'</span>,<span class="string">'.rtf'</span>,<span class="keyword">...</span>
+0408     <span class="string">'.jpg'</span>, <span class="string">'.png'</span>, <span class="string">'.tif'</span>,<span class="string">'.tiff'</span>,<span class="string">'.js'</span>, <span class="string">'.md'</span>, <span class="string">'.m'</span>, <span class="string">'.py'</span>, <span class="string">'.rar'</span>, <span class="string">'.wav'</span>, <span class="string">'.eps'</span>, <span class="string">'.pdfsync'</span>,<span class="keyword">...</span>
+0409     <span class="string">'.avi'</span>, <span class="string">'.PDF'</span>, <span class="string">'.gz'</span>, <span class="string">'.zip'</span>};
+0410 [PATHSTR,NAME,EXT]=fileparts(name);
+0411 isdata=0; type=<span class="string">'unknown'</span>; transpose=0; <span class="comment">% default</span>
+0412 d=dir(name);
+0413 <span class="keyword">if</span> d.bytes==0 
+0414     type=<span class="string">'empty'</span>;
+0415 <span class="keyword">elseif</span> ~isempty(EXT) &amp;&amp; any(strcmpi(EXT,EXTENSIONS_TO_SKIP))
+0416     isdata=0; type=lower(EXT); type=type(2:end); <span class="comment">% intercept common types</span>
+0417     disp([<span class="string">'skip (extension): '</span>,name])
+0418 <span class="keyword">else</span>
+0419     fid=fopen(name);
+0420     firstbytes=fread(fid,8,<span class="string">'uchar'</span>);
+0421     fclose(fid);
+0422     <span class="keyword">if</span> ~isempty(EXT) &amp;&amp; strcmp(EXT,<span class="string">'.mat'</span>) || (numel(firstbytes)&gt;=4 &amp;&amp; all(firstbytes(1:4)'==<span class="string">'MATL'</span>)) 
+0423         <span class="comment">% matlab file</span>
+0424         <span class="keyword">try</span>
+0425             s=whos(<span class="string">'-file'</span>,name);
+0426         <span class="keyword">catch</span> ME
+0427             disp(<span class="string">'name'</span>);
+0428             disp(<span class="string">'... whos failed'</span>);
+0429             disp(ME)
+0430             type=[]; <span class="keyword">return</span>
+0431         <span class="keyword">end</span>
+0432         <span class="comment">% find which variables are numeric</span>
+0433         numerics={<span class="string">'double'</span>,<span class="string">'single'</span>,<span class="string">'int64'</span>,<span class="string">'int32'</span>,<span class="string">'int16'</span>,<span class="string">'int8'</span>};
+0434         matrix=strcmp(repmat({s.class},numel(numerics),1), <span class="keyword">...</span>
+0435             repmat(numerics',1,numel(s))); 
+0436 <span class="comment">%         idx=find(any(matrix));</span>
+0437 <span class="comment">%         if isempty(idx)</span>
+0438         <span class="keyword">if</span> ~any(matrix)
+0439             <span class="comment">% no numeric variables</span>
+0440             isdata=0; type=<span class="string">'matlab_non_numeric'</span>;
+0441         <span class="keyword">else</span>
+0442             <span class="comment">% some variables are numeric, choose the biggest one</span>
+0443             sizes=zeros(numel(s),1);
+0444             <span class="keyword">for</span> iVariable=1:numel(s)
+0445                 <span class="keyword">if</span> any(strcmp(s(iVariable),numerics))
+0446                     sizes(iVariable)=prod(s(iVariable).size);
+0447                 <span class="keyword">else</span> 
+0448                     sizes(iVariable)=0;
+0449                 <span class="keyword">end</span>
+0450             <span class="keyword">end</span>
+0451             [~,biggest]=max(prod(sizes));
+0452             isdata=1; type=[<span class="string">'matlab.'</span>,s(biggest).name];
+0453             disp(name);
+0454             disp([<span class="string">'mat file, multiple numeric variables, chosing: '''</span>, s(biggest).name, <span class="string">''', size:'</span>,num2str(s(biggest).size)]);
+0455         <span class="keyword">end</span>
+0456 <span class="comment">%     elseif strcmp(char(firstbytes(2:8))','BIOSEMI')</span>
+0457 <span class="comment">%         isdata=1; type='biosemi_bdf';</span>
+0458     <span class="keyword">else</span>    <span class="comment">% hand over to biosig</span>
+0459         <span class="keyword">try</span>
+0460             h=sopen(name);
+0461             type=h.TYPE;
+0462             sclose(h);
+0463         <span class="keyword">catch</span> ME
+0464             disp(name);
+0465             warning(<span class="string">'... sopen failed'</span>);
+0466             disp(ME);
+0467             type=<span class="string">'unknown'</span>; <span class="keyword">return</span>
+0468         <span class="keyword">end</span>                
+0469         <span class="keyword">if</span> strcmp(type,<span class="string">'unknown'</span>)
+0470             isdata=0; 
+0471         <span class="keyword">else</span> 
+0472             isdata=1;
+0473         <span class="keyword">end</span>
+0474     <span class="keyword">end</span>
+0475 <span class="keyword">end</span>
+0476 <span class="keyword">end</span> <span class="comment">% function [isdata,type]=filetype(name)</span>
+0477     
+0478 <a name="_sub4" href="#_subfunctions" class="code">function x=readmatlab(name,varname)</a>
+0479 <span class="comment">% read varname from matlab file</span>
+0480 load(<span class="string">'-mat'</span>,name,varname);
+0481 eval([<span class="string">'x='</span>,varname, <span class="string">';'</span>]);
+0482 <span class="keyword">end</span> <span class="comment">% function x=readmatlab(name,varname)</span>
+0483 
+0484 
+0485 <span class="comment">% recursive tally of field names at all depths</span>
+0486 <a name="_sub5" href="#_subfunctions" class="code">function s=myfieldnamesr(x)</a>
+0487 <span class="keyword">if</span> ~isstruct(x); s=[]; <span class="keyword">return</span>; <span class="keyword">end</span>
+0488 fields=fieldnames(x);
+0489 s={};
+0490 <span class="keyword">for</span> iField=1:numel(fields)
+0491     xx=getfield(x,fields{iField});
+0492     <span class="keyword">if</span> isa(xx,<span class="string">'struct'</span>)
+0493         subfields=<a href="#_sub5" class="code" title="subfunction s=myfieldnamesr(x)">myfieldnamesr</a>(xx);
+0494         <span class="keyword">for</span> iSubfield=1:numel(subfields)
+0495             s=[s,[char(fields(iField)),<span class="string">'.'</span>,char(subfields(iSubfield))]];
+0496         <span class="keyword">end</span>
+0497     <span class="keyword">else</span>
+0498         s=[s,fields{iField}];
+0499     <span class="keyword">end</span>
+0500 <span class="keyword">end</span>
+0501 <span class="keyword">end</span> <span class="comment">% function x=readmatlab(name,varname)</span>
+0502 
+0503 
+0504 <span class="comment">% visit index files of all files in 'd', merge into aggregate index</span>
+0505 <a name="_sub6" href="#_subfunctions" class="code">function iii=merge_file_indexes(d, dname)</a>
+0506     iii=[];
+0507     <span class="comment">% load all indexes into cell array</span>
+0508     all_indexes=[];       
+0509     nfiles=numel(d);
+0510     <span class="keyword">for</span> iFile=1:nfiles
+0511         name=d(iFile).name;
+0512         load(<span class="string">'-mat'</span>,[dname,filesep,<span class="string">'nt_idx'</span>,filesep,d(iFile).name,<span class="string">'.idx'</span>], <span class="string">'ii'</span>); 
+0513         all_indexes{iFile}=ii;
+0514     <span class="keyword">end</span>
+0515     <span class="comment">% estimate total size of statistics</span>
+0516     statNrows=[]; <span class="comment">% cell array of stat sizes</span>
+0517     statNcols=[]; <span class="comment">% cell array of stat sizes</span>
+0518     <span class="keyword">for</span> iFile=1:nfiles
+0519         ii=all_indexes{iFile};
+0520         <span class="keyword">if</span> isempty(ii); <span class="keyword">continue</span>; <span class="keyword">end</span>
+0521         statNames=fieldnames(ii);
+0522         <span class="keyword">for</span> iField=1:numel(statNames)
+0523             <span class="keyword">if</span> ~isfield(statNcols,statNames{iField})
+0524                 <span class="comment">%setfield(statSizes,statNames{iField})=0;</span>
+0525                 statNrows.(statNames{iField})=0;
+0526                 statNcols.(statNames{iField})=0;
+0527             <span class="keyword">end</span>
+0528             [nrows,ncols]=size(getfield(ii, statNames{iField}));
+0529             <span class="comment">%tmp=getfield(statSizes,statNames{iField});</span>
+0530             <span class="comment">%setfield(statSizes,statNames{iField},tmp);</span>
+0531             statNrows.(statNames{iField})=statNrows.(statNames{iField})+nrows;
+0532             statNcols.(statNames{iField})=max(statNcols.(statNames{iField}),ncols);
+0533         <span class="keyword">end</span>
+0534     <span class="keyword">end</span>
+0535     <span class="keyword">if</span> isempty(statNcols)
+0536         <span class="keyword">return</span>; <span class="comment">% no indexes to summarize</span>
+0537     <span class="keyword">end</span>
+0538     statNames=fieldnames(statNcols);
+0539     iCounter=[];
+0540     <span class="keyword">for</span> iName=1:numel(statNames) 
+0541         statName=statNames{iName};
+0542         <span class="comment">%setfield(iii,statNames{iName},zeros(statSizes(iName)));</span>
+0543         iii.(statNames{iName})=zeros(statNrows.(statName),statNcols.(statName));
+0544         <span class="comment">%setfield(iCounter, statnames{iName}, 0);</span>
+0545         iCounter.(statNames{iName})=0;
+0546     <span class="keyword">end</span> 
+0547     <span class="keyword">for</span> iFile=1:nfiles
+0548         ii=all_indexes{iFile};
+0549         <span class="keyword">for</span> iName=1:numel(statNames)
+0550             statName=statNames{iName};
+0551             <span class="keyword">if</span> isfield(ii,statName)
+0552                 tmp=ii.(statName);
+0553                 offset=iCounter.(statName);
+0554                 iii.(statName)(offset+(1:size(tmp,1)),1:size(tmp,2))=tmp;
+0555                 iCounter.(statName)=iCounter.(statName)+size(tmp,1);
+0556             <span class="keyword">end</span>
+0557         <span class="keyword">end</span>
+0558     <span class="keyword">end</span>
+0559 <span class="keyword">end</span> <span class="comment">% function iii=merge_file_indexes(d)</span>
+0560 
+0561            
+0562         
+0563         
+0564             
+0565</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

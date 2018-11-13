@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_topoplot</title>
+  <meta name="keywords" content="nt_topoplot">
+  <meta name="description" content="nt_topoplot(cfg,data) - simple topoplot">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_topoplot.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_topoplot
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>nt_topoplot(cfg,data) - simple topoplot</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function nt_topoplot(cfg,data) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">nt_topoplot(cfg,data) - simple topoplot
+
+  nt_topoplot(topo,data): use 'topo' layout file</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_interpolate_bad_channels.html" class="code" title="function [toGood,fromGood]=interpolate_bad_channels(x,iBad,coordinates,n)">nt_interpolate_bad_channels</a>	y=interpolate_bad_channels(x,iBad,coordinates,n) - interpolate bad channels from good</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function nt_topoplot(cfg,data)</a>
+0002 <span class="comment">%nt_topoplot(cfg,data) - simple topoplot</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  nt_topoplot(topo,data): use 'topo' layout file</span>
+0005 <span class="comment">%</span>
+0006 
+0007 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0008 
+0009 data=data(:);
+0010 
+0011 <span class="keyword">if</span> ~isstruct(cfg)
+0012     topo=cfg; 
+0013     cfg=[];
+0014     cfg.layout=topo;
+0015 <span class="keyword">end</span>
+0016 
+0017 <span class="comment">% todo: extract fields from cfg as arguments to ft_topo_plot</span>
+0018        
+0019 layout=ft_prepare_layout(cfg);
+0020 
+0021 
+0022 ft_plot_topo(layout.pos(1:numel(data),1), layout.pos(1:numel(data),2), data',<span class="keyword">...</span>
+0023     <span class="string">'mask'</span>, layout.mask,<span class="keyword">...</span>
+0024     <span class="string">'outline'</span>, layout.outline, <span class="keyword">...</span>
+0025     <span class="string">'interplim'</span>, <span class="string">'mask'</span>);
+0026 
+0027 <span class="comment">% ensure symmetrical color axes</span>
+0028 clim=get(gca,<span class="string">'clim'</span>);
+0029 set(gca,<span class="string">'clim'</span>,[-1 1]*max(abs(clim)));
+0030 
+0031 axis off
+0032 axis equal</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

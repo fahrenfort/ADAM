@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of test_nt_qca1</title>
+  <meta name="keywords" content="test_nt_qca1">
+  <meta name="description" content="{">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">TEST</a> &gt; test_nt_qca1.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/TEST&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>test_nt_qca1
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>{</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">{</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">%{</span>
+0002 
+0003 Extract component based on reproducible induced activity
+0004 
+0005 <span class="comment">%}</span>
+0006 
+0007 reset(RandStream.getGlobalStream); <span class="comment">% to get reproducible signals</span>
+0008 
+0009 sr=1000;
+0010 nsamples=1000;
+0011 ntrials=100;
+0012 nchans=10;
+0013 CF1=4;
+0014 CF2=2; 
+0015 FSIZE=12;
+0016 
+0017 <span class="comment">% sinusoidal pulse</span>
+0018 target=sin(2*pi*0.5*(1:nsamples)'/sr).^2;
+0019 target=repmat(target,[1,1,ntrials]) .* sin( 2*pi*(CF1*repmat((1:nsamples)',[1,1,ntrials])/sr + repmat(rand(1,1,ntrials),[nsamples,1,1])));
+0020 target=nt_normcol(target);
+0021 
+0022 <span class="comment">% noise</span>
+0023 NNOISE=9;
+0024 noise=randn(nsamples,NNOISE,ntrials);
+0025 noise=nt_mmat(noise,randn(NNOISE,nchans));
+0026 noise=nt_normcol(noise);
+0027 
+0028 <span class="comment">% data</span>
+0029 SNR=0.0001;
+0030 x=noise+ SNR * nt_mmat(target,randn(1,nchans)) ;
+0031 
+0032 x=nt_demean(x);
+0033 x=nt_normcol(x);
+0034 
+0035 [squares,quads,D]=nt_qca(x,[],[],10);
+0036 
+0037 
+0038 figure(1); clf;
+0039 set(gca,<span class="string">'fontsize'</span>,12)
+0040 set(gcf,<span class="string">'color'</span>,[1 1 1])
+0041 set(gcf, <span class="string">'position'</span>, [667   368   700   400])
+0042 
+0043 subplot 231
+0044 plot(0.9*squeeze(target(:,1,1:5)/max(target(:))), <span class="string">'k'</span>); set(gca,<span class="string">'ytick'</span>,[]); title(<span class="string">'target (5 trials)'</span>, <span class="string">'fontsize'</span>,14);
+0045 subplot 232
+0046 plot(squeeze(x(:,1,:))); set(gca,<span class="string">'ytick'</span>,[]); title(<span class="string">'mixture'</span>, <span class="string">'fontsize'</span>,14); xlabel(<span class="string">'samples'</span>, <span class="string">'fontsize'</span>, 14);
+0047 subplot 233
+0048 plot(0.9*squeeze(squares(:,1,1:5)/max(squares(:))), <span class="string">'k'</span>);  set(gca,<span class="string">'ytick'</span>,[]); title(<span class="string">'recovered'</span>, <span class="string">'fontsize'</span>,14);
+0049 
+0050 clear x; clear noise
+0051 
+0052 
+0053 <span class="comment">%return</span>
+0054 P=mfilename(<span class="string">'fullpath'</span>);
+0055 [PATHSTR,NAME,EXT] = fileparts(P);
+0056 
+0057 <span class="comment">% noise is meg data</span>
+0058 load([PATHSTR,<span class="string">'/../DATA/meg'</span>]);
+0059 meg=nt_unfold(meg);
+0060 meg=nt_fold(meg(1:76000,:),1000);
+0061 meg=nt_demean2(meg);
+0062 sr=1000; <span class="comment">% Hz</span>
+0063 
+0064 [idx,d]=nt_find_outlier_trials2(meg,1.5);<span class="comment">% plot(d);</span>
+0065 meg=meg(:,:,idx);
+0066 [idx,d]=nt_find_outlier_trials2(meg,1.5); <span class="comment">% plot(d);</span>
+0067 meg=meg(:,:,idx);
+0068 nsamples=size(meg,1); nchans=size(meg,2); ntrials=size(meg,3);
+0069 
+0070 
+0071 <span class="comment">% add 'target'</span>
+0072 <span class="keyword">if</span> 0
+0073     target=sin(2*pi*0.5*(1:nsamples)'/sr).^2;
+0074     target=repmat(target,[1,1,ntrials]).*sin(2*pi*(20*repmat((1:nsamples)',[1,1,ntrials])/sr+repmat(rand(1,1,ntrials),[nsamples,1,1])));
+0075 <span class="keyword">else</span>
+0076     <span class="comment">% target is pulses with random latency</span>
+0077     PWIDTH=60; PRANGE=400;
+0078     B=sin(2*pi*(1:PWIDTH)/(2*PWIDTH));
+0079     target=zeros(nsamples,1,ntrials);
+0080     mixmatrix=randn(1,nchans);
+0081     <span class="keyword">for</span> k=1:ntrials
+0082         target(200+round(rand*PRANGE),:,k)=1;
+0083         target(:,:,k)=filter(B,1,target(:,:,k));
+0084     <span class="keyword">end</span>
+0085 <span class="keyword">end</span>
+0086 
+0087 SNR=0.001;
+0088 mixmatrix=randn(1,nchans);
+0089 [dummy,maxidx]=max(abs(mixmatrix));
+0090 target=nt_mmat(target,mixmatrix);
+0091 meg=nt_normcol(meg)+SNR*target;
+0092 
+0093 
+0094 y=nt_normcol(nt_pca(nt_normcol(meg)));
+0095 NKEEP=28;
+0096 yy=zeros(size(meg,1),NKEEP*(NKEEP+1),size(meg,3));
+0097 ii=1;
+0098 <span class="keyword">for</span> k=1:NKEEP;
+0099     <span class="keyword">for</span> j=1:k;
+0100         yy(:,ii,:)=meg(:,k,:).*meg(:,j,:);
+0101         ii=ii+1;
+0102     <span class="keyword">end</span>
+0103 <span class="keyword">end</span>
+0104 
+0105 yy=nt_demean2(yy);
+0106 SMOOTH=100;
+0107 yy=filter(ones(1,SMOOTH),1,yy);
+0108 yy=yy(SMOOTH:<span class="keyword">end</span>,:,:);
+0109 
+0110 [todss,pwr0,pwr1]=nt_dss1(yy,[],[],0);
+0111 z=nt_mmat(yy,todss);
+0112 
+0113 
+0114 <span class="keyword">if</span> 0
+0115     c0=nt_cov(meg(SMOOTH:<span class="keyword">end</span>,:,:));
+0116     c1=nt_cov(meg(SMOOTH:<span class="keyword">end</span>,:,:).*repmat(z(:,1,:),[1,nchans,1]));
+0117 <span class="keyword">else</span>
+0118     <span class="comment">%c0=nt_cov([y1,y2]);</span>
+0119     c0=nt_cov(meg(SMOOTH:<span class="keyword">end</span>,:,:).*repmat(max(0,z(:,1,:)),[1,nchans,1]));
+0120     c1=nt_cov(meg(SMOOTH:<span class="keyword">end</span>,:,:).*repmat(min(0,z(:,1,:)),[1,nchans,1]));
+0121 <span class="keyword">end</span>
+0122    
+0123 [todss2,pwr0,pwr1]=nt_dss0(c0,c1);
+0124 z2=nt_mmat(meg,todss2);
+0125 
+0126 t=(0:size(target,1)-1)/sr;
+0127 subplot 234; 
+0128 plot(t, squeeze(target(:,1,1:10))/max(max(target(:,1,:))), <span class="string">'k'</span>); title(<span class="string">'target (10 trials)'</span>, <span class="string">'fontsize'</span>, 14); set(gca,<span class="string">'ytick'</span>,[]); 
+0129 xlim([t(1) t(end)]); ylim([-1.2 1.2]);
+0130 subplot 235; 
+0131 plot(t, squeeze(meg(:,maxidx,:)));  title(<span class="string">'mixture'</span>, <span class="string">'fontsize'</span>, 14); xlabel(<span class="string">'s'</span>, <span class="string">'fontsize'</span>,14); set(gca,<span class="string">'ytick'</span>,[]); xlim([t(1) t(end)]);
+0132 subplot 236; 
+0133 plot(t, -squeeze(z2(:,<span class="keyword">end</span>,1:10))/max(max(abs(z2(:,<span class="keyword">end</span>,:)))), <span class="string">'k'</span>);  title(<span class="string">'recovered'</span>, <span class="string">'fontsize'</span>, 14); set(gca,<span class="string">'ytick'</span>,[]); 
+0134 xlim([t(1) t(end)]); ylim([-1.2 1.2]);
+0135 
+0136 
+0137 figure(2); clf
+0138 plot(D);
+0139 title(<span class="string">'quality of fit to a square'</span>);
+0140 xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'score'</span>);
+0141 
+0142 
+0143</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

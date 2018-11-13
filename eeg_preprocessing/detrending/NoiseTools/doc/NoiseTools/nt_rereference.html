@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_rereference</title>
+  <meta name="keywords" content="nt_rereference">
+  <meta name="description" content="[y,mn]=nt_rereference(x,thresh,w,factor) - rereference by subtracting robust mean">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_rereference.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_rereference
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,mn]=nt_rereference(x,thresh,w,factor) - rereference by subtracting robust mean</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y,mn]=nt_rereference(x,w,factor) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,mn]=nt_rereference(x,thresh,w,factor) - rereference by subtracting robust mean
+
+   y: rereferenced data
+   mn: subtracted reference
+
+   x: data to rereference (time*channels or time*channels*trials
+   w: mask
+   factor: apply to mean before subtracting [default: 1]
+   
+ See also: <a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>, <a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,mn]=nt_rereference(x,w,factor)</a>
+0002 <span class="comment">%[y,mn]=nt_rereference(x,thresh,w,factor) - rereference by subtracting robust mean</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%   y: rereferenced data</span>
+0005 <span class="comment">%   mn: subtracted reference</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%   x: data to rereference (time*channels or time*channels*trials</span>
+0008 <span class="comment">%   w: mask</span>
+0009 <span class="comment">%   factor: apply to mean before subtracting [default: 1]</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% See also: nt_detrend, nt_outliers</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% NoiseTools</span>
+0014 
+0015 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0016 <span class="keyword">if</span> nargin&lt;2||isempty(w); w=ones(size(x)); <span class="keyword">end</span>
+0017 <span class="keyword">if</span> nargin&lt;3||isempty(factor); factor=1; <span class="keyword">end</span>
+0018 
+0019 <span class="keyword">if</span> size(w,1)~=size(x,1); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0020 <span class="keyword">if</span> size(w,2)==1; w=repmat(w,1,size(x,2)); <span class="keyword">end</span>
+0021 <span class="keyword">if</span> size(w,2) ~= size(x,2); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0022 
+0023 <span class="comment">%{</span>
+0024 Reference is weighted mean.
+0025 <span class="comment">%}</span>
+0026 
+0027 mn=sum(x.*w,2)./sum(w,2);
+0028 mn(isnan(mn))=0;
+0029 y=bsxfun(@minus,x,mn);
+0030 
+0031 <span class="keyword">if</span> ~nargout
+0032     <span class="comment">% don't return values, just plot</span>
+0033     figure(1); clf;
+0034     subplot 411; plot(x); title(<span class="string">'raw'</span>);
+0035     subplot 412; plot(y); title(<span class="string">'rereferenced'</span>);
+0036     subplot 413; plot(mn); title(<span class="string">'reference'</span>);
+0037     subplot 414; plot(mean(w)); title(<span class="string">'mean weight'</span>); ylim([-.1 1.1']); xlabel(<span class="string">'channel'</span>);
+0038     figure(2); 
+0039     histogram(mn(:)/std(mn(:)), 100);
+0040     clear y mn
+0041 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

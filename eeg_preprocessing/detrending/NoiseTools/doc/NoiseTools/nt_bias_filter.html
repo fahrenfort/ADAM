@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_bias_filter</title>
+  <meta name="keywords" content="nt_bias_filter">
+  <meta name="description" content="[c0,c1]=nt_bias_filter(x,B,A) - covariance with and w/o filter bias">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_bias_filter.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_bias_filter
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[c0,c1]=nt_bias_filter(x,B,A) - covariance with and w/o filter bias</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [c0,c1]=nt_bias_filter(x,B,A) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[c0,c1]=nt_bias_filter(x,B,A) - covariance with and w/o filter bias
+
+ x: data 
+ B,A: filter coefficients
+
+ NoiseTools
+ see nt_filter_peak for a second-order resonator</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_narrowband_scan.html" class="code" title="function A=nt_narrowband_scan(x,freqs,sr,Q,plotflag,yulewalk_order)">nt_narrowband_scan</a>	A=nt_narrowband_scan(x,freqs,sr,Q,plotflag) - scan for narrowband components using DSS</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function [B,A] = secondorderPeak(Wo,BW)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [c0,c1]=nt_bias_filter(x,B,A)</a>
+0002 <span class="comment">%[c0,c1]=nt_bias_filter(x,B,A) - covariance with and w/o filter bias</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% x: data</span>
+0005 <span class="comment">% B,A: filter coefficients</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% NoiseTools</span>
+0008 <span class="comment">% see nt_filter_peak for a second-order resonator</span>
+0009 
+0010 <span class="keyword">if</span> nargin&lt;3;
+0011     error(<span class="string">'!'</span>);
+0012 <span class="keyword">end</span>
+0013 
+0014 c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x);
+0015 x=filter(B,A,x);
+0016 c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x);
+0017 <span class="keyword">return</span>
+0018 
+0019 
+0020 
+0021 <span class="comment">% example:</span>
+0022 w=0.3;  <span class="comment">% center frequency</span>
+0023 Q=10;
+0024 bw=f/Q;
+0025 [B,A]=<a href="#_sub1" class="code" title="subfunction [B,A] = secondorderPeak(Wo,BW)">secondorderPeak</a>(w,bw);
+0026 
+0027 
+0028 
+0029 <a name="_sub1" href="#_subfunctions" class="code">function [B,A] = secondorderPeak(Wo,BW)</a>
+0030 <span class="comment">%second order resonator</span>
+0031 
+0032 <span class="comment">% Inputs are normalized by pi.</span>
+0033 BW = BW*pi;
+0034 Wo = Wo*pi;
+0035 
+0036 Ab=(10*log10(2));
+0037 
+0038 Gb   = 10^(-Ab/20);
+0039 beta = (Gb/sqrt(1-Gb.^2))*tan(BW/2);
+0040 gain = 1/(1+beta);
+0041 
+0042 B  = (1-gain)*[1 0 -1];
+0043 A  = [1 -2*gain*cos(Wo) (2*gain-1)];</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

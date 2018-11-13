@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_xprod</title>
+  <meta name="keywords" content="nt_xprod">
+  <meta name="description" content="[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_xprod.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_xprod
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts
+
+  y: crossproducts 
+  ind: linear index of cross-products 
+ 
+  x: data (time*channels*trials)
+  flag: 'lower','nodiag','full' [default: 'lower']
+  dsratio: ratio by which to downsample cross-product [default: 1]
+  normrow_flag: if true, divide each slice by trace (default: false)
+
+ If flag is 'lower' (default), return lower diagonal terms, including
+ diagonal.  The order of cross-products is diagonal first (squares first). 
+ 
+ If 'nodiag' return lower diagonal terms without diagonal.
+
+ If 'full', return full array of cross-products as a 3D matrix.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dsample.html" class="code" title="function x=nt_dsample(x,factor)">nt_dsample</a>	y=nt_dsample(x,factor) - downsample by averaging neighboring samples</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li><li><a href="nt_xprod.html" class="code" title="function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)">nt_xprod</a>	[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bias_cluster.html" class="code" title="function [c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags)">nt_bias_cluster</a>	[c0,c1,A,todss,pwr0,pwr1]=nt_bias_cluster(x,dsr,flags) - cluster covariance</li><li><a href="nt_cluster_jd.html" class="code" title="function [IDX,TODSS,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose, depth,N)">nt_cluster_jd</a>	[IDX,todss,SCORE,COVS]=nt_cluster_jd(x,dsr,smooth,flags,init,verbose) - cluster with joint diagonalization</li><li><a href="nt_xprod.html" class="code" title="function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)">nt_xprod</a>	[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)</a>
+0002 <span class="comment">%[y,ind]=nt_xprod(x,flag,dsratio,normrow_flag) - form all crossproducts</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: crossproducts</span>
+0005 <span class="comment">%  ind: linear index of cross-products</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  x: data (time*channels*trials)</span>
+0008 <span class="comment">%  flag: 'lower','nodiag','full' [default: 'lower']</span>
+0009 <span class="comment">%  dsratio: ratio by which to downsample cross-product [default: 1]</span>
+0010 <span class="comment">%  normrow_flag: if true, divide each slice by trace (default: false)</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% If flag is 'lower' (default), return lower diagonal terms, including</span>
+0013 <span class="comment">% diagonal.  The order of cross-products is diagonal first (squares first).</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% If 'nodiag' return lower diagonal terms without diagonal.</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% If 'full', return full array of cross-products as a 3D matrix.</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">%</span>
+0020 
+0021 <span class="keyword">if</span> nargin&lt;4 || isempty(normrow_flag); normrow_flag=0; <span class="keyword">end</span>
+0022 <span class="keyword">if</span> nargin&lt;3 || isempty(dsratio); dsratio=1; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> nargin&lt;2 || isempty(flag); flag=<span class="string">'lower'</span>; <span class="keyword">end</span>
+0024 
+0025 <span class="keyword">if</span> ~strcmp(flag,{<span class="string">'lower'</span>,<span class="string">'nodiag'</span>,<span class="string">'full'</span>}); error(<span class="string">'unexpected flag'</span>); <span class="keyword">end</span>
+0026 
+0027 <span class="keyword">if</span> ndims(x)==3
+0028     <span class="keyword">if</span> rem(size(x,1),dsratio); error(<span class="string">'size(x,1) must be multiple of dsratio'</span>); <span class="keyword">end</span>
+0029     y=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(<a href="nt_xprod.html" class="code" title="function [y,ind]=nt_xprod(x,flag,dsratio,normrow_flag)">nt_xprod</a>(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x),flag,dsratio), size(x,1)/dsratio);
+0030 <span class="keyword">else</span>
+0031     [nsamples,nchans]=size(x);
+0032     nsamples=floor(nsamples/dsratio);
+0033 
+0034     y=zeros(nsamples,nchans*(nchans+1)/2);
+0035     ind=zeros(nchans*(nchans+1)/2,1);
+0036     start=0;
+0037     
+0038     iProd=1;
+0039     <span class="keyword">for</span> iDiag=start:nchans-1
+0040         <span class="keyword">for</span> kk=1:(nchans-iDiag)
+0041             xx=x(:,kk+iDiag).*x(:,kk);
+0042             y(:,iProd)=<a href="nt_dsample.html" class="code" title="function x=nt_dsample(x,factor)">nt_dsample</a>(xx,dsratio);
+0043             ind(iProd)=sub2ind([nchans,nchans],kk+iDiag,kk);
+0044             iProd=iProd+1;
+0045         <span class="keyword">end</span>
+0046     <span class="keyword">end</span>
+0047     <span class="keyword">if</span> normrow_flag
+0048         <span class="keyword">for</span> iRow=1:size(y,1)
+0049             y(iRow,:)=y(iRow,:)/(eps+sum(y(iRow,1:nchans)));
+0050         <span class="keyword">end</span>
+0051     <span class="keyword">end</span>
+0052     <span class="keyword">if</span> strcmp(flag, <span class="string">'nodiag'</span>)
+0053         y=y(:,nchans+1:end);
+0054     <span class="keyword">end</span>
+0055 
+0056     <span class="comment">% this could be optimized to save memory:</span>
+0057     <span class="keyword">if</span> strcmp(flag,<span class="string">'full'</span>)
+0058         y0=y;
+0059         y=zeros(nsamples,nchans,nchans);
+0060 
+0061         [I,J]=ind2sub(nchans,ind);
+0062 
+0063         <span class="keyword">for</span> k=1:numel(I)
+0064             y(:,I(k),J(k))=y0(:,k);
+0065             y(:,J(k),I(k))=y0(:,k);
+0066         <span class="keyword">end</span>
+0067 
+0068         ind=[];
+0069     <span class="keyword">end</span>
+0070     
+0071 <span class="comment">%     switch order</span>
+0072 <span class="comment">%         case 'colwise'</span>
+0073 <span class="comment">%             for iRow=1:nchans</span>
+0074 <span class="comment">%                 for iCol=1:iRow</span>
+0075 <span class="comment">%                     xx=x(:,iCol).*x(:,iRow);</span>
+0076 <span class="comment">%                     y(:,iProd)=nt_dsample(xx,dsratio);</span>
+0077 <span class="comment">%                     ind(iProd)=sub2ind([size(x,2),size(x,2)],iRow,iCol);</span>
+0078 <span class="comment">%                     iProd=iProd+1;</span>
+0079 <span class="comment">%                 end</span>
+0080 <span class="comment">%             end</span>
+0081 <span class="comment">%         case 'diagwise'</span>
+0082 <span class="comment">%             for iDiag=start:nchans-1</span>
+0083 <span class="comment">%                 for kk=1:(nchans-iDiag)</span>
+0084 <span class="comment">%                     xx=x(:,kk+iDiag).*x(:,kk);</span>
+0085 <span class="comment">%                     y(:,iProd)=nt_dsample(xx,dsratio);</span>
+0086 <span class="comment">%                     ind(iProd)=sub2ind([size(x,2),size(x,2)],kk+iDiag,kk);</span>
+0087 <span class="comment">%                     iProd=iProd+1;</span>
+0088 <span class="comment">%                 end</span>
+0089 <span class="comment">%             end</span>
+0090 <span class="comment">%         otherwise</span>
+0091 <span class="comment">%             error('unexpected order flag');</span>
+0092 <span class="comment">%     end</span>
+0093 <span class="keyword">end</span>
+0094 
+0095</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_bias_mask</title>
+  <meta name="keywords" content="nt_bias_mask">
+  <meta name="description" content="[c0,c1]=bias_hi_amp(x,mask) - covariance of masked signal">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_bias_mask.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_bias_mask
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[c0,c1]=bias_hi_amp(x,mask) - covariance of masked signal</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [c0,c1]=bias_mask(x,mask) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[c0,c1]=bias_hi_amp(x,mask) - covariance of masked signal
+
+ c0: covariance of part for which mask&lt;0
+ c1: covariance of part for which mask&gt;0
+ 
+ x: data set (time X channels or time X channels X trials)
+ mask: mask function (time X 1 or time X 1 X trials)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [c0,c1]=bias_mask(x,mask)</a>
+0002 <span class="comment">%[c0,c1]=bias_hi_amp(x,mask) - covariance of masked signal</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% c0: covariance of part for which mask&lt;0</span>
+0005 <span class="comment">% c1: covariance of part for which mask&gt;0</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% x: data set (time X channels or time X channels X trials)</span>
+0008 <span class="comment">% mask: mask function (time X 1 or time X 1 X trials)</span>
+0009 
+0010 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0011 
+0012 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0013 mask=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(mask);
+0014 
+0015 
+0016 c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(x(find(mask&lt;=0),:),mask(find(mask&lt;=0))));
+0017 c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(x(find(mask&gt;0),:),mask(find(mask&gt;0))));</pre></div>
+<hr><address>Generated on Mon 10-Nov-2014 14:40:42 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_tsr</title>
+  <meta name="keywords" content="nt_tsr">
+  <meta name="description" content="[y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_tsr.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_tsr
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)
+
+  y: denoised data 
+  idx: x(idx) is aligned with y
+  w: weights applied by tsr
+ 
+  x: data to denoise (time * channels * trials)
+  ref: reference (time * channels * trials)
+  shifts: array of shifts to apply to ref (default: [0])
+  wx: weights to apply to x (time * 1 * trials);
+  wref: weights to apply to ref (time * 1 * trials);
+  keep: number of shifted-ref PCs to retain (default: all)
+  thresh: ignore shifted-ref PCs smaller than thresh (default: 10.^-12)
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>	z=nt_multishift(x,shifts,amplitudes) - apply multiple shifts to matrix</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>	[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_regcov.html" class="code" title="function r=nt_regcov(cxy,cyy,keep,threshold)">nt_regcov</a>	r=nt_regcov(cxy,cyy,keep,threshold) - regression matrix from cross covariance</li><li><a href="nt_xcov.html" class="code" title="function [c,tw]=nt_xcov(x,y,shifts,w);">nt_xcov</a>	[c,tw]=nt_xcov(x,y,shifts,w) - cross-covariance of X and time-shifted Y</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_sns1.html" class="code" title="function x=nt_sns1(x,nneighbors,skip,w,threshold)">nt_sns1</a>	y=nt_sns1(x,nneigbors,skip,w,threshold) - sensor noise suppression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh)</a>
+0002 <span class="comment">%[y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: denoised data</span>
+0005 <span class="comment">%  idx: x(idx) is aligned with y</span>
+0006 <span class="comment">%  w: weights applied by tsr</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  x: data to denoise (time * channels * trials)</span>
+0009 <span class="comment">%  ref: reference (time * channels * trials)</span>
+0010 <span class="comment">%  shifts: array of shifts to apply to ref (default: [0])</span>
+0011 <span class="comment">%  wx: weights to apply to x (time * 1 * trials);</span>
+0012 <span class="comment">%  wref: weights to apply to ref (time * 1 * trials);</span>
+0013 <span class="comment">%  keep: number of shifted-ref PCs to retain (default: all)</span>
+0014 <span class="comment">%  thresh: ignore shifted-ref PCs smaller than thresh (default: 10.^-12)</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% NoiseTools</span>
+0017 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0018 
+0019 
+0020 <span class="comment">% Copyright 2007, 2008 Alain de Cheveigne</span>
+0021 
+0022 <span class="comment">% See:</span>
+0023 <span class="comment">% de Cheveign\'e, A. and Simon, J. Z. (2007). &quot;Denoising based on</span>
+0024 <span class="comment">% Time-Shift PCA.&quot; Journal of Neuroscience Methods 165: 297-305.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% The basic idea is to project the signal X on a basis formed by the</span>
+0027 <span class="comment">% orthogonalized time-shifted REF, and remove the projection. Supposing REF</span>
+0028 <span class="comment">% gives a good observation of the noise that contaminates X, the noise is</span>
+0029 <span class="comment">% removed. By allowing time shifts, the algorithm finds the optimal FIR filter</span>
+0030 <span class="comment">% to apply to REF so as to compensate for any convolutional mismatch</span>
+0031 <span class="comment">% between X and REF.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% Implementation issues:</span>
+0034 <span class="comment">% - Data are often available as an array of epochs. This implementation</span>
+0035 <span class="comment">% caters for 3D data (time * channnels * trials);</span>
+0036 <span class="comment">% - It is important to deemphasize high amplitude artifacts and glitches</span>
+0037 <span class="comment">% so that they do not dominate the solution.  This implementation uses</span>
+0038 <span class="comment">% weighted covariance and means.</span>
+0039 <span class="comment">% - Processing assumes zero-means data. Means are calculated with weights.</span>
+0040 <span class="comment">% - The implementation tries to be efficent and minimize memory requirements</span>
+0041 <span class="comment">% so as to handle large data sets.</span>
+0042 <span class="comment">%</span>
+0043 <span class="comment">% Larger data sets (disk based) could be handled by performing mean and</span>
+0044 <span class="comment">% covariance calculations block-by-block, in several passes.</span>
+0045 <span class="comment">%</span>
+0046 
+0047 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'too few arguments'</span>); <span class="keyword">end</span>
+0048 <span class="keyword">if</span> nargin&lt;3 || isempty(shifts); shifts=0; <span class="keyword">end</span>
+0049 <span class="keyword">if</span> nargin&lt;4; wx=[]; <span class="keyword">end</span>
+0050 <span class="keyword">if</span> nargin&lt;5; wref=[]; <span class="keyword">end</span>
+0051 <span class="keyword">if</span> nargin&lt;6 || isempty(keep); keep=[]; <span class="keyword">end</span>
+0052 <span class="keyword">if</span> nargin&lt;7 || isempty(thresh); thresh=10.^-20; <span class="keyword">end</span>
+0053 
+0054 <span class="comment">% check argument values for sanity</span>
+0055 <span class="keyword">if</span> size(x,1)~=size(ref,1); error(<span class="string">'X and REF should have same nrows'</span>); <span class="keyword">end</span>
+0056 <span class="keyword">if</span> size(x,3)~=size(ref,3); error(<span class="string">'X and REF should have same npages'</span>); <span class="keyword">end</span>
+0057 <span class="keyword">if</span> ~isempty(wx) &amp;&amp; size(x,3)~=size(wx,3); error(<span class="string">'X and WX should have same npages'</span>); <span class="keyword">end</span>
+0058 <span class="keyword">if</span> ~isempty(wx) &amp;&amp; size(x,1)~=size(wx,1); error(<span class="string">'X and WX should have same nrows'</span>); <span class="keyword">end</span>
+0059 <span class="keyword">if</span> ~isempty(wref) &amp;&amp; size(ref,1)~=size(wref,1); error(<span class="string">'REF and WREF should have same nrows'</span>); <span class="keyword">end</span>
+0060 <span class="keyword">if</span> ~isempty(wref) &amp;&amp; size(ref,3)~=size(wref,3); error(<span class="string">'REF and WREF should have same npages'</span>); <span class="keyword">end</span>
+0061 <span class="keyword">if</span> max(shifts)-min(0,min(shifts)) &gt;= size(x,1); error(<span class="string">'X has too few samples to support SHIFTS'</span>); <span class="keyword">end</span>
+0062 <span class="keyword">if</span> ~isempty(wx) &amp;&amp; size(wx,2)~=1; error(<span class="string">'wx should have ncols=1'</span>); <span class="keyword">end</span>
+0063 <span class="keyword">if</span> ~isempty(wref) &amp;&amp; size(wref,2)~=1; error(<span class="string">'wref should have ncols=1'</span>); <span class="keyword">end</span>
+0064 <span class="keyword">if</span> ~isempty(wx) &amp;&amp; sum(wx(:))==0; error(<span class="string">'weights on x are all zero!'</span>); <span class="keyword">end</span>
+0065 <span class="keyword">if</span> ~isempty(wref) &amp;&amp; sum(wref(:))==0; error(<span class="string">'weights on ref are all zero!'</span>); <span class="keyword">end</span>
+0066 
+0067 <span class="keyword">if</span> numel(shifts)&gt;1000; error([<span class="string">'numel(shifts)='</span>,num2str(numel(shifts)), <span class="string">' (if OK comment out this line)'</span>]); <span class="keyword">end</span>
+0068 
+0069 
+0070 <span class="comment">% We need to adjust x and ref to ensure that shifts are non-negative.</span>
+0071 <span class="comment">% If some values of shifts are negative, we increment shifts and truncate x.</span>
+0072 
+0073 <span class="comment">% adjust x to make shifts non-negative</span>
+0074 offset1=max(0,-min(shifts));
+0075 idx=1+offset1:size(x,1);
+0076 x=x(idx,:,:);                             <span class="comment">% truncate x</span>
+0077 <span class="keyword">if</span> ~isempty(wx); wx=wx(idx,:,:); <span class="keyword">end</span>
+0078 shifts=shifts+offset1;                    <span class="comment">% shifts are now positive</span>
+0079 
+0080 <span class="comment">% adjust size of x</span>
+0081 offset2=max(0,max(shifts)); 
+0082 idx=1: size(ref,1)-offset2; 
+0083 x=x(idx,:,:);                           <span class="comment">% part of x that overlaps with time-shifted refs</span>
+0084 <span class="keyword">if</span> ~isempty(wx); wx=wx(idx,:,:); <span class="keyword">end</span>
+0085 
+0086 [mx,nx,ox]=size(x);
+0087 [mref,nref,oref]=size(ref);
+0088 
+0089 <span class="comment">% consolidate weights into single weight matrix</span>
+0090 w=zeros([mx,1,oref]);
+0091 <span class="keyword">if</span> isempty(wx) &amp;&amp; isempty(wref)
+0092     w(1:mx,:,:)=1;
+0093 <span class="keyword">elseif</span> isempty(wref);
+0094     w(:,:,:)=wx(:,:,:);
+0095 <span class="keyword">elseif</span> isempty(wx)
+0096     <span class="keyword">for</span> k=1:ox
+0097         wr=wref(:,:,k);
+0098         wr=ts_multishift(wr,shifts);
+0099         wr=min(wr,[],2);
+0100         w(:,:,k)=wr;
+0101     <span class="keyword">end</span>;
+0102 <span class="keyword">else</span>
+0103     <span class="keyword">for</span> k=1:ox
+0104         wr=wref(:,:,k);
+0105         wr=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(wr,shifts);
+0106         wr=min(wr,[],2);
+0107         wr=min(wr,wx(1:size(wr,1),:,k));
+0108         w(:,:,k)=wr;
+0109     <span class="keyword">end</span>
+0110 <span class="keyword">end</span>
+0111 wx=w;
+0112 wref=zeros(mref,1,oref);
+0113 wref(idx,:,:)=w;
+0114 
+0115 <span class="comment">% remove weighted means</span>
+0116 x0=x;
+0117 x=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,wx);
+0118 mn1=x-x0;
+0119 ref=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(ref,wref);
+0120 
+0121 <span class="comment">% equalize power of ref chans, then equalize power of ref PCs</span>
+0122 ref=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(ref,wref);
+0123 ref=<a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>(ref,0,[],10^-6);
+0124 ref=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(ref,wref);
+0125 
+0126 <span class="comment">% covariances and cross covariance with time-shifted refs</span>
+0127 [cref,twcref]=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(ref,shifts,wref);
+0128 [cxref,twcxref]=<a href="nt_xcov.html" class="code" title="function [c,tw]=nt_xcov(x,y,shifts,w);">nt_xcov</a>(x,ref,shifts,wx);
+0129 
+0130 <span class="comment">% regression matrix of x on time-shifted refs</span>
+0131 r=<a href="nt_regcov.html" class="code" title="function r=nt_regcov(cxy,cyy,keep,threshold)">nt_regcov</a>(cxref/twcxref,cref/twcref,keep,thresh);
+0132 
+0133 <span class="comment">%r=r*0.765;</span>
+0134 
+0135 <span class="comment">% TSPCA: clean x by removing regression on time-shifted refs</span>
+0136 y=zeros(mx,nx,ox);
+0137 <span class="keyword">for</span> k=1:ox
+0138     z=<a href="nt_multishift.html" class="code" title="function z=nt_multishift(x,shifts)">nt_multishift</a>(ref(:,:,k),shifts)*r;
+0139     <span class="comment">%plot([x(1:size(z,1),1,k), z(:,1)]); pause</span>
+0140     y(:,:,k)=x(1:size(z,1),:,k)-z;
+0141 <span class="keyword">end</span>
+0142 y0=y;
+0143 y=<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(y,wx);    <span class="comment">% multishift(ref) is not necessarily 0 mean</span>
+0144 mn2=y-y0;
+0145 
+0146 <span class="comment">%idx=1+offset1:n0-offset2;</span>
+0147 idx=1+offset1:size(y,1)+offset1;
+0148 mn=mn1+mn2;
+0149 w=wref;
+0150 
+0151 <span class="comment">%y=vecadd(y,mn);</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

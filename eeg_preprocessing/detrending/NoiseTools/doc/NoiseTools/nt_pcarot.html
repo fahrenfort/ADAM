@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_pcarot</title>
+  <meta name="keywords" content="nt_pcarot">
+  <meta name="description" content="[topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_pcarot.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_pcarot
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> [topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance
+
+  topcs: PCA rotation matrix
+  eigenvalues: PCA eigenvalues
+  
+  cov: covariance matrix
+  nkeep: number of component to keep
+  thresholds: discard components below this threshold
+  N: eigs' K parameter (if absent: use eig)
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_inpaint.html" class="code" title="function [y,yy]=nt_inpaint(x,w)">nt_inpaint</a>	function y=nt_inpaint(x,w) - weighted interpolation based on correlation structure</li><li><a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>	[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</li><li><a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>	[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_pca0.html" class="code" title="function [topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w)">nt_pca0</a>	[topcs,pwr,y]=nt_pca0(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_qpca0.html" class="code" title="function [tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads)">nt_qpca0</a>	[tosquares,quads,D]=nt_qpca0(x,npcs,nsmooth,nquads) - quadratic PCA</li><li><a href="nt_regcov.html" class="code" title="function r=nt_regcov(cxy,cyy,keep,threshold)">nt_regcov</a>	r=nt_regcov(cxy,cyy,keep,threshold) - regression matrix from cross covariance</li><li><a href="nt_sns0.html" class="code" title="function r=nt_sns0(c,nneighbors,skip,wc)">nt_sns0</a>	r=nt_sns0(c,nneigbors,skip,wc) - sensor noise suppression</li><li><a href="nt_star.html" class="code" title="function [x,w,ww]=nt_star(x,thresh,closest,depth)">nt_star</a>	[y,w,ww]=nt_star(x,thresh,closest,depth) - sensor noise suppression</li><li><a href="nt_star2.html" class="code" title="function [x,w,ww]=nt_star2(x,thresh,closest,w)">nt_star2</a>	[y,w,ww]=nt_star2(x,thresh,closest,w) - sensor noise suppression</li><li><a href="nt_whiten.html" class="code" title="function [A,y]=nt_whiten(x,N)">nt_whiten</a>	[A,y]=nt_whiten(x,N) - whiten spectrally using pca</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [topcs,eigenvalues]=nt_pcarot(cov,nkeep,threshold,N)</a>
+0002 <span class="comment">% [topcs,eigenvalues]=pcarot(cov,nkeep,threshold,N) - PCA matrix from covariance</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  topcs: PCA rotation matrix</span>
+0005 <span class="comment">%  eigenvalues: PCA eigenvalues</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  cov: covariance matrix</span>
+0008 <span class="comment">%  nkeep: number of component to keep</span>
+0009 <span class="comment">%  thresholds: discard components below this threshold</span>
+0010 <span class="comment">%  N: eigs' K parameter (if absent: use eig)</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% NoiseTools</span>
+0013 
+0014 <span class="keyword">if</span> nargin&lt;4; N=[]; <span class="keyword">end</span>
+0015 <span class="keyword">if</span> nargin&lt;3; threshold=[]; <span class="keyword">end</span>
+0016 <span class="keyword">if</span> nargin&lt;2; nkeep=[]; <span class="keyword">end</span>
+0017 
+0018 <span class="keyword">if</span> ~isempty(N); 
+0019     [V, S] = eigs(cov,N) ;  
+0020 <span class="keyword">else</span>
+0021     [V, S] = eig(cov) ;  
+0022 <span class="keyword">end</span>
+0023 
+0024 V=real(V);
+0025 S=real(S);
+0026 [eigenvalues, idx] = sort(diag(S)', <span class="string">'descend'</span>) ;
+0027 topcs = V(:,idx);
+0028 
+0029 <span class="comment">% truncate</span>
+0030 <span class="keyword">if</span> ~isempty (threshold)
+0031     ii=find(eigenvalues/eigenvalues(1)&gt;threshold);
+0032     topcs=topcs(:,ii);
+0033     eigenvalues=eigenvalues(ii);
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="keyword">if</span> ~isempty(nkeep)
+0037     nkeep=min(nkeep,size(topcs,2));
+0038     topcs=topcs(:,1:nkeep);
+0039     eigenvalues=eigenvalues(1:nkeep);
+0040 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

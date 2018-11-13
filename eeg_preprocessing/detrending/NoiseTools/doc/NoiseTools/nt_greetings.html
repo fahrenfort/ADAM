@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_greetings</title>
+  <meta name="keywords" content="nt_greetings">
+  <meta name="description" content="nt_greetings - display message the first time the toolbox is used">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_greetings.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_greetings
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>nt_greetings - display message the first time the toolbox is used</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function nt_greetings(reset) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">nt_greetings - display message the first time the toolbox is used</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_version.html" class="code" title="function y=nt_version, y='09-Oct-2018';">nt_version</a>	</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bsplot.html" class="code" title="function nt_bsplot(x,w,style,abscissa,zeroflag,rmsflag)">nt_bsplot</a>	nt_bsplot(x,sds,style,abscissa,zeroflag,rmsflag) - plot average with bootstrap standard deviation</li><li><a href="nt_cca.html" class="code" title="function [A,B,R]=nt_cca(x,y,shifts,C,m,thresh)">nt_cca</a>	[A,B,R]=nt_cca(x,y,shifts,C,m,thresh) - canonical correlation</li><li><a href="nt_deboing.html" class="code" title="function y=nt_deboing(x,events)">nt_deboing</a>	y=nt_deboing(x,events) - fit, remove ringing associated with events</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_destep.html" class="code" title="function [y,stepList]=nt_destep(x,thresh,guard,depth,minstep);">nt_destep</a>	[y,stepList]=nt_destep(x,thresh,guard,depth,minstep) - remove step glitch from MEG data</li><li><a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>	[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_dss_repeat_cluster.html" class="code" title="function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)">nt_dss_repeat_cluster</a>	y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_idx_disp.html" class="code" title="function nt_idx_disp(name,field,explainflag)">nt_idx_disp</a>	nt_idx_disp(name,field,explainflag) - display contents of index file</li><li><a href="nt_index.html" class="code" title="function [status,p]=nt_index(name,p,forceUpdate)">nt_index</a>	[status,p]=nt_index(name,p,forceUpdate) - index data files & directories</li><li><a href="nt_inpaint.html" class="code" title="function [y,yy]=nt_inpaint(x,w)">nt_inpaint</a>	function y=nt_inpaint(x,w) - weighted interpolation based on correlation structure</li><li><a href="nt_interpolate_bad_channels.html" class="code" title="function [toGood,fromGood]=interpolate_bad_channels(x,iBad,coordinates,n)">nt_interpolate_bad_channels</a>	y=interpolate_bad_channels(x,iBad,coordinates,n) - interpolate bad channels from good</li><li><a href="nt_iplot.html" class="code" title="function [hh,ii]=nt_iplot(name)">nt_iplot</a>	[hh,ii]=nt_iplot(fname) - plot data file based on index</li><li><a href="nt_morton.html" class="code" title="function [iMorton,toMorton]=nt_morton(nrows,ncols)">nt_morton</a>	[iMorton,toMorton]=nt_morton(nrows,ncols) - indices for Morton scan of image</li><li><a href="nt_multismooth.html" class="code" title="function z=nt_multismooth(x,smooth,alignment)">nt_multismooth</a>	z=nt_multismooth(x,smooth,alignment) - apply multiple smoothing kernels</li><li><a href="nt_narrowband_scan.html" class="code" title="function A=nt_narrowband_scan(x,freqs,sr,Q,plotflag,yulewalk_order)">nt_narrowband_scan</a>	A=nt_narrowband_scan(x,freqs,sr,Q,plotflag) - scan for narrowband components using DSS</li><li><a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>	[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</li><li><a href="nt_pca.html" class="code" title="function [z,idx]=nt_pca(x,shifts,nkeep,threshold,w)">nt_pca</a>	[z,idx]=nt_pca(x,shifts,nkeep,threshold,w) - time-shift pca</li><li><a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a>	[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels</li><li><a href="nt_sgram.html" class="code" title="function [s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags)">nt_sgram</a>	[s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags) - spectrogram</li><li><a href="nt_smooth.html" class="code" title="function x=nt_smooth(x,T,nIterations,nodelayflag)">nt_smooth</a>	y=nt_smooth(x,T,nIterations,nodelayflag) - smooth by convolution with square window</li><li><a href="nt_sns.html" class="code" title="function y=nt_sns(x,nneighbors,skip,w)">nt_sns</a>	y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression</li><li><a href="nt_sns_cluster.html" class="code" title="function x=nt_sns_cluster(x,nneighbors,cluster_size)">nt_sns_cluster</a>	y=nt_sns_cluster(x,nneigbors,cluster_size) - sensor noise suppression within clusters</li><li><a href="nt_star.html" class="code" title="function [x,w,ww]=nt_star(x,thresh,closest,depth)">nt_star</a>	[y,w,ww]=nt_star(x,thresh,closest,depth) - sensor noise suppression</li><li><a href="nt_star2.html" class="code" title="function [x,w,ww]=nt_star2(x,thresh,closest,w)">nt_star2</a>	[y,w,ww]=nt_star2(x,thresh,closest,w) - sensor noise suppression</li><li><a href="nt_tsr.html" class="code" title="function [y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh)">nt_tsr</a>	[y,idx,w]=nt_tsr(x,ref,shifts,wx,wref,keep,thresh) - time-shift regression (TSPCA)</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function nt_greetings(reset)</a>
+0002 <span class="comment">%nt_greetings - display message the first time the toolbox is used</span>
+0003 
+0004 <span class="keyword">persistent</span> nt_greeted
+0005 <span class="keyword">if</span> nargin&gt;0; nt_greeted=reset; <span class="keyword">return</span>; <span class="keyword">end</span>
+0006 
+0007 <span class="keyword">if</span> isempty(nt_greeted)
+0008     
+0009     display(<span class="string">' '</span>)
+0010     display([<span class="string">'NoiseTools, version '</span>,<a href="nt_version.html" class="code" title="function y=nt_version, y='09-Oct-2018';">nt_version</a>]);
+0011     display(<span class="string">'http://audition.ens.fr/adc/NoiseTools'</span>);
+0012     display(<span class="string">'Please cite relevant methods papers.'</span>);
+0013     display(<span class="string">' '</span>);
+0014     
+0015     nt_greeted=1;
+0016     
+0017 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

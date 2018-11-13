@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of example5</title>
+  <meta name="keywords" content="example5">
+  <meta name="description" content="This example uses DSS to isolate narrowband power near 16 Hz in MEG data.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">EXAMPLE</a> &gt; example5.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/EXAMPLE&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>example5
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This example uses DSS to isolate narrowband power near 16 Hz in MEG data.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> This example uses DSS to isolate narrowband power near 16 Hz in MEG data.
+ The presence of strong narrowband power near 10Hz would mask this
+ component without DSS.
+
+ The best component is dominated by 16 Hz, but the best sensor (ie the sensor 
+ most strongly containing this component) is dominated mainly by 10 Hz.
+
+ Uses nt_bias_filter(), nt_dss0().</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% This example uses DSS to isolate narrowband power near 16 Hz in MEG data.</span>
+0002 <span class="comment">% The presence of strong narrowband power near 10Hz would mask this</span>
+0003 <span class="comment">% component without DSS.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% The best component is dominated by 16 Hz, but the best sensor (ie the sensor</span>
+0006 <span class="comment">% most strongly containing this component) is dominated mainly by 10 Hz.</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% Uses nt_bias_filter(), nt_dss0().</span>
+0009 
+0010 clear;
+0011 disp(mfilename);
+0012 help(mfilename)
+0013 
+0014 <span class="comment">% load data</span>
+0015 FNAME=[fileparts(which(<span class="string">'nt_version'</span>)), <span class="string">'/DATA/example_data.mat'</span>];
+0016 <span class="keyword">if</span> ~exist(FNAME); 
+0017     disp(<span class="string">'file ''../DATA/example_data.mat'' not found, get it at http://cognition.ens.fr/Audition/adc/NoiseTools/DATA/'</span>);
+0018     <span class="keyword">return</span>
+0019 <span class="keyword">end</span>
+0020 load(FNAME)  <span class="comment">% loads 'meg', 'sr'</span>
+0021 <span class="comment">% excerpt of data from</span>
+0022 <span class="comment">% Duncan, K.K., Hadjipapas, A., Li, S., Kourtzi, Z., Bagshaw, A., Barnes, G., 2009. Identifying</span>
+0023 <span class="comment">% spatially overlapping local cortical networks with MEG. Hum. Brain Mapp. 7,</span>
+0024 <span class="comment">% 1003?1016.</span>
+0025 <span class="comment">% With thanks to authors.</span>
+0026 
+0027 <span class="comment">% first remove 50 Hz &amp; harmonics (see example4)</span>
+0028 disp(<span class="string">'remove 50 Hz &amp; harmonics...'</span>);
+0029 [c0,c1]=nt_bias_fft(meg,[50, 100, 150]/sr, 512);
+0030 [todss,pwr0,pwr1]=nt_dss0(c0,c1); 
+0031 p1=pwr1./pwr0; <span class="comment">% score, proportional to power ratio of 50Hz &amp; harmonics to full band</span>
+0032 z=nt_mmat(meg,todss);
+0033 NREMOVE=20;
+0034 meg=nt_tsr(meg,z(:,1:NREMOVE,:)); <span class="comment">% regress out to get clean data</span>
+0035 
+0036 <span class="comment">% downsample</span>
+0037 DSRATIO=3;
+0038 meg=nt_dsample(meg,DSRATIO);
+0039 sr=sr/DSRATIO;
+0040 
+0041 
+0042 
+0043 <span class="comment">% bias filter is second-order resonator</span>
+0044 disp(<span class="string">'DSS to isolate 16 Hz components...'</span>);
+0045 FPEAK=16; <span class="comment">% Hz</span>
+0046 Q=8; <span class="comment">% determines width</span>
+0047 [b,a]=nt_filter_peak(FPEAK/(sr/2),Q);
+0048 
+0049 <span class="comment">% covariance matrices of full band (c0) and filtered (c1)</span>
+0050 [c0,c1]=nt_bias_filter(meg,b,a);
+0051 
+0052 <span class="comment">% DSS matrix</span>
+0053 [todss,pwr0,pwr1]=nt_dss0(c0,c1); 
+0054 p1=pwr1./pwr0; <span class="comment">% score, proportional to power ratio of 50Hz &amp; harmonics to full band</span>
+0055 
+0056 <span class="comment">% DSS components</span>
+0057 z=nt_mmat(meg,todss);
+0058 
+0059 
+0060 <span class="comment">% plot bias score</span>
+0061 figure(1); clf; set(gcf,<span class="string">'color'</span>, [1 1 1]);
+0062 plot(p1, <span class="string">'.-'</span>); xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'score'</span>); title(<span class="string">'DSS score'</span>);
+0063 
+0064 
+0065 <span class="comment">% plot spectra of DSS components</span>
+0066 figure(2); clf; set(gcf,<span class="string">'color'</span>, [1 1 1]);
+0067 nt_spect_plot2(nt_normcol(z(:,1:30,:)),512,[],[],sr);
+0068 title(<span class="string">'spectra of first 30 DSS components'</span>); ylabel(<span class="string">'component'</span>)
+0069 
+0070 <span class="comment">% plot spectra of best DSS component and best sensor</span>
+0071 figure(3); clf; set(gcf,<span class="string">'color'</span>, [1 1 1]);
+0072 nt_spect_plot(nt_normcol(z(:,1,:)),512,[],[],sr);
+0073 hold on;
+0074 [~,idx]=max(abs(nt_xcov(z(:,1,:),nt_normcol(meg))));
+0075 nt_spect_plot(nt_normcol(meg(:,idx,:)),512,[],[],sr);
+0076 nt_linecolors([], [3 1]);
+0077 legend(<span class="string">'best component'</span>, <span class="string">'best sensor'</span>); legend boxoff; axis tight
+0078 title(<span class="string">'bias to 16 Hz'</span>)
+0079 
+0080</pre></div>
+<hr><address>Generated on Wed 29-Nov-2017 23:17:18 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

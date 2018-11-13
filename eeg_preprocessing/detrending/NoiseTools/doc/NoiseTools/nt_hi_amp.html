@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_hi_amp</title>
+  <meta name="keywords" content="nt_hi_amp">
+  <meta name="description" content="y=nt_hi_amp(x) - decompose into high-amplitude components">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_hi_amp.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_hi_amp
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_hi_amp(x) - decompose into high-amplitude components</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_hi_amp(x,exponent) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=nt_hi_amp(x) - decompose into high-amplitude components</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_bias_hi_amp.html" class="code" title="function [c0,c1,w]=bias_hi_amp(x,exponent)">nt_bias_hi_amp</a>	[c0,c1]=bias_hi_amp(x,exponent) - covariance with and without hi-amp bias</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_hi_amp.html" class="code" title="function y=nt_hi_amp(x,exponent)">nt_hi_amp</a>	y=nt_hi_amp(x) - decompose into high-amplitude components</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_hi_amp.html" class="code" title="function y=nt_hi_amp(x,exponent)">nt_hi_amp</a>	y=nt_hi_amp(x) - decompose into high-amplitude components</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y=nt_hi_amp(x,exponent)</a>
+0002 <span class="comment">%y=nt_hi_amp(x) - decompose into high-amplitude components</span>
+0003 
+0004 
+0005 <span class="keyword">if</span> nargin&lt;1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0006 <span class="keyword">if</span> nargin&lt;2 || isempty(exponent); exponent=0.5; <span class="keyword">end</span>
+0007 
+0008 <span class="keyword">if</span> ndims(x)==3; 
+0009     y=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(<a href="nt_hi_amp.html" class="code" title="function y=nt_hi_amp(x,exponent)">nt_hi_amp</a>(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x)),size(x,1)); 
+0010     <span class="keyword">return</span>
+0011 <span class="keyword">end</span>
+0012 
+0013 y=zeros(size(x));
+0014 <span class="keyword">for</span> k=1:size(x,2)-1
+0015     x=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(x);
+0016     [c0,c1]=<a href="nt_bias_hi_amp.html" class="code" title="function [c0,c1,w]=bias_hi_amp(x,exponent)">nt_bias_hi_amp</a>(x,exponent);
+0017     [todss,pwr0,pwr1]=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0018     
+0019     figure(100); clf; 
+0020     plot(pwr1./pwr0,<span class="string">'.-'</span>); 
+0021     ylim([0 inf]); 
+0022     xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'score'</span>); title (<span class="string">'DSS for high samplitude'</span>);
+0023     
+0024     x=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,todss);
+0025     y(:,k)=x(:,1);
+0026     x=x(:,2:end);
+0027     <span class="keyword">if</span> size(x,2)==0; 
+0028         <span class="keyword">break</span>;
+0029     <span class="keyword">end</span>
+0030 <span class="keyword">end</span>
+0031 
+0032 y=y(:,1:k+1);</pre></div>
+<hr><address>Generated on Wed 12-Oct-2016 15:09:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

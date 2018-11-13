@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of example4</title>
+  <meta name="keywords" content="example4">
+  <meta name="description" content="This example uses DSS to remove power-line noise from MEG data.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">EXAMPLE</a> &gt; example4.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/EXAMPLE&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>example4
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This example uses DSS to remove power-line noise from MEG data.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> This example uses DSS to remove power-line noise from MEG data.
+ Finds components that are most dominated by 50 Hz and 
+ harmonics, regresses them out to obtain clean data.
+
+ Uses nt_bias_fft(), nt_dss0(), nt_tsr().</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% This example uses DSS to remove power-line noise from MEG data.</span>
+0002 <span class="comment">% Finds components that are most dominated by 50 Hz and</span>
+0003 <span class="comment">% harmonics, regresses them out to obtain clean data.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Uses nt_bias_fft(), nt_dss0(), nt_tsr().</span>
+0006 
+0007 clear;
+0008 disp(mfilename);
+0009 help(mfilename)
+0010 
+0011 <span class="comment">% load data</span>
+0012 FNAME=[fileparts(which(<span class="string">'nt_version'</span>)), <span class="string">'/DATA/example_data.mat'</span>];
+0013 <span class="keyword">if</span> ~exist(FNAME); 
+0014     disp([<span class="string">'file '</span>, FNAME, <span class="string">' not found, get it at http://cognition.ens.fr/Audition/adc/NoiseTools/DATA/'</span>]);
+0015     <span class="keyword">return</span>
+0016 <span class="keyword">end</span>
+0017 load(FNAME)  <span class="comment">% loads 'meg', 'sr'</span>
+0018 <span class="comment">% excerpt of data from</span>
+0019 <span class="comment">% Duncan, K.K., Hadjipapas, A., Li, S., Kourtzi, Z., Bagshaw, A., Barnes, G., 2009. Identifying</span>
+0020 <span class="comment">% spatially overlapping local cortical networks with MEG. Hum. Brain Mapp. 7,</span>
+0021 <span class="comment">% 1003?1016.</span>
+0022 <span class="comment">% With thanks to authors.</span>
+0023 
+0024 <span class="comment">% use DSS to isolate 50 Hz &amp; harmonics</span>
+0025 disp(<span class="string">'50 Hz &amp; harmonics DSS...'</span>);
+0026 
+0027 <span class="comment">% covariance matrices of full band (c0) and filtered to 50 Hz &amp; harmonics (c1)</span>
+0028 [c0,c1]=nt_bias_fft(meg,[50, 100, 150]/sr, 512);
+0029 
+0030 <span class="comment">% DSS matrix</span>
+0031 [todss,pwr0,pwr1]=nt_dss0(c0,c1); 
+0032 p1=pwr1./pwr0; <span class="comment">% score, proportional to power ratio of 50Hz &amp; harmonics to full band</span>
+0033 
+0034 <span class="comment">% DSS components</span>
+0035 z=nt_mmat(meg,todss);
+0036 
+0037 <span class="comment">% first components are most dominated by 50Hz &amp; harmonics</span>
+0038 NREMOVE=20;
+0039 clean=nt_tsr(meg,z(:,1:NREMOVE,:)); <span class="comment">% regress them out</span>
+0040 
+0041 <span class="comment">% plot bias score</span>
+0042 figure(1); clf; set(gcf,<span class="string">'color'</span>, [1 1 1]);
+0043 plot(p1, <span class="string">'.-'</span>); xlabel(<span class="string">'component'</span>); ylabel(<span class="string">'score'</span>); title(<span class="string">'DSS score'</span>);
+0044 
+0045 <span class="comment">% plot spectra of DSS components</span>
+0046 figure(2); clf; set(gcf,<span class="string">'color'</span>, [1 1 1]);
+0047 nt_spect_plot2(nt_normcol(z(:,1:30,:)),512,[],[],sr);
+0048 title(<span class="string">'spectra of first 30 DSS components'</span>); ylabel(<span class="string">'component'</span>)
+0049 
+0050 <span class="comment">% plot spectra of data before and after removal of power line components</span>
+0051 figure(3); clf; set(gcf,<span class="string">'color'</span>, [1 1 1]);
+0052 subplot 121;
+0053 nt_spect_plot(meg,1024,[],[],sr); 
+0054 set(gca,<span class="string">'ygrid'</span>,<span class="string">'on'</span>);
+0055 hold on
+0056 nt_spect_plot(clean,1024,[],[],sr);
+0057 nt_linecolors([],[3 1]);
+0058 title(<span class="string">'power spectra, average over channels'</span>);
+0059 legend(<span class="string">'before'</span>,<span class="string">'after'</span>); legend boxoff
+0060 set(gca,<span class="string">'ygrid'</span>,<span class="string">'on'</span>);
+0061 subplot 122
+0062 nt_spect_plot(meg-clean,1024,[],[],sr);
+0063 title(<span class="string">'noise power (removed)'</span>);
+0064 set(gca,<span class="string">'ygrid'</span>,<span class="string">'on'</span>);
+0065 
+0066 
+0067</pre></div>
+<hr><address>Generated on Wed 29-Nov-2017 23:17:18 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

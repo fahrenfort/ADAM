@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_dss_repeat_cluster</title>
+  <meta name="keywords" content="nt_dss_repeat_cluster">
+  <meta name="description" content="y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_dss_repeat_cluster.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_dss_repeat_cluster
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function x=nt_dss_repeat_cluster(x,nkeep,cluster_size) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters
+ to emphasize repeatability
+
+   y: denoised matrix
+
+   x: matrix  to denoise (time * channels * trials)
+   nkeep: number of components to keep for each cluster
+   cluster_size: target cluster size [default: size(x,1)/2]
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dss1.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2)">nt_dss1</a>	[todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2) - evoked-biased DSS denoising</li><li><a href="nt_dss_repeat_cluster.html" class="code" title="function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)">nt_dss_repeat_cluster</a>	y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li><li><a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>	[y,tweight]=nt_wpwr(x,w) - weighted power</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dss_repeat_cluster.html" class="code" title="function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)">nt_dss_repeat_cluster</a>	y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001  <a name="_sub0" href="#_subfunctions" class="code">function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)</a>
+0002 <span class="comment">% y=nt_dss_repeat_cluster(x,nkeep,cluster_size) - dss within clusters</span>
+0003 <span class="comment">% to emphasize repeatability</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">%   y: denoised matrix</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%   x: matrix  to denoise (time * channels * trials)</span>
+0008 <span class="comment">%   nkeep: number of components to keep for each cluster</span>
+0009 <span class="comment">%   cluster_size: target cluster size [default: size(x,1)/2]</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% NoiseTools</span>
+0012 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0013 
+0014 
+0015 <span class="keyword">if</span> nargin&lt;3; cluster_size=[]; <span class="keyword">end</span>
+0016 <span class="keyword">if</span> nargin&lt;2; nkeep=ceil(cluster_size/2); <span class="keyword">end</span>
+0017 
+0018 <span class="keyword">if</span> ndims(x)~=3; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0019 
+0020 x0=x;
+0021 
+0022 <span class="keyword">if</span> isempty(cluster_size); cluster_size=round(size(x,1)/2); <span class="keyword">end</span>
+0023 
+0024 <span class="keyword">if</span> size(x,2)&lt;=cluster_size
+0025     todss=<a href="nt_dss1.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss1(x,w,keep1,keep2)">nt_dss1</a>(x);
+0026     fromdss=pinv(todss);
+0027     nkeep=min(nkeep,size(todss,2));
+0028     x=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,(todss(:,1:nkeep)*fromdss(1:nkeep,:)));
+0029 <span class="keyword">else</span>
+0030     NCLUSTERS=2;
+0031     [C,A]=vl_kmeans(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x),NCLUSTERS,<span class="string">'algorithm'</span>, <span class="string">'elkan'</span>,<span class="string">'initialization'</span>,<span class="string">'plusplus'</span>,<span class="string">'numrepetitions'</span>, 100);
+0032     <span class="keyword">if</span> numel(find(A==1)) &amp;&amp; numel(find(A==2))
+0033         xA=<a href="nt_dss_repeat_cluster.html" class="code" title="function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)">nt_dss_repeat_cluster</a>(x(:,find(A==1),:),nkeep,cluster_size);
+0034         xB=<a href="nt_dss_repeat_cluster.html" class="code" title="function x=nt_dss_repeat_cluster(x,nkeep,cluster_size)">nt_dss_repeat_cluster</a>(x(:,find(A==2),:),nkeep,cluster_size);
+0035         x(:,find(A==1),:)=xA;
+0036         x(:,find(A==2),:)=xB;
+0037     <span class="keyword">end</span> <span class="comment">% else no split, return</span>
+0038 <span class="keyword">end</span>
+0039 x1=x;
+0040 
+0041 
+0042 verbose=0;
+0043 <span class="keyword">if</span> nargout==0 || verbose;
+0044     disp([<span class="string">'cluster size: '</span>, num2str(size(x,2)), <span class="string">',  power ratio: '</span>,num2str(<a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>(x1)/<a href="nt_wpwr.html" class="code" title="function [y,tweight]=nt_wpwr(x,w)">nt_wpwr</a>(x0))]);
+0045 <span class="keyword">end</span>
+0046 
+0047</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

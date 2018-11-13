@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of getnicedialoglocation</title>
+  <meta name="keywords" content="getnicedialoglocation">
+  <meta name="description" content="adjust the specified figure position to fig nicely over GCBF">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">private</a> &gt; getnicedialoglocation.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/private&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>getnicedialoglocation
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>adjust the specified figure position to fig nicely over GCBF</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function figure_size = getnicedialoglocation(figure_size, figure_units) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> adjust the specified figure position to fig nicely over GCBF
+ or into the upper 3rd of the screen</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="listdlg3.html" class="code" title="">listdlg3</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function figure_size = getnicedialoglocation(figure_size, figure_units)</a>
+0002 <span class="comment">% adjust the specified figure position to fig nicely over GCBF</span>
+0003 <span class="comment">% or into the upper 3rd of the screen</span>
+0004 
+0005 <span class="comment">%  Copyright 1999-2010 The MathWorks, Inc.</span>
+0006 <span class="comment">%  $Revision: 1.1.6.5 $</span>
+0007 
+0008 parentHandle = gcbf;
+0009 convertData.destinationUnits = figure_units;
+0010 <span class="keyword">if</span> ~isempty(parentHandle)
+0011     <span class="comment">% If there is a parent figure</span>
+0012     convertData.hFig = parentHandle;
+0013     convertData.size = get(parentHandle,<span class="string">'Position'</span>);
+0014     convertData.sourceUnits = get(parentHandle,<span class="string">'Units'</span>);  
+0015     c = []; 
+0016 <span class="keyword">else</span>
+0017     <span class="comment">% If there is no parent figure, use the root's data</span>
+0018     <span class="comment">% and create a invisible figure as parent</span>
+0019     convertData.hFig = figure(<span class="string">'visible'</span>,<span class="string">'off'</span>);
+0020     convertData.size = get(0,<span class="string">'ScreenSize'</span>);
+0021     convertData.sourceUnits = get(0,<span class="string">'Units'</span>);
+0022     c = onCleanup(@() close(convertData.hFig));
+0023 <span class="keyword">end</span>
+0024 
+0025 <span class="comment">% Get the size of the dialog parent in the dialog units</span>
+0026 container_size = hgconvertunits(convertData.hFig, convertData.size ,<span class="keyword">...</span>
+0027     convertData.sourceUnits, convertData.destinationUnits, get(convertData.hFig,<span class="string">'Parent'</span>));
+0028 
+0029 delete(c);
+0030 
+0031 figure_size(1) = container_size(1)  + 1/2*(container_size(3) - figure_size(3));
+0032 figure_size(2) = container_size(2)  + 2/3*(container_size(4) - figure_size(4));
+0033 
+0034</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

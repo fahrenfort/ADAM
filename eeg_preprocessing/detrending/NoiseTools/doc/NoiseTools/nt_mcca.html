@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_mcca</title>
+  <meta name="keywords" content="nt_mcca">
+  <meta name="description" content="[A,score,AA]=nt_mcca(C,N) - multiple cca">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_mcca.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_mcca
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[A,score,AA]=nt_mcca(C,N) - multiple cca</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [A,score,AA]=nt_mcca(C,N,Nkeep) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[A,score,AA]=nt_mcca(C,N) - multiple cca
+
+  A: transform matrix
+  score: commonality score (ranges from 1 to N)
+  AA: array of subject-specific MCCA transform matrices
+ 
+  C: covariance matrix of aggregated data sets
+  N: number of channels of each data set
+  Nkeep: number of components to keep (for orthogonal transforms)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cca.html" class="code" title="function [A,B,R]=nt_cca(x,y,shifts,C,m,thresh)">nt_cca</a>	[A,B,R]=nt_cca(x,y,shifts,C,m,thresh) - canonical correlation</li><li><a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>	nt_imagescc - plot image with symmetric scaling</li><li><a href="nt_mcca.html" class="code" title="function [A,score,AA]=nt_mcca(C,N,Nkeep)">nt_mcca</a>	[A,score,AA]=nt_mcca(C,N) - multiple cca</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_mcca.html" class="code" title="function [A,score,AA]=nt_mcca(C,N,Nkeep)">nt_mcca</a>	[A,score,AA]=nt_mcca(C,N) - multiple cca</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [A,score,AA]=nt_mcca(C,N,Nkeep)</a>
+0002 <span class="comment">%[A,score,AA]=nt_mcca(C,N) - multiple cca</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  A: transform matrix</span>
+0005 <span class="comment">%  score: commonality score (ranges from 1 to N)</span>
+0006 <span class="comment">%  AA: array of subject-specific MCCA transform matrices</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%  C: covariance matrix of aggregated data sets</span>
+0009 <span class="comment">%  N: number of channels of each data set</span>
+0010 <span class="comment">%  Nkeep: number of components to keep (for orthogonal transforms)</span>
+0011 
+0012 <span class="keyword">if</span> nargin&lt;3; Nkeep=[]; <span class="keyword">end</span>
+0013 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0014 <span class="keyword">if</span> size(C,1) ~= size(C,2); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0015 <span class="keyword">if</span> size(C,1) ~= round(size(C,1)/N)*N; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0016 
+0017 <span class="comment">% sphere by blocks</span>
+0018 nblocks=size(C,1)/N;
+0019 <span class="keyword">for</span> iBlock=1:nblocks
+0020     idx=(iBlock-1)*N + (1:N);
+0021     CC=C(idx,idx);
+0022     [V, S] = eig(CC) ;  
+0023     V=real(V); S=real(S);
+0024     [E,idx2] = sort(diag(S)', <span class="string">'descend'</span>);
+0025     topcs=V(:,idx2);
+0026     EXP=1-10^-12; 
+0027     E=E.^EXP; <span class="comment">% break symmetry when x and y perfectly correlated (otherwise cols of x*A and y*B are not orthogonal)</span>
+0028     EE=(1./E); EE(find(E&lt;=0))=0;
+0029     A(idx,idx)=topcs*diag(sqrt(EE));
+0030 <span class="keyword">end</span>
+0031 C=A'*C*A;
+0032 
+0033 
+0034 <span class="comment">% final PCA</span>
+0035 [V, S] = eig(C) ;
+0036 V=real(V); S=real(S);
+0037 [E, idx] = sort(diag(S)', <span class="string">'descend'</span>) ;
+0038 topcs = V(:,idx);
+0039 A=A*topcs;
+0040 <span class="comment">%A=A(:,1:N);</span>
+0041 
+0042 C=topcs'*C*topcs;
+0043 score=diag(C);
+0044 
+0045 
+0046 <span class="keyword">if</span> nargout&gt;2;
+0047     AA=[];
+0048     <span class="keyword">for</span> iBlock=1:nblocks
+0049         AA{iBlock}=A(N*(iBlock-1)+(1:N),:);
+0050     <span class="keyword">end</span>
+0051 <span class="keyword">end</span>
+0052 
+0053 <span class="keyword">if</span> nargout&gt;3;
+0054     <span class="keyword">if</span> isempty(Nkeep); error(<span class="string">'must specify Nkeep'</span>); <span class="keyword">end</span>
+0055     AAA=[];
+0056     <span class="keyword">for</span> iBlock=1:nblocks
+0057         <span class="comment">% covariance of subject's data</span>
+0058         idx=(iBlock-1)*N + (1:N);
+0059         C11=C(idx,idx);
+0060         <span class="comment">% covariance of selected MCCA components</span>
+0061         tmp=A(:,1:Nkeep);
+0062         C22=tmp'*C*tmp;
+0063         <span class="comment">% cross covariance between subject's data and transformed data</span>
+0064         C12=C(idx,:)*tmp; clear tmp
+0065         C21=C12';
+0066         <span class="comment">% CCA:</span>
+0067         [tmp]=<a href="nt_cca.html" class="code" title="function [A,B,R]=nt_cca(x,y,shifts,C,m,thresh)">nt_cca</a>([],[],[],[C11,C12;C21,C22],N);
+0068         AAA{iBlock}=tmp;
+0069     <span class="keyword">end</span>
+0070 <span class="keyword">end</span>
+0071 
+0072 
+0073 <span class="keyword">return</span>
+0074 
+0075 <span class="comment">% test code</span>
+0076 
+0077 <span class="comment">% 3 uncorrelated data sets</span>
+0078 figure(1); clf;
+0079 x1=randn(10000,10); x2=randn(10000,10); x3=randn(10000,10); 
+0080 x=[x1,x2,x3];
+0081 C=x'*x;
+0082 [A,score,AA]=<a href="nt_mcca.html" class="code" title="function [A,score,AA]=nt_mcca(C,N,Nkeep)">nt_mcca</a>(C,10);
+0083 subplot 131; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(A); title(<span class="string">'mcca transform'</span>);
+0084 subplot 132; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(A'*C*A); title(<span class="string">'covariance of transformed data'</span>);
+0085 subplot 133; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(x'*(x*A)); title(<span class="string">'crosscorr between raw &amp; transf'</span>); xlabel(<span class="string">'transformed'</span>); ylabel(<span class="string">'raw'</span>);
+0086 z=x*A;
+0087 figure(11); clf;
+0088 plot(mean(z.^2));
+0089 
+0090 <span class="comment">% 3 identical data sets</span>
+0091 figure(2); clf
+0092 x1=randn(10000,10); x=[x1,x1,x1]; 
+0093 C=x'*x; 
+0094 [A,score,AA]=<a href="nt_mcca.html" class="code" title="function [A,score,AA]=nt_mcca(C,N,Nkeep)">nt_mcca</a>(C,10);
+0095 subplot 131; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(A); title(<span class="string">'mcca transform'</span>);
+0096 subplot 132; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(A'*C*A); title(<span class="string">'covariance of transformed data'</span>);
+0097 subplot 133; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(x'*(x*A)); title(<span class="string">'cross correlation'</span>); xlabel(<span class="string">'transformed'</span>); ylabel(<span class="string">'raw'</span>);
+0098 
+0099 <span class="comment">% 3 data sets with shared parts</span>
+0100 figure(3); clf
+0101 x1=randn(10000,5); x2=randn(10000,5); x3=randn(10000,5); x4=randn(10000,5); 
+0102 x=[x2,x1,x3,x1,x4,x1];
+0103 C=x'*x; 
+0104 [A,score,AA]=<a href="nt_mcca.html" class="code" title="function [A,score,AA]=nt_mcca(C,N,Nkeep)">nt_mcca</a>(C,10);
+0105 subplot 131; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(A); title(<span class="string">'mcca transform'</span>);
+0106 subplot 132; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(A'*C*A); title(<span class="string">'covariance of transformed data'</span>);
+0107 subplot 133; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(x'*(x*A)); title(<span class="string">'cross correlation'</span>); xlabel(<span class="string">'transformed'</span>); ylabel(<span class="string">'raw'</span>);
+0108 
+0109 <span class="comment">% 3 data sets with parts shared 2 by 2</span>
+0110 figure(4); clf
+0111 x1=randn(10000,5); x2=randn(10000,5); x3=randn(10000,5); x4=randn(10000,5); 
+0112 x=[x2,x1,x3,x1,x3,x4];
+0113 C=x'*x; 
+0114 [A,score,AA]=<a href="nt_mcca.html" class="code" title="function [A,score,AA]=nt_mcca(C,N,Nkeep)">nt_mcca</a>(C,10);
+0115 subplot 131; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(A); title(<span class="string">'mcca transform'</span>);
+0116 subplot 132; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(A'*C*A); title(<span class="string">'covariance of transformed data'</span>);
+0117 subplot 133; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(x'*(x*A)); title(<span class="string">'cross correlation'</span>); xlabel(<span class="string">'transformed'</span>); ylabel(<span class="string">'raw'</span>);
+0118</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

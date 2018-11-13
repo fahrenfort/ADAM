@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_dprime</title>
+  <meta name="keywords" content="nt_dprime">
+  <meta name="description" content="[d,err_rate,perm,area_roc,roc]=nt_dprime(x,y,jd_flag) - calculate d' (discriminability) of two distributions">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_dprime.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_dprime
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[d,err_rate,perm,area_roc,roc]=nt_dprime(x,y,jd_flag) - calculate d' (discriminability) of two distributions</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [d,err_rate,perm_rate,area_roc,roc]=nt_dprime(x,y,jd_flag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[d,err_rate,perm,area_roc,roc]=nt_dprime(x,y,jd_flag) - calculate d' (discriminability) of two distributions
+
+  d: discriminablity index
+  err_rate: error rate for linear discrimination
+  perm_rate: rate for permuted data
+  area_roc: area under ROC curve
+  roc: ROC curve
+
+  x, y: data (column vectors or matrices)
+  jd_flag: apply JD first
+ 
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_dprime.html" class="code" title="function [d,err_rate,perm_rate,area_roc,roc]=nt_dprime(x,y,jd_flag)">nt_dprime</a>	[d,err_rate,perm,area_roc,roc]=nt_dprime(x,y,jd_flag) - calculate d' (discriminability) of two distributions</li><li><a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>	[todss,pwr1,pwr2]=nt_dss0(c0,c1,keep1,keep2) - dss from covariance</li><li><a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>	y=nt_mmat(x,m) -  matrix multiplication (with convolution)</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dprime.html" class="code" title="function [d,err_rate,perm_rate,area_roc,roc]=nt_dprime(x,y,jd_flag)">nt_dprime</a>	[d,err_rate,perm,area_roc,roc]=nt_dprime(x,y,jd_flag) - calculate d' (discriminability) of two distributions</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [d,err_rate,perm_rate,area_roc,roc]=nt_dprime(x,y,jd_flag)</a>
+0002 <span class="comment">%[d,err_rate,perm,area_roc,roc]=nt_dprime(x,y,jd_flag) - calculate d' (discriminability) of two distributions</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  d: discriminablity index</span>
+0005 <span class="comment">%  err_rate: error rate for linear discrimination</span>
+0006 <span class="comment">%  perm_rate: rate for permuted data</span>
+0007 <span class="comment">%  area_roc: area under ROC curve</span>
+0008 <span class="comment">%  roc: ROC curve</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">%  x, y: data (column vectors or matrices)</span>
+0011 <span class="comment">%  jd_flag: apply JD first</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% NoiseTools</span>
+0014 
+0015 NSTEPS=1000; <span class="comment">% number of steps to find min of error rate</span>
+0016 P=0.05; <span class="comment">% theshold value for permutation test</span>
+0017 NPERMUTE=1000; <span class="comment">% number of trials for permutation test</span>
+0018 
+0019 <span class="keyword">if</span> nargin&lt;3; jd_flag=[]; <span class="keyword">end</span>
+0020 <span class="keyword">if</span> nargin&lt;2; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0021 <span class="keyword">if</span> iscell(x)
+0022     xx=[]; yy=[];
+0023     <span class="keyword">for</span> iCell=1:numel(x);
+0024         xx=[xx; x{iCell}];
+0025         yy=[yy; y{iCell}];
+0026     <span class="keyword">end</span>
+0027     x=xx; y=yy;
+0028 <span class="keyword">end</span>
+0029 <span class="keyword">if</span> size(x,2) ~= size(y,2); error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0030 
+0031 <span class="keyword">if</span> jd_flag; 
+0032     c0=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x))+<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(y));
+0033     c1=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(mean(x)-mean(y));
+0034     todss=<a href="nt_dss0.html" class="code" title="function [todss,pwr0,pwr1]=nt_dss0(c0,c1,keep1,keep2)">nt_dss0</a>(c0,c1);
+0035     x=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(x,todss);
+0036     y=<a href="nt_mmat.html" class="code" title="function y=nt_mmat(x,m)">nt_mmat</a>(y,todss);
+0037 <span class="keyword">end</span>
+0038 
+0039 d=abs(mean(x)-mean(y)) ./ sqrt((var(x)+var(y))/2);
+0040 
+0041 <span class="comment">% make sure that y&gt;x</span>
+0042 <span class="keyword">for</span> iChan=1:size(x,2)
+0043     <span class="keyword">if</span> mean(x(:,iChan))&gt;mean(y(:,iChan));
+0044         x(:,iChan)=-x(:,iChan);
+0045         y(:,iChan)=-y(:,iChan);
+0046     <span class="keyword">end</span>
+0047 <span class="keyword">end</span>
+0048 
+0049 <span class="keyword">if</span> nargout&gt;1; <span class="comment">% error rate</span>
+0050     err_rate=[];
+0051     <span class="keyword">for</span> iChan=1:size(x,2)
+0052         min_error=1;
+0053         <span class="keyword">for</span> thresh=linspace(mean(x(:,iChan)),mean(y(:,iChan)),NSTEPS);
+0054             x2y=sum(x(:,iChan)&gt;thresh);
+0055             y2x=sum(y(:,iChan)&lt;thresh);
+0056             nErr=x2y+y2x;
+0057             min_error=min(min_error,nErr/(size(x,1)+size(y,1)));
+0058         <span class="keyword">end</span>
+0059         err_rate(iChan)=min_error;
+0060     <span class="keyword">end</span>
+0061 <span class="keyword">end</span>
+0062 
+0063 <span class="keyword">if</span> nargout&gt;2; <span class="comment">%permutation test</span>
+0064     perm_rate=[];
+0065     <span class="keyword">for</span> iChan=1:size(x,2)
+0066         <span class="keyword">for</span> iPermute=1:NPERMUTE
+0067             <span class="keyword">if</span> rem(iPermute,100)==1; disp(iPermute); <span class="keyword">end</span>
+0068             <span class="comment">% scramble between x and y:</span>
+0069             z=[x(:,iChan);y(:,iChan)]; 
+0070             z=z(randperm(size(z,1)));
+0071             xx=z(1:size(x,1));    
+0072             yy=z(size(x,1)+1:end);
+0073             min_error=1;
+0074             <span class="comment">% scan criterion for minimum error</span>
+0075             <span class="keyword">for</span> thresh=linspace(mean(x(:,iChan)),mean(y(:,iChan)),NSTEPS);
+0076                 x2y=sum(xx&gt;thresh);
+0077                 y2x=sum(yy&lt;thresh);
+0078                 nErr=x2y+y2x;
+0079                 min_error=min(min_error,nErr/(size(x,1)+size(y,1)));
+0080             <span class="keyword">end</span>
+0081             min_errors(iPermute)=min_error;
+0082         <span class="keyword">end</span>
+0083         <span class="comment">% find 5th percentile of distribution of error rates</span>
+0084         min_errors=sort(min_errors);
+0085         min_errors=min_errors(1:round(NPERMUTE*P));
+0086         perm_rate(iChan)=min_errors(end);
+0087     <span class="keyword">end</span>
+0088 <span class="keyword">end</span>
+0089 
+0090 <span class="keyword">if</span> nargout&gt;3; error(<span class="string">'ROC not implemented yet'</span>); <span class="keyword">end</span>
+0091 
+0092 
+0093 <span class="comment">% test code</span>
+0094 <span class="keyword">if</span> 0
+0095     x=randn(10000,1);
+0096     y=1+randn(10000,1);
+0097     figure(1); clf
+0098     t=-3:0.1:4;
+0099     plot(t,hist(x,t));
+0100     hold on;
+0101     plot(t,hist(y,t), <span class="string">'r'</span>);
+0102     [d,e,p]=<a href="nt_dprime.html" class="code" title="function [d,err_rate,perm_rate,area_roc,roc]=nt_dprime(x,y,jd_flag)">nt_dprime</a>(x,y);
+0103     disp([<span class="string">'d'': '</span>, num2str(d)]);
+0104     disp([<span class="string">'e'': '</span>, num2str(e)]);
+0105     disp([<span class="string">'p'': '</span>, num2str(p)]);
+0106 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

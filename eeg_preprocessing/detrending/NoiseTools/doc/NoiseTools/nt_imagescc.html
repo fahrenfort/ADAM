@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_imagescc</title>
+  <meta name="keywords" content="nt_imagescc">
+  <meta name="description" content="nt_imagescc - plot image with symmetric scaling">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_imagescc.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_imagescc
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>nt_imagescc - plot image with symmetric scaling</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function nt_imagescc(C) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">nt_imagescc - plot image with symmetric scaling</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cca.html" class="code" title="function [A,B,R]=nt_cca(x,y,shifts,C,m,thresh)">nt_cca</a>	[A,B,R]=nt_cca(x,y,shifts,C,m,thresh) - canonical correlation</li><li><a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>	[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</li><li><a href="nt_interpolate_bad_channels.html" class="code" title="function [toGood,fromGood]=interpolate_bad_channels(x,iBad,coordinates,n)">nt_interpolate_bad_channels</a>	y=interpolate_bad_channels(x,iBad,coordinates,n) - interpolate bad channels from good</li><li><a href="nt_mcca.html" class="code" title="function [A,score,AA]=nt_mcca(C,N,Nkeep)">nt_mcca</a>	[A,score,AA]=nt_mcca(C,N) - multiple cca</li><li><a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>	[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</li><li><a href="nt_regw.html" class="code" title="function [b,z]=nt_regw(y,x,w)">nt_regw</a>	[b,z]=nt_regw(y,x,w) - weighted regression</li><li><a href="nt_sgram.html" class="code" title="function [s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags)">nt_sgram</a>	[s,f,t]=nt_sgram(x,window,noverlap,nfft,sr,flags) - spectrogram</li><li><a href="nt_spect_plot2.html" class="code" title="function varargout=nt_spect_plot2(x,varargin)">nt_spect_plot2</a>	nt_spect_plot2 - plot power spectrum</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function nt_imagescc(C)</a>
+0002 <span class="comment">%nt_imagescc - plot image with symmetric scaling</span>
+0003 
+0004 m=max(abs(C(:)));
+0005 imagesc(C,[-m-realmin,m+realmin]);</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

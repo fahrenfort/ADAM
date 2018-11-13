@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_sns</title>
+  <meta name="keywords" content="nt_sns">
+  <meta name="description" content="y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_sns.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_sns
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function y=nt_sns(x,nneighbors,skip,w) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression
+
+   y: denoised matrix
+
+   x: matrix  to denoise
+   nneighbors: number of channels to use in projection
+   skip: number of closest neighbors to skip (default: 0)
+   w : weights (default: all ones)
+
+ If w=='auto', the weights are calculated automatically.
+
+  Mean of data is NOT removed.
+
+ Cite: 
+ de Cheveign\'e, A. and Simon, J. Z. (2007). &quot;Sensor Noise Suppression.&quot; 
+ Journal of Neuroscience Methods, 168: 195-202.
+
+ NoiseTools</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>	[c,tw]=nt_cov(x,shifts,w) - time shift covariance</li><li><a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>	[y,mn]=nt_demean(x,w) - remove weighted mean over cols</li><li><a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>	y=fold(x,epochsize) - fold 2D to 3D</li><li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_sns.html" class="code" title="function y=nt_sns(x,nneighbors,skip,w)">nt_sns</a>	y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression</li><li><a href="nt_sns0.html" class="code" title="function r=nt_sns0(c,nneighbors,skip,wc)">nt_sns0</a>	r=nt_sns0(c,nneigbors,skip,wc) - sensor noise suppression</li><li><a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>	y=nt_fold(x) - unfold 3D to 2D</li><li><a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>	y=nt_vecmult(x,v) - multiply all rows or columns of matrix by vector</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_find_bad_channels.html" class="code" title="function [iBad,toGood]=nt_find_bad_channels(x,proportion,thresh1,thresh2,thresh3)">nt_find_bad_channels</a>	[iBad,toGood]=nt_find_bad_channels(x,proportion,thresh1,thresh2,thresh3) - find bad channels</li><li><a href="nt_sns.html" class="code" title="function y=nt_sns(x,nneighbors,skip,w)">nt_sns</a>	y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression</li><li><a href="nt_sns1.html" class="code" title="function x=nt_sns1(x,nneighbors,skip,w,threshold)">nt_sns1</a>	y=nt_sns1(x,nneigbors,skip,w,threshold) - sensor noise suppression</li><li><a href="nt_sns_cluster.html" class="code" title="function x=nt_sns_cluster(x,nneighbors,cluster_size)">nt_sns_cluster</a>	y=nt_sns_cluster(x,nneigbors,cluster_size) - sensor noise suppression within clusters</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001  <a name="_sub0" href="#_subfunctions" class="code">function y=nt_sns(x,nneighbors,skip,w)</a>
+0002 <span class="comment">% y=nt_sns(x,nneigbors,skip,w) - sensor noise suppression</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%   y: denoised matrix</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%   x: matrix  to denoise</span>
+0007 <span class="comment">%   nneighbors: number of channels to use in projection</span>
+0008 <span class="comment">%   skip: number of closest neighbors to skip (default: 0)</span>
+0009 <span class="comment">%   w : weights (default: all ones)</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% If w=='auto', the weights are calculated automatically.</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%  Mean of data is NOT removed.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% Cite:</span>
+0016 <span class="comment">% de Cheveign\'e, A. and Simon, J. Z. (2007). &quot;Sensor Noise Suppression.&quot;</span>
+0017 <span class="comment">% Journal of Neuroscience Methods, 168: 195-202.</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% NoiseTools</span>
+0020 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0021 
+0022 
+0023 <span class="comment">% Copyright 2007, 2008 Alain de Cheveigne</span>
+0024 
+0025 
+0026 <span class="comment">%</span>
+0027 <span class="comment">% The basic idea is to project each channel of X on a basis formed by the</span>
+0028 <span class="comment">% orthogonalized set of other channels. Supposing (a) that sensor noise is</span>
+0029 <span class="comment">% uncorrelated across sensors, and (b) genuine signal is correlated, sensor</span>
+0030 <span class="comment">% noise is removed and genuine signal preserved.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% Implementation issues:</span>
+0033 <span class="comment">% - Data are often available as an array of epochs. This implementation</span>
+0034 <span class="comment">% caters for 3D data (time * channnels * trials);</span>
+0035 <span class="comment">% - It is important to deemphasize high amplitude artifacts and glitches</span>
+0036 <span class="comment">% so that they do not dominate the solution.  This implementation uses</span>
+0037 <span class="comment">% weighted covariance and means.</span>
+0038 <span class="comment">% - Processing assumes zero-means data. Means are calculated with weights.</span>
+0039 <span class="comment">% - The implementation tries to be efficent and minimize memory requirements</span>
+0040 <span class="comment">% so as to handle large data sets.</span>
+0041 <span class="comment">%</span>
+0042 <span class="comment">% Larger data sets (disk based) could be handled by performing mean and</span>
+0043 <span class="comment">% covariance calculations block-by-block, in several passes.</span>
+0044 
+0045 
+0046 <span class="keyword">if</span> nargin&lt;4; w=[]; <span class="keyword">end</span>
+0047 <span class="keyword">if</span> nargin&lt;3 || isempty(skip); skip=0; <span class="keyword">end</span>
+0048 <span class="keyword">if</span> nargin&lt;2 || isempty(nneighbors); error(<span class="string">'need to specify nneighbors'</span>); <span class="keyword">end</span>
+0049 <span class="keyword">if</span> ~isempty(w) &amp;&amp; sum(w(:))==0; error(<span class="string">'weights are all zero!'</span>); <span class="keyword">end</span>
+0050 
+0051 <span class="keyword">if</span> ~isempty(find(isnan(x))); error(<span class="string">'x contains NANs'</span>); <span class="keyword">end</span>
+0052 <span class="keyword">if</span> numel(nneighbors)&gt;1 || numel(skip)&gt;1; error(<span class="string">'nneighbors &amp; skip should be scalars'</span>);  <span class="keyword">end</span>
+0053 
+0054 [m,n,o]=size(x);
+0055 x=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x);
+0056 
+0057 <span class="comment">%[x,mn0]=demean(x);  % remove mean</span>
+0058 [c,nc]=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(x);    <span class="comment">% raw covariance</span>
+0059 
+0060 TOOBIG=10;
+0061 <span class="keyword">if</span> strcmp(w,<span class="string">'auto'</span>)
+0062     y=<a href="nt_sns.html" class="code" title="function y=nt_sns(x,nneighbors,skip,w)">nt_sns</a>(<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x),nneighbors,skip);
+0063     d=(y-x).^2;
+0064     d=<a href="nt_vecmult.html" class="code" title="function x=nt_vecmult(x,v)">nt_vecmult</a>(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(d), 1./mean( [mean(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(x.^2)); mean(<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(y.^2))] ));
+0065     w=d&lt;TOOBIG;
+0066     w=min(w,[],2);
+0067     w(find(isnan(w)))=0;
+0068 <span class="keyword">end</span>
+0069 
+0070 
+0071 <span class="comment">% sns matrix</span>
+0072 <span class="keyword">if</span> ~isempty(w);
+0073     w=<a href="nt_unfold.html" class="code" title="function x=nt_unfold(x)">nt_unfold</a>(w);
+0074     <span class="comment">%[x,mn1]=demean(x,w);</span>
+0075     [wc,nwc]=<a href="nt_cov.html" class="code" title="function [c,tw]=nt_cov(x,shifts,w);">nt_cov</a>(<a href="nt_demean.html" class="code" title="function [x,mn]=nt_demean(x,w)">nt_demean</a>(x,w),[],w);                     <span class="comment">% weighted covariance</span>
+0076     r=<a href="nt_sns0.html" class="code" title="function r=nt_sns0(c,nneighbors,skip,wc)">nt_sns0</a>(c,nneighbors,skip,wc);
+0077 <span class="keyword">else</span>
+0078     mn1=0;
+0079     w=ones(n,o);
+0080     r=<a href="nt_sns0.html" class="code" title="function r=nt_sns0(c,nneighbors,skip,wc)">nt_sns0</a>(c,nneighbors,skip,c);
+0081 <span class="keyword">end</span>
+0082 
+0083 
+0084 <span class="comment">% apply to data</span>
+0085 y=x*r;
+0086 
+0087 y=<a href="nt_fold.html" class="code" title="function x=fold(x,epochsize)">nt_fold</a>(y,m);
+0088 
+0089 <span class="comment">%mn=mn0;%+mn1;</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

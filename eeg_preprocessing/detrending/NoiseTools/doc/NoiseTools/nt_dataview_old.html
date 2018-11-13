@@ -1,0 +1,376 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_dataview_old</title>
+  <meta name="keywords" content="nt_dataview_old">
+  <meta name="description" content="[data,p]=nt_dataview(data,p) - view data sets">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_dataview_old.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_dataview_old
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[data,p]=nt_dataview(data,p) - view data sets</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [data,p]=nt_dataview(data,p) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[data,p]=nt_dataview(data,p) - view data sets
+
+ 
+  DATA: matrix, struct, file or directory to view
+  P: parameter structure</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dataview.html" class="code" title="function [data,p]=nt_dataview(data,p)">nt_dataview</a>	[data,p]=nt_dataview(data,p) - view data sets</li><li><a href="nt_whoss.html" class="code" title="function varargout=nt_whoss">nt_whoss</a>	size=nt_whoss - total Gbytes used by variables</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function doFigureKeyPress(obj, evd)</a></li><li><a href="#_sub2" class="code">function doDelete(varargin)</a></li><li><a href="#_sub3" class="code">function editCallback(obj,evd);</a></li><li><a href="#_sub4" class="code">function doButtonPress(obj,evd);</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [data,p]=nt_dataview(data,p)</a>
+0002 <span class="comment">%[data,p]=nt_dataview(data,p) - view data sets</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">%  DATA: matrix, struct, file or directory to view</span>
+0006 <span class="comment">%  P: parameter structure</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%</span>
+0009 
+0010 verbose=1;
+0011 evalError=0;
+0012 <span class="keyword">if</span> verbose; <a href="nt_whoss.html" class="code" title="function varargout=nt_whoss">nt_whoss</a>; drawnow; <span class="keyword">end</span>
+0013 set(0, <span class="string">'DefaultUICOntrolFontSize'</span>, 14)
+0014 
+0015 <span class="keyword">if</span> nargin &lt; 1; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0016 <span class="keyword">if</span> nargin &lt; 2; p=[]; <span class="keyword">end</span>
+0017 
+0018 
+0019 <span class="keyword">if</span> isempty(data); data=[]; <span class="keyword">return</span>; <span class="keyword">end</span>
+0020 
+0021 <span class="comment">% determine the name to display on dialog or window</span>
+0022 <span class="keyword">if</span> isa(data,<span class="string">'char'</span>);
+0023     data_name=data;
+0024 <span class="keyword">elseif</span> isa(data,<span class="string">'struct'</span>);
+0025     data_name=<span class="string">'structure'</span>;
+0026 <span class="keyword">elseif</span> isa(data,<span class="string">'double'</span>);
+0027     data_name=<span class="string">'matrix'</span>;
+0028 <span class="keyword">else</span>
+0029     error(<span class="string">'argument should be string, struct, or double'</span>);
+0030 <span class="keyword">end</span>
+0031 
+0032 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%   MATRIX  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0033 <span class="keyword">if</span> isa(data, <span class="string">'double'</span>)
+0034     <span class="comment">% matrix in workspace</span>
+0035     <span class="keyword">if</span> verbose; disp(<span class="string">'matrix'</span>); <span class="keyword">end</span>
+0036 
+0037     <span class="comment">% put up dialog to allow user to manipulate matrix before plotting</span>
+0038     s=size(data);
+0039     sstring=[<span class="string">'[ '</span>,num2str(s(1))]; 
+0040     <span class="keyword">for</span> k=2:numel(s); sstring=[sstring,<span class="string">', '</span>, num2str(s(k))]; <span class="keyword">end</span>
+0041     sstring=[sstring,<span class="string">' ]'</span>];
+0042     fPos    = get(0,<span class="string">'DefaultFigurePosition'</span>);
+0043     fPos([3,4]) = [500, 200];
+0044     whichButton=[];
+0045     defaultPressed=[];
+0046     escapePressed=[];
+0047     plotData=0;
+0048     imageData=0;
+0049     dialogH=figure(<span class="string">'Visible'</span>,<span class="string">'on'</span>, <span class="string">'WindowStyle'</span>,<span class="string">'modal'</span>, <span class="string">'Name'</span>,<span class="string">'Data'</span>                  , <span class="keyword">...</span>
+0050         <span class="string">'NumberTitle'</span>     ,<span class="string">'off'</span>                       ,<span class="keyword">...</span>
+0051         <span class="string">'Pointer'</span>         ,<span class="string">'arrow'</span>                    , <span class="keyword">...</span>
+0052         <span class="string">'Position'</span>        ,fPos                     , <span class="keyword">...</span>
+0053         <span class="string">'color'</span>, [1 1 1]                  ,<span class="keyword">...</span>
+0054         <span class="string">'KeyPressFcn'</span>     ,@<a href="#_sub1" class="code" title="subfunction doFigureKeyPress(obj, evd)  ">doFigureKeyPress</a>          , <span class="keyword">...</span>
+0055         <span class="string">'ButtonDownFcn'</span>   ,@<a href="#_sub2" class="code" title="subfunction doDelete(varargin)">doDelete</a>                  , <span class="keyword">...</span>
+0056         <span class="string">'IntegerHandle'</span>   ,<span class="string">'off'</span>                      , <span class="keyword">...</span>
+0057         <span class="string">'HandleVisibility'</span>,<span class="string">'callback'</span>                 , <span class="keyword">...</span>
+0058         <span class="string">'CloseRequestFcn'</span> ,@<a href="#_sub2" class="code" title="subfunction doDelete(varargin)">doDelete</a>                  <span class="keyword">...</span>
+0059         );
+0060     textAxesH=axes(<span class="string">'visible'</span>, <span class="string">'off'</span>, <span class="string">'parent'</span>, dialogH);
+0061     textH=text(0.01, 0.9, [<span class="string">'size(data) = '</span>, sstring], <span class="string">'parent'</span>, textAxesH,<span class="string">'fontsize'</span>, 14, <span class="string">'fontweight'</span>, <span class="string">'bold'</span>);
+0062     editString=<span class="string">'[data,p]=nt_dataview(data,p);'</span>;
+0063     editH2=uicontrol(<span class="string">'Style'</span>,<span class="string">'edit'</span>,<span class="string">'String'</span>,editString,<span class="string">'position'</span>, [20 100 fPos(3)-50 30], <span class="string">'parent'</span>, dialogH,<span class="keyword">...</span>
+0064         <span class="string">'callback'</span>, @<a href="#_sub3" class="code" title="subfunction editCallback(obj,evd);">editCallback</a>, <span class="string">'foregroundcolor'</span>,[1 1 1]*0 ); 
+0065     buttonH1=uicontrol(<span class="string">'style'</span>, <span class="string">'pushbutton'</span>, <span class="string">'string'</span>, <span class="string">'Execute String, Return ''data'''</span>,<span class="string">'position'</span>, [50, 60, 200, 25],<span class="keyword">...</span>
+0066          <span class="string">'KeyPressFcn'</span>,@doControlKeyPress, <span class="string">'Callback'</span>,@<a href="#_sub4" class="code" title="subfunction doButtonPress(obj,evd);">doButtonPress</a>, <span class="string">'HorizontalAlignment'</span>,<span class="string">'center'</span>, <span class="string">'parent'</span>, dialogH,<span class="keyword">...</span>
+0067          <span class="string">'fontSize'</span>, 14);
+0068     buttonH2=uicontrol(<span class="string">'style'</span>, <span class="string">'pushbutton'</span>, <span class="string">'string'</span>, <span class="string">'Imagesc'</span>,<span class="string">'position'</span>, [50, 20, 100, 25],<span class="keyword">...</span>
+0069          <span class="string">'KeyPressFcn'</span>,@doControlKeyPress, <span class="string">'Callback'</span>,@<a href="#_sub4" class="code" title="subfunction doButtonPress(obj,evd);">doButtonPress</a>, <span class="string">'HorizontalAlignment'</span>,<span class="string">'center'</span>, <span class="string">'parent'</span>, dialogH,<span class="keyword">...</span>
+0070          <span class="string">'fontSize'</span>, 14);
+0071     buttonH3=uicontrol(<span class="string">'style'</span>, <span class="string">'pushbutton'</span>, <span class="string">'string'</span>, <span class="string">'Plot'</span>,<span class="string">'position'</span>, [400 20, 80, 25],<span class="keyword">...</span>
+0072         <span class="string">'KeyPressFcn'</span>,@doControlKeyPress, <span class="string">'Callback'</span>,@<a href="#_sub4" class="code" title="subfunction doButtonPress(obj,evd);">doButtonPress</a>, <span class="string">'HorizontalAlignment'</span>,<span class="string">'center'</span>, <span class="string">'parent'</span>, dialogH,<span class="keyword">...</span>
+0073         <span class="string">'fontSize'</span>, 14);
+0074     <span class="keyword">if</span> ~ ishghandle(dialogH); <span class="keyword">return</span>; <span class="keyword">end</span>
+0075     uiwait(dialogH); 
+0076     <span class="keyword">if</span> ~ ishghandle(dialogH); <span class="keyword">return</span>; <span class="keyword">end</span>
+0077     <span class="keyword">if</span> defaultPressed <span class="comment">%</span>
+0078         plotData=true;
+0079     <span class="keyword">elseif</span> escapePressed <span class="comment">% return</span>
+0080         close(dialogH);
+0081     <span class="keyword">else</span>
+0082         h=get(dialogH,<span class="string">'CurrentObject'</span>);
+0083         <span class="keyword">if</span> h==editH2
+0084             close(dialogH);
+0085             disp(<span class="string">'evaluate...'</span>);
+0086             <span class="keyword">try</span> 
+0087                 eval(editString, <span class="string">'evalError=true;'</span>);
+0088             <span class="keyword">catch</span>
+0089                 error(<span class="string">'!!'</span>);
+0090             <span class="keyword">end</span>
+0091             disp(<span class="string">'returned'</span>);
+0092         <span class="keyword">else</span>
+0093             <span class="keyword">switch</span> whichButton
+0094                 <span class="keyword">case</span> buttonH1 <span class="comment">% evaluate &amp; return</span>
+0095                     close(dialogH);
+0096                     disp(<span class="string">'evaluate...'</span>);
+0097                     eval(editString, <span class="string">'evalError=true;'</span>);
+0098                     disp(<span class="string">'returned'</span>);
+0099                 <span class="keyword">case</span> buttonH2 <span class="comment">% plot</span>
+0100                     imageData=true;
+0101                 <span class="keyword">case</span> buttonH3 <span class="comment">% plot</span>
+0102                     plotData=true;
+0103                 <span class="keyword">otherwise</span>
+0104                     error(<span class="string">'!'</span>);
+0105             <span class="keyword">end</span>
+0106         <span class="keyword">end</span>
+0107     <span class="keyword">end</span>
+0108     
+0109     <span class="keyword">if</span> evalError
+0110         disp(<span class="string">'  '</span>);
+0111         disp(<span class="string">'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'</span>);
+0112         disp(<span class="string">'error while evaluating user-input string:'</span>);
+0113         disp(<span class="string">' '</span>);
+0114         disp([<span class="string">'  &gt;'</span>,editString,<span class="string">'&lt;'</span>])
+0115         disp(<span class="string">' '</span>);
+0116         disp(lasterr);
+0117         disp(<span class="string">'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'</span>);
+0118         disp(<span class="string">' '</span>);
+0119         <span class="keyword">return</span>;
+0120     <span class="keyword">end</span>
+0121        
+0122         
+0123     <span class="keyword">if</span> ishghandle(dialogH); close(dialogH); <span class="keyword">end</span>
+0124     <span class="keyword">if</span> plotData || imageData
+0125         <span class="keyword">if</span> ~isempty(get(0,<span class="string">'currentfigure'</span>));
+0126             plotH=figure(gcf); clf
+0127         <span class="keyword">else</span>
+0128             plotH=figure; 
+0129         <span class="keyword">end</span>
+0130         set(plotH,<span class="string">'position'</span>, [0 100, 1000, 400]);
+0131         set(plotH,<span class="string">'color'</span>,[1 1 1]);
+0132         buttonH4=uicontrol(<span class="string">'style'</span>, <span class="string">'pushbutton'</span>, <span class="string">'string'</span>, <span class="string">'Return Data'</span>,<span class="string">'position'</span>, [50, 20, 100, 25],<span class="keyword">...</span>
+0133         <span class="string">'KeyPressFcn'</span>,@doControlKeyPress, <span class="string">'Callback'</span>,@<a href="#_sub4" class="code" title="subfunction doButtonPress(obj,evd);">doButtonPress</a>, <span class="string">'HorizontalAlignment'</span>,<span class="string">'center'</span>, <span class="string">'parent'</span>, plotH,<span class="keyword">...</span>
+0134         <span class="string">'fontSize'</span>, 14);
+0135         drawnow
+0136         axes(<span class="string">'position'</span>,[.05 .25 .92 .7], <span class="string">'parent'</span>, plotH);
+0137         set(gca,<span class="string">'fontsize'</span>,12);
+0138         <span class="keyword">if</span> plotData
+0139             plot(data);
+0140         <span class="keyword">elseif</span> imageData
+0141             imagescc(data');
+0142         <span class="keyword">end</span>
+0143         xlim([1 size(data,1)]); xlabel(<span class="string">'samples'</span>);
+0144         title([<span class="string">'matrix: '</span>, inputname(1)]);
+0145         uiwait;
+0146         <span class="keyword">switch</span> whichButton
+0147              <span class="keyword">case</span> buttonH4 <span class="comment">% return</span>
+0148                  close(plotH);
+0149             <span class="keyword">otherwise</span>
+0150                 error(<span class="string">'!'</span>);
+0151         <span class="keyword">end</span>        
+0152     <span class="keyword">end</span>
+0153     disp(<span class="string">'end of plotting'</span>);
+0154 
+0155     <span class="keyword">if</span> nargout==0; clear data, p; <span class="keyword">end</span>
+0156     <span class="keyword">if</span> verbose; disp(<span class="string">'returning from nt_dataview...'</span>); <span class="keyword">end</span>
+0157     <span class="keyword">return</span>;
+0158  
+0159 
+0160 
+0161 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%   STRUCT  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0162 <span class="keyword">elseif</span> isa(data, <span class="string">'struct'</span>)
+0163     <span class="comment">% struct in workspace</span>
+0164     <span class="keyword">if</span> verbose; disp(<span class="string">'struct'</span>); <span class="keyword">end</span>
+0165     field_names=fieldnames(data);
+0166     <span class="keyword">if</span> isempty(field_names); error(<span class="string">'structure is empty!'</span>); <span class="keyword">end</span>
+0167     field_sizes=zeros(numel(field_names),1);
+0168     <span class="keyword">for</span> k=1:numel(field_names);
+0169         field=getfield(data,field_names{k});
+0170         field_sizes(k)=round(prod(size(field))/1024);
+0171     <span class="keyword">end</span>
+0172     clear field;
+0173     a=repmat(<span class="string">' ('</span>, numel(field_names),1);
+0174     b=cellstr(num2str(field_sizes, <span class="string">'%9d'</span>));
+0175     b=char(b);
+0176     c=[repmat(<span class="string">' Mb)'</span>, numel(field_names),1)];
+0177     i=listdlg(<span class="string">'liststring'</span>,cellstr([char(field_names),a,b,c]),<span class="keyword">...</span>
+0178         <span class="string">'name'</span>, <span class="string">'Select field in struct:'</span>, <span class="keyword">...</span>
+0179         <span class="string">'listsize'</span>, [600 300], <span class="keyword">...</span>
+0180         <span class="string">'OKstring'</span>,<span class="string">'Select'</span>,<span class="keyword">...</span>
+0181         <span class="string">'PromptString'</span>,data_name);
+0182     
+0183     <span class="comment">% call this function on the selected field</span>
+0184     <span class="keyword">if</span> i
+0185         data=<a href="nt_dataview.html" class="code" title="function [data,p]=nt_dataview(data,p)">nt_dataview</a>(getfield(data,field_names{i}),p); 
+0186         <span class="keyword">if</span> nargout==0; data=[]; <span class="keyword">end</span>
+0187         <span class="keyword">return</span>
+0188     <span class="keyword">end</span>
+0189     
+0190 
+0191 <span class="keyword">elseif</span> isa(data, <span class="string">'char'</span>) &amp;&amp; exist(data,<span class="string">'file'</span>)==2
+0192 
+0193 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%   FILE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0194     <span class="keyword">if</span> verbose; disp(<span class="string">'file'</span>); <span class="keyword">end</span>
+0195     <span class="keyword">try</span> 
+0196         <span class="comment">% .mat file? list variables</span>
+0197         S=whos(<span class="string">'-file'</span>,data);
+0198         var_names=char(S.name);
+0199         var_sizes=round([S.bytes]/1024)';
+0200         a=repmat(<span class="string">' ('</span>, size(var_names,1),1);
+0201         b=cellstr(num2str(var_sizes, <span class="string">'%9d'</span>));
+0202         b=char(b);
+0203         c=[repmat(<span class="string">' Mb)'</span>, size(var_names,1),1)];
+0204         i=listdlg(<span class="string">'liststring'</span>,cellstr([var_names,a,b,c]),<span class="keyword">...</span>
+0205             <span class="string">'name'</span>, <span class="string">'Select variable in file:'</span>, <span class="keyword">...</span>
+0206             <span class="string">'listsize'</span>, [600 300], <span class="keyword">...</span>
+0207             <span class="string">'OKstring'</span>,<span class="string">'Select'</span>,<span class="keyword">...</span>
+0208             <span class="string">'PromptString'</span>,data_name);
+0209         <span class="keyword">if</span> i
+0210             X=load(data,var_names(i));
+0211             data=<a href="nt_dataview.html" class="code" title="function [data,p]=nt_dataview(data,p)">nt_dataview</a>(X,p);
+0212         <span class="keyword">end</span>
+0213         <span class="keyword">if</span> nargout==0; data=[]; <span class="keyword">end</span>
+0214         <span class="keyword">return</span>
+0215     <span class="keyword">catch</span> ME
+0216         <span class="comment">%ME</span>
+0217     <span class="keyword">end</span>
+0218         
+0219     <span class="comment">% select file reader among those available</span>
+0220     <span class="keyword">if</span> 2==exist(<span class="string">'ft_read_header'</span>);
+0221         <span class="keyword">try</span>
+0222             data=ft_read_header(data);
+0223             x=ft_read_data(data)';
+0224             h=<a href="nt_dataview.html" class="code" title="function [data,p]=nt_dataview(data,p)">nt_dataview</a>(x,p);
+0225         <span class="keyword">catch</span>
+0226             disp([<span class="string">'FieldTrip cannot read file &gt;'</span>,data,<span class="string">'&lt;'</span>]);
+0227         <span class="keyword">end</span>
+0228     <span class="keyword">else</span>
+0229         error(<span class="string">'function ft_read_header() not found: download FieldTrip and/or adjust path'</span>);
+0230     <span class="keyword">end</span>
+0231     
+0232 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%   DIRECTORY  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0233 <span class="keyword">elseif</span> isa(data, <span class="string">'char'</span>) &amp;&amp; exist(data, <span class="string">'dir'</span>)==7
+0234     <span class="comment">% directory</span>
+0235     <span class="keyword">if</span> verbose; disp(<span class="string">'directory'</span>); <span class="keyword">end</span>
+0236     
+0237     d=dir(data);
+0238     fnames=char(d.name);
+0239     idx=find(fnames(:,1)~=<span class="string">'.'</span>);  <span class="comment">% remove '.' and '..' and invisible files</span>
+0240     d=d(idx);
+0241     fnames=fnames(idx,:);
+0242     
+0243     <span class="comment">% separate directories and files</span>
+0244     didx=find([d.isdir]);
+0245     fidx=find(~[d.isdir]);
+0246     fnames=fnames([didx, fidx],:);
+0247     
+0248    <span class="comment">% count files within the directories</span>
+0249     nfiles=zeros(numel(didx),1);
+0250     <span class="keyword">for</span> k=1:numel(didx)
+0251         dd=dir([data,<span class="string">'/'</span>,d(didx(k)).name]);
+0252         fns=char(dd.name);
+0253         idx=find(fns(:,1)~=<span class="string">'.'</span>);  <span class="comment">% remove '.' and '..' and invisible files</span>
+0254         nfiles(k)=numel(idx);
+0255     <span class="keyword">end</span>
+0256     
+0257     <span class="comment">% size of the files</span>
+0258     mbytes=[d(fidx).bytes]'/1024;
+0259    
+0260     <span class="comment">% string arrays to put in dialog list</span>
+0261     a=repmat(<span class="string">' ('</span>, numel(d),1);
+0262     <span class="keyword">if</span> numel(didx)&gt;0
+0263         b=cellstr(num2str(nfiles, <span class="string">'%9d'</span>));
+0264     <span class="keyword">else</span>
+0265         b=[]; <span class="comment">% stupid matlab!</span>
+0266     <span class="keyword">end</span>
+0267     <span class="keyword">if</span> numel(fidx)&gt;0
+0268         b=[b;cellstr(num2str(mbytes,<span class="string">'%0.1f'</span>))];
+0269     <span class="keyword">end</span>
+0270     b=char(b);
+0271     c=[repmat(<span class="string">' files)'</span>, numel(didx),1); repmat(<span class="string">' Mb)   '</span>, numel(fidx),1)];
+0272      
+0273     <span class="comment">% which directory or file is user interested in?</span>
+0274     
+0275     i=listdlg(<span class="string">'liststring'</span>,cellstr([fnames,a,b,c]),<span class="keyword">...</span>
+0276         <span class="string">'name'</span>, <span class="string">'Select file:'</span>, <span class="keyword">...</span>
+0277         <span class="string">'listsize'</span>, [300 300], <span class="keyword">...</span>
+0278         <span class="string">'OKstring'</span>,<span class="string">'Select'</span>,<span class="keyword">...</span>
+0279         <span class="string">'PromptString'</span>,data_name);
+0280     
+0281     <span class="comment">% call this function on that file</span>
+0282     <span class="keyword">if</span> i
+0283         data=strcat(data,<span class="string">'/'</span>,fnames(i,:));
+0284         data=<a href="nt_dataview.html" class="code" title="function [data,p]=nt_dataview(data,p)">nt_dataview</a>(data,p);   
+0285     <span class="keyword">end</span>
+0286 <span class="keyword">else</span>
+0287     disp([data_name,<span class="string">' not found'</span>]); 
+0288     <span class="keyword">if</span> nargout==0; data=[]; <span class="keyword">end</span>
+0289     <span class="keyword">return</span>
+0290 <span class="keyword">end</span>
+0291 
+0292 
+0293 <span class="comment">%h=data;</span>
+0294 <span class="keyword">if</span> nargout==0; data=[]; <span class="keyword">end</span>
+0295 
+0296 <span class="comment">%%%%%%%%%%%%%%%%%%%%  LOCAL FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0297     <a name="_sub1" href="#_subfunctions" class="code">function doFigureKeyPress(obj, evd)  </a><span class="comment">%#ok</span>
+0298         <span class="keyword">switch</span>(evd.Key)
+0299             <span class="keyword">case</span> {<span class="string">'return'</span>,<span class="string">'space'</span>}
+0300                 defaultPressed = true;
+0301             <span class="keyword">case</span> <span class="string">'escape'</span>
+0302                 escapePressed=true;
+0303         <span class="keyword">end</span>
+0304         uiresume(gcbf)
+0305     <span class="keyword">end</span>
+0306 
+0307     <a name="_sub2" href="#_subfunctions" class="code">function doDelete(varargin)</a>
+0308         delete(dialogH);
+0309     <span class="keyword">end</span>
+0310 
+0311     <a name="_sub3" href="#_subfunctions" class="code">function editCallback(obj,evd);</a>
+0312         editString = get(obj,<span class="string">'String'</span>);
+0313         uiresume(gcbf);
+0314     <span class="keyword">end</span>
+0315 
+0316     <a name="_sub4" href="#_subfunctions" class="code">function doButtonPress(obj,evd);</a>
+0317         whichButton=obj;
+0318         uiresume(gcbf);
+0319     <span class="keyword">end</span>
+0320 
+0321 
+0322 
+0323 <span class="keyword">end</span> <span class="comment">% this file's main function</span></pre></div>
+<hr><address>Generated on Mon 21-Oct-2013 11:27:02 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

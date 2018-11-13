@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_interpolate_bad_channels</title>
+  <meta name="keywords" content="nt_interpolate_bad_channels">
+  <meta name="description" content="y=interpolate_bad_channels(x,iBad,coordinates,n) - interpolate bad channels from good">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_interpolate_bad_channels.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_interpolate_bad_channels
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>y=interpolate_bad_channels(x,iBad,coordinates,n) - interpolate bad channels from good</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [toGood,fromGood]=interpolate_bad_channels(x,iBad,coordinates,n) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">y=interpolate_bad_channels(x,iBad,coordinates,n) - interpolate bad channels from good
+
+  y: interpolated data
+ 
+  x: data to interpolate
+  iBad: indices of bad channels
+  coordinates: coordinate map (see nt_proximity)
+  n: number of neighboring channels to use [default: 3]
+
+ NoiseTools;</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>	nt_greetings - display message the first time the toolbox is used</li><li><a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>	nt_imagescc - plot image with symmetric scaling</li><li><a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a>	[closest,d]=nt_proximity(coordinates,N) - distance to neighboring channels</li><li><a href="nt_topoplot.html" class="code" title="function nt_topoplot(cfg,data)">nt_topoplot</a>	nt_topoplot(cfg,data) - simple topoplot</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [toGood,fromGood]=interpolate_bad_channels(x,iBad,coordinates,n)</a>
+0002 <span class="comment">%y=interpolate_bad_channels(x,iBad,coordinates,n) - interpolate bad channels from good</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  y: interpolated data</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  x: data to interpolate</span>
+0007 <span class="comment">%  iBad: indices of bad channels</span>
+0008 <span class="comment">%  coordinates: coordinate map (see nt_proximity)</span>
+0009 <span class="comment">%  n: number of neighboring channels to use [default: 3]</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% NoiseTools;</span>
+0012 
+0013 <a href="nt_greetings.html" class="code" title="function nt_greetings(reset)">nt_greetings</a>;
+0014 
+0015 <span class="keyword">if</span> nargin&lt;3; 
+0016     error(<span class="string">'!'</span>); 
+0017 <span class="keyword">end</span>
+0018 <span class="keyword">if</span> nargin&lt;4; 
+0019     n=3;
+0020 <span class="keyword">end</span>
+0021 
+0022 nchans=size(x,2);
+0023 toGood=eye(nchans);
+0024 toGood(:,iBad)=[];
+0025 
+0026 [closest,d]=<a href="nt_proximity.html" class="code" title="function [closest,d]=nt_proximity(coordinates,N)">nt_proximity</a>(coordinates);
+0027 <span class="keyword">if</span> size(closest,1)~=nchans; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0028 
+0029 fromGood=eye(nchans);
+0030 <span class="keyword">for</span> iChan=iBad
+0031     iOthers=closest(iChan,:);
+0032     iOthers=setdiff(iOthers, iBad, <span class="string">'stable'</span>); <span class="comment">% don't include bad channels</span>
+0033     <span class="keyword">if</span> numel(iOthers)&lt;n; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0034     iOthers=iOthers(1:n);
+0035     w=1./(d(iChan,iOthers) + eps);
+0036     w=w/sum(w);
+0037     fromGood(iOthers,iChan)=w;
+0038 <span class="keyword">end</span>
+0039 fromGood(iBad,:)=[];
+0040     
+0041 topo=ones(nchans,1);
+0042 topo(iBad)=0;
+0043 <span class="keyword">if</span> nargout==0
+0044     figure(100); clf
+0045     subplot 121; <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(fromGood);
+0046     subplot 122; <a href="nt_topoplot.html" class="code" title="function nt_topoplot(cfg,data)">nt_topoplot</a>(coordinates,topo);
+0047 <span class="keyword">end</span>
+0048</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_spect_plot2</title>
+  <meta name="keywords" content="nt_spect_plot2">
+  <meta name="description" content="nt_spect_plot2 - plot power spectrum">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_spect_plot2.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_spect_plot2
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>nt_spect_plot2 - plot power spectrum</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function varargout=nt_spect_plot2(x,varargin) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">nt_spect_plot2 - plot power spectrum
+
+  The power spectral densities of all columns are calculated.  
+  The result is either plotted as an image or returned.
+ 
+  See nt_spect_plot, and pwelch for syntax.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>	nt_imagescc - plot image with symmetric scaling</li><li><a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>	[y,norm]=nt_normcol(x,w) - normalize each column so its weighted msq is 1</li><li><a href="nt_spect_plot.html" class="code" title="function varargout=nt_spect_plot(x,varargin)">nt_spect_plot</a>	nt_spect_plot - plot power spectrum</li><li><a href="nt_spect_plot2.html" class="code" title="function varargout=nt_spect_plot2(x,varargin)">nt_spect_plot2</a>	nt_spect_plot2 - plot power spectrum</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_narrowband_scan.html" class="code" title="function A=nt_narrowband_scan(x,freqs,sr,Q,plotflag,yulewalk_order)">nt_narrowband_scan</a>	A=nt_narrowband_scan(x,freqs,sr,Q,plotflag) - scan for narrowband components using DSS</li><li><a href="nt_spect_plot2.html" class="code" title="function varargout=nt_spect_plot2(x,varargin)">nt_spect_plot2</a>	nt_spect_plot2 - plot power spectrum</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function varargout=nt_spect_plot2(x,varargin)</a>
+0002 <span class="comment">%nt_spect_plot2 - plot power spectrum</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%  The power spectral densities of all columns are calculated.</span>
+0005 <span class="comment">%  The result is either plotted as an image or returned.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  See nt_spect_plot, and pwelch for syntax.</span>
+0008 
+0009 <span class="keyword">if</span> ndims(x)&gt;2;
+0010     [m,n,o]=size(x);
+0011     x=reshape(x,[m,n*o]);
+0012     [pxx,f]=<a href="nt_spect_plot2.html" class="code" title="function varargout=nt_spect_plot2(x,varargin)">nt_spect_plot2</a>(x,varargin{:});
+0013     pxx=reshape(pxx,[size(pxx,1),n,o]);
+0014     pxx=mean(pxx,3);
+0015 <span class="keyword">else</span>
+0016 
+0017 <span class="comment">% ndims(x)==2</span>
+0018 
+0019     [m,n]=size(x);
+0020     [a,f]=pwelch(x(:,1),varargin{:});
+0021     pxx=zeros(size(a,1),n);
+0022     <span class="keyword">for</span> k=1:n
+0023         [a,f]=pwelch(x(:,k),varargin{:});
+0024         pxx(:,k)=a;
+0025     <span class="keyword">end</span>
+0026 <span class="keyword">end</span>
+0027 
+0028 <span class="keyword">if</span> nargout == 0; <span class="comment">% plot</span>
+0029     
+0030     <span class="comment">% hack to get nice frequency axis</span>
+0031     [X,f]=<a href="nt_spect_plot.html" class="code" title="function varargout=nt_spect_plot(x,varargin)">nt_spect_plot</a>(x(:,1,1), varargin{:}); <span class="comment">% to get scaling factor</span>
+0032     scaling_factor=size(X,1)/max(f);
+0033     <a href="nt_spect_plot.html" class="code" title="function varargout=nt_spect_plot(x,varargin)">nt_spect_plot</a>(x(:,1,1), varargin{:}); <span class="comment">% to get x axis labels</span>
+0034     xtick=get(gca,<span class="string">'xtick'</span>); xticklabel=get(gca,<span class="string">'xticklabel'</span>);  
+0035     <span class="keyword">if</span> 0
+0036         pxx=<a href="nt_normcol.html" class="code" title="function [y,norm]=nt_normcol(x,w)">nt_normcol</a>(pxx);
+0037     <span class="keyword">else</span>
+0038         pxx=bsxfun(@times,pxx,1./max(pxx));
+0039     <span class="keyword">end</span>
+0040     <a href="nt_imagescc.html" class="code" title="function nt_imagescc(C)">nt_imagescc</a>(pxx'.^0.25);
+0041     set(gca,<span class="string">'xtick'</span>,xtick*scaling_factor,<span class="string">'xticklabel'</span>,xticklabel);
+0042     xlabel(<span class="string">'Hz'</span>); ylabel(<span class="string">'channel'</span>);
+0043     
+0044 <span class="keyword">else</span>
+0045     varargout={pxx,f};
+0046 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

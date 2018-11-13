@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of test_nt_quad2square</title>
+  <meta name="keywords" content="test_nt_quad2square">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">NoiseTools</a> &gt; <a href="index.html">TEST</a> &gt; test_nt_quad2square.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools/TEST&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>test_nt_quad2square
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 reset(RandStream.getGlobalStream); <span class="comment">% to get reproducible signals</span>
+0002 
+0003 <span class="comment">%{</span>
+0004 The data are 10-channel data organized into trials.
+0005 The stimulus is a single source consisting of a modulated sinusoid with
+0006 random phase. It is mixed into the 10 channels via a 1x10 random mixing matrix.
+0007 The noise is produced by 9 independent sources mixed into the 10 channels via a
+0008 9x10 random mixing matrix.
+0009 <span class="comment">%}</span>
+0010 
+0011 sr=1000;
+0012 nsamples=1000;
+0013 ntrials=100;
+0014 nchans=10;
+0015 
+0016 <span class="comment">% sinusoidal pulse with random phase</span>
+0017 CF1=4;
+0018 target=sin(2*pi*0.5*(1:nsamples)'/sr).^2;
+0019 target=repmat(target,[1,1,ntrials]) .* <span class="keyword">...</span>
+0020     sin( 2*pi*(CF1*repmat((1:nsamples)',[1,1,ntrials])/sr + <span class="keyword">...</span>
+0021     repmat(rand(1,1,ntrials),[nsamples,1,1]))); <span class="comment">% phase</span>
+0022 target=nt_normcol(target);
+0023 
+0024 <span class="comment">% noise</span>
+0025 NNOISE=9;
+0026 noise=randn(nsamples,NNOISE,ntrials);
+0027 noise=nt_mmat(noise,randn(NNOISE,nchans));
+0028 noise=nt_normcol(noise);
+0029 
+0030 <span class="comment">% data</span>
+0031 SNR=0.0001;
+0032 x=noise+ SNR * nt_mmat(target,randn(1,nchans)) ;
+0033 x=nt_demean(x);
+0034 x=nt_normcol(x);
+0035 
+0036 
+0037 <span class="comment">%{</span>
+0038 We append a DC channel (non-zero constant value) and then we form all
+0039 cross-products of channels two-by-two.  Appending a DC channel implies
+0040 that the set of cross products also includes the original data channels, 
+0041 as well as the DC channel.
+0042 <span class="comment">%}</span>
+0043 
+0044 <span class="comment">% append DC channel</span>
+0045 x=[x, ones(nsamples,1,ntrials)*mean(abs(x(:)))];
+0046 
+0047 <span class="comment">% not sure why this makes things better:</span>
+0048 <span class="keyword">if</span> 1
+0049     THRESH=0;<span class="comment">%10^-12;</span>
+0050     [topcs,pwr]=nt_pca0(x,[],[],THRESH); 
+0051     x=nt_mmat(x,topcs);
+0052     x=nt_normcol(x);
+0053 <span class="keyword">end</span>
+0054 
+0055 <span class="comment">% form cross products</span>
+0056 xx=nt_xprod(x);
+0057 
+0058 <span class="comment">% DSS finds the most reproducible quadratic form</span>
+0059 keep1=[]; keep2=0;<span class="comment">%10^-12;</span>
+0060 [toquads,pwr0,pwr1]=nt_dss1(xx,[],keep1,keep2);
+0061 
+0062 <span class="comment">% illustrate</span>
+0063 figure(1); clf
+0064 plot(pwr1./pwr0,<span class="string">'.-'</span>)
+0065 z=nt_mmat(xx,toquads);
+0066 figure(2); clf
+0067 subplot 211; nt_bsplot(z(:,1,:));  title(<span class="string">'DC'</span>)
+0068 subplot 212; nt_bsplot(z(:,2,:)); title(<span class="string">'most reproducible quadratic form'</span>);
+0069 
+0070 
+0071 <span class="comment">%{</span>
+0072 We now find the linear component (weighted sum of channels) with square
+0073 closest to our optimal quadratic form.
+0074 <span class="comment">%}</span>
+0075 
+0076 [tosquares,D]=nt_quad2square(toquads(:,2));
+0077 z=nt_mmat(x,tosquares);
+0078 
+0079 figure(3); clf
+0080 subplot 211; nt_bsplot(z(:,1,:).^2); 
+0081 ylabel(<span class="string">'power'</span>); title(<span class="string">'closest square'</span>);
+0082 subplot 212; nt_bsplot(z(:,2,:).^2); 
+0083 ylabel(<span class="string">'power'</span>); title(<span class="string">'second closest'</span>); 
+0084 figure(4); clf
+0085 plot(abs(D(2:end)))
+0086 
+0087 <span class="comment">%{</span>
+0088 It may necessary to sort the components to ensure that the DC component
+0089 does not come first.
+0090 <span class="comment">%}</span>
+0091</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

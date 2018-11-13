@@ -1,0 +1,325 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of nt_read_data</title>
+  <meta name="keywords" content="nt_read_data">
+  <meta name="description" content="[p,data]=nt_read_data(fname,flag) - read data from file">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">NoiseTools</a> &gt; nt_read_data.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for NoiseTools&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>nt_read_data
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>[p,data]=nt_read_data(fname,flag) - read data from file</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [p,data]=nt_read_data(fname,flag) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">[p,data]=nt_read_data(fname,flag) - read data from file
+
+ 
+  fname: file to read
+  flag: specify how to deal with complex data
+       0: walk through and select 
+       1: choose first of each [default]
+       2: return all as struct</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>	[p,data]=nt_read_data(fname,flag) - read data from file</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="nt_dataview.html" class="code" title="function [p,data]=nt_dataview(data,p)">nt_dataview</a>	[p,data]=nt_dataview(data,p) - view data sets</li><li><a href="nt_detrend.html" class="code" title="function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)">nt_detrend</a>	[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend</li><li><a href="nt_inpaint.html" class="code" title="function [y,yy]=nt_inpaint(x,w)">nt_inpaint</a>	function y=nt_inpaint(x,w) - weighted interpolation based on correlation structure</li><li><a href="nt_outliers.html" class="code" title="function [w,y]=nt_outliers(x,w,thresh,niter)">nt_outliers</a>	[w,y]=nt_outliers(x,w,thresh,niter) - detect outliers based on weighted correlation structure</li><li><a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>	[p,data]=nt_read_data(fname,flag) - read data from file</li><li><a href="nt_star2.html" class="code" title="function [x,w,ww]=nt_star2(x,thresh,closest,w)">nt_star2</a>	[y,w,ww]=nt_star2(x,thresh,closest,w) - sensor noise suppression</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [p,data]=nt_read_data(fname,flag)</a>
+0002 <span class="comment">%[p,data]=nt_read_data(fname,flag) - read data from file</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">%  fname: file to read</span>
+0006 <span class="comment">%  flag: specify how to deal with complex data</span>
+0007 <span class="comment">%       0: walk through and select</span>
+0008 <span class="comment">%       1: choose first of each [default]</span>
+0009 <span class="comment">%       2: return all as struct</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%</span>
+0012 VERBOSE=1;
+0013 
+0014 <span class="keyword">if</span> nargin &lt; 1 ; error(<span class="string">'!'</span>); <span class="keyword">end</span>
+0015 <span class="keyword">if</span> nargin &lt; 2; flag=1; <span class="keyword">end</span>
+0016 
+0017 <span class="keyword">if</span> ~isa(fname, <span class="string">'char'</span>); 
+0018     error(<span class="string">'filename is not char string'</span>);
+0019 <span class="keyword">end</span>
+0020 <span class="keyword">if</span> exist(fname,<span class="string">'file'</span>)~=2 
+0021     error([<span class="string">'file &gt;'</span>, fname, <span class="string">'&lt; not found'</span>]);
+0022 <span class="keyword">end</span>
+0023 
+0024 <span class="comment">% standard fields</span>
+0025 p.fname=fname;
+0026 p.read_with=[];
+0027 p.sr=[];
+0028 
+0029 <span class="comment">% intercept directories</span>
+0030 <span class="keyword">if</span> exist(fname,<span class="string">'dir'</span>) 
+0031     dname=fname; clear fname;
+0032     <span class="keyword">if</span> VERBOSE; disp(<span class="string">'directory'</span>); <span class="keyword">end</span>    
+0033     d=dir(dname);
+0034     fnames=char(d.name);
+0035     idx=find(fnames(:,1)~=<span class="string">'.'</span>);  <span class="comment">% remove '.' and '..' and invisible files</span>
+0036     d=d(idx);
+0037     fnames=fnames(idx,:);
+0038     <span class="keyword">if</span> numel(d)==0
+0039         error([<span class="string">'directory &gt;'</span>,fname,<span class="string">'&lt; is empty'</span>]);
+0040     <span class="keyword">end</span>
+0041     
+0042     
+0043     <span class="comment">% separate directories and files</span>
+0044     didx=find([d.isdir]);
+0045     fidx=find(~[d.isdir]);
+0046     fnames=fnames([didx, fidx],:);
+0047     
+0048     <span class="keyword">switch</span> flag
+0049         <span class="keyword">case</span> 2
+0050             <span class="comment">% return all as array</span>
+0051             data={}; p={};
+0052             <span class="keyword">for</span> iFile=1:size(fnames,1);
+0053                 [pp,dd]=<a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>([dname,deblank(fnames(iFile,:))],flag);
+0054                 p{iFile}=pp;
+0055                 data{iFile}=dd;
+0056             <span class="keyword">end</span>
+0057             <span class="keyword">return</span>
+0058         <span class="keyword">case</span> 1
+0059             <span class="comment">% return first</span>
+0060             <span class="keyword">if</span> VERBOSE; disp([<span class="string">'choosing file: '</span>, fnames(1,:)]); <span class="keyword">end</span>
+0061             [p,data]=<a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>([dname,deblank(fnames(1,:))],flag);
+0062             <span class="keyword">return</span>
+0063         <span class="keyword">case</span> 0
+0064             <span class="comment">% choose one</span>
+0065             ;
+0066     <span class="keyword">end</span>
+0067     
+0068    <span class="comment">% count files within the directories</span>
+0069     nfiles=zeros(numel(didx),1);
+0070     <span class="keyword">for</span> k=1:numel(didx)
+0071         dd=dir([data,<span class="string">'/'</span>,d(didx(k)).name]);
+0072         fns=char(dd.name);
+0073         idx=find(fns(:,1)~=<span class="string">'.'</span>);  <span class="comment">% remove '.' and '..' and invisible files</span>
+0074         nfiles(k)=numel(idx);
+0075     <span class="keyword">end</span>
+0076     
+0077     <span class="comment">% size of the files</span>
+0078     mbytes=[d(fidx).bytes]'/1024;
+0079    
+0080     <span class="comment">% string arrays to put in dialog list</span>
+0081     a=repmat(<span class="string">' ('</span>, numel(d),1);
+0082     <span class="keyword">if</span> numel(didx)&gt;0
+0083         b=cellstr(num2str(nfiles, <span class="string">'%9d'</span>));
+0084     <span class="keyword">else</span>
+0085         b=[]; <span class="comment">% stupid matlab!</span>
+0086     <span class="keyword">end</span>
+0087     <span class="keyword">if</span> numel(fidx)&gt;0
+0088         b=[b;cellstr(num2str(mbytes,<span class="string">'%0.1f'</span>))];
+0089     <span class="keyword">end</span>
+0090     b=char(b);
+0091     c=[repmat(<span class="string">' files)'</span>, numel(didx),1); repmat(<span class="string">' Mb)   '</span>, numel(fidx),1)];
+0092      
+0093     <span class="comment">% which directory or file is user interested in?</span>
+0094     i=listdlg(<span class="string">'liststring'</span>,cellstr([fnames,a,b,c]),<span class="keyword">...</span>
+0095         <span class="string">'name'</span>, <span class="string">'Select file:'</span>, <span class="keyword">...</span>
+0096         <span class="string">'listsize'</span>, [300 300], <span class="keyword">...</span>
+0097         <span class="string">'OKstring'</span>,<span class="string">'Select'</span>,<span class="keyword">...</span>
+0098         <span class="string">'PromptString'</span>,<span class="string">'choose file'</span>);
+0099     
+0100     <span class="keyword">if</span> numel(i)==1; 
+0101         [p,data]=<a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>([dname,deblank(fnames(i,:))]); 
+0102     <span class="keyword">elseif</span> isempty(i)
+0103         p=[]; data=[];
+0104     <span class="keyword">else</span>
+0105         <span class="comment">% load a bunch of files</span>
+0106         p.fnames=fnames(i);
+0107         <span class="keyword">for</span> iFile=1:numel(i);
+0108             [pp,dd]=<a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>([dname,deblank(fnames(i(iFile),:))]);
+0109             p.p{iFile}=pp;
+0110             data{iFile}=dd;
+0111         <span class="keyword">end</span>
+0112     <span class="keyword">end</span>
+0113     <span class="keyword">return</span>
+0114  
+0115 <span class="keyword">end</span>
+0116 
+0117 <span class="comment">% intercept .mat files</span>
+0118 <span class="keyword">if</span> numel(fname)&gt;4 &amp; fname(end-3:end)==<span class="string">'.mat'</span>
+0119     p.read_with=<span class="string">'.mat file'</span>;
+0120     <span class="keyword">if</span> VERBOSE; disp(<span class="string">'mat file'</span>); <span class="keyword">end</span>
+0121     <span class="comment">% list variables in file, ask user to choose one</span>
+0122     <span class="keyword">switch</span> flag
+0123         <span class="keyword">case</span> 2
+0124             <span class="comment">% load all as struct</span>
+0125             data=load(fname);
+0126             <span class="keyword">return</span>
+0127         <span class="keyword">case</span> 1
+0128             <span class="comment">% load first variable in mat file</span>
+0129             S=whos(<span class="string">'-file'</span>,fname);
+0130             <span class="keyword">if</span> VERBOSE; disp([<span class="string">'choosing variable: '</span>,S(1).name]); <span class="keyword">end</span>
+0131             data=load(fname,deblank(S(1).name));
+0132             <span class="keyword">while</span> isstruct(data);
+0133                 <span class="comment">% load first field in structure</span>
+0134                 <span class="keyword">if</span> numel(data)&gt;1
+0135                     data=data(1); 
+0136                 <span class="keyword">end</span>
+0137                 S=fieldnames(data);
+0138                 <span class="keyword">if</span> VERBOSE; disp ([<span class="string">'choosing field: '</span>,S{1}]); <span class="keyword">end</span>
+0139                 data=getfield(data,S{1});
+0140             <span class="keyword">end</span>
+0141             <span class="keyword">return</span>
+0142         <span class="keyword">case</span> 0
+0143             <span class="comment">% choose</span>
+0144     <span class="keyword">end</span>
+0145     S=whos(<span class="string">'-file'</span>,fname);
+0146     var_names=char(S.name);
+0147     var_sizes=round([S.bytes]/1024)';
+0148     a=repmat(<span class="string">' ('</span>, size(var_names,1),1);
+0149     b=cellstr(num2str(var_sizes, <span class="string">'%9d'</span>));
+0150     b=char(b);
+0151     c=[repmat(<span class="string">' Mb)'</span>, size(var_names,1),1)];
+0152     i=listdlg(<span class="string">'liststring'</span>,cellstr([var_names,a,b,c]),<span class="keyword">...</span>
+0153         <span class="string">'name'</span>, [<span class="string">'Select variable in file '</span>,fname], <span class="keyword">...</span>
+0154         <span class="string">'listsize'</span>, [600 300], <span class="keyword">...</span>
+0155         <span class="string">'OKstring'</span>,<span class="string">'Select'</span>,<span class="keyword">...</span>
+0156         <span class="string">'PromptString'</span>,<span class="string">'select:'</span>);
+0157     <span class="keyword">if</span> isempty(i); data=[]; <span class="keyword">return</span>; <span class="keyword">end</span>
+0158     <span class="keyword">if</span> nargout&gt;1;
+0159         data=load(fname,deblank(var_names(i,:)));
+0160         <span class="comment">% if it's a structure, list fields, ask user to choose one</span>
+0161         <span class="keyword">while</span> isstruct(data);
+0162             <span class="keyword">if</span> numel(data)&gt;1
+0163                 i=listdlg(<span class="string">'liststring'</span>,cellstr(S),<span class="keyword">...</span>
+0164                     <span class="string">'name'</span>, [<span class="string">'Select element of strucure array '</span>,var_names(i,:)], <span class="keyword">...</span>
+0165                     <span class="string">'listsize'</span>, [600 300], <span class="keyword">...</span>
+0166                     <span class="string">'OKstring'</span>,<span class="string">'Select'</span>,<span class="keyword">...</span>
+0167                     <span class="string">'PromptString'</span>,<span class="string">'select:'</span>);
+0168                 <span class="keyword">if</span> i ; data=data(i); <span class="keyword">end</span>
+0169             <span class="keyword">end</span>
+0170             S=fieldnames(data);
+0171             i=listdlg(<span class="string">'liststring'</span>,cellstr(S),<span class="keyword">...</span>
+0172                 <span class="string">'name'</span>, [<span class="string">'Select field in struct '</span>,var_names(i,:)], <span class="keyword">...</span>
+0173                 <span class="string">'listsize'</span>, [600 300], <span class="keyword">...</span>
+0174                 <span class="string">'OKstring'</span>,<span class="string">'Select'</span>,<span class="keyword">...</span>
+0175                 <span class="string">'PromptString'</span>,<span class="string">'select:'</span>);
+0176             <span class="keyword">if</span> i ; data=getfield(data,S{i}); <span class="keyword">end</span>
+0177         <span class="keyword">end</span>
+0178     <span class="keyword">end</span>
+0179     <span class="keyword">return</span>
+0180 <span class="keyword">end</span>
+0181 
+0182 <span class="comment">% intercept Yokogawa files</span>
+0183 <span class="keyword">if</span> numel(fname)&gt;4 &amp; (fname(end-3:end)==<span class="string">'.con'</span> | fname(end-3:end)==<span class="string">'.sqd'</span>)
+0184     p.read_with=<span class="string">'yokogawa 2013'</span>;
+0185     p.acq_cond = getYkgwHdrAcqCond(fname);
+0186     p.channel_info=getYkgwHdrChannel(fname);
+0187     p.system_info=getYkgwHdrSystem(fname);
+0188     p.event=getYkgwHdrEvent(fname);
+0189     <span class="comment">% read other info?</span>
+0190     p.sr=p.acq_cond.sample_rate;
+0191     <span class="keyword">if</span> nargout&gt;1;
+0192         data=getYkgwData(fname)';
+0193     <span class="keyword">end</span>
+0194     <span class="keyword">return</span>
+0195 <span class="keyword">end</span>
+0196    
+0197          
+0198 <span class="comment">% select file reader among those available</span>
+0199 has_ft_reader=0; 
+0200 has_sopen=0;
+0201 <span class="keyword">if</span> 2==exist(<span class="string">'ft_read_header'</span>);
+0202     has_ft_read_header=1;
+0203 <span class="keyword">else</span>
+0204     warning(<span class="string">'function ft_read_header() not found: download FieldTrip and/or adjust path'</span>);
+0205 <span class="keyword">end</span>
+0206 <span class="keyword">if</span> 2==exist(<span class="string">'sopen'</span>);
+0207     has_sopen=1;
+0208 <span class="keyword">else</span>
+0209     warning(<span class="string">'function sopen() not found: download BIOSIG and/or adjust path'</span>);
+0210 <span class="keyword">end</span>
+0211     
+0212     
+0213 <span class="keyword">if</span> has_ft_read_header
+0214     isftReadable=0;
+0215     <span class="keyword">try</span>
+0216         <span class="comment">% readable by FieldTrip?</span>
+0217         h=ft_read_header(fname);
+0218         isftReadable=1;
+0219     <span class="keyword">catch</span>
+0220         ; <span class="comment">% can't read</span>
+0221     <span class="keyword">end</span>
+0222 <span class="keyword">end</span>
+0223 <span class="keyword">if</span> ~isftReadable &amp; has_sopen
+0224     isBiosigReadable=0;
+0225     <span class="keyword">try</span>
+0226         <span class="comment">% readable by biosig?</span>
+0227         h=sopen(fname);
+0228         isBiosigReadable=1;
+0229         sclose(h);
+0230     <span class="keyword">catch</span>
+0231         ; <span class="comment">% can't read</span>
+0232     <span class="keyword">end</span>
+0233 <span class="keyword">end</span>
+0234     
+0235 <span class="keyword">if</span> isftReadable
+0236     <span class="keyword">if</span> VERBOSE; disp(<span class="string">'read with FieldTrip'</span>); <span class="keyword">end</span>
+0237     h=ft_read_header(fname);    
+0238     p.header=h;
+0239     p.read_with=<span class="string">'FieldTrip'</span>;
+0240     p.sr=h.Fs;
+0241     <span class="keyword">if</span> nargout&gt;1;
+0242         data=ft_read_data(fname)';
+0243     <span class="keyword">end</span>
+0244 <span class="keyword">elseif</span> isBiosigReadable
+0245     <span class="keyword">if</span> VERBOSE; disp(<span class="string">'read with Biosig'</span>); <span class="keyword">end</span>
+0246     h=sopen(fname);
+0247     p.header=h;
+0248     p.read_with=<span class="string">'BIOSIG'</span>;
+0249     p.sr=h.SampleRate;
+0250     <span class="keyword">if</span> nargout&gt;1;
+0251         data=sread(h)';
+0252     <span class="keyword">end</span>
+0253     sclose(h);
+0254 <span class="keyword">else</span>
+0255     ismatfile=0;
+0256     <span class="keyword">try</span>
+0257         <span class="comment">% .mat file?</span>
+0258         S=whos(<span class="string">'-file'</span>,data);
+0259         <span class="keyword">if</span> numel(S)&gt;1
+0260             <span class="keyword">if</span> nargout==2
+0261                 [p,data]=<a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>([fname,<span class="string">'.mat'</span>]);
+0262             <span class="keyword">else</span>
+0263                 [p,data]=<a href="nt_read_data.html" class="code" title="function [p,data]=nt_read_data(fname,flag)">nt_read_data</a>([fname,<span class="string">'.mat'</span>]);
+0264             <span class="keyword">end</span>
+0265         <span class="keyword">end</span>
+0266     <span class="keyword">catch</span>
+0267         disp([<span class="string">'File &gt;'</span>,fname,<span class="string">'&lt; is not a matlab file, and FieldTrip and BIOSIG can''t read it'</span>]);
+0268     <span class="keyword">end</span>
+0269 <span class="keyword">end</span>
+0270     
+0271</pre></div>
+<hr><address>Generated on Tue 09-Oct-2018 10:58:04 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>
