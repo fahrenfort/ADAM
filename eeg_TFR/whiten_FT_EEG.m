@@ -46,7 +46,7 @@ data = FT_EEG.(field);
 [~, nChannels, nTime] = size(data);
 nConds = numel(condSet);
 
-% compute IE (if it was not passed to the function)
+% compute the inverted covariance matrix IE (if it was not passed to the function)
 if avgtime && computeIE
     % pre-allocate (time, conditions, channels, channels)
     E=NaN(nTime,nConds,nChannels,nChannels);

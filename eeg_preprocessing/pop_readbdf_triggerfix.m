@@ -143,7 +143,7 @@ if ~isempty(eventchans)
     end;
     disp('Applying 8-bit masks to event channels (only for BIOSEMI files).');
     %EEG.data(eventchans,:) = bitand(uint32(EEG.data(eventchans,:)), 32767);
-    
+
     % SOME MODIFICATIONS BY JOHANNES TO EXTRACT CORRECT TRIGGER CODES:
     disp('SOME MODIFICATIONS BY JOHANNES TO EXTRACT CORRECT TRIGGER CODES:');
     binVal = dec2bin(EEG.data(eventchans,:));
