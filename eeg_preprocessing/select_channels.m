@@ -40,12 +40,12 @@ if strcmpi('ALL',bundlename_or_bundlelabels)
     bundlename_or_bundlelabels = 'EEG';
 end
 if iscell(bundlename_or_bundlelabels)
-    disp(['selecting the following channels: ' cell2csv(bundlename_or_bundlelabels) ]);
+    disp(['Selecting the following channels: ' cell2csv(bundlename_or_bundlelabels) ]);
 else
-    disp(['selecting ' bundlename_or_bundlelabels ' channels...']);
+    disp(['Selecting ' bundlename_or_bundlelabels ' channels...']);
 end
 if strcmpi('EEG',bundlename_or_bundlelabels)
-    wraptext('Removing EOG channels...\nassuming electrodes are defined using labels from the 10-20 system, electrodes that are not defined using labels from this system are always removed. Edit the select_channels.m function or specify cfg.channelpool = ''ALL_NOSELECTION''; when reading in the data if this is undesirable behavior.');
+    wraptext('Selecting EEG channels...\nassuming electrodes are defined using labels from the 10-20 system, only electrodes from this system are selected. Edit the select_channels.m function or specify cfg.channelpool = ''ALL_NOSELECTION''; when you require specific selections.');
 end
 % These are the EEG and EOG channels according to the 10-20 / 10-05 definition:
 if exist('1005chanlocdata.mat','file')
