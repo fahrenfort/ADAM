@@ -532,8 +532,8 @@ if ~exist('qsub','var') || isempty(qsub) % run local
 else % or create qsub files
     qsub.repeat = repeat; % repeat by the number of times specified in cfg.iterations or cfg.randpermutations
     if strcmpi(raw_or_tfr,'raw')
-        create_qsub_files(qsub.functionpath,'classify_RAW_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channelpool,str_settings,crossclass_resample,erp_baseline,class_spec{:});
+        create_slurm_files(qsub.functionpath,'classify_RAW_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channelpool,str_settings,crossclass_resample,erp_baseline,class_spec{:});
     elseif strcmpi(raw_or_tfr,'tfr')
-        create_qsub_files(qsub.functionpath,'classify_TFR_from_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channelpool,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+        create_slurm_files(qsub.functionpath,'classify_TFR_from_eeglab_data',qsub,datadir,filenames,outputdir,nfolds,channelpool,str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
     end
 end

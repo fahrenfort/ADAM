@@ -202,7 +202,7 @@ ndirs = drill2data(folder_name);
 if isempty(plot_order)
     dirz = dir(folder_name);
     dirz = {dirz([dirz(:).isdir]).name};
-    plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    plot_order = dirz(~(strcmp(dirz,'.')|strcmp(dirz,'..')));
     if ndirs == 1
         [folder_name, plot_order] = fileparts(folder_name);
         plot_order = {plot_order};
@@ -215,7 +215,7 @@ elseif ndirs ~= 2
 else
     dirz = dir(folder_name);
     dirz = {dirz([dirz(:).isdir]).name};
-    dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    dirz = dirz(~(strcmp(dirz,'.')|strcmp(dirz,'..')));
     for cPlot = 1:numel(plot_order)
         dirindex = find(strcmpi(plot_order{cPlot},dirz)); 
         if isempty(dirindex) % if an exact match cannot be made, look only for the pattern in the first sequency of characters
@@ -234,8 +234,28 @@ else
     end
 end
 
+% when plotting individual subjects in a single plot also need to create a figure and set colors
+if plotsubjects && singleplot
+    fh = figure('name','individual subjects');
+    set(fh, 'Position', get(0,'Screensize'));
+    set(fh,'color','w');
+    % set line colors
+    if ~exist('line_colors','var')
+        line_colors = {[.5 0 0] [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5] [.75 0 0] [0 .75 0] [0 0 .75] [.75 .75 0] [0 .75 .75] [.75 0 .75] };
+    end
+    if ~iscell(line_colors)
+        for c=1:size(line_colors,1)
+            cell_colors{c} = line_colors(c,:);
+        end
+        line_colors = cell_colors;
+    end
+end
+
 % loop through directories (results folders)
 for cdirz = 1:numel(plot_order)
+    if plotsubjects && singleplot
+        cfg.line_color = line_colors{cdirz};
+    end
     [stats(cdirz), cfg] = subcompute_group_MVPA(cfg, [folder_name filesep plot_order{cdirz}], mask);
 end
 
@@ -326,7 +346,8 @@ cfg = v2struct(freqlim,plotFreq,trainlim,testlim,tail,indiv_pval,cluster_pval,pl
 
 % get filenames
 subjectfiles = dir([folder_name filesep channelpool plotFreq{1} filesep '*.mat']);
-[~, condname] = fileparts(folder_name);
+[~, condname, ext] = fileparts(folder_name);
+condname = [condname ext];
 subjectfiles = { subjectfiles(:).name };
 subjectfiles(strncmp(subjectfiles,'.',1)) = []; % remove hidden files
 
@@ -342,7 +363,7 @@ if nSubj == 0
 end
 
 % prepare figure in case individual subjects are plotted
-if plotsubjects;
+if plotsubjects && ~singleplot
     fh = figure('name',['individual subjects: ' condname]);
     set(fh, 'Position', get(0,'Screensize'));
     set(fh,'color','w');
@@ -630,6 +651,9 @@ for cSubj = 1:nSubj
     
     % plot individual subjects
     if plotsubjects
+        if singleplot
+            hold on; % for plotting multiple lines
+        end
         subplot(numSubplots(nSubj,1),numSubplots(nSubj,2),cSubj);
         onestat.ClassOverTime = ClassOverTime;
         onestat.StdError = [];
@@ -644,6 +668,9 @@ for cSubj = 1:nSubj
         onestat.channelpool = channelpool;
         onestat.cfg = [];
         tmpcfg = cfg;
+        if singleplot
+            tmpcfg.line_colors = {line_color}; % for plotting multiple lines
+        end
         tmpcfg.plot_model = plot_model;
         tmpcfg.plotsubjects = true;
         tmpcfg.plotsigline_method = 'both';
