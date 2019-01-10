@@ -69,10 +69,11 @@ function map = adam_plot_MVPA(cfg,varargin)
 %                               will plot testing on y and training x.
 %   cfg.inverty               = [] (default, for ERP plots default is true); you can choose to plot
 %                               the voltage on the y-axis of ERP plots downward by setting to false.
-%   cfg.plotsigline_method    = 'both' (default); or 'straight'; a straight horizontal line at the 
-%                               bottom of the plot for (clusters of) significant time points in line
-%                               plots is always drawn, but the default option 'both' will also make
-%                               the line of the line plot thicker on these time points. 
+%   cfg.plotsigline_method    = 'both' (default); Alternatively specify 'straight' a straight
+%                               horizontal line at the bottom of the plot for (clusters of)
+%                               significant time points. 'follow' will make the significant lines
+%                               thicker in the graph itself. The default option 'both' will also
+%                               make the line of the line plot thicker on these time points.
 %   cfg.plot_model            = 'BDM' (default); or 'FEM' if stats contains classification results
 %                               of a forward encoding model.
 %
@@ -191,6 +192,12 @@ if strcmpi(plottype,'3D')
 end
 
 % set line colors
+if ~iscell(line_colors)
+    for c=1:size(line_colors,1)
+        cell_colors{c} = line_colors(c,:);
+    end
+    line_colors = cell_colors;
+end
 if numel(line_colors)<numel(stats) || isempty(line_colors)
     if numel(stats) > 1
         line_colors = {[.5 0 0] [0 .5 0] [0 0 .5] [.5 .5 0] [0 .5 .5] [.5 0 .5] [.75 0 0] [0 .75 0] [0 0 .75] [.75 .75 0] [0 .75 .75] [.75 0 .75] };
@@ -597,7 +604,7 @@ if strcmpi(plottype,'2D')
     % plot significant time points
     if ~isempty(pVals)
         sigdata = data;
-        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') && ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none')
+        if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') 
             if ~singleplot elevate = 1; else elevate = (nGraph-cGraph)+.5; end
             if inverty
                 sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/80)*elevate;
@@ -612,7 +619,7 @@ if strcmpi(plottype,'2D')
             end
         end
         sigdata = data;
-        if ~strcmpi(plotsigline_method,'straight')
+        if strcmpi(plotsigline_method,'follow') || strcmpi(plotsigline_method,'both')
             sigdata(pVals>=indiv_pval) = NaN;
             if isnumeric(line_colors{cGraph})
                 H.mainLine=plot(1:numel(sigdata),sigdata,'Color',line_colors{cGraph},'LineWidth',3); % sigline on graph
@@ -635,6 +642,15 @@ if strcmpi(plottype,'2D')
             if ~strcmpi(mpcompcor_method,'none')
                 legend boxoff;
                 set(h_legend,'FontSize',12);
+            end
+        end
+    else
+        if strcmpi(plotsigline_method,'follow') || strcmpi(plotsigline_method,'both')
+            sigdata = data;
+            if isnumeric(line_colors{cGraph})
+                H.mainLine=plot(1:numel(sigdata),sigdata,'Color',line_colors{cGraph},'LineWidth',3); % sigline on graph
+            else
+                H.mainLine=plot(1:numel(sigdata),sigdata,line_colors{cGraph},'LineWidth',3); % sigline on graph
             end
         end
     end

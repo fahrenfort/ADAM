@@ -174,7 +174,7 @@ ndirs = drill2data(folder_name);
 if isempty(plot_order)
     dirz = dir(folder_name);
     dirz = {dirz([dirz(:).isdir]).name};
-    plot_order = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    plot_order = dirz(~(strcmp(dirz,'.')|strcmp(dirz,'..')));
     if ndirs == 1
         [folder_name, plot_order] = fileparts(folder_name);
         plot_order = {plot_order};
@@ -187,7 +187,7 @@ elseif ndirs ~= 2
 else
     dirz = dir(folder_name);
     dirz = {dirz([dirz(:).isdir]).name};
-    dirz = dirz(cellfun(@isempty,strfind(dirz,'.')));
+    dirz = dirz(~(strcmp(dirz,'.')|strcmp(dirz,'..')));
     for cPlot = 1:numel(plot_order)
         dirindex = find(strcmpi(plot_order{cPlot},dirz));
         if isempty(dirindex) % if an exact match cannot be made, look only for the pattern in the first sequency of characters
@@ -258,7 +258,8 @@ end
 % get filenames
 plotFreq = ''; % this is empty for now, but might be used to look at the ERPs obtained from a TF analysis
 subjectfiles = dir([folder_name filesep channelpool plotFreq filesep '*.mat']);
-[~, condname] = fileparts(folder_name);
+[~, condname,ext] = fileparts(folder_name);
+condname = [condname ext];
 subjectfiles = { subjectfiles(:).name };
 subjectfiles(strncmp(subjectfiles,'.',1)) = []; % remove hidden files
 
