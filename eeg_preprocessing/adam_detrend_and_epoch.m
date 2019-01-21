@@ -120,9 +120,8 @@ end
 if ~iscell(filenames)
     filenames = regexp(filenames, ',', 'split');
 end
-% conditions can either be defined as a string of comma separated values,
-% or a cell array of numbers or strings, and is converted to a ell array of
-% strings to be fed into pop_epoch
+% conditions can either be defined as a string of comma separated values, or a cell array of numbers
+% or strings, and is converted to a cell array of strings to be fed into pop_epoch
 if numel(varargin) == 1
     if ischar(varargin{1})
         conditions = regexp(varargin{1}, ',', 'split');
@@ -215,6 +214,12 @@ for filename = filenames
             mask_stopind = nearest(eeg_time,trialinfo(cTrials,2)+end_mask);
             eeg_mask(mask_startind:mask_stopind) = 0;
         end
+    end
+    
+    % initialize trial array
+    new_trial = NaN([size(trialinfo,1) numel(label) numel(nearest(eeg_time,0):nearest(eeg_time,(end_epoch-start_epoch)))]);
+    if polynomial_order > 0
+        old_trial = new_trial;
     end
     
     % do the epoching (and detrending if indicated)
@@ -331,8 +336,8 @@ for filename = filenames
         end
     end
     
-    % Plot butterfly plots of ERP 
-    % Only plot EEG channels (no ocular channels), baseline < 0 (baseline only for illustration purposes)
+    % Plot butterfly plots of ERP. Only plot EEG channels (no ocular channels)
+    % Also baseline < 0 (baseline only for illustration purposes, not in saved data)
     if polynomial_order > 0
         oldERP = mean(old_trial(:,EEG_index,:) - repmat(mean(old_trial(:,EEG_index,trial_time<0),3),[1 1 size(old_trial,3)]),1);
         clear old_trial;
