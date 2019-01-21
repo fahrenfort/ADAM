@@ -1,4 +1,5 @@
 function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
+% function create_qsub_files(path_on_lisa, function_name, qsettings, varargin)
 % create_qsub_files creates qsub files and bash files to submit qsub jobs for all subjects 
 % path_on_lisa contains the path where the function is on lisa e.g. '$HOME/Dropbox/mvpa_scripts'
 % function_name contains the function name, e.g. 'classify_RAW_from_eeglab_data'

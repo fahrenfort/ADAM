@@ -1,4 +1,5 @@
 function [selchannelindex, selchannellabels] = select_channels(channellabels,bundlename_or_bundlelabels)
+% function [selchannelindex, selchannellabels] = select_channels(channellabels,bundlename_or_bundlelabels)
 % select_channels either takes a cell array of electrodes to select, or assumes a standard
 % 64-channel BioSemi system for specific bundles. Modify this file to include other systems, or use
 % 'ALL_NOSELECTION' to refrain from selecting anything (in this case you have to make a selection
@@ -45,7 +46,7 @@ else
     disp(['Selecting ' bundlename_or_bundlelabels ' channels...']);
 end
 if strcmpi('EEG',bundlename_or_bundlelabels)
-    wraptext('Selecting EEG channels...\nassuming electrodes are defined using labels from the 10-20 system, only electrodes from this system are selected. Edit the select_channels.m function or specify cfg.channelpool = ''ALL_NOSELECTION''; when you require specific selections.');
+    wraptext('Selecting EEG channels...\nassuming electrodes are defined using labels from the 10-20 system, only electrodes from this system are selected. Edit the select_channels.m function or specify cfg.channelpool = ''ALL_NOSELECTION''; when you do not want to use electrode selection.');
 end
 % These are the EEG and EOG channels according to the 10-20 / 10-05 definition:
 if exist('1005chanlocdata.mat','file')

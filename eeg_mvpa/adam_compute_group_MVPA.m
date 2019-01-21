@@ -144,6 +144,7 @@ mask = [];
 plot_order = {};
 reduce_dims = '';
 freqlim = [];
+plotsubjects = false;
 
 % backwards compatibility
 plot_dim = 'time_time'; % default, 'time_time' or 'freq_time'
