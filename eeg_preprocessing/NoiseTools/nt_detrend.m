@@ -1,4 +1,4 @@
-function [y,w,r]=ntdetrend(x,order,w,basis,thresh,niter)
+function [y,w,r,regressline]=nt_detrend(x,order,w,basis,thresh,niter)
 %[y,w,r]=nt_detrend(x,order,w,basis,thresh,niter) - robustly remove trend
 % 
 %  y: detrended data
@@ -103,9 +103,15 @@ for iIter=1:niter
     
 end
 
-y=x-y;
+regressline = reshape(y,dims);
+
+%y=x-y;
 y=reshape(y,dims);
 w=reshape(w,dims);
+
+%new
+x=reshape(x,dims);
+y=x-y;
 
 if ~nargout
     % don't return, just plot

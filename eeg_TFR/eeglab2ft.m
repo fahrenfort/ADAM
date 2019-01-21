@@ -1,11 +1,15 @@
-function FT_EEG = eeglab2ft(EEG,filepath)
-% function FT_EEG = eeglab2ft(EEG,filepath)
+function FT_EEG = eeglab2ft(EEG,filepath,continuous)
+% function FT_EEG = eeglab2ft(EEG,filepath,continuous)
 % Wrapper function to import EEG lab data to a fieldtrip, including
 % conditions
 % EEG can either be an eeglab struct, or be the filename which contains the
 % eeglab data. In the latter case, filepath must also be specified
-%
+% If continuous == true, the function works on un-epoched data
 % J.J.Fahrenfort, VU 2014, 2016
+
+if nargin < 3
+    continuous = false;
+end
 
 if ~isstruct(EEG)
     if isempty(filepath)
@@ -18,8 +22,7 @@ if ~isstruct(EEG)
 end
 FT_EEG = eeglab2fieldtrip_local(EEG, 'preprocessing');
 % also get events using pop_export
-FT_EEG.trialinfo = pop_exportepoch(EEG);
-clear EEG;
+FT_EEG.trialinfo = pop_exportepoch(EEG,continuous);
 
 function data = eeglab2fieldtrip_local(EEG, fieldbox, transform)
 
@@ -86,7 +89,8 @@ switch fieldbox
   case 'preprocessing'
     for index = 1:EEG.trials
       data.trial{index}  = EEG.data(:,:,index);
-      data.time{index}   = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
+      %data.time{index}   = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
+      data.time{index} = EEG.times;
     end;
     data.label   = { tmpchanlocs(1:EEG.nbchan).labels };
 
@@ -94,7 +98,8 @@ switch fieldbox
   case 'timelockanalysis'
     data.avg  = mean(EEG.data, 3);   
     data.var  = std(EEG.data, [], 3).^2;   
-    data.time = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
+    % data.time = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
+    data.time = EEG.times;
     data.label   = { tmpchanlocs(1:EEG.nbchan).labels };
     
   case 'componentanalysis'
@@ -113,7 +118,8 @@ switch fieldbox
       catch
           
       end;
-      data.time{index}   = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
+      %data.time{index}   = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
+      data.time{index} = EEG.times;
     end;
     data.label = [];
     for comp = 1:size(EEG.icawinv,2)
