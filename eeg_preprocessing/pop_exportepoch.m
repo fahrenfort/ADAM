@@ -15,7 +15,7 @@ if nargin < 2
     continuous = false;
 end
 
-if continuous % extracting all events, with time stamps
+if continuous % extracting all continuous events, with time stamps
     events = NaN(numel(EEG.event),2);
     for cEvents = 1:numel(EEG.event)
         event = EEG.event(cEvents).type;
@@ -31,7 +31,10 @@ if continuous % extracting all events, with time stamps
             end
         end
         events(cEvents,1) = event;
-        events(cEvents,2) = EEG.event(cEvents).latency; % expressed in ms.
+        pointlatency = EEG.event(cEvents).latency; % expressed in samples (!!!!)
+        % eventlatency = round(pointlatency/EEG.srate*1000);
+        eventlatency = round(EEG.times(round(pointlatency))); % expressed in ms. :-)
+        events(cEvents,2) = eventlatency;
     end
 else % extracting only epoched events that occur at time zero of each epoch, without time stamp
     events = NaN(numel(EEG.epoch),1);
