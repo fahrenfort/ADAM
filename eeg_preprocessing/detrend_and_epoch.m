@@ -318,6 +318,7 @@ if remove_bad_chans && ~isempty(rejected_electrodes)
 end
 
 %% save
-% save([outputdir filesep fname '.mat'],'DETRENDED_FT_EEG');
-% as EEGLAB file
+% can also save as FT_EEG if that is preferred:
+% save([outputdir filesep fname '.mat'],'DETRENDED_FT_EEG'); 
+% OR as EEGLAB file
 pop_saveset(EEG, 'filename',[fname '.set'],'filepath',outputdir);

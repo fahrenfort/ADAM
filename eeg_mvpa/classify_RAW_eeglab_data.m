@@ -179,7 +179,6 @@ clean_window = [];
 basis_sigma = 1; % default width of basis set if not a delta, if this is empty, do a simple basis set (delta function)
 unbalance_events = false;
 unbalance_classes = false;
-detrend_eeg = false;
 whiten = false;
 whiten_test_using_train = false;
 for c=1:numel(methods)
@@ -263,9 +262,6 @@ for c=1:numel(methods)
     end
     if any(strcmpi(methods{c},{'oversample'}))
         unbalance_classes = false;
-    end
-    if any(strcmpi(methods{c},{'detrend','detrend_eeg'}))
-        detrend_eeg = true;
     end
     if any(strcmpi(methods{c},{'whiten'}))
         whiten = true;
@@ -362,7 +358,6 @@ for cFile = 1:numel(filenames)
     msettings.clean_data = clean_muscle;
     msettings.clean_window = clean_window;
     msettings.shuffle_trials = true;
-    msettings.detrend_eeg= detrend_eeg;
     [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,msettings);
     % randomize labels for first level random permutation testing. NOTE: permuting all observations/labels regardless of the conditions in the experiment
     if randomize_labels
@@ -622,7 +617,6 @@ settings.filenames = filenames;
 settings.crossclass = crossclass;
 settings.erp_baseline = erp_baseline;
 settings.clean_window = clean_window;
-settings.detrend_eeg = detrend_eeg;
 settings.BDM = do_BDM;
 settings.FEM = do_FEM;
 settings.basis_set_sigma = basis_sigma;

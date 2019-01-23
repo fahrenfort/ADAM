@@ -33,7 +33,7 @@ if continuous % extracting all continuous events, with time stamps
         events(cEvents,1) = event;
         pointlatency = EEG.event(cEvents).latency; % expressed in samples (!!!!)
         % eventlatency = round(pointlatency/EEG.srate*1000);
-        eventlatency = round(EEG.times(round(pointlatency))); % expressed in ms. :-)
+        eventlatency = EEG.times(round(pointlatency)); % expressed in ms. :-)
         events(cEvents,2) = eventlatency;
     end
 else % extracting only epoched events that occur at time zero of each epoch, without time stamp
