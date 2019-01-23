@@ -145,6 +145,7 @@ plot_order = {};
 reduce_dims = '';
 freqlim = [];
 plotsubjects = false;
+singleplot = false;
 
 % backwards compatibility
 plot_dim = 'time_time'; % default, 'time_time' or 'freq_time'
@@ -174,6 +175,7 @@ if exist('channels','var') && ~isfield(cfg,'channelpool')
     channelpool = channels;
     cfg.channelpool = channelpool;
 end
+cfg.singleplot = singleplot;
 
 % check freqlimits
 if (strcmpi(plot_dim,'freq_time') && ~strcmpi(reduce_dims,'avfreq')) && (numel(freqlim) == 1 || (~isempty(freqlim) && abs(diff(freqlim)) <= 2))
