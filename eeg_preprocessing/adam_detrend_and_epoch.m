@@ -4,9 +4,7 @@ function adam_detrend_and_epoch(cfg)
 % and writes out as EPOCHED (!) EEGLAB file. Note that the data are high-pass filtered early on to
 % identify faulty electrodes, but that the highpass filtered data is discarded after identifying
 % these electrodes. Polynomial detrending is applied to remove drifts in raw data. Faulty
-% electrodes are interpolated back in after detrending. filenames: names of files either in a cell
-% array or as comma separated string. Wildcards * and ? can be used, e.g. filenames = '*' will take
-% all the .set files in the input filepath as sources. The output of this function can serve as
+% electrodes are interpolated back in after detrending. The output of this function can serve as
 % input for ADAM_MVPA_FIRSTLEVEL.
 %
 %       cfg.datadir           = string specifiying the directory where the input files are

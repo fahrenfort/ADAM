@@ -6,7 +6,6 @@ function [ FT_EEG, filename, chanlocs ]= read_raw_data(filepath,filename,outpath
 % Johannes Fahrenfort, VU 2016, 2017, 2018
 
 % set some defaults
-detrend_eeg = false;
 shuffle_trials = false;
 clean_window = [];
 clean_data = false;
@@ -72,11 +71,6 @@ reqfields = {'fsample', 'label', 'trial', 'time', 'trialinfo', 'dimord'};
 absentfields = reqfields(~ismember(reqfields,FT_FIELDS));
 if ~isempty(absentfields)
     error(['The following required fields are missing from your data: ' cell2csv(absentfields,true)]);
-end
-
-% detrend eeg
-if detrend_eeg
-    FT_EEG = detrend_FT_EEG(FT_EEG);
 end
 
 % keep track of index numbers
