@@ -1,40 +1,39 @@
-function merge_EEG_sessions(filepath,filenames,subjects)
-% function merge_EEG_sessions(filepath,filenames,subjects)
-% concatenates all sessions from EEG lab file belonging together. The resulting merged files are
-% stored in a subfolder in filepath called 'merged' (this folder is created if it does not exist).
-%
-% Inputs:
-%
-% filepath:     where files are stored
-% filenames:    names of files either in a cell array or as comma separated
-%               string. Wildcards * and ? can be used, e.g. filenames = '*.set' will
-%               take all the .set files in the input filepath as sources for merging
-%               subjects. When  using together with qsub, use '*,*.set' to specify the
-%               filenames to prevent qsub from expanding to a separate line  for each
-%               filename. Set settings.use_scratch = false; in this case. Files are
-%               appended in alphabetical order when using a wildcard. When a specific
-%               order is required for merging, specify each file separately without
-%               wildcards (in the correct order of course).
-% subjects:     specify regular expressions for which the
-%               filenames will be merged. This patterns is also used for the new
-%               filename, after removal of the asterisk (*), dot (.) and question mark
-%               (?) characters, e.g. '.*subj02.*_AB.*' as a subject name will result in
-%               the selection of all files with that data pattern, and the file name in
-%               this case would be 'subj02_AB'. You can find more about how regular
-%               expressions work by typing: help regexp in the command line.
-%               NOTE: REGULAR EXPRESSIONS DO NOT USE * AS A WILDCARD, RATHER SAY .* TO
-%               INDICATE A WILDCARD (. means any character and * means 0 or more times)
-%               If you simply do 'subj02' without anything else, it will grab all files
-%               containing subj02 anywhere and merge them, no wildcards necessary.
-%
-% 
+function merge_EEG_sessions(filepath,filenames,outpath,subjects,reject_artifacts)
+% function merge_EEG_sessions(filepath,filenames,outpath,subjects,reject_artifacts)
+% concatenates all sessions from EEG lab file belonging together
+% filepath: where files are stored
+% filenames: names of files either in a cell array or as comma separated
+% string. Wildcards * and ? can be used, e.g. filenames = '*.set' will
+% take all the .set files in the input filepath as sources for merging
+% subjects. When  using together with qsub, use '*,*.set' to specify the
+% filenames to prevent qsub from expanding to a separate line  for each
+% filename. Set settings.use_scratch = false; in this case. Files are
+% appended in alphabetical order when using a wildcard. When a specific
+% order is required for merging, specify each file separately without
+% wildcards (in the correct order of course).
+% Subjects: specify regular expressions for which the
+% filenames will be merged. This patterns is also used for the new
+% filename, after removal of the asterisk (*), dot (.) and question mark
+% (?) characters, e.g. '.*subj02.*_AB.*' as a subject name will result in
+% the selection of all files with that data pattern, and the file name in
+% this case would be 'subj02_AB'. You can find more about how regular
+% expressions work by typing: help regexp in the command line.
+% NOTE: REGULAR EXPRESSIONS DO NOT USE * AS A WILDCARD, RATHER SAY .* TO
+% INDICATE A WILDCARD (. means any character and * means 0 or more times)
+% If you simply do 'subj02' without anything else, it will grab all files
+% containing subj02 anywhere and merge them, no wildcards necessary.
+% If reject_artifacts = true (default
+% false), the artifacts that are contained in EEG.reject.rejmanual are
+% rejected before concatenating.
 % example:
-% merge_EEG_sessions('c:\inputfiles','*.set',{'.*subj02.*_AB.*' '.*subj03.*_AB.*' '.*subj04.*_AB.*'});
+% merge_EEG_sessions('c:\inputfiles','*.set','c:\mergedfiles',{'.*subj02.*_AB.*' '.*subj03.*_AB.*' '.*subj04.*_AB.*'},true);
 %
 % J.J.Fahrenfort, VU, 2015
 
 % some input checking
-reject_artifacts = false;
+if nargin<5
+    reject_artifacts = false;
+end
 if nargin<4
     outpath = pwd;
 end
@@ -89,10 +88,7 @@ for cSubj = 1:numel(subjects)
     OUTEEG = pop_mergeset( ALLEEG, 1:numel(subjIndex), 1);
     filename = subjects{cSubj};
     filename(regexp(filename,'[*.?[]^()]')) = [];
-    savepath = ([filepath filesep 'merged']);
-    if ~exist(savepath,'dir');
-        mkdir(filepath, 'merged');
-    end
-    disp(['the above files were merged into ' filename '.set and saved in ' savepath]);
-    pop_saveset(OUTEEG, 'filename',[filename '.set'],'filepath',savepath);    
+    filename = [filename '_merged'];
+    disp(['the above files were merged into ' filename '.set']);
+    pop_saveset(OUTEEG, 'filename',[filename '.set'],'filepath',outpath);    
 end
