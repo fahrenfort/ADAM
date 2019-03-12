@@ -113,7 +113,11 @@ end
 disp('done.');
 
 % sort z scores into quantiles
-swz = sort(wz);
+if size(wz,1) > 1 % fixed this in case the function is operating on a single channel
+    swz = sort(wz);
+else
+    swz = wz;
+end
 % determine which windows to remove
 remove_mask = false(1,size(swz,2));
 if max(zthresholds)>0

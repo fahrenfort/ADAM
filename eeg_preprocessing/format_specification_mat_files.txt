@@ -1,0 +1,20 @@
+If you want to use .mat files for classification, the specification should be as follows:
+
+FT_EEG = 
+
+         time: [1x750 double]
+        label: {27x1 cell}
+        trial: [513x27x750 double]
+    trialinfo: [513x1 double]
+       dimord: 'rpt_chan_time'
+
+
+.time contains the time in seconds
+.label contains the channel labels
+.trial contains the actual data, first dimension is trial, second is dimension is electrode, last dimension is time
+.trialinfo contains a condition number for each trial (should be numeric)
+.dimord contains the order of the dimensions in .trial, can be left as ‘rpt_chan_time’.
+
+An example can be found here:
+https://www.dropbox.com/s/nz3fk1o2u5asmt2/grptrain_lon_decode01.mat?dl=1
+

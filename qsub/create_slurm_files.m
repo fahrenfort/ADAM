@@ -6,8 +6,7 @@ function create_slurm_files(path_on_lisa, function_name, qsettings, varargin)
 % qsettings contains a bunch of info about how to run the job:
 % qsettings.walltime -> how long the job may run
 % qsettings.lnodes -> how many nodes
-% qsettings.maxcores -> maximum number of cores the script may use (default: 15)
-% qsettings.cores -> number of cores the node should have (default: 16)
+% qsettings.cores -> max number of cores the job should have (default: 15)
 % qsettings.qsubdir -> where to write the qsub job
 %       special value: if qsettings.qsubdir exists, the function uses the path specified in
 %       varargin(3), where it replaces $HOME by that the path in qsubdir)
@@ -59,8 +58,7 @@ repeat = 1;
 use_scratch = true;
 keep_together = false;
 send_mail = false;
-maxcores = [];
-cores = 16;
+cores = 15;
 mcr_version = '/v718'; % e.g. '/v718' for matlab 2012b; (or leave empty for the default mcr / latest version of matlab on your machine)
 mcr_set_cache = true; % may have to set to true for older versions of MCR, e.g. matlab 2012b
 mcr_cache_verbose = false; % produce info about cache creation (can be useful in case of problems)
@@ -71,14 +69,8 @@ bashfilename = regexprep(function_name(1:dotindx),' ','_'); % create a clean fil
 
 % unpack passed settings
 v2struct(qsettings);
-if ~isempty(mem)
-    mem = [':mem' mem];
-end
 if isempty(cores)
-    cores = 12; % maximum nr of jobs to start, always take one less than the number of cores on the node (or even less if you require more memory)
-end
-if isempty(maxcores)
-    maxcores = cores - 1;
+    cores = 15; % maximum nr of jobs to start, by default no more than 15 out of 16
 end
 
 % locate output path on server through local path
@@ -105,10 +97,7 @@ if strcmp(home(end),filesep)
 end
 
 % create job settings
-% corestxt = [':cores' num2str(cores)];
-% ppn = [':ppn=' num2str(maxcores)];
-corestxt = num2str(cores);
-ppn = num2str(maxcores);
+ppn = num2str(cores);
 
 % obtain filenames if not already supplied as argument
 file = varargin{2};
@@ -169,7 +158,7 @@ qsubfiles = {};
 for cMat = 1:numel(allMat)
     combMat = allMat{cMat};
     for cQsubs = 1:size(combMat,1)
-        if (mod(cQsubs,maxcores) == 1 && repeat == 1) || maxcores == 1 || cQsubs == 1
+        if (mod(cQsubs,cores) == 1 && repeat == 1) || cores == 1 || cQsubs == 1
             % initialize
             copyin = [];
             copyout = [];
@@ -184,8 +173,8 @@ for cMat = 1:numel(allMat)
             qsubfiles{end+1} = qsubfile;
             fout = fopen(qsubfile,'w');
             fprintf(fout,'#!/bin/bash\n');
-            fprintf(fout,['#SBATCH -N ' lnodes ' --ntasks-per-node=' corestxt '\n']);
-            fprintf(fout,['#SBATCH --time ' walltime '\n']);
+            fprintf(fout,['#SBATCH -N ' lnodes ' --ntasks-per-node=' ppn ' --mem=60G --time ' walltime '\n']); % specify we need at least 64GB of memory!
+            % fprintf(fout,['#SBATCH --time ' walltime '\n']);
             fprintf(fout,'echo "Job $SLURM_JOBID started at `date`"');
             if send_mail % no idea whether this works under slurm, don't care i'm not using it anyway
                 fprintf(fout,' | mail $USER -s "Job $SLURM_JOBID"');
@@ -240,10 +229,10 @@ for cMat = 1:numel(allMat)
         end
         line = [line ' &\n'];
         % close qsub file once all cores are used or all commands have been issued
-        if (mod(cQsubs,maxcores) == 0 && repeat > 1 && ~(cQsubs==size(combMat,1)))
+        if (mod(cQsubs,cores) == 0 && repeat > 1 && ~(cQsubs==size(combMat,1)))
             % pause till all previous are done
             line = [line 'wait\n'];
-        elseif (mod(cQsubs,maxcores) == 0 && repeat == 1) || maxcores == 1 || cQsubs == size(combMat,1)
+        elseif (mod(cQsubs,cores) == 0 && repeat == 1) || cores == 1 || cQsubs == size(combMat,1)
             % copy to scratch
             if use_scratch
                 copyin = [copyin 'wait\n'];
