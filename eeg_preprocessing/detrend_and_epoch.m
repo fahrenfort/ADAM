@@ -1,5 +1,5 @@
-function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, remove_bad_chans, event_codes)
-% function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, remove_bad_chans, event_codes)
+function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, remove_bad_chans, event_codes)
+% function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, remove_bad_chans, event_codes)
 % detrend_and_epoch is an internal function of the ADAM toolbox. Loads EEGLAB data and performs a
 % multivariate classification procedure. Refer to the help of ADAM_DETREND_AND_EPOCH for proper
 % instructions on how to use this function.
@@ -36,13 +36,6 @@ if ischar(mask_only_current)
         mask_only_current = true;
     else
         mask_only_current = false;
-    end
-end
-if ischar(mask_bad_data)
-    if strcmpi(mask_bad_data,'yes')
-        mask_bad_data = true;
-    else
-        mask_bad_data = false;
     end
 end
 if ischar(remove_bad_chans)
@@ -84,55 +77,43 @@ conditions = string2double(event_codes);
 
 [~,fname,~] = fileparts(filename);
 
-%% load EEGLAB data and make sure there is electrode position data
-EEG = pop_loadset('filename',[fname '.set'],'filepath',datadir);
-% next identify bad channels
-try
-    eeg_channels = select_channels({EEG.chanlocs(:).labels},'EEG');
-catch
-    error('Stopping now, there are no EEG channels in this set? ADAM only works with standard 10-20 EEG labels.');
-end
-% double check whether channel location information is present
-nopos_channels = [];
-for cEl=1:length(EEG.chanlocs)
-    if (any(isempty(EEG.chanlocs(1,cEl).X)&isempty(EEG.chanlocs(1,cEl).Y)&isempty(EEG.chanlocs(1,cEl).Z)&isempty(EEG.chanlocs(1,cEl).theta)&isempty(EEG.chanlocs(1,cEl).radius)))
-        nopos_channels = [nopos_channels cEl];
-    end
-end
-EEG = pop_select(EEG, 'channel', eeg_channels);
-% look up electrode info
-if any(ismember(eeg_channels,nopos_channels))
-    disp(['WARNING: Channels ' num2str(nopos_channels) ' have incomplete location information. Now attempting to read in location information.']);
-    EEG = pop_chanedit(EEG, 'lookup', trycapfile);
-end
-
-%% identify bad channels and bad data
-if remove_bad_chans || mask_bad_data
-    % strong 1 Hz highpass filter (temporary, only for identifying bad channels/data)
-    EEG_filt = pop_eegfiltnew(EEG, 1);
-end
+%% load EEGLAB data to identify bad channels
 if remove_bad_chans
-    % identify and remove bad channels
-    EEG_nobadchans = clean_channels(EEG_filt);
-    orig_chanlocs = EEG.chanlocs;
-    clean_chanlocs = EEG_nobadchans.chanlocs;
-    rej_channels = setdiff({orig_chanlocs.labels},{clean_chanlocs.labels});
-    % reject bad channels
-    EEG = pop_select(EEG, 'nochannel', rej_channels);
-    EEG_filt = pop_select(EEG_filt, 'nochannel', rej_channels);
-end
-if mask_bad_data 
-    % EEG_filt = pop_eegfiltnew(EEG_filt, 110, 140); % interested in muscle artefacts in particular, so band-pass between 110 and 140
-    % create mask of the data that contains clean data (to mask out dirty parts for detrending)
-    for cChan = 1:size(EEG_filt.data,1)
-        temp_EEG = pop_select(EEG_filt, 'channel', cChan);
-        [~,clean_mask(cChan,:)] = clean_windows(temp_EEG,[],[-25,25]);
+    EEG = pop_loadset('filename',[fname '.set'],'filepath',datadir);
+    % strong 1 Hz highpass filter
+    EEG = pop_eegfiltnew(EEG, 1);
+    try
+        eeg_channels = select_channels({EEG.chanlocs(:).labels},'EEG');
+    catch
+        error('Stopping now, there are no EEG channels in this set? ADAM only works with standard 10-20 EEG labels.');
     end
-    %[~,clean_mask] = clean_windows(EEG_filt);
+    % double check whether channel location information is present
+    nopos_channels = [];
+    for cEl=1:length(EEG.chanlocs)
+        if (any(isempty(EEG.chanlocs(1,cEl).X)&isempty(EEG.chanlocs(1,cEl).Y)&isempty(EEG.chanlocs(1,cEl).Z)&isempty(EEG.chanlocs(1,cEl).theta)&isempty(EEG.chanlocs(1,cEl).radius)))
+            nopos_channels = [nopos_channels cEl];
+        end
+    end
+    EEG = pop_select(EEG, 'channel', eeg_channels);
+    % look up electrode info
+    if any(ismember(eeg_channels,nopos_channels))
+        disp(['WARNING: Channels ' num2str(nopos_channels) ' have incomplete location information. Now attempting to read in location information.']);
+        EEG = pop_chanedit(EEG, 'lookup', trycapfile);
+    end
+    % identify and remove bad channels from the EEG, interpolate and write bad channels to text file
+    orig_chanlocs = EEG.chanlocs;
+    EEG = clean_artifacts(EEG,'Highpass','off','WindowCriterion','off','burst_crit','off');
+    clean_chanlocs = EEG.chanlocs;
+    rejected_electrodes = setdiff({orig_chanlocs.labels},{clean_chanlocs.labels});
 end
-clear EEG_filt EEG_nobadchans temp_EEG;
 
-%% apply detrending
+%% load original EEGLAB data again to apply detrending to
+EEG = pop_loadset('filename',[fname '.set'],'filepath',datadir);
+
+% reject bad channels
+if remove_bad_chans
+    EEG = pop_select(EEG, 'nochannel', rejected_electrodes);
+end
 
 % little hack: apply filtering if polynomial_order < 0, so we can compare filtering to detrending
 if polynomial_order < 0
@@ -167,12 +148,7 @@ eeg_data = padarray(eeg_data,[0 pad_length*srate],'both','symmetric');
 eeg_time = padarray(eeg_time,[0 pad_length*srate],NaN,'both');
 
 % create a mask for all trials
-if mask_bad_data
-    eeg_mask = padarray(clean_mask,[0 pad_length*srate],'both','symmetric');
-else
-    eeg_mask = ones(size(eeg_data)); 
-end
-% mask out all trials
+eeg_mask = ones(size(eeg_data));
 if ~mask_only_current
     for cTrials = 1:size(trialinfo,1)
         mask_startind = nearest(eeg_time,trialinfo(cTrials,2)+start_mask);
@@ -199,12 +175,10 @@ for cTrials = 1:size(trialinfo,1)
     pad_time = eeg_time((start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
     pad_data = eeg_data(:,(start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
     if mask_only_current % mask only current trial
-        temp_mask = eeg_mask;
-        mask_startind = nearest(eeg_time,trialinfo(cTrials,2)+start_mask);
-        mask_stopind = nearest(eeg_time,trialinfo(cTrials,2)+end_mask);
-        temp_mask(mask_startind:mask_stopind) = 0;
-        pad_mask = temp_mask((start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
-        clear temp_mask;
+        pad_mask = ones(1,size(pad_data,2));
+        mask_zero_ind = nearest(pad_time,trialinfo(cTrials,2)+start_mask);
+        mask_stop_ind = nearest(pad_time,trialinfo(cTrials,2)+end_mask);
+        pad_mask(mask_zero_ind:mask_stop_ind) = 0;
     else % mask all trials
         pad_mask = eeg_mask((start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
     end
@@ -334,11 +308,11 @@ DETRENDED_FT_EEG.fsample = srate;
 EEG = ft2eeglab(DETRENDED_FT_EEG);
 
 %% now that detrending is complete, interpolate faulty electrodes if required
-if remove_bad_chans && ~isempty(rej_channels)
+if remove_bad_chans && ~isempty(rejected_electrodes)
     EEG = pop_interp(EEG, orig_chanlocs, 'spherical');
     fid = fopen([outputdir filesep 'bad_channels_' fname '.txt'], 'wt' );
-    for c = 1:numel(rej_channels)
-        fprintf( fid, '%s\n', rej_channels{c});
+    for c = 1:numel(rejected_electrodes)
+        fprintf( fid, '%s\n', rejected_electrodes{c});
     end
     fclose(fid);
 end

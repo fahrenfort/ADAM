@@ -22,7 +22,7 @@ function adam_detrend_and_epoch(cfg)
 %       cfg.pad_length        = wide epoch padding window used to fit the polynomial on, e.g.
 %                               pad_length of 100 creates 50 second pads around both sides of a
 %                               trial (Default: 50). This padding window is only used during
-%                               detrending and is discarded after the trial itself is epoched out
+%                               detrending and is discarded after the trial itsel is epoched out
 %                               (when doing the final epoching).
 %       cfg.start_mask        = in seconds, specifies when your 'cognitive' or other events of
 %                               interest start
@@ -33,11 +33,7 @@ function adam_detrend_and_epoch(cfg)
 %                               or only the currently relevant trial. If you have sufficiently long
 %                               intertrial intervals you may also set this to false.
 %       cfg.event_codes       = array containing the relevant event values for the experiment.
-%       cfg.remove_bad_chans  = 'yes' or 'no' (default: 'yes'). Identifies and interpolates bad
-%                               electrodes.
-%       cfg.mask_bad_data     = 'yes' or 'no' (default: 'no'). Masks out bad data *only during
-%                               detrending* (the bad data is left in and still needs to be removed
-%                               later if desired).
+%       cfg.remove_bad_chans  = identifies and interpolates bad electrodes.
 %
 % The function also saves a graph for each subject in the output folder, containg (from top to
 % bottom):
@@ -69,8 +65,7 @@ function adam_detrend_and_epoch(cfg)
 % cfg.pad_length        = 50;
 % cfg.mask_only_current = 'no';
 % cfg.event_codes       = [1001:1024 1101:1124];
-% cfg.remove_bad_chans  = 'yes';
-% cfg.mask_bad_data     = 'yes';
+% cfg.remove_bad_chans  = true;
 %
 % adam_detrend_eeg_and_epoch(cfg);
 %
@@ -83,7 +78,6 @@ polynomial_order = 30;
 pad_length = 50;
 mask_only_current = true;
 remove_bad_chans = true;
-mask_bad_data =  false;
 
 % unpack cfg
 v2struct(cfg);
@@ -127,13 +121,6 @@ if ~ischar(remove_bad_chans)
         remove_bad_chans = 'no';
     end
 end
-if ~ischar(mask_bad_data)
-    if mask_bad_data
-        mask_bad_data = 'yes';
-    else
-        mask_bad_data = 'no';
-    end
-end
 if ~ischar(event_codes)
     event_codes = cond_string(event_codes);
 end
@@ -141,9 +128,9 @@ end
 % run analysis
 if ~exist('qsub','var') || isempty(qsub) % run local
     for cSubj = 1:numel(filenames)
-        detrend_and_epoch(datadir,filenames{cSubj},outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, remove_bad_chans, event_codes);
+        detrend_and_epoch(datadir,filenames{cSubj},outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, remove_bad_chans, event_codes);
     end
 else % or create qsub files
-    create_slurm_files(qsub.functionpath,'detrend_and_epoch',qsub, datadir, filenames, outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, remove_bad_chans, event_codes);
+    create_slurm_files(qsub.functionpath,'detrend_and_epoch',qsub, datadir, filenames, outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, remove_bad_chans, event_codes);
 end
 
