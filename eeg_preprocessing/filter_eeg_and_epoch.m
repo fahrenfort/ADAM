@@ -90,12 +90,13 @@ for filename = filenames
     if hicutoff>0
         EEG = pop_eegfiltnew(EEG, [], hicutoff, filtorder, revfilt);
     end
-    % remove mean across the entire block (somewhat superfluous but can't hurt)
-    EEG = pop_rmbase( EEG,[]);
+
     % epoch data
     if ~isempty(conditions)
         EEG = pop_epoch(EEG, conditions, [start_epoch end_epoch], 'newname', ['epoched_ ' fname], 'epochinfo', 'yes'); 
     end
+    % remove mean across the entire block (somewhat superfluous but can't hurt)
+    EEG = pop_rmbase( EEG,[]);
     % save data
     pop_saveset(EEG, 'filename',[fname '.set'],'filepath',outpath);
 end
