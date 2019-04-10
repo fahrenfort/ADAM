@@ -90,6 +90,15 @@ function stats = adam_compute_group_ERP(cfg,folder_name)
 %       stats.pVals:            1xN matrix; p-values of each tested time point
 %       stats.pStruct:          struct; cluster info, if mpcompcor_method was set to
 %                               'cluster_based'
+%       stats.latencies         struct; containing three fields with onset latencies, based on
+%                               the percent-amplitude latency (50%): single subject, jackknife and
+%                               GA (grand average). Note that single subject outcomes are not very
+%                               reliable, it is much better to rely on the jackknife results. For
+%                               details about latency computation see: Liesefeld, H. R. (2018).
+%                               Estimating the Timing of Cognitive Operations With MEG/EEG Latency
+%                               Measures: A Primer, a Brief Tutorial, and an Implementation of
+%                               Various Methods. Frontiers in Neuroscience, 12, 765.
+%                               http://doi.org/10.3389/fnins.2018.00765
 %       stats.mpcompcor_method: string; correction method ('uncorrected' is default)
 %       stats.settings:         struct; the settings grabbed from the level-1 results
 %       stats.condname:         string; combining name of the level-1 folder and the condition_method
@@ -230,7 +239,7 @@ timelim = [];
 resample_eeg = 0;
 electrode_def = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
-electrode_method = 'average';
+electrode_method = 'keep';
 condition_method = 'keep';
 % unpack graphsettings
 plottype = '2D';
@@ -275,7 +284,7 @@ if nSubj == 0
 end
 
 % prepare figure in case individual subjects are plotted
-if plotsubjects;
+if plotsubjects
     fh = figure('name',['individual subjects, condition: ' condname]);
     set(fh, 'Position', get(0,'Screensize'));
     set(fh,'color','w');
@@ -312,9 +321,13 @@ for cSubj = 1:nSubj
         disp('Extracting ERPs from testing data');
     end
     
-    % compute electrodes and do electrode subtractions
+    % extract electrodes and/or do electrode subtraction/averaging
     FT_ERP = restrict_FT_ERP(FT_ERP,cfg);
-    settings.times = {FT_ERP.time, FT_ERP.time};
+    if numel(FT_ERP) == 1
+        settings.times = {FT_ERP.time, FT_ERP.time};
+    else
+        settings.times = {FT_ERP{1}.time, FT_ERP{1}.time};
+    end
     
     % possible use cases:
     % 	(1) get ERP difference between conditions + stats against zero for one or more results folders
@@ -322,30 +335,46 @@ for cSubj = 1:nSubj
     %   (3) get raw ERPs for more conditions from a given results folder without averaging
     % 	(4) get N2pc/CDA electrode subtractions for two conditions, average
     %       them, and do stats against zero (for each results folder)
-    
-    % strcmpi(electrode_method,'average')
-    % strcmpi(condition_method,'subtract')
+    %   (5) extract raw ERPs for multiple electrodes of a single condition
     
     % now do condition subtraction
     clear trial;
-    % subtract
     if strcmpi(condition_method,'subtract')
+        % only works for a single electrode
+        if numel(FT_ERP)>1
+            error('can only subtract conditions from single electrode, not multiple electrodes');
+        end
+        % subtract
         if ~(size(condition_def,2)==2)
             error('Condition_def does not contain the correct number of conditions (2) to be able to subtract.');
         end
         trial = FT_ERP.trial(FT_ERP.trialinfo==condition_def(1),:,:) - FT_ERP.trial(FT_ERP.trialinfo==condition_def(2),:,:);
-        % average
     elseif strcmpi(condition_method,'average')
+        % only works for a single electrode
+        if numel(FT_ERP)>1
+            error('can only average conditions from single electrode, not multiple electrodes');
+        end
+        % average
         trial = mean(FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:),1);
-        % plain extraction
     else
-        trial = FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:);
+        if numel(FT_ERP) == 1
+            % plain extraction of all conditions
+            trial = FT_ERP.trial(ismember(FT_ERP.trialinfo,condition_def),:,:);
+        else
+            % let's pretend that electrodes are conditions so we can get multiple electrodes out
+            for cEl = 1:numel(FT_ERP)
+                trial(cEl,:) = FT_ERP{cEl}.trial(ismember(FT_ERP{cEl}.trialinfo,condition_def),:,:);
+            end
+        end
     end
+    
     % little hack to change V to muV (if applicable)
     if  all(all(all(trial<10^-3)))
         trial = trial*10^6;
     end
-    % hold on to each subject's resulting erps
+    
+    % hold on to each subject's resulting erps! A bit hackey, but the cCond can also refer to electrodes, 
+    % if multiple electrodes for a single condition were extracted
     for cCond=1:size(trial,1)
         ClassTotal{cCond}(cSubj,:) = squeeze(trial(cCond,:));
     end
@@ -389,18 +418,22 @@ chance = 0;
 % statistical testing
 origcondname = condname;
 for cCond = 1:numel(ClassTotal) % loop over stats
-    
+
     % determine condname
     if strcmpi(electrode_method,'subtract') && strcmpi(condition_method,'average')
         condname =  [origcondname '-average(' cell2csv(FT_ERP.channelpool) ')'];
     elseif strcmpi(electrode_method,'subtract')
-        condname =  [origcondname '-' cell2csv(FT_ERP.channelpool)];
+        condname =  [origcondname ' erp' num2str(condition_def(cCond)) '-' cell2csv(FT_ERP.channelpool)];
     elseif strcmpi(condition_method,'subtract')
         condname =  [origcondname '-subtraction(' cell2csv(FT_ERP.channelpool) ')'];
     elseif strcmpi(condition_method,'average')
         condname = [origcondname ' average(' cell2csv(FT_ERP.channelpool) ')'];
     else
-        condname = [origcondname ' erp' num2str(condition_def(cCond)) ' (' cell2csv(FT_ERP.channelpool) ')'];
+        if numel(FT_ERP) == 1
+            condname = [origcondname ' erp' num2str(condition_def(cCond)) ' (' cell2csv(FT_ERP.channelpool) ')'];
+        else % little hack for when multiple electrodes of a single condition were extracted:
+            condname = [origcondname ' erp' num2str(condition_def(1)) ' (' cell2csv(FT_ERP{cCond}.channelpool) ')'];
+        end
     end
     
     % get some stats
@@ -441,8 +474,20 @@ for cCond = 1:numel(ClassTotal) % loop over stats
     stats(cCond).mpcompcor_method = mpcompcor_method;
     stats(cCond).settings = settings;
     stats(cCond).condname = condname;
-    stats(cCond).channelpool = FT_ERP.channelpool;
+    if numel(FT_ERP) == 1
+        stats(cCond).channelpool = FT_ERP.channelpool;
+    else % little hack for when multiple electrodes of a single condition were extracted:
+        stats(cCond).channelpool = FT_ERP{cCond}.channelpool;
+    end
     stats(cCond).pStruct = pStruct;
+    % compute latency
+    try
+        stats(cCond).latencies = extract_latency(cfg,stats(cCond));
+    catch ME
+        disp('Cannot extract latencies.');
+        disp(ME.message);
+        stats(cCond).latencies = [];
+    end
     stats(cCond).reduce_dims = reduce_dims;
     stats(cCond).cfg = cfg;
     if isfield(stats(cCond).cfg,'plotsubjects')
@@ -468,8 +513,8 @@ if ~isempty(timelim)
     FT_EEG = select_time_from_FT_EEG(FT_EEG,(FT_EEG.time>min(timelim)/1000 & FT_EEG.time<max(timelim)/1000)); % time should be in seconds in FT_EEG
 end
 clear channelpool;
-% subtracting electrode sets, subtracts electrode 2 from electrode 1 for each condition
-if strcmpi(electrode_method,'subtract') %iscell(electrode_def{1})
+if strcmpi(electrode_method,'subtract')
+    % subtracting electrode sets, subtracts electrode 2 from electrode 1 for each condition
     if size(electrode_def,2)~=2
         error('to subtract electrode sets, you should define two columns in cfg.electrode_def');
     end
@@ -477,16 +522,21 @@ if strcmpi(electrode_method,'subtract') %iscell(electrode_def{1})
         electrode_def = repmat(electrode_def,[numel(condition_def),1]);
     end
     for cCond = 1:size(electrode_def,1)
+        % first extracting specified electrodes for specific conditions
         for cDif=1:size(electrode_def,2)
             cfg = [];
-            FT_TEMP(cDif) = select_channels_from_FT_EEG(FT_EEG,electrode_def{cCond,cDif});
+            FT_TEMP(cDif) = select_channels_from_FT_EEG(FT_EEG,electrode_def{cCond,cDif}); % this is a bare extraction
         end
-        trial(cCond,:,:) = FT_TEMP(1).trial(FT_TEMP(1).trialinfo==condition_def(cCond),:,:) - FT_TEMP(2).trial(FT_TEMP(2).trialinfo==condition_def(cCond),:,:);
-        channelpool{cCond} = [ 'chan_subtract(' FT_TEMP(1).label ',' FT_TEMP(2).label ')'];
+        % next subtracting averages of the two electrodes for the relevant conditions
+        % This was a bug: trial(cCond,:,:) = FT_TEMP(1).trial(FT_TEMP(1).trialinfo==condition_def(cCond),:,:) - FT_TEMP(2).trial(FT_TEMP(2).trialinfo==condition_def(cCond),:,:);
+        % This was a bug: channelpool{cCond} = [ 'chan_subtract(' FT_TEMP(1).label ',' FT_TEMP(2).label ')'];
+        trial(FT_TEMP(1).trialinfo==condition_def(cCond),:,:) = FT_TEMP(1).trial(FT_TEMP(1).trialinfo==condition_def(cCond),:,:) - FT_TEMP(2).trial(FT_TEMP(2).trialinfo==condition_def(cCond),:,:);
+        channelpool{FT_TEMP(1).trialinfo==condition_def(cCond)} = [ 'chan_subtract(' FT_TEMP(1).label ',' FT_TEMP(2).label ')'];
     end
     FT_EEG.trial = trial;
     FT_EEG.channelpool = channelpool;
 elseif strcmpi(electrode_method,'average')
+    % averaging electrodes
     if ~iscell(electrode_def)
         electrode_def = {electrode_def};
     end
@@ -497,9 +547,24 @@ elseif strcmpi(electrode_method,'average')
         FT_EEG.channelpool = FT_EEG.label;
     end
 else
-    error('Specify cfg.electrode_method as ''average'' (default) or ''subtract''');
+    % extracting individual electrodes (plain extract) 
+    % -> only works for single condition
+    if numel(condition_def) > 1
+        error('You are attempting to extract multiple electrodes for multiple conditions. This is not supported. Either specify cfg.electrode_method as ''average'' (default) or ''subtract'' and/or specify cfg.condition_def for a single condition.');
+    end
+    if ~iscell(electrode_def)
+        electrode_def = {electrode_def};
+    end
+    clear FT_TEMP;
+    for cEl = 1:numel(electrode_def)
+        % extract separate electrodes
+        FT_TEMP{cEl} = select_channels_from_FT_EEG(FT_EEG,electrode_def{cEl});
+        FT_TEMP{cEl}.channelpool = FT_TEMP{cEl}.label;
+    end
+    % pass back only the relevant electrodes as an array
+    FT_EEG = FT_TEMP;
 end
-if any(size(FT_EEG.trial)==0)
+if numel(FT_EEG) == 1 && any(size(FT_EEG.trial)==0)
     dims = regexp(FT_EEG.dimord,'_','split');
     error(['There are no dimensions left in these fields, change cfg selection parameters for ''' cell2csv(dims(logical(size(FT_EEG.trial)==0))) '''.']);
 end

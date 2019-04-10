@@ -180,6 +180,8 @@ for cMat = 1:numel(allMat)
                 fprintf(fout,' | mail $USER -s "Job $SLURM_JOBID"');
             end
             fprintf(fout,'\n');
+            % map the cache to /dev/shm which is the RAM of the node 
+            fprintf(fout,'export CACHEDIR=/dev/shm\n');
             if use_scratch
                 % build in some time to copy output back by breaking off jobs before the end
                 fprintf(fout,'module load sara-batch-resources\n');
@@ -193,9 +195,9 @@ for cMat = 1:numel(allMat)
             end
             % load matlab runtime
             fprintf(fout,['module load mcr' mcr_version '\n']);
-            if mcr_set_cache
-                fprintf(fout,'export MCR_CACHE_ROOT=`mktemp -d "$TMPDIR"/mcr.XXXXXXXXXX`\n');
-            end
+%             if mcr_set_cache
+%                 fprintf(fout,'export MCR_CACHE_ROOT=`mktemp -d "$TMPDIR"/mcr.XXXXXXXXXX`\n');
+%             end
             if mcr_cache_verbose
                 fprintf(fout,'export MCR_CACHE_VERBOSE=true\n');
             end
@@ -223,7 +225,13 @@ for cMat = 1:numel(allMat)
             end
         end
         % commands to issue in qsub file
-        line = [ line timeout path_on_lisa '/' function_name];
+        if mcr_set_cache
+            MCR_CACHE = ['MCR_CACHE_ROOT="$CACHEDIR"/' num2str(cQsubs) ' '];
+        else
+            MCR_CACHE = '';
+        end
+
+        line = [ line timeout MCR_CACHE path_on_lisa '/' function_name];
         for cArgs = 1:size(combMat,2)
             line = [line ' "' combMat{cQsubs,cArgs} '" '];
         end

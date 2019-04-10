@@ -113,17 +113,17 @@ function adam_MVPA_firstlevel(cfg)
 %                                    performs a forward encoding model. It is only sensible to run a
 %                                    FEM when the classes are thought to form a continuum, such as
 %                                    positions on a circle, colors on a color wheel, or orientation.
-%       cfg.sigma_basis_set        = 1; (default). Specifies the width of the basis set when running
-%                                    a forward encoding model (FEM). When setting
-%                                    cfg.sigma_basis_set = 0; the basis set is a simple box-car
+%       cfg.sigma_basis_set        = 0; (default) the basis set is a simple box-car
 %                                    (also called delta function) with an 'on' (1) predictor for the
 %                                    current class and 'off' predictors (0) for all the other
-%                                    classes. For other values of sigma_basis_set, the basis set is
-%                                    a gaussian with width sigma. For example, see Fahrenfort, J.
-%                                    J., Grubert, A., Olivers, C. N. L., & Eimer, M. (2017).
-%                                    Multivariate EEG analyses support high-resolution tracking of
-%                                    feature-based attentional selection. Scientific Reports, 7(1),
-%                                    1886. http://doi.org/10.1038/s41598-017-01911-0.
+%                                    classes. This allows one to reconstruct a CTF that is not
+%                                    driven by the basis set itsel. For other values of
+%                                    sigma_basis_set, the basis set is a gaussian with width sigma.
+%                                    However, in this case the shape of the CTF may simply reflect
+%                                    the shape of the basis set (see: Gardner, J. L., & Liu, T.
+%                                    (2019). Inverted encoding models reconstruct an arbitrary model
+%                                    response, not the stimulus. eNeuro, ENEURO.0363–18.2019.
+%                                    http://doi.org/10.1523/ENEURO.0363-18.2019
 %       cfg.raw_or_tfr             = 'raw' (default); you can either perform MVPA on raw EEG/MEG
 %                                    data, or on time frequency representations of the data
 %                                    (cfg.raw_or_tfr = 'tfr';) When 'tfr' is specified, ADAM first
@@ -385,7 +385,8 @@ save_confidence = 'no';     % if 'yes', also saves the confidence scores of the 
 compute_performance = 'yes';% if 'no', does not save the performance of the classifier
 tfr_method = 'total';       % computes total power, alternative is 'induced' or 'evoked' ('induced' subtracts the erp from each trial, separately for train and test data, 'evoked' takes ERPs as input for TFR)
 clean_window = [];          % specifies the window used to reject muscle artifacts
-sigma_basis_set = [];       % specifies the width of the basis set (0 means box-car)
+sigma_basis_set = 0;        % specifies the width of the basis set (0 means box-car)
+whiten = 'no';              % specifies whether to whiten the data prior to decoding
 
 % unpack cfg
 v2struct(cfg);
@@ -413,7 +414,7 @@ if exist('channels','var') && ~isfield(cfg,'channelpool')
 end
 
 % re-structure parameters to work with lower-level API settings string in the classify_ and create_qsub_ functions
-if strcmpi(raw_or_tfr,'raw');
+if strcmpi(raw_or_tfr,'raw')
     if ~strcmpi(tfr_method,'induced')
         tfr_method = '';       % don't need this for raw
     end
