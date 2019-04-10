@@ -74,6 +74,8 @@ function map = adam_plot_MVPA(cfg,varargin)
 %                               significant time points. 'follow' will make the significant lines
 %                               thicker in the graph itself. The default option 'both' will also
 %                               make the line of the line plot thicker on these time points.
+%   cfg.nolatency             = false (default); or true. If true, no latency onset of the first 
+%                               component will be plotted.
 %   cfg.plot_model            = 'BDM' (default); or 'FEM' if stats contains classification results
 %                               of a forward encoding model.
 %
@@ -129,6 +131,8 @@ acctick = [];
 acclim2D = [];
 acclim3D = [];
 cent_acctick = [];
+nolatency = false;
+figure_size = [500 400];
 
 % unpack config
 v2struct(cfg);
@@ -138,7 +142,6 @@ ax1 = 1; ax2 = 2;
 if strcmpi(figure_axis,'vertical')
     ax1 = 2; ax2 = 1;
 end
-
 
 % BACKWARDS COMPATIBILITY
 if exist('one_two_tailed','var')
@@ -152,6 +155,10 @@ if isfield(stats(1),'cfg')
     end
     if isfield(stats(1).cfg,'folder')
         folder = stats(1).cfg.folder;
+    end
+    % only plot the line itself as thick when no significance was computed
+    if isfield(stats(1).cfg,'mpcompcor_method') && strcmpi(stats(1).cfg.mpcompcor_method,'none')
+        cfg.plotsigline_method = 'follow';
     end
 end
 
@@ -296,7 +303,7 @@ end
 
 % pack config with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(rawstats,rawchance,inverty,acclim,acctick,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,nameOfStruct2Update);
+cfg = v2struct(nolatency,rawstats,rawchance,inverty,acclim,acctick,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,nameOfStruct2Update);
 
 % make figure?
 if ~plotsubjects
@@ -313,8 +320,8 @@ if ~plotsubjects
     else
         UL = (screensize([3 4])-50)./[numSubplots(numel(stats),ax2) numSubplots(numel(stats),ax1)];
     end
-    if any(UL>[500 400])
-        UL=[500 400]; % take this as default
+    if any(UL>figure_size)
+        UL=figure_size; % take this as default
     end
     po=get(fh,'position');
     if singleplot
@@ -579,7 +586,7 @@ else
 end
 if strcmpi(plottype,'2D')
     % if we are plotting dif stats together with raw stats, put them on a second axis
-    if ~isempty(rawstats) && (~isempty(strfind(measuremethod,' difference')) || ~isempty(strfind(measuremethod,' correlation'))) && singleplot
+    if ~isempty(rawstats) && (contains(measuremethod,' difference') || contains(measuremethod,' correlation')) && singleplot
         yaxis = yaxis - rawchance; % a little hack to shift stuff up and down
         data = data + rawchance;
     end
@@ -607,10 +614,11 @@ if strcmpi(plottype,'2D')
         if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both') 
             if ~singleplot elevate = 1; else elevate = (nGraph-cGraph)+.5; end
             if inverty
-                sigdata(1:numel(sigdata)) = max(acclim) - (diff(acclim)/80)*elevate;
+                elevate = max(acclim) - (diff(acclim)/80)*elevate;
             else
-                sigdata(1:numel(sigdata)) = min(acclim) + (diff(acclim)/80)*elevate;
+                elevate = min(acclim) + (diff(acclim)/80)*elevate;
             end
+            sigdata(1:numel(sigdata)) = elevate;
             sigdata(pVals>=indiv_pval) = NaN;
             if isnumeric(line_colors{cGraph})
                 H.bottomLine=plot(1:numel(sigdata),sigdata,'Color',line_colors{cGraph},'LineWidth',3); % sigline below graph
@@ -627,8 +635,22 @@ if strcmpi(plottype,'2D')
                 H.mainLine=plot(1:numel(sigdata),sigdata,line_colors{cGraph},'LineWidth',3); % sigline on graph
             end
         end
-        if ~all(isnan((sigdata)))
-            wraptext('Due to a bug in the way Matlab exports figures (the ''endcaps'' property in OpenGL is set to''on'' by default), the ''significance lines'' near the time line are not correctly plotted when saving as .eps or .pdf. The workaround is to open these plots in Illustrator, manually select these lines and select ''butt cap'' for these lines (under the ''stroke'' property).');
+        % plot onset latency (in the same color as the graph)
+        if exist('latencies','var') && ~isempty(latencies) && ~nolatency
+            onset = latencies.GA;
+            onsetindex = nearest(xaxis,onset);
+            % plot a circle on the onset in the line graph
+            if strcmpi(plotsigline_method,'follow') || strcmpi(plotsigline_method,'both')
+                plot(onsetindex,sigdata(onsetindex),'o','Color',line_colors{cGraph});
+            end
+            % plot a circle at the onset near the x-axis on the significance line
+            if strcmpi(plotsigline_method,'straight') || strcmpi(plotsigline_method,'both')
+                plot(onsetindex,elevate,'o','Color',line_colors{cGraph});
+            end
+            % plot a vertical line at the onset between the graph and the significance line
+            if strcmpi(plotsigline_method,'both')
+                plot([onsetindex,onsetindex],[elevate,sigdata(onsetindex)],'--','Color',line_colors{cGraph});
+            end
         end
         if strcmpi(tail,'both'); tail = '2'; end
         if ~plotsubjects
@@ -666,7 +688,7 @@ if strcmpi(plottype,'2D')
         xlabel('time in ms','FontSize',fontsize);
     end
     % if we are plotting dif stats together with raw stats, put them on a second axis
-    if ~isempty(rawstats) && (~isempty(strfind(measuremethod,' difference')) || ~isempty(strfind(measuremethod,' correlation'))) && singleplot
+    if ~isempty(rawstats) && (contains(measuremethod,' difference') || contains(measuremethod,' correlation')) && singleplot
         ax = axes('YLim',get(gca,'YLim'),'YTick',get(gca,'YTick'),'YTickLabel',get(gca,'YTickLabel'),'Position',get(gca,'Position'),'YAxisLocation','right','YColor',line_colors{cGraph});
     else
         ax = gca;
@@ -690,7 +712,7 @@ else
     
     % some smoothing on 3D
     if makespline
-        if ndims(data) > 2 % DOUBLE CHECK WHETHER THIS IS OK
+        if ~ismatrix(data) % DOUBLE CHECK WHETHER THIS IS OK
             [X,Y,Z] = meshgrid(1:size(data,2),1:size(data,1),1:size(data,3));
             [XX,YY,ZZ] = meshgrid(linspace(1,size(data,2),round(size(data,2)/smoothfactor)),linspace(1,size(data,1),round(size(data,1)/smoothfactor)),1:size(data,3));
             data = interp3(X,Y,Z,data,XX,YY,ZZ);

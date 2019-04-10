@@ -110,6 +110,15 @@ function stats = adam_compute_group_MVPA(cfg,folder_name)
 %       stats.pVals:                NxM matrix; p-values of each tested time-time point
 %       stats.pStruct:              struct; cluster info, if mpcompcor_method was set to
 %                                   'cluster_based'
+%       stats.latencies             struct; containing three fields with onset latencies, based on
+%                                   the percent-amplitude latency (50%): single subject, jackknife
+%                                   and GA (grand average). Note that single subject outcomes are
+%                                   not very reliable, it is much better to rely on the jackknife
+%                                   results. For details about latency computation see: Liesefeld,
+%                                   H. R. (2018). Estimating the Timing of Cognitive Operations With
+%                                   MEG/EEG Latency Measures: A Primer, a Brief Tutorial, and an
+%                                   Implementation of Various Methods. Frontiers in Neuroscience,
+%                                   12, 765. http://doi.org/10.3389/fnins.2018.00765
 %       stats.mpcompcor_method:     string; correction method ('uncorrected' is default)
 %       stats.settings:             struct; the settings grabbed from the level-1 results
 %       stats.condname:             string; name of the level-1 folder
@@ -520,11 +529,12 @@ for cSubj = 1:nSubj
             end
             pVals = ~sigMatrix;
             pStruct.posclusters = compute_pstruct(posLabels,pVals,diag(ClassOverTime),cfg,settings);
-            if ~isempty(pStruct.posclusters)
-                onsetTimes(cSubj) = min([ pStruct.posclusters(:).start_time ]);
-            else
-                onsetTimes(cSubj) = nan;
-            end
+%             obsolete now:
+%             if ~isempty(pStruct.posclusters)
+%                 onsetTimes(cSubj) = min([ pStruct.posclusters(:).start_time ]);
+%             else
+%                 onsetTimes(cSubj) = nan;
+%             end
         end
         
         % limit weights too
@@ -752,10 +762,30 @@ stats.channelpool = channelpool;
 if exist('pStruct','var')
     stats.pStruct = pStruct;
 end
-if exist('onsetTimes')
-    stats.onsetTimes = onsetTimes;
+% extract chancel level in order to be able to compute latencies (i.e. subtract chance during latency computation)
+if ~isfield(settings,'chance') % backwards compatibility
+    if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || ~isempty(strfind(settings.measuremethod,' correlation')) || strcmpi(plot_model,'FEM')
+        cfg.chance = 0;
+    elseif strcmpi(settings.measuremethod,'AUC')
+        cfg.chance = .5;
+    else
+        cfg.chance = 1/settings.nconds;
+    end
+else
+    cfg.chance = settings.chance;
 end
-%cfg = v2struct(name,nameOfStruct2Update);
+% compute latency
+try
+    stats.latencies = extract_latency(cfg,stats);
+catch ME
+    disp('Cannot extract latencies.');
+    disp(ME.message);
+    stats.latencies = [];
+end
+% obsolete now:
+% if exist('onsetTimes')
+%     stats.onsetTimes = onsetTimes;
+% end
 
 % compute weights stuff
 if exist('WeightsOverTimeAll','var')
