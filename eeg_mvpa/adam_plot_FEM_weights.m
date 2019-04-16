@@ -1,7 +1,8 @@
-function avweightstruct = plot_FEM_weights(stats,cfg)
-% plot FEM weights for a specific time range or frequency range
+function avweightstruct = adam_plot_FEM_weights(cfg,stats)
+% ADAM_PLOT_FEM_WEIGHTS generates topographical maps of classifier forward encoding weights over a
+% specified time interval. Requires as input the output of adam_compute_group_MVPA.
 %
-% J.J.Fahrenfort, VU 2016
+% J.J.Fahrenfort, VU 2016, 2019
 
 % main loop
 for c=1:numel(stats)
@@ -29,7 +30,7 @@ subjlim = [];
 timelim = 250; % indicate time or period for which to compute weights in ms, if empty plots time with highest average weight
 freqlim = []; % indicate freq or freq range for which to compute weights in ms, if empty plots frequency with heighest average weight
 weightlim = []; % indicate color range to plot
-normalized = false; % can be false (default) or true (z-scoring is performed)
+normalized = true; % can be false (default) or true (z-scoring is performed)
 imgtype = [];
 indiv_pval = .05;
 cluster_pval = .05;
@@ -174,6 +175,10 @@ for cCond = 1:nCond
         cbar('vert');
     end
 end
+
+% colormap
+cmap  = brewermap([],'*RdBu');
+colormap(gcf,cmap);
 
 % return the averages
 avweightstruct.chanlocs = chanlocs;
