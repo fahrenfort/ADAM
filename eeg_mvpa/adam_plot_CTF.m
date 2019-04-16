@@ -9,7 +9,6 @@ function avgctfstruct = adam_plot_CTF(cfg,stats)
 %
 % The cfg (configuration) input structure can contain the following:
 %       cfg.plotfield           = 'CTF' or 'CTFpercond';
-%       cfg.plottype            = '2D' or '3D'
 %       cfg.mpcompcor_method    = 'cluster_based';
 %       cfg.tail                = 'both';
 %       cfg.trainlim            = [];
@@ -25,8 +24,10 @@ function avgctfstruct = adam_plot_CTF(cfg,stats)
 %       cfg.reduce_dims         = 'diag', 'avtrain', 'avtest', 'avtraintest', 'avfreq'
 %       cfg.weightlim           = [];
 %       cfg.colorlim            = [];
-%       cfg.CTFtime             = [];  
-%       cfg.BLtime              = [];
+%       cfg.CTFtime             = []; indicates the time window over which the CTF should be
+%                                 averaged. If empty, the CTF is plotted over time.
+%       cfg.BLtime              = []; indicates a baseline window for which the CTF should be
+%                                 plotted
 %       cfg.ytick               = .1;
 %       
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
@@ -43,15 +44,23 @@ timelim = [];
 plotfield = 'CTF';
 folder = '';
 startdir = '';
-singleplot = false;
+singleplot = true;
+CTFtime = [];
 BLtime = [];
 reduce_dims = [];
-plottype = '3D';
 line_colors = [];
-ytick = .05;
+ytick = .1;
+trainlim = [];
+testlim = [];
 v2struct(cfg);
 
 containsbaseline = ~isempty(BLtime) && cfg.BLtime(1)<= cfg.BLtime(2);
+
+if isempty(CTFtime)
+    plottype = '3D';
+else
+    plottype = '2D';
+end
 
 % set plot type
 if strcmpi(plottype,'3D')
@@ -79,7 +88,7 @@ elseif ~containsbaseline && (numel(line_colors)<numel(stats) || isempty(line_col
     end
 end
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(line_colors,singleplot,containsbaseline,ytick,nameOfStruct2Update);
+cfg = v2struct(plottype,line_colors,singleplot,containsbaseline,ytick,trainlim,testlim,nameOfStruct2Update);
 
 v2struct(stats(1).settings,{'fieldNames','dimord'});
 
@@ -156,7 +165,7 @@ for cStats=1:numel(stats)
     avgctfstruct(cStats).condname = stats(cStats).condname;
     
     % put in legend
-    if ~singleplot || (singleplot && cStats == numel(stats))
+    if (~singleplot || (singleplot && cStats == numel(stats))) && exist('legend_text','var')
         legend(legend_text);
         legend boxoff;
     end
@@ -575,9 +584,9 @@ else
             H.mainLine=plot3(1:numel(sigline),ones(size(sigline))*addy,sigline,'k','LineWidth',8);
         end
     end
-    if ~all(isnan((sigline)))
-        wraptext('Due to a bug in the way Matlab exports figures (the ''endcaps'' property in OpenGL is set to''on'' by default), the ''significance lines'' near the time line are not correctly plotted when saving as .eps or .pdf. The workaround is to open these plots in Illustrator, manually select these lines and select ''butt cap'' for these lines (under the ''stroke'' property).');
-    end
+%     if ~all(isnan((sigline)))
+%         wraptext('Due to a bug in the way Matlab exports figures (the ''endcaps'' property in OpenGL is set to''on'' by default), the ''significance lines'' near the time line are not correctly plotted when saving as .eps or .pdf. The workaround is to open these plots in Illustrator, manually select these lines and select ''butt cap'' for these lines (under the ''stroke'' property).');
+%     end
     
     % NEW
     % determine time tick
