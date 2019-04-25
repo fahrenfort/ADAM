@@ -270,8 +270,7 @@ function adam_MVPA_firstlevel(cfg)
 %                                    The qsub struct can have a number of fields specifying the
 %                                    parameters used when creating the qsub files, e.g.
 %                                    qsub.walltime = '28:59:00'; 
-%                                    qsub.cores = 16; 
-%                                    qsub.maxcores = 10; 
+%                                    qsub.cores = 15; 
 %                                    qsub.mem = '64gb'; 
 %                                    qsub.repeat = 1;
 %                                    qsub.keep_together = true; 

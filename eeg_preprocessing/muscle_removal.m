@@ -125,7 +125,7 @@ try
     end
     boollist = boollist';
 catch ME
+    boollist = zeros(size(FT_EEG.trialinfo));
     disp('WARNING: could not remove muscle artefacts due to an error:');
     disp(ME);
-    boollist = [];
 end

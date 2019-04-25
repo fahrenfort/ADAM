@@ -40,13 +40,13 @@ else
         mkdir(outpath);
     end
 end
-if ischar(hicutoff);
+if ischar(hicutoff)
     hicutoff = string2double(hicutoff);
 end
 if ischar(locutoff)
     locutoff = string2double(locutoff);
 end
-if ischar(start_epoch);
+if ischar(start_epoch)
     start_epoch = string2double(start_epoch);
 end
 if ischar(end_epoch)

@@ -21,3 +21,4 @@ for cA = 1:numel(listA)
         end
     end
 end
+output = sort(output);
