@@ -14,6 +14,7 @@ if ~ismatrix(accs)
 end
 accs = reshape(accs,[size(accs,1) 1 size(accs,2)]);     % subjects * electrode * time
 times = stats.settings.times{1};                        % in seconds
+times = times * 1000;                                   % now in milliseconds
 
 % compute some defaults
 if ~isfield(cfg,'peakWin')
@@ -39,13 +40,20 @@ if ~isfield(cfg,'peakWin')
         sign = 1;
         peakWin = [stats.pStruct.posclusters(1).start_time stats.pStruct.posclusters(1).stop_time ]; % signficant window
     end
+else
+    % find polarity of signal in relevant window
+    meanaccs = mean(accs,1);
+    if mean(meanaccs(times>cfg.peakWin(1) & times<cfg.peakWin(2))) > 0
+        sign = 1;
+    else
+        sign = -1;
+    end
 end
+
 chans = 1;                                          % only one channel
 extract = 'onset';                                  % percentage amplitude reached
 percAmp = .5;                                       % 50% amplitude
 fig = false;                                        % set to true to plot figures
-%sampRate = (numel(times)-1)/(times(end)-times(1));  % in Hz
-times = times * 1000;                               % now in milliseconds
 peakWidth = 10;                                     % average across 10 ms. to find peak
 warnings = false;
 

@@ -211,5 +211,25 @@ avstats.pVals = ClassPvals;
 if exist('pStruct','var')
     avstats.pStruct = pStruct;
 end
+% extract chancel level in order to be able to compute latencies (i.e. subtract chance during latency computation)
+if ~isfield(settings,'chance') % backwards compatibility
+    if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || ~isempty(strfind(settings.measuremethod,' correlation')) || strcmpi(plot_model,'FEM')
+        cfg.chance = 0;
+    elseif strcmpi(settings.measuremethod,'AUC')
+        cfg.chance = .5;
+    else
+        cfg.chance = 1/settings.nconds;
+    end
+else
+    cfg.chance = settings.chance;
+end
 avstats.cfg = cfg;
 avstats.settings = settings;
+% compute latency
+try
+    avstats.latencies = extract_latency(cfg,avstats);
+catch ME
+    disp('Cannot extract latencies.');
+    disp(ME.message);
+    avstats.latencies = [];
+end
