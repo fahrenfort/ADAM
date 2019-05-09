@@ -586,7 +586,7 @@ else
 end
 if strcmpi(plottype,'2D')
     % if we are plotting dif stats together with raw stats, put them on a second axis
-    if ~isempty(rawstats) && (contains(measuremethod,' difference') || contains(measuremethod,' correlation')) && singleplot
+    if ~isempty(rawstats) && (~isempty(strfind(measuremethod,' difference')) || ~isempty(strfind(measuremethod,' correlation'))) && singleplot
         yaxis = yaxis - rawchance; % a little hack to shift stuff up and down
         data = data + rawchance;
     end
@@ -688,7 +688,7 @@ if strcmpi(plottype,'2D')
         xlabel('time in ms','FontSize',fontsize);
     end
     % if we are plotting dif stats together with raw stats, put them on a second axis
-    if ~isempty(rawstats) && (contains(measuremethod,' difference') || contains(measuremethod,' correlation')) && singleplot
+    if ~isempty(rawstats) && (~isempty(strfind(measuremethod,' difference')) || ~isempty(strfind(measuremethod,' correlation'))) && singleplot
         ax = axes('YLim',get(gca,'YLim'),'YTick',get(gca,'YTick'),'YTickLabel',get(gca,'YTickLabel'),'Position',get(gca,'Position'),'YAxisLocation','right','YColor',line_colors{cGraph});
     else
         ax = gca;
