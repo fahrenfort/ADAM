@@ -161,9 +161,17 @@ else
     ClassPvals = zeros([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
     pStruct = [];
 end
-
+cfg.chance = 0;
 % output stats
 difstats.pVals = ClassPvals;
 difstats.pStruct = pStruct;
 difstats.cfg = cfg;
 difstats.settings = settings;
+% compute latency
+try
+    difstats.latencies = extract_latency(cfg,difstats);
+catch ME
+    disp('Cannot extract latencies.');
+    disp(ME.message);
+    difstats.latencies = [];
+end
