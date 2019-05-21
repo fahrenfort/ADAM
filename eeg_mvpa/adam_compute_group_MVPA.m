@@ -311,8 +311,8 @@ if isempty(channelpool)
 end
 
 % some logical checking: is this a frequency folder?
-freqfolder_contains_time_time = ~isempty(dir([folder_name filesep channelpool filesep 'freq*'])); 
-freqfolder_contains_freq_time = ~isempty(dir([folder_name filesep channelpool filesep 'allfreqs']));
+freqfolder_contains_time_time = ~isempty(dir([folder_name filesep regexprep(channelpool,',','_') filesep 'freq*'])); 
+freqfolder_contains_freq_time = ~isempty(dir([folder_name filesep regexprep(channelpool,',','_') filesep 'allfreqs']));
 freqfolder = any([freqfolder_contains_time_time freqfolder_contains_freq_time]);
 if freqfolder
     if strcmpi(plot_dim,'freq_time') && freqfolder_contains_freq_time
@@ -326,7 +326,7 @@ if freqfolder
             freqlim = input('What frequency or frequency range should I extract (e.g. type [2 10] to average between 2 and 10 Hz)? ');
         end
         if numel(freqlim) > 1 % make a list of frequencies over which to average
-            freqlist = dir([folder_name filesep channelpool filesep 'freq*']); freqlist = {freqlist(:).name};
+            freqlist = dir([folder_name filesep  regexprep(channelpool,',','_') filesep 'freq*']); freqlist = {freqlist(:).name};
             for c=1:numel(freqlist); freqsindir(c) = string2double(regexprep(freqlist{c},'freq','')); end
             freqsindir = sort(freqsindir); freqs2keep = find(freqsindir >= min(freqlim) & freqsindir <= max(freqlim));
             for c=1:numel(freqs2keep); plotFreq{c} = [filesep 'freq' num2str(freqsindir(freqs2keep(c)))]; end
@@ -357,7 +357,7 @@ nameOfStruct2Update = 'cfg';
 cfg = v2struct(freqlim,plotFreq,trainlim,testlim,tail,indiv_pval,cluster_pval,plot_model,mpcompcor_method,reduce_dims,freqlim,nameOfStruct2Update);
 
 % get filenames
-subjectfiles = dir([folder_name filesep channelpool plotFreq{1} filesep '*.mat']);
+subjectfiles = dir([folder_name filesep  regexprep(channelpool,',','_') plotFreq{1} filesep '*.mat']);
 [~, condname, ext] = fileparts(folder_name);
 condname = [condname ext];
 subjectfiles = { subjectfiles(:).name };
@@ -371,7 +371,7 @@ end
 % see if data exists
 nSubj = numel(subjectfiles);
 if nSubj == 0
-    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{1} ' maybe you should specify (a different) cfg.channelpool?']);
+    error(['cannot find data in specified folder ' folder_name filesep regexprep(channelpool,',','_') plotFreq{1} ' maybe you should specify (a different) cfg.channelpool?']);
 end
 
 % prepare figure in case individual subjects are plotted
@@ -393,7 +393,7 @@ for cSubj = 1:nSubj
     for cFreq = 1:numel(plotFreq)
         
         % locate data
-        matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep subjectfiles{cSubj}]);
+        matObj = matfile([folder_name filesep regexprep(channelpool,',','_') plotFreq{cFreq} filesep subjectfiles{cSubj}]);
         if isempty(whos(matObj,'settings'))
             error([ subjectfiles{cSubj} ' in ' condname ' does not contain the expected fields, which suggests that the analysis did not complete succesfully. Check the error message that appeared during first level analysis.']);
         else
@@ -434,7 +434,7 @@ for cSubj = 1:nSubj
         else
             try % backward compatibility, can be removed in later version
                 disp('WARNING: These seem to be analyses that were performed using ancient scripts. Unless this is pure replication, it is recommended to run the first levels again.');
-                matObj = load([folder_name filesep channelpool plotFreq{cFreq} filesep subjectfiles{cSubj}]);
+                matObj = load([folder_name filesep regexprep(channelpool,',','_') plotFreq{cFreq} filesep subjectfiles{cSubj}]);
                 v2struct(matObj);
                 if ~exist('covPatternsOverTime', 'var')
                     try
@@ -462,7 +462,7 @@ for cSubj = 1:nSubj
         end
         
         % find permutations and load them
-        permfolder = [folder_name filesep channelpool plotFreq{cFreq} filesep 'randperm'];
+        permfolder = [folder_name filesep regexprep(channelpool,',','_') plotFreq{cFreq} filesep 'randperm'];
         if compute_randperm && exist(permfolder,'dir')
             subjectpermutes = dir([permfolder filesep subjectfiles{cSubj}(1:end-4) '_PERM*.mat']);
             subjectpermutes = {subjectpermutes(:).name};
