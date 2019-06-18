@@ -5,6 +5,8 @@ function FT_EEG = eeglab2ft(EEG,filepath,continuous)
 % EEG can either be an eeglab struct, or be the filename which contains the
 % eeglab data. In the latter case, filepath must also be specified
 % If continuous == true, the function works on un-epoched data
+% In this case the trial info field will also contain a second column that has the time stamps of
+% the events, expressed in milliseconds (not in seconds, although the time field is in seconds!)
 % J.J.Fahrenfort, VU 2014, 2016
 
 if nargin < 3
@@ -29,7 +31,7 @@ function data = eeglab2fieldtrip_local(EEG, fieldbox, transform)
 if nargin < 2
     error('missing 2nd argument');
     return;
-end;
+end
 
 % start with an empty data object 
 data = [];
@@ -55,10 +57,10 @@ if strcmpi(fieldbox, 'chanloc_withfid')
             for f = 1:length( fields )
                 EEG.chanlocs = setfield(EEG.chanlocs, { ind }, fields{f}, ...
                                         getfield( EEG.chaninfo.nodatchans, { index },  fields{f}));
-            end;
-        end;
-    end;
-end;
+            end
+        end
+    end
+end
 
 data.elec.pnt   = zeros(length( EEG.chanlocs ), 3);
 for ind = 1:length( EEG.chanlocs )
@@ -69,8 +71,8 @@ for ind = 1:length( EEG.chanlocs )
         data.elec.pnt(ind,3) = EEG.chanlocs(ind).Z;
     else
         data.elec.pnt(ind,:) = [0 0 0];
-    end;
-end;
+    end
+end
 
 if nargin > 2
     if strcmpi(transform, 'dipfit') 
@@ -81,16 +83,16 @@ if nargin > 2
             data.elec.pnt = data.elec.pnt(1:3,:)';
         else
             disp('Warning: no transformation of electrode coordinates to match head model');
-        end;
-    end;
-end;
+        end
+    end
+end
         
 switch fieldbox
   case 'preprocessing'
     for index = 1:EEG.trials
       data.trial{index}  = EEG.data(:,:,index);
       data.time{index}   = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
-    end;
+    end
     data.label   = { tmpchanlocs(1:EEG.nbchan).labels };
   case 'timelockanalysis'
     data.avg  = mean(EEG.data, 3);   
@@ -112,9 +114,9 @@ switch fieldbox
           end
       catch
           
-      end;
+      end
       data.time{index}   = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
-    end;
+    end
     data.label = [];
     for comp = 1:size(EEG.icawinv,2)
       % the labels correspond to the component activations that are stored in data.trial

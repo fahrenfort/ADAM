@@ -4,6 +4,8 @@ function events = pop_exportepoch(EEG,continuous)
 % correspond to the values that the ADAM toolbox will be using. It is the function that ADAM uses
 % internally to read EEGLAB events from your EEGLAB file. You can modify and re-import these event
 % values using: EEG = pop_importepoch(EEG,events,{'eventtype'},'typefield','eventtype');
+% If continuous data are exported, the second column of events contains time stamps expressed in
+% milliseconds (!)
 %
 % Use as:
 %   events = pop_exportepoch(EEG);

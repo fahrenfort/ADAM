@@ -75,7 +75,12 @@ splitme = find(strcmpi(varargin,';'));
 if isempty(splitme)
     output = get_intersection(varargin{:});
 else
-    output = [ get_intersection(varargin{1:splitme-1}) ';' get_intersection(varargin{splitme+1:end}) ];
+    splitme = [0 splitme numel(varargin)+1];
+    output = [];
+    for c = 1:(numel(splitme)-1)
+        output = [ output get_intersection(varargin{splitme(c)+1:splitme(c+1)-1}) ';'];
+    end
+    output = output(1:end-1);
 end
 
 function output = get_intersection(varargin)
