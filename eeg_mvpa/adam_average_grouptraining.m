@@ -1,12 +1,10 @@
-function adam_average_iterations(cfg,folder_name)
-% ADAM_AVERAGE_ITERATIONS computes average across iterations for every subject, and saves the result
-% one folder up. Iterations can be created by specifying cfg.iterations = (some integer number) when
-% running the first level analysis using adam_MVPA_firstlevel. See the help of adam_MVPA_firstlevel
-% for details. In general, it seems to be more helpful to increase the number of folds than to use
-% this iteration procedure.
+function adam_average_grouptraining(cfg,folder_name)
+% ADAM_AVERAGE_ITERATIONS computes average across group-trained data for every subject, and saves the
+% result. Create group trained data by using file_list_grouptrain to create file combinations when
+% running the first level analysis using adam_MVPA_firstlevel.
 %
 % Use as:
-%   adam_compute_group_MVPA(cfg)
+%   adam_average_grouptraining(cfg)
 %
 % The cfg (configuration) input structure can contain the following optional parameters:
 %
@@ -17,14 +15,15 @@ function adam_average_iterations(cfg,folder_name)
 %                              analyses are located. When you do not specify cfg.startdir, you will
 %                              be required to navigate from your Matlab root folder to the desired
 %                              results directory every time you run a group analysis.
-%       cfg.niterations      = [] (int). When unspecified or left empty, simply loads and averages
-%                              all iterations (default). when specified, limits the number of
-%                              iterations over which the function averages to this value.
+%       cfg.keepfiles        = false (default): remove the files on which the average is based.
+%                              Alternatively set to true, in which all the files will be kept in a
+%                              directory called 'grouptrain'.
 %
-% The output (averaged result) is saved one folder up, as though it would be a regular analysis.
-% This can subsequently be read in using adam_compute_group_MVPA
+% The output (averaged result) is saved in the same folder, as though it would be a regular
+% analysis. This can subsequently be read in using adam_compute_group_MVPA. The analyses on which
+% these averages are based are moved to a subfolder which is called 'grouptrain'.
 % 
-% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
+% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018/2019
 % 
 % See also: ADAM_MVPA_FIRSTLEVEL, ADAM_COMPUTE_GROUP_MVPA, ADAM_PLOT_MVPA
 
@@ -36,6 +35,8 @@ mask = [];
 plot_order = {};
 reduce_dims = '';
 freqlim = [];
+keepfiles = false;
+channelpool = '';
 
 % backwards compatibility
 plot_dim = 'time_time'; % default, 'time_time' or 'freq_time'
@@ -61,6 +62,7 @@ if exist('plotorder','var')
     cfg = rmfield(cfg,'plotorder');
 end
 cfg.plot_dim = plot_dim;
+cfg.keepfiles = keepfiles;
 
 % Main routine, is a folder name specified? If not, pop up selection dialog
 if isempty(folder_name)
@@ -76,7 +78,7 @@ end
 cfg.folder = folder_name;
 
 % where am I?
-ndirs = drill2data(folder_name);
+ndirs = drill2data(folder_name,channelpool);
 if isempty(plot_order)
     dirz = dir(folder_name);
     dirz = {dirz([dirz(:).isdir]).name};
@@ -173,21 +175,34 @@ else
 end
 
 % get filenames
-allfiles = dir([folder_name filesep channelpool plotFreq{1} filesep 'iterations' filesep '*.mat']);
+if exist([folder_name filesep channelpool plotFreq{1} filesep 'grouptrain'],'dir')
+    % grouptrain already exists, read from there
+    allfiles = dir([folder_name filesep channelpool plotFreq{1} filesep 'grouptrain' filesep '*.mat']);
+else
+    % otherwise read from root
+    allfiles = dir([folder_name filesep channelpool plotFreq{1} filesep '*.mat']);
+end
 allfiles = { allfiles(:).name };
 allfiles(strncmp(allfiles,'.',1)) = []; % remove hidden files
 
-% find unique subjects
-allfiles = cellfun(@(x) regexprep(x,'_PERM(\w*).mat', ''), allfiles,'UniformOutput',false);
+% find unique subject filenames excluding the actual test name
+allfiles = cellfun(@(x) regexprep(x,'CLASS_PERF_train_sub_(\w*)_test_', ''), allfiles,'UniformOutput',false);
+allfiles = cellfun(@(x) regexprep(x,'.mat', ''), allfiles,'UniformOutput',false);
 subjectfiles = unique(allfiles);
 
 % see if data exists
-nSubj = numel(subjectfiles);
-if nSubj == 0
-    error(['cannot find data in specified folder ' folder_name filesep channelpool plotFreq{1} filesep 'iterations, maybe you should specify (a different) cfg.channelpool?']);
+if isempty(subjectfiles)
+    error(['could not find any unique subjects in specified folder ' folder_name filesep channelpool plotFreq{1} filesep ', maybe these data are not from a group training procedure?']);
+else
+    % if grouptrain folder did not exist, make and move files to folder grouptrain
+    if ~exist([folder_name filesep channelpool plotFreq{1} filesep 'grouptrain'],'dir')
+        mkdir([folder_name filesep channelpool plotFreq{1} filesep 'grouptrain']);
+        movefile([folder_name filesep channelpool plotFreq{1} filesep 'CLASS_PERF*.mat'], [folder_name filesep channelpool plotFreq{1} filesep 'grouptrain']);
+    end
 end
 
 % do the loop, restrict time and frequency if applicable
+nSubj = numel(subjectfiles);
 for cSubj = 1:nSubj
     fprintf(1,'loading subject %d of %d\n', cSubj, nSubj);
 
@@ -195,12 +210,12 @@ for cSubj = 1:nSubj
     for cFreq = 1:numel(plotFreq)
         
         % determine what to load
-        iterations = dir([folder_name filesep channelpool plotFreq{cFreq} filesep 'iterations' filesep subjectfiles{cSubj} '*.mat']);
+        iterations = dir([folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep '*' subjectfiles{cSubj} '*.mat']);
         iterations = { iterations(:).name };
         iterations(strncmp(iterations,'.',1)) = []; % remove hidden files
         
         % initialize subject
-        matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep 'iterations' filesep iterations{1}]);
+        matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep iterations{1}]);
         if ~isempty(whos(matObj,'BDM'))
             BDM = matObj.BDM;
             ClassOverTimeAv = zeros(size(BDM.ClassOverTime));
@@ -223,7 +238,7 @@ for cSubj = 1:nSubj
             end
             
             % locate data
-            matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep 'iterations' filesep iterations{cIt}]);
+            matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep iterations{cIt}]);
             
             % get data
             if ~isempty(whos(matObj,'BDM'))
@@ -236,7 +251,7 @@ for cSubj = 1:nSubj
                     corPatternsOverTimeAv = corPatternsOverTimeAv + BDM.corPatternsOverTime;
                     nIts = nIts + 1;
                 catch 
-                    disp(['cannot read ' folder_name filesep channelpool plotFreq{cFreq} filesep 'iterations' filesep iterations{cIt}]);
+                    disp(['cannot read ' folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep iterations{cIt}]);
                 end
                 % confidence averaging not currently implemented, may do so later if useful
 
@@ -245,26 +260,33 @@ for cSubj = 1:nSubj
                 % FEM averaging not currently implemented, may do so later if useful
             end
         end % end iterations loop
+        fprintf(1,' successfully averaged %d of %d iterations for subject %d (%s) \n', nIts, nSubj, cSubj, subjectfiles{cSubj});
         clear BDM;
         % now compute the average for that subject / frequency
         BDM.ClassOverTime = ClassOverTimeAv/nIts;
         BDM.WeightsOverTime = WeightsOverTimeAv/nIts;
         BDM.covPatternsOverTime = covPatternsOverTimeAv/nIts;
         BDM.corPatternsOverTime = corPatternsOverTimeAv/nIts;
-        BDM_CONF = matObj.BDM_CONF; % just copy over from the last one
+        BDM_CONF = []; % just remove
         settings = matObj.settings; % just copy over from the last one
         FEM = []; % just create an empty one
         clearvars *Av;
         % and save the result
-        fprintf(1,'\nsaving the average over iterations of subject %d of %d\n', cSubj, nSubj);
+        fprintf(1,'saving the average over iterations of subject %d of %d\n\n', cSubj, nSubj);
         fullfilename = [folder_name filesep channelpool plotFreq{cFreq} filesep subjectfiles{cSubj}];
         save(fullfilename,'FEM', 'BDM', 'BDM_CONF', 'settings', '-v7.3');
     end % end frequency loop
 end % end subject loop
+
+% remove folder
+if ~keepfiles
+    rmdir([folder_name filesep channelpool plotFreq{1} filesep 'grouptrain'],'s');
+end
+
 disp('done!');
 
 
-function ndirs = drill2data(folder_name)
+function ndirs = drill2data(folder_name,channelpool)
 % drills down until it finds the iterations folder, returns the number of directories it had to
 % drill
 notfound = true;
@@ -276,9 +298,13 @@ while notfound
     if isempty(nextlevel)
         error('Cannot find data, select different location in the directory hierarchy and/or check path settings.');
     end
-    folder_name = fullfile(folder_name,nextlevel{1});
+    if any(strcmpi(nextlevel,channelpool))
+        folder_name = fullfile(folder_name,nextlevel{strcmpi(nextlevel,channelpool)});
+    else
+        folder_name = fullfile(folder_name,nextlevel{1});
+    end
     ndirs = ndirs + 1;
-    containsiterations = exist(fullfile(folder_name, 'iterations'),'dir') == 7;
+    containsiterations = exist(fullfile(folder_name, 'grouptrain'),'dir') == 7 || ~isempty(dir(fullfile(folder_name, '*_train_*_test_*.mat')));
     containsfreq = ~isempty(dir(fullfile(folder_name, 'freq*'))) || ~isempty(dir(fullfile(folder_name, 'allfreqs')));
     if containsiterations || containsfreq
         notfound = false;

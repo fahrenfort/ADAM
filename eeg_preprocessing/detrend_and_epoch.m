@@ -13,19 +13,19 @@ if nargin < 11
     help detrend_and_epoch;
     error('not enough input arguments');
 end
-if ischar(start_epoch);
+if ischar(start_epoch)
     start_epoch = string2double(start_epoch);
 end
 if ischar(end_epoch)
     end_epoch = string2double(end_epoch);
 end
-if ischar(polynomial_order);
+if ischar(polynomial_order)
     polynomial_order = string2double(polynomial_order);
 end
 if ischar(pad_length)
     pad_length = string2double(pad_length);
 end
-if ischar(start_mask);
+if ischar(start_mask)
     start_mask = string2double(start_mask);
 end
 if ischar(end_mask)
@@ -74,7 +74,7 @@ else
         mkdir(outputdir);
     end
 end
-% fix time, internally everything is in milliseconds
+% FIX TIME, INTERNALLY EVERYTHING IS IN MILLISECONDS
 start_epoch = start_epoch * 1000;
 end_epoch = end_epoch * 1000;
 start_mask = start_mask * 1000;
@@ -150,7 +150,8 @@ clear EEG;
 
 % obtain names to work with
 eeg_data = FT_EEG.trial{1};
-eeg_time = FT_EEG.time{1}; % in milliseconds
+% FT_EEG is in seconds, but we want eeg_time in milliseconds, so converted here
+eeg_time = FT_EEG.time{1}*1000; % FIX TIME, INTERNALLY EVERYTHING IS IN MILLISECONDS
 srate = FT_EEG.fsample;
 trialinfo = FT_EEG.trialinfo;
 label = FT_EEG.label;

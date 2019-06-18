@@ -36,10 +36,22 @@ elseif exist(fullfile(filepath,[filename '.mat']),'file')
     if numel(FT_FIELDS) == 1
         FT_EEG = FT_EEG.(FT_FIELDS{1});
     end
+    % IMIPLEMENT CONVERSION TO trial x electrode x time
 else
     wraptext('The data needs to be stored in eeglab native format (.set extension) or in fieldtrip native format (.mat extension). The toolbox attempts to read your datafile using both extensions. If you are reading this message, both attempts have failed.');
     error(['Cannot load data, filename ''' filename ''' cannot be found at ''' filepath '''']);
 end
+
+% convert to FT timelock
+cfg = [];
+cfg.baseline = [];
+cfg.channel = 'all';
+cfg.parameter = 'trial';
+% turn off annoying FT warnings
+if exist('ft_warning','file') == 2
+    ft_warning off;
+end
+FT_EEG = ft_timelockbaseline(cfg,FT_EEG);
 
 % baseline correction, converts data to FT timelock format
 cfg = [];

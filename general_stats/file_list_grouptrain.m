@@ -13,9 +13,14 @@ function output = file_list_grouptrain(listA,listB)
 cOut = 0;
 for cA = 1:numel(listA)
     for cB = 1:numel(listB)
-        subjA = regexp(listA{cA},'\d*','Match');
-        subjB = regexp(listB{cB},'\d*','Match');
-        if ~strcmp(subjA,subjB)
+        %subjA = regexp(listA{cA},'*\d*','Match');
+        %subjB = regexp(listB{cB},'*\d*','Match');
+        subjA = listA{cA};
+        subjB = listB{cB};
+        % if neither of the strings is contained in the other, or if the first element of the
+        % testfile is a digit when removing the part of the pattern that is present in the trainfile
+        % (e.g. when trainfile is 'subj1' and testfile is 'subj12')
+        if (isempty(strfind(subjA,subjB)) && isempty(strfind(subjB,subjA))) || ~isempty(find(isstrprop(regexprep(subjB,subjA,''),'digit'),true,'first')==1)
             cOut = cOut + 1;
             output{cOut} = [listA{cA} ';' listB{cB}];
         end

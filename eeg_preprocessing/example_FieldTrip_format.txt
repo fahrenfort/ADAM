@@ -1,4 +1,4 @@
-If you want to use .mat files for classification, the specification should be as follows:
+If you want to use .mat files for classification, the specification should be similar to the timelocked epoched FieldTrip format (ft_datatype_timelock or ft_datatype_raw):
 
 FT_EEG = 
 
@@ -8,13 +8,13 @@ FT_EEG =
     trialinfo: [513x1 double]
        dimord: 'rpt_chan_time'
 
-
 .time contains the time in seconds
 .label contains the channel labels
 .trial contains the actual data, first dimension is trial, second is dimension is electrode, last dimension is time
 .trialinfo contains a condition number for each trial (should be numeric)
 .dimord contains the order of the dimensions in .trial, can be left as ‘rpt_chan_time’.
+(where the exact numbers are idiosyncratic to your dataset of course)
 
-An example can be found here:
-https://www.dropbox.com/s/nz3fk1o2u5asmt2/grptrain_lon_decode01.mat?dl=1
+An example can be found in the ADAM/eeg_preprocessing folder under the name example_FieldTrip_format.mat
 
+You can find more information about FieldTrip data types by typing 'help ft_datatype' in the Command Window.

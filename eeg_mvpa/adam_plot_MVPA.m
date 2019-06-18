@@ -311,7 +311,9 @@ if ~plotsubjects
     if numel(stats) == 1
         title_text = title_text(1:find(title_text=='/',1,'last')-1);
     end
-    fh = figure('name',title_text);
+    if ~exist('fh','var')
+        fh = figure('name',title_text);
+    end
     % make sure all figures have the same size regardless of nr of subplots
     % and make sure they fit on the screen
     screensize = get(0,'screensize'); % e.g. 1920 * 1080
