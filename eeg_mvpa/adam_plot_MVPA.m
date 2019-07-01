@@ -242,7 +242,7 @@ for cStats = 1:numel(stats)
         settings = stats(cStats).settings;
         if ~isfield(settings,'chance') % backwards compatibility
             if any(strcmpi(settings.measuremethod,{'hr-far','dprime','hr','far','mr','cr'})) || strcmpi(settings.measuremethod,'\muV') || ~isempty(strfind(settings.measuremethod,' difference')) || ~isempty(strfind(settings.measuremethod,' correlation')) || strcmpi(plot_model,'FEM')
-                rawchance = 0; disp('yeah');
+                rawchance = 0;
             elseif strcmpi(settings.measuremethod,'AUC')
                 rawchance = .5;
             else
@@ -692,11 +692,12 @@ if strcmpi(plottype,'2D')
     % if we are plotting dif stats together with raw stats, put them on a second axis
     if ~isempty(rawstats) && (~isempty(strfind(measuremethod,' difference')) || ~isempty(strfind(measuremethod,' correlation'))) && singleplot
         ax = axes('YLim',get(gca,'YLim'),'YTick',get(gca,'YTick'),'YTickLabel',get(gca,'YTickLabel'),'Position',get(gca,'Position'),'YAxisLocation','right','YColor',line_colors{cGraph});
+        ylabel(measuremethod,'FontSize',fontsize,'Color',line_colors{cGraph});
     else
         ax = gca;
         set(ax,'YTick',yaxis);
+        ylabel(measuremethod,'FontSize',fontsize);
     end
-    ylabel(measuremethod,'FontSize',fontsize);
     ticklabel = regexp(deblank(sprintf(['%0.' num2str(ndec) 'f '],yaxis)),' ','split');
     if chance ~= 0 % create labels containing equal character counts when centered on some non-zero value
         ticklabel((yaxis == chance)) = {'chance'}; % say "chance".
