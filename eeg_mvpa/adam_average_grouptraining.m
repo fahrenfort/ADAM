@@ -186,7 +186,7 @@ allfiles = { allfiles(:).name };
 allfiles(strncmp(allfiles,'.',1)) = []; % remove hidden files
 
 % find unique subject filenames excluding the actual test name
-allfiles = cellfun(@(x) regexprep(x,'CLASS_PERF_train_sub_(\w*)_test_', ''), allfiles,'UniformOutput',false);
+allfiles = cellfun(@(x) regexprep(x,'CLASS_PERF_train_(\w*)_test_', ''), allfiles,'UniformOutput',false);
 allfiles = cellfun(@(x) regexprep(x,'.mat', ''), allfiles,'UniformOutput',false);
 subjectfiles = unique(allfiles);
 
@@ -215,16 +215,22 @@ for cSubj = 1:nSubj
         iterations(strncmp(iterations,'.',1)) = []; % remove hidden files
         
         % initialize subject
-        matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep iterations{1}]);
-        if ~isempty(whos(matObj,'BDM'))
-            BDM = matObj.BDM;
-            ClassOverTimeAv = zeros(size(BDM.ClassOverTime));
-            WeightsOverTimeAv = zeros(size(BDM.WeightsOverTime));
-            covPatternsOverTimeAv = zeros(size(BDM.covPatternsOverTime));
-            corPatternsOverTimeAv = zeros(size(BDM.corPatternsOverTime));
-        else
-            error('This function is currently only implementend for BDM, not for FEM. Cannot find BDM variable in data.');
+        notinitialized = true;
+        itnr = 1;
+        while notinitialized
+            matObj = matfile([folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep iterations{itnr}]);
+            try
+                BDM = matObj.BDM;
+                notinitialized = false;
+            catch
+                disp(['cannot read ' folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep iterations{itnr}]);
+                itnr = itnr + 1;
+            end
         end
+        ClassOverTimeAv = zeros(size(BDM.ClassOverTime));
+        WeightsOverTimeAv = zeros(size(BDM.WeightsOverTime));
+        covPatternsOverTimeAv = zeros(size(BDM.covPatternsOverTime));
+        corPatternsOverTimeAv = zeros(size(BDM.corPatternsOverTime));
         
         % Only BDM for now, will implement FEM later if useful
         % C2_averageAv = [];
@@ -260,7 +266,7 @@ for cSubj = 1:nSubj
                 % FEM averaging not currently implemented, may do so later if useful
             end
         end % end iterations loop
-        fprintf(1,' successfully averaged %d of %d iterations for subject %d (%s) \n', nIts, nSubj, cSubj, subjectfiles{cSubj});
+        fprintf(1,' successfully averaged %d of %d iterations for subject %d (%s) \n', nIts, nSubj-1, cSubj, subjectfiles{cSubj});
         clear BDM;
         % now compute the average for that subject / frequency
         BDM.ClassOverTime = ClassOverTimeAv/nIts;

@@ -220,7 +220,7 @@ for t=1:size(allTrainData,2)
             matObj = matfile(fname);
         end
         % slightly different for frequency or raw data
-        if exist('dim_params','var'); % frequency data
+        if exist('dim_params','var') % frequency data
             dim_params.index{dim_params.timedim} = t; % only read for the current time point
             realData = squeeze(matObj.powspctrm(dim_params.index{:}));
             if dim_params.trialdim > dim_params.chandim

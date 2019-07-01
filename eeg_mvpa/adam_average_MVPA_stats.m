@@ -141,7 +141,7 @@ if getweights
     avstats.weights.indivWeights = indivWeights/nStats;
     avstats.weights.CTF = CTF/nStats;
     avstats.weights.indivCTF = indivCTF/nStats;
-    for cCond = 1:nConds;
+    for cCond = 1:nConds
         avstats.weights.CTFpercond{cCond} = CTFpercond{cCond}/nStats;
         avstats.weights.indivCTFpercond{cCond} = indivCTFpercond{cCond}/nStats;
     end
