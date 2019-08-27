@@ -480,7 +480,6 @@ for cSubj = 1:nSubj
         
         % initialize chanlocs
         if ~exist('firstchanlocs','var')
-            disp('initialize chanlocs (you should see this message only once)');
             firstchanlocs = [];
         end
         
