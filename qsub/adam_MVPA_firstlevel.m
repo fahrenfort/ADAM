@@ -521,10 +521,19 @@ if ~exist('qsub','var') || isempty(qsub) % run local
     for cChannels = 1:numel(channelpool) % channelpool{cChannels}
         for cSubj = 1:numel(filenames)
             for cRepeat = 1:repeat
-                if strcmpi(raw_or_tfr,'raw')
-                    classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,erp_baseline,class_spec{:});
-                elseif strcmpi(raw_or_tfr,'tfr')
-                    classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+                try
+                    disp(['Analyzing subject ' filenames{cSubj} ]);
+                    if strcmpi(raw_or_tfr,'raw')
+                        classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,erp_baseline,class_spec{:});
+                    elseif strcmpi(raw_or_tfr,'tfr')
+                        classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+                    end
+                    disp('Done.');
+                catch ME
+                    disp(ME.message);
+                    disp('************************************************************************************************************');
+                    disp(['ERROR: could not analyze data from subject ' filenames{cSubj} '. Skipping and continuing to next subject.']);
+                    disp('************************************************************************************************************');
                 end
             end
         end
