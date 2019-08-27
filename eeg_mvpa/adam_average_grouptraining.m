@@ -210,7 +210,7 @@ for cSubj = 1:nSubj
     for cFreq = 1:numel(plotFreq)
         
         % determine what to load
-        iterations = dir([folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep '*' subjectfiles{cSubj} '*.mat']);
+        iterations = dir([folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep '*_train_*_test_' subjectfiles{cSubj} '.mat']);
         iterations = { iterations(:).name };
         iterations(strncmp(iterations,'.',1)) = []; % remove hidden files
         
@@ -279,7 +279,7 @@ for cSubj = 1:nSubj
         clearvars *Av;
         % and save the result
         fprintf(1,'saving the average over iterations of subject %d of %d\n\n', cSubj, nSubj);
-        fullfilename = [folder_name filesep channelpool plotFreq{cFreq} filesep subjectfiles{cSubj}];
+        fullfilename = [folder_name filesep channelpool plotFreq{cFreq} filesep 'CLASS_PERF_avgtrainsets_' subjectfiles{cSubj}];
         save(fullfilename,'FEM', 'BDM', 'BDM_CONF', 'settings', '-v7.3');
     end % end frequency loop
 end % end subject loop

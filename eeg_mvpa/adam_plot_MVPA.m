@@ -78,6 +78,12 @@ function map = adam_plot_MVPA(cfg,varargin)
 %                               component will be plotted.
 %   cfg.plot_model            = 'BDM' (default); or 'FEM' if stats contains classification results
 %                               of a forward encoding model.
+%   cfg.figure_size           = [500 400] (default), to change the size of the figure on the screen
+%                               (in pixels)
+%   cfg.fh                    = figure handle, in case you want to plot to a specific figure that
+%                               already has a window (handle) associated with it. E.g. create a
+%                               figure handle using fh = figure; and subsequently plot using 
+%                               cfg.fh = fh.
 %
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

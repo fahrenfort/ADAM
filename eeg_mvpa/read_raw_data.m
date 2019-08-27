@@ -12,7 +12,7 @@ clean_data = false;
 do_csd = false;
 resample_eeg = false;
 erp_baseline = 'no';
-channelset = 'all';
+channelpool = 'all';
 if nargin>3
     v2struct(msettings);
 end
@@ -129,7 +129,7 @@ if resample_eeg
 end
 
 % custom function to select channels
-[~, channels] = select_channels(FT_EEG.label,channelset);
+[~, channels] = select_channels(FT_EEG.label,channelpool);
 disp(['We had ' num2str(numel(FT_EEG.label)) ' channels/electrodes.']);
 cfg = [];
 cfg.channel = channels;
@@ -149,6 +149,7 @@ else % if not coming from eeglab, recreate eeglab chanlocs structure
         chanfields = FT_FIELDS(ismember(FT_FIELDS,{'elec','grad'}));
         % if FT_EEG already contains chanloc data, use those data
         if ~isempty(chanfields)
+            disp('WARNING: using electrode positions that are native to the data set. Therefore, the direction of the nose in topoplots cannot be ascertained with certainty. If needed, you can adjust the cfg.nosedir property prior to plotting (see help adam_plot_BDM_weights).');
             % remove field if not informative
             index2remove = [];
             for c = 1:numel(chanfields)

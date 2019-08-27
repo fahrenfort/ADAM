@@ -85,9 +85,11 @@ end
 % setting some defaults
 plot_order = [];
 plotsubjects = false;
+timelim = 250;
 
 % unpack config
 v2struct(cfg);
+cfg.timelim = timelim;
 
 % BACKWARDS COMPATIBILITY
 if exist('one_two_tailed','var')
@@ -168,7 +170,6 @@ pStruct = [];
 v2struct(weights);
 % set defaults
 subjlim = [];
-timelim = 250;
 freqlim = [];
 plotweights_or_pattern = 'weights';
 normalized = true;
@@ -271,7 +272,8 @@ end
 % do some statistics
 if isempty(clusterPvals)
     if strcmpi(mpcompcor_method, 'cluster_based')
-        connectivity = get_connected_electrodes({stats.settings.chanlocs(:).labels});
+        % connectivity = get_connected_electrodes({stats.settings.chanlocs(:).labels});
+        connectivity = get_connected_electrodes(stats.settings.chanlocs);
         [ clusterPvals, pStruct ] = cluster_based_permutation(subjweights,0,cfg,settings,[],connectivity);
     elseif strcmpi(mpcompcor_method, 'uncorrected')
         [~,clusterPvals] = ttest(subjweights,0,'tail',tail);

@@ -181,10 +181,6 @@ unbalance_events = false;
 unbalance_classes = false;
 whiten = false;
 whiten_test_using_train = false;
-hyperalignment = false;
-alignpertimepoint = true;
-standardize = false;
-hyper_targets = [];
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
         method = methods{c};
@@ -273,17 +269,6 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'nowhiten'}))
         whiten = false;
     end
-    if any(strcmpi(methods{c},{'hyperalignment'}))
-        hyperalignment = true;
-        % standardize = true;
-        hyper_targets = get_this_condset(condSet,3);
-    end
-    if any(strcmpi(methods{c},{'alignpertimepoint'}))
-        alignpertimepoint = true;
-    end
-    if any(strcmpi(methods{c},{'standardize'}))
-        standardize = true;
-    end
 end
 if ~do_FEM && ~do_BDM
     do_BDM = true;
@@ -340,13 +325,6 @@ if ~compute_performance && nFolds > 1
     compute_performance = true;
     wraptext('WARNING: Always computing performance when using leave-on-out. Only set cfg.compute_performance = ''no'' when you do not have useful class labels to compute performance with. Defaulting back to cfg.compute_performance = ''yes''.',80);
 end
-if hyperalignment
-    if isempty(hyper_targets)
-        error('ERROR: You need to specify the classes in your test set to which the training classes will be aligned. These cannot include your test classes.');
-    elseif any(ismember(unique([hyper_targets{:}]),unique([testevents{:}])))
-        error('ERROR: There is an overlap between events in your hyperalignment and test set class definitions. These cannot contain the same event code.');
-    end
-end
 % display class specification
 wraptext('These are the class specifications. Each row contains the event codes that go into a single class (first row training, second row testing):',80);
 celldisp(condSet,'class_spec');
@@ -372,7 +350,7 @@ end
 % load data and determine output name
 for cFile = 1:numel(filenames)
     msettings = [];
-    msettings.channelset = bundlename_or_bundlelabels;
+    msettings.channelpool = bundlename_or_bundlelabels;
     msettings.erp_baseline = erp_baseline{cFile};
     msettings.resample_eeg = resample_eeg; % NOTE: this line is different in TFR! Resampling here...
     msettings.do_csd = do_csd;
@@ -391,6 +369,7 @@ end
 % duplicate data for testing if only one file is available
 if numel(filenames) == 1
     FT_EEG(2) = FT_EEG;
+    chanlocs{2} = chanlocs{1};
 end
 
 % extract some relevant trial info, training and testing data
@@ -416,54 +395,6 @@ end
 % if testing and training are on different files, check consistency
 if numel(filenames) > 1 && ~all(strcmpi(channels{1},channels{2}))
     error('The electrodes do not occur in the same order in testing and training, some coding required to fix this...');
-end
-
-% standardize -> for every trial, take the mean across time and subtract, divide by standard deviation
-if standardize
-    for cSet = 1:2
-        % trial x electrode x time
-        FT_EEG(cSet).trial = zscore(FT_EEG(cSet).trial,0,1);
-        % re-baseline
-        blBool = FT_EEG(cSet).time>=erp_baseline{cSet}(1) & FT_EEG(cSet).time<=erp_baseline{cSet}(2);
-        FT_EEG(cSet).trial = FT_EEG(cSet).trial - repmat(mean(FT_EEG(cSet).trial(:,:,blBool),3),[ 1 1 size(FT_EEG(cSet).trial,3)]);
-    end
-end
-
-% hyperaligns the data based on the ERP across all trials for each of the classes
-% should only use data for alignment that are NOT used for testing
-if hyperalignment
-    % check if the number of time points is the same, FT_EEG.trial = trial x electrode x time
-    if size(FT_EEG(1).trial,3) ~= size(FT_EEG(2).trial,3)
-        error('Cannot apply hyperalignment if the number of time points is not equal between the two data sets');
-    end
-    % compute ERPs on train data and on hyper target data from the test set (different classes from those being tested)
-    FT_ERP_TRAIN = compute_erp_on_FT_EEG(FT_EEG(1),get_this_condset(condSet,1),'trial','bin');
-    FT_ERP_HYPER = compute_erp_on_FT_EEG(FT_EEG(2),hyper_targets,'trial','bin');
-    % procrustes alignment on entire time window (appending the conditions)
-    if ~alignpertimepoint
-        % If aligning the entire time window of the ERP at once (using a single transformation):
-        % convert cond x electrode x time -> cond/time x electrode, appending the two ERPs together
-        data1 = permute(FT_ERP_TRAIN.trial(1:numel(thisCondSet),:,:),[3 1 2]);
-        data1 = reshape(data1,[size(data1,1)*size(data1,2),size(data1,3)]);
-        data2 = permute(FT_ERP_HYPER.trial(1:numel(hyper_targets),:,:),[3 1 2]);
-        data2 = reshape(data2,[size(data2,1)*size(data2,2),size(data2,3)]);
-        % align second dataset to first dataset
-        [~,~,tr] = procrustes(data2,data1);
-    end
-    for cTime = 1:size(FT_ERP_TRAIN.trial,3)
-        % compute procrustes per time point rather than for the entire ERP
-        if alignpertimepoint
-            data1 = squeeze(FT_ERP_TRAIN.trial(1:numel(thisCondSet),:,cTime));
-            data2 = squeeze(FT_ERP_HYPER.trial(1:numel(hyper_targets),:,cTime));
-            % align second dataset to first dataset
-            [~,~,tr] = procrustes(data2,data1);
-        end
-        for cTrial = 1:size(FT_EEG(1).trial,1)
-            % use the transform parameters to transform the training data in FT_EEG(1), but only
-            % transforming data that was not used to estimate the hyperparameter
-            FT_EEG(1).trial(cTrial,:,cTime) = tr.b*squeeze(FT_EEG(1).trial(cTrial,:,cTime))*tr.T; % + t.c; no translation, as data were already standardized
-        end
-    end
 end
 
 % Generate indices for folds to do training and testing

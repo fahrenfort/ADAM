@@ -451,16 +451,6 @@ for cSubj = 1:nSubj
             end
         end
         
-        % initialize chanlocs
-        if ~exist('firstchanlocs','var')
-            firstchanlocs = [];
-            if exist('1005chanlocdata.mat','file')
-                load('1005chanlocdata.mat');
-            else
-                chanlocdata = readlocs(trycapfile,'importmode','native'); % from standard 10-20 system
-            end
-        end
-        
         % find permutations and load them
         permfolder = [folder_name filesep regexprep(channelpool,',','_') plotFreq{cFreq} filesep 'randperm'];
         if compute_randperm && exist(permfolder,'dir')
@@ -488,8 +478,15 @@ for cSubj = 1:nSubj
             pVals = countP / (numel(subjectpermutes)-failed);
         end
         
+        % initialize chanlocs
+        if ~exist('firstchanlocs','var')
+            disp('initialize chanlocs (you should see this message only once)');
+            firstchanlocs = [];
+        end
+        
         % find limits
-        [settings, cfg, lim1, lim2, dataindex, firstchanlocs, chanlocdata] = find_limits(settings, cfg, firstchanlocs, chanlocdata);
+        % [settings, cfg, lim1, lim2, dataindex, firstchanlocs, chanlocdata] = find_limits(settings, cfg, firstchanlocs, chanlocdata);
+        [settings, cfg, lim1, lim2, dataindex ] = find_limits(settings, cfg, firstchanlocs);
         v2struct(cfg);
         
         % limit ClassOverTime
@@ -818,7 +815,7 @@ if isfield(stats.cfg,'plotsubjects')
 end
 disp('done!');
 
-function [settings, cfg, lim1, lim2, dataindex, firstchanlocs, chanlocdata] = find_limits(settings, cfg, firstchanlocs, chanlocdata) 
+function [settings, cfg, lim1, lim2, dataindex] = find_limits(settings, cfg, firstchanlocs) 
 % find limits within which to constrain ClassOverTime
 times = []; % need to initialize this, because times also happens to be a variable
 v2struct(cfg); % unpack cfg
@@ -842,38 +839,45 @@ if numel(times) == 1 && strcmpi(settings.dimord,'time_time')
     end
 end
 
-% get the relevant electrodes and obtain the correct order for weights
-% if ~isfield(settings,'chanlocs') || isempty(settings.chanlocs{1}) % if no chanlocdata exist in settings
-
-if numel(settings.channels) == 2
-    settings.channels = settings.channels{1}; % take the training channel list
+% get the relevant electrodes and obtain the correct order for weights (from the first subject)
+% extract channels from settings
+channels = settings.channels;
+if iscell(channels)
+    if iscell(channels{1})
+        channels = channels{1}; % take the training channel list
+    end
 end
-[~, chanindex, dataindex] = intersect({chanlocdata(:).labels},settings.channels,'stable');
-chanlocs = chanlocdata(chanindex); % put all in the same order as imported locations
-chanlocdata = chanlocs;
-if isempty(firstchanlocs)
-    firstchanlocs = chanlocs;
-end
-
- % if this fails, try to extract the channel locations from settings
-if numel(chanlocs) < numel(settings.channels) && isfield(settings,'chanlocs')
+% extract the channel locations from settings
+if isfield(settings,'chanlocs')
     chanlocs = settings.chanlocs;
     if iscell(chanlocs)
         chanlocs = chanlocs{1};
     end
-    if isempty(firstchanlocs)
-        disp('WARNING: using electrode positions that are native to the data set. Therefore, the direction of the nose in topoplots cannot be ascertained with certainty. If needed, you can adjust the cfg.nosedir property prior to plotting (see help adam_plot_BDM_weights).');
-        firstchanlocs = chanlocs;
+else
+    % if no chanlocdata exist, read them in
+    if exist('1005chanlocdata.mat','file')
+        load('1005chanlocdata.mat');
+    else
+        chanlocdata = readlocs(trycapfile,'importmode','native'); % from standard 10-20 system
     end
-    [~, ~, dataindex] = intersect({firstchanlocs(:).labels},{chanlocs(:).labels},'stable');
-    chanlocs = firstchanlocs;
+    [~, ~, chanindex] = intersect(channels,{chanlocdata(:).labels},'stable'); % takes FT_EEG.label as point of departure!
+    chanlocs = chanlocdata(chanindex);
+    if numel(chanlocs) ~= numel(channels)
+        error('Could not read in all channel positions for some reason. Either make sure they exist in the original EEG file, or add these positions to the 1005chanlocdata.mat file so they can be obtained during processing.');
+    end 
 end
-settings.chanlocs = chanlocs;
 
-if numel(chanlocs) < numel(settings.channels)
-    chanlocs = [];
-    disp('WARNING: could not find (all) electrode positions, it is not possible to generate topoplots without electrode positions.');
+% make sure that channel locations and channel labels are in the same order
+if sum(strcmpi({chanlocs(:).labels}, channels')) ~= numel(channels)
+    error('The order of the channel labels and the channel locations is different for some reason, revisit your original EEG files to see what might be wrong.');
+end 
+% put channels and channel locations in the same order as the first channel locations that were read in
+if isempty(firstchanlocs)
+    firstchanlocs = chanlocs;
 end
+[~, ~, dataindex] = intersect({firstchanlocs(:).labels},{chanlocs(:).labels},'stable');
+settings.channels = channels(dataindex);
+settings.chanlocs = chanlocs(dataindex);
 
 % continue limit operation
 % NOTE: ClassOverTime has dimensions: test_time * train_time OR freq * time
