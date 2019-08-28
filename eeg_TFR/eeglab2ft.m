@@ -1,14 +1,19 @@
-function FT_EEG = eeglab2ft(EEG,filepath,continuous)
+function FT_EEG = eeglab2ft(EEG,filepath,continuous,epochwindow)
 % function FT_EEG = eeglab2ft(EEG,filepath,continuous)
 % Wrapper function to import EEG lab data to a fieldtrip, including
 % conditions
 % EEG can either be an eeglab struct, or be the filename which contains the
 % eeglab data. In the latter case, filepath must also be specified
 % If continuous == true, the function works on un-epoched data
+% epochwindow (start, stop) is in seconds. It is only relevant for continuous data. It discards
+% events that do not have all the data required to generate a full epoch for that event.
 % In this case the trial info field will also contain a second column that has the time stamps of
 % the events, expressed in milliseconds (not in seconds, although the time field is in seconds!)
 % J.J.Fahrenfort, VU 2014, 2016
 
+if nargin < 4
+    epochwindow = [];
+end
 if nargin < 3
     continuous = false;
 end
@@ -24,13 +29,12 @@ if ~isstruct(EEG)
 end
 FT_EEG = eeglab2fieldtrip_local(EEG, 'preprocessing');
 % also get events using pop_export
-FT_EEG.trialinfo = pop_exportepoch(EEG,continuous);
+FT_EEG.trialinfo = pop_exportepoch(EEG,continuous,epochwindow);
 
 function data = eeglab2fieldtrip_local(EEG, fieldbox, transform)
 
 if nargin < 2
     error('missing 2nd argument');
-    return;
 end
 
 % start with an empty data object 

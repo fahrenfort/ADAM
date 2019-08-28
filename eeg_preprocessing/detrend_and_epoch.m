@@ -145,7 +145,7 @@ if polynomial_order < 0
 end
 
 % convert to FT_EEG format for ease of processing
-FT_EEG = eeglab2ft(EEG,[],true); % third argument indicated data is continuous
+FT_EEG = eeglab2ft(EEG,[],true,[start_epoch end_epoch]/1000); % third argument indicated data is continuous, fourth argument is to indicate epoch window in seconds
 clear EEG;
 
 % obtain names to work with
