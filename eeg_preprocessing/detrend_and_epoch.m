@@ -1,15 +1,15 @@
-function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, remove_bad_chans, event_codes)
-% function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, remove_bad_chans, event_codes)
+function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, channelpool, remove_bad_chans, event_codes)
+% function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, channelpool, remove_bad_chans, event_codes)
 % detrend_and_epoch is an internal function of the ADAM toolbox. Loads EEGLAB data and performs a
 % multivariate classification procedure. Refer to the help of ADAM_DETREND_AND_EPOCH for proper
 % instructions on how to use this function.
 %
-% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015, 2018
+% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015, 2018, 2019
 %
 % See also: ADAM_DETREND_AND_EPOCH
 
 %% input checks, convert inputs to doubles etc 
-if nargin < 11
+if nargin < 12
     help detrend_and_epoch;
     error('not enough input arguments');
 end
@@ -88,7 +88,7 @@ conditions = string2double(event_codes);
 EEG = pop_loadset('filename',[fname '.set'],'filepath',datadir);
 % next identify bad channels
 try
-    eeg_channels = select_channels({EEG.chanlocs(:).labels},'EEG');
+    eeg_channels = select_channels({EEG.chanlocs(:).labels},channelpool);
 catch
     error('Stopping now, there are no EEG channels in this set? ADAM only works with standard 10-20 EEG labels.');
 end
@@ -165,7 +165,10 @@ trialinfo = trialinfo(ismember(trialinfo(:,1),conditions),:);
 
 % mirror-pad edges of the unepoched data, so that extracting wide padded epochs will not be problematic
 eeg_data = padarray(eeg_data,[0 pad_length*srate],'both','symmetric');
-eeg_time = padarray(eeg_time,[0 pad_length*srate],NaN,'both');
+% eeg_time_old = padarray(eeg_time,[0 pad_length*srate],NaN,'both'); -> this fills it with NaNs which we don't want
+% instead, let's mirror-pad the time array with time (also going negative) 
+eeg_time_step = (eeg_time(end)-eeg_time(1))/(numel(eeg_time)-1); % determine step size
+eeg_time = (eeg_time(1)-(eeg_time_step*pad_length*srate)):eeg_time_step:(eeg_time(end)+(eeg_time_step*pad_length*srate)); % create time line
 
 % create a mask for all trials
 if mask_bad_data

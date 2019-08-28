@@ -33,7 +33,7 @@ function adam_detrend_and_epoch(cfg)
 %                               or only the currently relevant trial. If you have sufficiently long
 %                               intertrial intervals you may also set this to false.
 %       cfg.event_codes       = array containing the relevant event values for the experiment.
-%       cfg.remove_bad_chans  = 'yes' or 'no' (default: 'yes'). Identifies and interpolates bad
+%       cfg.remove_bad_chans  = 'yes' or 'no' (default: 'no'). Identifies and interpolates bad
 %                               electrodes.
 %       cfg.mask_bad_data     = 'yes' or 'no' (default: 'no'). Masks out bad data *only during
 %                               detrending* (the bad data is left in and still needs to be removed
@@ -82,8 +82,9 @@ function adam_detrend_and_epoch(cfg)
 polynomial_order = 30;
 pad_length = 50;
 mask_only_current = true;
-remove_bad_chans = true;
+remove_bad_chans = false;
 mask_bad_data =  false;
+channelpool = 'ALL_NOSELECTION';
 
 % unpack cfg
 v2struct(cfg);
@@ -141,9 +142,9 @@ end
 % run analysis
 if ~exist('qsub','var') || isempty(qsub) % run local
     for cSubj = 1:numel(filenames)
-        detrend_and_epoch(datadir,filenames{cSubj},outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, remove_bad_chans, event_codes);
+        detrend_and_epoch(datadir,filenames{cSubj},outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, channelpool, remove_bad_chans, event_codes);
     end
 else % or create qsub files
-    create_slurm_files(qsub.functionpath,'detrend_and_epoch',qsub, datadir, filenames, outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, remove_bad_chans, event_codes);
+    create_slurm_files(qsub.functionpath,'detrend_and_epoch',qsub, datadir, filenames, outputdir, start_epoch, end_epoch, polynomial_order, pad_length, start_mask, end_mask, mask_only_current, mask_bad_data, channelpool, remove_bad_chans, event_codes);
 end
 
