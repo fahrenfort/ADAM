@@ -6,6 +6,7 @@ function pstruct = compute_pstruct(labels,clusterPvals,data,cfg,settings,mask,co
 % - start_freq and stop_freq
 % - included electrodes
 % - cluster p-value
+times = [];
 reduce_dims = '';
 v2struct(cfg);
 v2struct(settings);
