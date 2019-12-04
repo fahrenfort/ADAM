@@ -62,8 +62,8 @@ neog = eog - repmat(mean(eog, 2), [1 trials]);
 
 % detect blinks
 winhalf = round(win/2);
-blinks = false(size(eog));
-blinks(winhalf+1:end-winhalf,:) = ((2*eog(winhalf+1:end-winhalf,:)-(eog(1:end-ceil(win),:)+eog(ceil(win)+1:end,:)))>crit);
+blinks = logical(zeros(size(eog)));
+blinks(winhalf+1:end-winhalf,:) = ((2*eog(winhalf+1:end-winhalf,:)-(eog(1:end-2*winhalf,:)+eog(2*winhalf+1:end,:)))>crit);
 % blinks = ((eog-circshift(eog, [winhalf 0]))+...
 %     (eog-circshift(eog, [-winhalf 0])))>crit;
 disp(sprintf('  gratton(): Found blinks in %i points', length(find(blinks>0))));

@@ -273,18 +273,25 @@ for index = 1:size(arg2(:),1)
                 %curpos = EEG.dipfit.model(arg2(index)).posxyz/EEG.dipfit.vol.r(end);
                 curpos = EEG.dipfit.model(arg2(index)).posxyz;
                 curmom = EEG.dipfit.model(arg2(index)).momxyz;
-                try,
+                try
                     select = EEG.dipfit.model(arg2(index)).select;
-                catch select = 0;
-                end;
+                catch
+                    select = 0;
+                end
                 if ~isempty(curpos)
                     if strcmpi(EEG.dipfit.coordformat, 'MNI') % from MNI to sperical coordinates
                         transform = pinv( sph2spm );
                         tmpres = transform * [ curpos(1,:) 1 ]'; curpos(1,:) = tmpres(1:3);
                         tmpres = transform * [ curmom(1,:) 1 ]'; curmom(1,:) = tmpres(1:3);
-                        try, tmpres = transform * [ curpos(2,:) 1 ]'; curpos(2,:) = tmpres(1:3); catch, end;
-                        try, tmpres = transform * [ curmom(2,:) 1 ]'; curmom(2,:) = tmpres(1:3); catch, end;
-                    end;
+                        try
+                            tmpres = transform * [ curpos(2,:) 1 ]'; curpos(2,:) = tmpres(1:3); 
+                        catch
+                        end
+                        try
+                            tmpres = transform * [ curmom(2,:) 1 ]'; curmom(2,:) = tmpres(1:3); 
+                        catch
+                        end
+                    end
                     curpos = curpos / 85;
                     if size(curpos,1) > 1 && length(select) == 2
                         dipole_index = find(strcmpi('dipole',options),1);
