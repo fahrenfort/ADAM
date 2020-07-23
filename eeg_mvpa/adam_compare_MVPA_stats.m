@@ -95,6 +95,8 @@ cluster_pval = .05;
 indiv_pval = .05;
 mpcompcor_method = 'uncorrected';
 plot_dim = 'time_time';
+trainlim = [];
+testlim= [];
 % unpack original cfg
 if isfield(stats1,'cfg')
     v2struct(stats1(1).cfg);

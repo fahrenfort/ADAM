@@ -4,7 +4,7 @@ function detrend_and_epoch(datadir,filename,outputdir, start_epoch, end_epoch, p
 % multivariate classification procedure. Refer to the help of ADAM_DETREND_AND_EPOCH for proper
 % instructions on how to use this function.
 %
-% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015, 2018, 2019
+% Internal function of the ADAM toolbox by J.J.Fahrenfort, VU 2014, 2015, 2018, 2019, 2020
 %
 % See also: ADAM_DETREND_AND_EPOCH
 
@@ -33,9 +33,12 @@ if ischar(end_mask)
 end
 if ischar(mask_only_current)
     if strcmpi(mask_only_current,'yes')
-        mask_only_current = true;
+        preset_mask_on_trial = 'current';
     else
-        mask_only_current = false;
+        preset_mask_on_trial = 'all';
+    end
+    if start_mask >= end_mask
+        preset_mask_on_trial = 'none';
     end
 end
 if ischar(mask_bad_data)
@@ -165,6 +168,7 @@ trialinfo = trialinfo(ismember(trialinfo(:,1),conditions),:);
 
 % mirror-pad edges of the unepoched data, so that extracting wide padded epochs will not be problematic
 eeg_data = padarray(eeg_data,[0 pad_length*srate],'both','symmetric');
+
 % eeg_time_old = padarray(eeg_time,[0 pad_length*srate],NaN,'both'); -> this fills it with NaNs which we don't want
 % instead, let's mirror-pad the time array with time (also going negative) 
 eeg_time_step = (eeg_time(end)-eeg_time(1))/(numel(eeg_time)-1); % determine step size
@@ -172,16 +176,17 @@ eeg_time = (eeg_time(1)-(eeg_time_step*pad_length*srate)):eeg_time_step:(eeg_tim
 
 % create a mask for all trials
 if mask_bad_data
-    eeg_mask = padarray(clean_mask,[0 pad_length*srate],'both','symmetric');
+    eeg_mask = padarray(clean_mask,[0 pad_length*srate],'both','symmetric'); % pad the clean_mask
 else
-    eeg_mask = ones(size(eeg_data)); 
+    eeg_mask = ones(size(eeg_data)); % no masking of bad data, just use the mirror-padded eeg_data
 end
-% mask out all trials
-if ~mask_only_current
+
+% mask out all trials: do this when wanting to mask out all trials during detrending
+if strcmpi(preset_mask_on_trial, 'all')
     for cTrials = 1:size(trialinfo,1)
         mask_startind = nearest(eeg_time,trialinfo(cTrials,2)+start_mask);
         mask_stopind = nearest(eeg_time,trialinfo(cTrials,2)+end_mask);
-        eeg_mask(mask_startind:mask_stopind) = 0;
+        eeg_mask(:,mask_startind:mask_stopind) = 0; % bugfix, missing channel in mask
     end
 end
 
@@ -202,22 +207,22 @@ for cTrials = 1:size(trialinfo,1)
     % extract wide padded trial
     pad_time = eeg_time((start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
     pad_data = eeg_data(:,(start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
-    if mask_only_current % mask only current trial
-        temp_mask = eeg_mask;
+    
+    temp_mask = eeg_mask; % copy from the source
+    if strcmpi(preset_mask_on_trial, 'current') % mask only the current trial
         mask_startind = nearest(eeg_time,trialinfo(cTrials,2)+start_mask);
         mask_stopind = nearest(eeg_time,trialinfo(cTrials,2)+end_mask);
-        temp_mask(mask_startind:mask_stopind) = 0;
-        pad_mask = temp_mask((start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
-        clear temp_mask;
-    else % mask all trials
-        pad_mask = eeg_mask((start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
+        temp_mask(:,mask_startind:mask_stopind) = 0; % bugfix, missing channel in mask
     end
+    % when preset_mask_on_trial == 'none', no preset masking is be applied
+    pad_mask = temp_mask(:,(start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate)); % bugfix, missing channel in mask
+    clear temp_mask;
     
     if polynomial_order > 0
         % estimate and subtract polynomial
         disp(['Polynomial detrending trial ' num2str(cTrials) ' of ' num2str(size(trialinfo,1)) '...']);
         % create a mask matrix
-        wt = repmat(pad_mask,[numel(label) 1]);
+        wt = pad_mask; % bugfix, already had channel in mask
         % make sure data is physically removed before calling nt_detrending function, just to be sure
         pad_data_orig = pad_data;
         % no way in hell that the detrending function can make use of brain data:
@@ -229,7 +234,7 @@ for cTrials = 1:size(trialinfo,1)
         % call nt_detrend with higher order polynomial
         [~, w2,~,regressline2] = nt_detrend(tmp,polynomial_order,w1); % then nth order with mask of previous step
         % take out the regression line manually
-        clean_data = pad_data-regressline2'; % manually take out regression slope from actual data
+        clean_data = pad_data - regressline2'; % manually take out regression slope from actual data
         % epoch original data to a narrow window
         old_trial(cTrials,:,:) = pad_data_orig(:,(pad_length/2*srate+1):end-pad_length/2*srate);
     else

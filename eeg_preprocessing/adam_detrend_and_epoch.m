@@ -25,9 +25,10 @@ function adam_detrend_and_epoch(cfg)
 %                               detrending and is discarded after the trial itself is epoched out
 %                               (when doing the final epoching).
 %       cfg.start_mask        = in seconds, specifies when your 'cognitive' or other events of
-%                               interest start
+%                               interest start.
 %       cfg.end_mask          = in seconds, specifies when your 'cognitive' or other events of
-%                               interest end
+%                               interest end. If cfg.end_mask < cfg.start_mask, no pre-set mask is
+%                               applied.
 %       cfg.mask_only_current = 'yes' or 'no' (default: 'yes'). Specifies whether the algorithm for
 %                               any given trial masks out all other trials from the wide window pad,
 %                               or only the currently relevant trial. If you have sufficiently long
