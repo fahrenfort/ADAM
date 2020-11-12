@@ -135,7 +135,7 @@ if mask_bad_data
 end
 clear EEG_filt EEG_nobadchans temp_EEG;
 
-%% apply detrending
+%% filter, detrend or nothing
 
 % little hack: apply filtering if polynomial_order < 0, so we can compare filtering to detrending
 if polynomial_order < 0
@@ -160,8 +160,8 @@ trialinfo = FT_EEG.trialinfo;
 label = FT_EEG.label;
 trialinfo(:,2) = trialinfo(:,2); % in milliseconds
 
-% remove mean from every channel
-eeg_data = eeg_data-repmat(mean(eeg_data,2),[1 size(eeg_data,2)]);
+% remove mean from every channel % WHY???? DON'T DO THAT!!!
+% eeg_data = eeg_data-repmat(mean(eeg_data,2),[1 size(eeg_data,2)]);
 
 % select relevant events
 trialinfo = trialinfo(ismember(trialinfo(:,1),conditions),:);
@@ -196,7 +196,7 @@ if polynomial_order > 0
     old_trial = new_trial;
 end
 
-%% Do the epoching (and detrending if polynomial_order > 0)
+%% Do the epoching 
 for cTrials = 1:size(trialinfo,1)
     
     % identify zero point and borders of trial
@@ -218,6 +218,7 @@ for cTrials = 1:size(trialinfo,1)
     pad_mask = temp_mask(:,(start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate)); % bugfix, missing channel in mask
     clear temp_mask;
     
+    % Do detrending, ONLY if polynomial_order > 0
     if polynomial_order > 0
         % estimate and subtract polynomial
         disp(['Polynomial detrending trial ' num2str(cTrials) ' of ' num2str(size(trialinfo,1)) '...']);
@@ -336,7 +337,7 @@ end
 DETRENDED_FT_EEG.dimord = 'rpt_chan_time';
 DETRENDED_FT_EEG.label = label;
 DETRENDED_FT_EEG.time = trial_time; % in milliseconds
-DETRENDED_FT_EEG.trial = new_trial;
+DETRENDED_FT_EEG.trial = new_trial; 
 DETRENDED_FT_EEG.trialinfo = trialinfo(:,1);
 DETRENDED_FT_EEG.fsample = srate;
 
