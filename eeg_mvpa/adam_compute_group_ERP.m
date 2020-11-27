@@ -397,12 +397,14 @@ for cSubj = 1:nSubj
         else
             plot_model = 'BDM';
         end
+        tmpcfg = cfg;
         tmpcfg.plot_model = plot_model;
         tmpcfg.plotsubjects = true;
         tmpcfg.plot_order = {condname};
         tmpcfg.acclim2D = [];
         tmpcfg.acclim3D = [];
         tmpcfg.acctick = [];
+        tmpcfg.ploterp = true;
         adam_plot_MVPA(tmpcfg,onestat);
         subjname = subjectfiles{cSubj};
         underscores = strfind(subjname,'_');

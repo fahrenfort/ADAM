@@ -181,6 +181,7 @@ unbalance_events = false;
 unbalance_classes = false;
 whiten = false;
 whiten_test_using_train = false;
+no_anti_alias = false;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
         method = methods{c};
@@ -269,6 +270,9 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'nowhiten'}))
         whiten = false;
     end
+    if any(strcmpi(methods{c},{'no_anti_alias'}))
+        no_anti_alias = true;
+    end
 end
 if ~do_FEM && ~do_BDM
     do_BDM = true;
@@ -353,12 +357,14 @@ for cFile = 1:numel(filenames)
     msettings.channelpool = bundlename_or_bundlelabels;
     msettings.erp_baseline = erp_baseline{cFile};
     msettings.resample_eeg = resample_eeg; % NOTE: this line is different in TFR! Resampling here...
+    msettings.no_anti_alias = no_anti_alias;
     msettings.do_csd = do_csd;
     msettings.clean_data = clean_muscle;
     msettings.clean_window = clean_window;
     msettings.shuffle_trials = true;
     [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,msettings);
-    % randomize labels for first level random permutation testing. NOTE: permuting all observatiif ons/labels regardless of the conditions in the experiment
+    
+    % randomize labels for first level random permutation testing. NOTE: permuting all labels regardless of the conditions in the experiment
     if randomize_labels
         rng default;
         rng('shuffle'); % random every time
@@ -616,6 +622,8 @@ settings.nfolds = nFolds;
 settings.filenames = filenames;
 settings.crossclass = crossclass;
 settings.erp_baseline = erp_baseline;
+settings.resample_eeg = resample_eeg; % NOTE: this line is different in TFR! Resampling here...
+settings.no_anti_alias = no_anti_alias;
 settings.clean_window = clean_window;
 settings.BDM = do_BDM;
 settings.FEM = do_FEM;

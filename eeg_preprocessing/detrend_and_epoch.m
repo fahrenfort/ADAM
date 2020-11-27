@@ -249,16 +249,19 @@ for cTrials = 1:size(trialinfo,1)
     
     %% plot a trial halfway through the experiment for illustration purposes
     if cTrials == round(size(trialinfo,1)/2) && polynomial_order > 0
+    % if cTrials == 8 && polynomial_order > 0 % for figure 3, applied to subject 2, remove
         % create an invisible image, to save later on
         f = figure('units','normalized','outerposition',[0 0 1 1],'visible', 'off');
+        % f = figure('units','normalized','outerposition',[0 0 1 1],'visible', 'on'); % for figure 3, remove
         % some settings
         sample_index = round(linspace(1,size(pad_data_orig,2),1000)); % (pad_length/2*srate+1):end-pad_length/2*srate
         trial_index = find(new_time > start_epoch & new_time < end_epoch);
-        EEG_index = select_channels(label,'EEG'); % identify the 10 electrodes with the largest standard deviation
+        EEG_index = select_channels(label,'EEG'); % identify the electrodes with the largest standard deviation
         [~, order] = sort(std(pad_data_orig'),'descend');
         order = order(ismember(order,EEG_index));
         % make mask for first 5 electrodes, top plot
         elec_index = order(1:5);
+        % elec_index = order(1:3); % for figure 3, remove
         plot_mask = w1;
         plot_mask(plot_mask==0) = NaN;
         plot_mask = plot_mask(:,elec_index);
@@ -278,7 +281,9 @@ for cTrials = 1:size(trialinfo,1)
         minlim = min(min(pad_data_orig(elec_index,sample_index)));
         maxlim = top+(top/5);
         ylim([minlim-top/5 maxlim]);
+        % ylim([-3 3]); % for figure 3, remove
         xlim([min(new_time) max(new_time)+(max(new_time)-min(new_time))/4]/1000);
+        xlim([-25 31.5]); % for figure 3, remove
         % make mask for 10 electrodes, middle plot
         plot_mask = w2;
         plot_mask(plot_mask==0) = NaN;
@@ -299,7 +304,9 @@ for cTrials = 1:size(trialinfo,1)
         minlim = min(min(pad_data(elec_index,trial_index)));
         maxlim = top+(top/5);
         ylim([minlim+minlim/10 maxlim]);
+        % ylim([-2.5 2.5]); % for figure 3, remove
         xlim([min(new_time) max(new_time)+(max(new_time)-min(new_time))/4]/1000);
+        % xlim([-25 31.5]); % for figure 3, remove
         % bottom plot
         subplot(4,2,[5 6]);
         plot(new_time(sample_index)/1000,clean_data(elec_index,sample_index)'); % final
@@ -309,7 +316,10 @@ for cTrials = 1:size(trialinfo,1)
         minlim = min(min(clean_data(elec_index,trial_index)));
         maxlim = max(max(clean_data(elec_index,trial_index)));
         ylim([minlim+minlim/10  maxlim+maxlim/10]);
+        % ylim([-1 1]); % for figure 3, remove
         xlim([min(new_time) max(new_time)+(max(new_time)-min(new_time))/4]/1000);
+        % xlim([-25 31.5]); % for figure 3, remove
+        % print -painters -dsvg '/Users/VU-MBP/Dropbox/Work/Artikelen/- Collegas - coauteur/Joram van Driel/Filtering_paper/JoN methods/figures/orig/figure3.svg'; % remove
     end
 end
 

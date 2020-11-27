@@ -11,6 +11,7 @@ clean_window = [];
 clean_data = false;
 do_csd = false;
 resample_eeg = false;
+no_anti_alias = false;
 erp_baseline = 'no';
 channelpool = 'all';
 if nargin>3
@@ -119,7 +120,11 @@ end
 if resample_eeg
     cfg = [];
     cfg.resamplefs = resample_eeg;
-    cfg.resamplemethod = 'resample';
+    if no_anti_alias
+        cfg.resamplemethod = 'downsample';  % does not apply anti-aliasing filter
+    else
+        cfg.resamplemethod = 'resample';  % applies anti-aliasing filter
+    end
     cfg.detrend = 'no';
     % turn off annoying FT warnings
     if exist('ft_warning','file') == 2

@@ -59,7 +59,9 @@ function map = adam_plot_MVPA(cfg,varargin)
 %                               of time-frequency plot.
 %   cfg.referenceline         = [int] in ms; you can plot a reference line
 %                               e.g. if the stimulus-class triggers were sent at 100 ms, define
-%                               cfg.referenceline = 100;
+%                               cfg.referenceline = 100; You can also plot a series of reference
+%                               lines by specifying the times as an array, e.g. 
+%                               cfg.referenceline = [100, 200, 300, 400];
 %   cfg.line_colors           = [] (default); or string cell array containing RGB triplets, e.g. 
 %                               {[R G B],[R G B]} with integers between [0 1] for RGB values; this
 %                               overrides the default colors for line plots.
@@ -112,6 +114,7 @@ end
 stats = concat_stats(varargin{:});
 
 % settting some defaults
+ploterp = false;
 plot_model = 'BDM';
 ndec = 2;
 inverty = [];
@@ -195,7 +198,7 @@ if isempty(inverty)
 end
 
 % set plottype
-if any(size(stats(1).ClassOverTime)==1)
+if any(size(stats(1).ClassOverTime)==1) || ploterp == true
     plottype = '2D'; %  used internally in this function
 else
     plottype = '3D';
@@ -613,7 +616,9 @@ if strcmpi(plottype,'2D')
     
     % plot help line
     if ~isempty(referenceline)
-        plot([nearest(xaxis,referenceline),nearest(xaxis,referenceline)],[acclim(1),acclim(2)],'k--');
+        for c = 1:numel(referenceline)
+            plot([nearest(xaxis,referenceline(c)),nearest(xaxis,referenceline(c))],[acclim(1),acclim(2)],'k--');
+        end
     end
     
     % plot significant time points
@@ -753,9 +758,11 @@ else
     % plot some help lines
     if ~isempty(referenceline)
         hold on;
-        timeinms = referenceline;
-        plot([nearest(xaxis,timeinms),nearest(xaxis,timeinms)],[nearest(yaxis,min(yaxis)),nearest(yaxis,max(yaxis))],'k--');
-        plot([nearest(xaxis,min(xaxis)),nearest(xaxis,max(xaxis))],[nearest(yaxis,timeinms),nearest(yaxis,timeinms)],'k--');
+        for c = 1:numel(referenceline)
+            timeinms = referenceline(c);
+            plot([nearest(xaxis,timeinms),nearest(xaxis,timeinms)],[nearest(yaxis,min(yaxis)),nearest(yaxis,max(yaxis))],'k--');
+            plot([nearest(xaxis,min(xaxis)),nearest(xaxis,max(xaxis))],[nearest(yaxis,timeinms),nearest(yaxis,timeinms)],'k--');
+        end
         % plot([nearest(xaxis,min(xaxis)),nearest(xaxis,max(xaxis))],[nearest(yaxis,min(yaxis)),nearest(yaxis,max(yaxis))],'k--');
     end
     
