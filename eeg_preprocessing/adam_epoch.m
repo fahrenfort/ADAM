@@ -1,7 +1,7 @@
 function adam_epoch(cfg)
 % Reads in CONTINUOUS (!) EEGLAB data, epochs and writes out as EPOCHED (!) EEGLAB file. 
-% No pre-processing is applied other than mean removal from every trial after epoching.
-% The output of this function can serve as input for ADAM_MVPA_FIRSTLEVEL.
+% No pre-processing is applied. The output of this function can serve as input for
+% ADAM_MVPA_FIRSTLEVEL.
 %
 %       cfg.datadir           = string specifiying the directory where the input files are
 %                               located;
@@ -76,14 +76,14 @@ end
 % go
 for filename = filenames
     [~,fname,~] = fileparts(filename{1});
-    % load and filter
+    % load
     EEG = pop_loadset('filename',[fname '.set'],'filepath',datadir);
     % epoch data
     if ~isempty(conditions)
         EEG = pop_epoch(EEG, conditions, [start_epoch end_epoch], 'newname', ['epoched_ ' fname], 'epochinfo', 'yes'); 
     end
-    % remove mean of every trial
-    EEG = pop_rmbase( EEG,[]);
+    % remove mean of every trial WHY??? DON'T DO THIS!
+    % EEG = pop_rmbase( EEG,[]);
     % save data
     pop_saveset(EEG, 'filename',[fname '.set'],'filepath',outputdir);
 end

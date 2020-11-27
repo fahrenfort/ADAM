@@ -5,7 +5,6 @@ function create_slurm_files(path_on_lisa, function_name, qsettings, varargin)
 %
 % qsettings contains a bunch of info about how to run the job:
 % qsettings.walltime -> how long the job may run
-% qsettings.lnodes -> how many nodes
 % qsettings.cores -> max number of cores the job should have (default: 15)
 % qsettings.qsubdir -> where to write the qsub job
 %       special value: if qsettings.qsubdir exists, the function uses the path specified in
@@ -52,8 +51,7 @@ function create_slurm_files(path_on_lisa, function_name, qsettings, varargin)
 
 % some default settings
 walltime = '23:59:59';
-lnodes = '1';
-mem = [];
+mem = 90;
 repeat = 1;
 use_scratch = true;
 keep_together = false;
@@ -173,8 +171,11 @@ for cMat = 1:numel(allMat)
             qsubfiles{end+1} = qsubfile;
             fout = fopen(qsubfile,'w');
             fprintf(fout,'#!/bin/bash\n');
-            fprintf(fout,['#SBATCH -N ' lnodes ' --ntasks-per-node=' ppn ' --mem=60G --time ' walltime '\n']); % specify we need at least 64GB of memory!
-            % fprintf(fout,['#SBATCH --time ' walltime '\n']);
+            % fprintf(fout,['#SBATCH -N 3 --tasks-per-node=' ppn ' --mem=' mem 'G -t ' walltime '\n']); % specify we need at least 90GB of memory! / lnodes
+            fprintf(fout,'#SBATCH -N 1\n');
+            fprintf(fout,['#SBATCH --tasks-per-node=' ppn '\n']);
+            fprintf(fout,['#SBATCH --mem=' mem 'G\n']); 
+            fprintf(fout,['#SBATCH --time=' walltime '\n']);
             fprintf(fout,'echo "Job $SLURM_JOBID started at `date`"');
             if send_mail % no idea whether this works under slurm, don't care i'm not using it anyway
                 fprintf(fout,' | mail $USER -s "Job $SLURM_JOBID"');
@@ -193,6 +194,8 @@ for cMat = 1:numel(allMat)
                 % This does not work for SLURM, too bad
                 % fprintf(fout,'(( timetorun = $SARA_BATCH_WALLTIME - 600 ))\n');
             end
+            % load outdated module
+            fprintf(fout,'module load pre2019\n'); % load in previous module package environment
             % load matlab runtime
             fprintf(fout,['module load mcr' mcr_version '\n']);
 %             if mcr_set_cache

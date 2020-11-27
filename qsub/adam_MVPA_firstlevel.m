@@ -159,12 +159,18 @@ function adam_MVPA_firstlevel(cfg)
 %                                    depiction of the artefacts that were removed (.png), as well as
 %                                    a list of the trial numbers that were removed (.txt).
 %       cfg.resample               = 'no' (default); or specify an integer to which to resample
-%                                    your data; this is recommended if you have a high sampling rate
-%                                    (e.g. >250 Hz), especially if you want to perform
+%                                    your data; this is recommended if you have a very high sampling
+%                                    rate (e.g. >250 Hz), especially if you want to perform
 %                                    cross-classification (temporal generalization, see under
-%                                    cfg.crossclass above). When resampling, it is recommended that
-%                                    the original sampling frequency is a multiple of the frequency
-%                                    to which to downsample (e.g. if the original sampling frequency
+%                                    cfg.crossclass above).
+%                                    Note that resampling involves applying a lowpass filter to
+%                                    prevent aliasing. This can produce edged artefacts, and can
+%                                    have serious temporal effects. If you are interested in precise
+%                                    timing, you can turn this off by setting cfg.anti_alias = 'no';
+%                                    Also see: Vanrullen, R. (2011); Van Driel, J. et al. (2020)
+%                                    When resampling, it is further recommended that the original
+%                                    sampling frequency is a multiple of the frequency to which to
+%                                    downsample (e.g. if the original sampling frequency
 %                                    is 512Hz, do cfg.resample = 256; or cfg.resample = 128; etc)
 %                                    but this is not required. When decoding raw EEG, the signal is
 %                                    resampled using shape-preserving piecewise cubic interpolation.
@@ -172,6 +178,8 @@ function adam_MVPA_firstlevel(cfg)
 %                                    decoding, resampling is applied after time-frequency
 %                                    decomposition (so the TFRs are computed on the original data,
 %                                    prior to resampling).
+%       cfg.anti_alias             = 'yes' (default); set to 'no' to prevent anti-aliasing when
+%                                    resampling the data prior to decoding.
 %       cfg.erp_baseline           = 'no' (default); or specify a time window according to
 %                                    [begin,end]; always in SECONDS, e.g. cfg.erp_baseline =
 %                                    [-.25,0];
@@ -386,6 +394,7 @@ tfr_method = 'total';       % computes total power, alternative is 'induced' or 
 clean_window = [];          % specifies the window used to reject muscle artifacts
 sigma_basis_set = 0;        % specifies the width of the basis set (0 means box-car)
 whiten = 'no';              % specifies whether to whiten the data prior to decoding
+anti_alias = 'yes';         % specifies whether to apply a lowpass filter prior to downsampling
 
 % unpack cfg
 v2struct(cfg);
@@ -476,7 +485,12 @@ end
 if ~isempty(sigma_basis_set)
     sigma_basis_set = sprintf('sigma%f',sigma_basis_set);
 end
-str_settings = cell2csv({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window});
+if strcmpi(anti_alias,'yes')
+    anti_alias = '';
+else
+    anti_alias = 'no_anti_alias';
+end
+str_settings = cell2csv({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window,anti_alias});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
@@ -488,7 +502,7 @@ if strcmpi(resample,'no') || isempty(resample)
 elseif ~ischar(resample)
     resample = num2str(resample);
 end
-crossclass_resample = sprintf('%s,%s',crossclass,resample);
+crossclass_resample = sprintf('%s,%s',crossclass,resample);   
 if strcmpi(erp_baseline,'no') || isempty(erp_baseline)
     erp_baseline = '0,0';
 elseif ~ischar(erp_baseline)
