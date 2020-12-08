@@ -147,6 +147,7 @@ if strcmpi(mpcompcor_method,'fdr')
     % FDR CORRECTION
     [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail);
     ClassPvals = squeeze(ClassPvals);
+    pValsUncorrected = ClassPvals;
     h = fdr_bh(ClassPvals,cluster_pval,'dep');
     ClassPvals(~h) = 1;
     pStruct = compute_pstructs(h,ClassPvals,ClassTotal{1},ClassTotal{2},cfg,settings);
@@ -166,6 +167,9 @@ end
 cfg.chance = 0;
 % output stats
 difstats.pVals = ClassPvals;
+if exist('pValsUncorrected','var')
+    difstats.pValsUncorrected   = pValsUncorrected;
+end
 difstats.pStruct = pStruct;
 difstats.cfg = cfg;
 difstats.settings = settings;

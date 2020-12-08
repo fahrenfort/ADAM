@@ -25,6 +25,8 @@ function avweightstruct = adam_plot_BDM_weights(cfg,stats)
 %                                     specifying the desired timepoint or time window to plot
 %       cfg.freqlim                 = [int int]; default: [] empty; if you have a time-by-frequency
 %                                     diagonal matrix, you can specify a frequency range
+%       cfg.weightlim               = [int int]; or [int]; determines the range within which to plot
+%                                     the color values
 %       cfg.mpcompcor_method        = 'cluster_based' (default); string specifying the method for 
 %                                     multiple correction correction; other options are:
 %                                     'uncorrected', 'fdr' for false-discovery rate, or 'none' if
@@ -86,6 +88,7 @@ end
 plot_order = [];
 plotsubjects = false;
 timelim = 250;
+subplotdim = [];
 
 % unpack config
 v2struct(cfg);
@@ -118,6 +121,11 @@ if ~isempty(plot_order)
     stats = newstats;
 end
 
+if isempty(subplotdim)
+    subplotdim(1) = numSubplots(numel(stats),1);
+    subplotdim(2) = numSubplots(numel(stats),2);
+end
+
 % make figure?
 if ~plotsubjects
     title_text = regexprep(regexprep(regexprep(folder,'\\','/'),regexprep(startdir,'\\','/'),''),'_',' ');
@@ -128,12 +136,12 @@ if ~plotsubjects
     % make sure all figures have the same size regardless of nr of subplots
     % and make sure they fit on the screen
     screensize = get(0,'screensize'); % e.g. 1920 * 1080
-    UL = (screensize([3 4])-50)./[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
+    UL = (screensize([3 4])-50)./[subplotdim(2) subplotdim(1)];
     if all(UL>[400 400])
         UL=[400 400]; % take this as default
     end
     po=get(fh,'position');
-    po(3:4)=UL.*[numSubplots(numel(stats),2) numSubplots(numel(stats),1)];
+    po(3:4)=UL.*[subplotdim(1) subplotdim(2)];
     po(1:2) = (screensize(3:4)-po(3:4))/2; po(logical([po(1:2)<100 0 0])) = round(po(logical([po(1:2)<100 0 0]))/4); % position in the center, push further to left / bottom if there is little space on horizontal or vertical axis axis
     set(fh,'position',po);
     set(fh,'color','w');
@@ -143,7 +151,7 @@ end
 avweightstruct = [];
 for cStats=1:numel(stats)
     disp(['plot ' num2str(cStats)]);
-    subplot(numSubplots(numel(stats),1),numSubplots(numel(stats),2),cStats);
+    subplot(subplotdim(2),subplotdim(1),cStats);
     avweightstruct = [avweightstruct subplot_BDM_weights(cfg,stats(cStats))];
 end
 

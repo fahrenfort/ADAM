@@ -187,9 +187,9 @@ for cMat = 1:numel(allMat)
                 % build in some time to copy output back by breaking off jobs before the end
                 fprintf(fout,'module load sara-batch-resources\n');
                 % make sure directories exists
-                fprintf(fout,['mkdir -p ' scratchindir ' &\n']);
-                fprintf(fout,['mkdir -p ' scratchoutdir ' &\n']);
-                fprintf(fout,['mkdir -p ' scratchlogdir ' &\n']);
+                fprintf(fout,['mkdir -p ' scratchindir ' \n']); % don't need to parrelize this omitting ampersand ' &\n'
+                fprintf(fout,['mkdir -p ' scratchoutdir ' \n']);
+                fprintf(fout,['mkdir -p ' scratchlogdir ' \n']);
                 % build in some time to copy output back by breaking off jobs before the end
                 % This does not work for SLURM, too bad
                 % fprintf(fout,'(( timetorun = $SARA_BATCH_WALLTIME - 600 ))\n');
@@ -238,11 +238,12 @@ for cMat = 1:numel(allMat)
         for cArgs = 1:size(combMat,2)
             line = [line ' "' combMat{cQsubs,cArgs} '" '];
         end
-        line = [line ' &\n'];
+        % line = [line ' &\n']; % don't need to parrelize this omitting ampersand ' &\n'
+        line = [line ' \n']; % according to people at SURF, I can run this serially and be even more efficient due to multi-threading by Matlab
         % close qsub file once all cores are used or all commands have been issued
         if (mod(cQsubs,cores) == 0 && repeat > 1 && ~(cQsubs==size(combMat,1)))
             % pause till all previous are done
-            line = [line 'wait\n'];
+            line = [line 'wait\n']; % not strictly necessary apparently
         elseif (mod(cQsubs,cores) == 0 && repeat == 1) || cores == 1 || cQsubs == size(combMat,1)
             % copy to scratch
             if use_scratch
@@ -254,7 +255,7 @@ for cMat = 1:numel(allMat)
             fprintf(fout,line);
             % copy back to home
             if use_scratch
-                copyout = ['cp -u -r ' scratchoutdir '/* ' outdir ' &\nwait\n'];
+                copyout = ['cp -u -r ' scratchoutdir '/* ' outdir ' &\nwait\n']; 
                 fprintf(fout,copyout);
             end
             if send_mail
@@ -321,7 +322,7 @@ for c = 1:nargin
 end
 maxArg = 1;
 for c = 1:nargin
-    if numel(varargin{c}) > maxArg;
+    if numel(varargin{c}) > maxArg
         maxArg = numel(varargin{c});
     elseif numel(varargin{c}) ~= maxArg && numel(varargin{c}) ~= 1
         disp(numel(varargin{c}));

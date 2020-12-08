@@ -31,8 +31,10 @@ function adam_detrend_and_epoch(cfg)
 %                               applied.
 %       cfg.mask_only_current = 'yes' or 'no' (default: 'yes'). Specifies whether the algorithm for
 %                               any given trial masks out all other trials from the wide window pad,
-%                               or only the currently relevant trial. If you have sufficiently long
-%                               intertrial intervals you may also set this to false.
+%                               or only the currently relevant trial. If your intertrial interval is
+%                               very short setting this to 'yes' may not work because there are not
+%                               enough data to fit on. Keeping this set to 'yes' typically works
+%                               well enough.
 %       cfg.event_codes       = array containing the relevant event values for the experiment.
 %       cfg.remove_bad_chans  = 'yes' or 'no' (default: 'no'). Identifies and interpolates bad
 %                               electrodes.

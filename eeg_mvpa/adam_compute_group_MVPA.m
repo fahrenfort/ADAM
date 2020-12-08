@@ -715,8 +715,9 @@ ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 if nSubj > 1
     if strcmpi(mpcompcor_method,'fdr')
         % FDR CORRECTION
-        [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail); 
+        [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail);
         ClassPvals = squeeze(ClassPvals);
+        pValsUncorrected = ClassPvals;
         h = fdr_bh(ClassPvals,cluster_pval,'dep');
         ClassPvals(~h) = 1;
         pStruct = compute_pstructs(h,ClassPvals,ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings);
@@ -742,21 +743,24 @@ end
 ClassPvals = shiftdim(squeeze(ClassPvals));
 
 % outputs
-stats.ClassOverTime = ClassAverage;
-stats.StdError = ClassStdErr;
-stats.pVals = ClassPvals;
-stats.mpcompcor_method = mpcompcor_method;
+stats.ClassOverTime      = ClassAverage;
+stats.StdError           = ClassStdErr;
+stats.pVals              = ClassPvals;
+if exist('pValsUncorrected','var')
+    stats.pValsUncorrected   = pValsUncorrected;
+end
+stats.mpcompcor_method   = mpcompcor_method;
 stats.indivClassOverTime = ClassOverTimeAll{1};
 if read_confidence
-    stats.indivConf = indivConf;
+    stats.indivConf      = indivConf;
 end
-stats.settings = settings;
-stats.trialcount = trialcount;
-stats.condname = condname;
-stats.filenames = subjectfiles;
-stats.channelpool = channelpool;
+stats.settings           = settings;
+stats.trialcount         = trialcount;
+stats.condname           = condname;
+stats.filenames          = subjectfiles;
+stats.channelpool        = channelpool;
 if exist('pStruct','var')
-    stats.pStruct = pStruct;
+    stats.pStruct        = pStruct;
 end
 % extract chancel level in order to be able to compute latencies (i.e. subtract chance during latency computation)
 if ~isfield(settings,'chance') % backwards compatibility
