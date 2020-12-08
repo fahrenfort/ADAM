@@ -163,9 +163,6 @@ trialinfo(:,2) = trialinfo(:,2); % in milliseconds
 % remove mean from every channel % WHY???? DON'T DO THAT!!!
 % eeg_data = eeg_data-repmat(mean(eeg_data,2),[1 size(eeg_data,2)]);
 
-% select relevant events
-trialinfo = trialinfo(ismember(trialinfo(:,1),conditions),:);
-
 % mirror-pad edges of the unepoched data, so that extracting wide padded epochs will not be problematic
 eeg_data = padarray(eeg_data,[0 pad_length*srate],'both','symmetric');
 
@@ -181,7 +178,10 @@ else
     eeg_mask = ones(size(eeg_data)); % no masking of bad data, just use the mirror-padded eeg_data
 end
 
-% mask out all trials: do this when wanting to mask out all trials during detrending
+% select relevant events
+trialinfo = trialinfo(ismember(trialinfo(:,1),conditions),:);
+
+% mask out all trials: do this when wanting to mask out all trials during detrending (instead of only the current trial) 
 if strcmpi(preset_mask_on_trial, 'all')
     for cTrials = 1:size(trialinfo,1)
         mask_startind = nearest(eeg_time,trialinfo(cTrials,2)+start_mask);
