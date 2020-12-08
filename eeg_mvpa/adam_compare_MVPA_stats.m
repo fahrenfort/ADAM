@@ -153,6 +153,9 @@ if strcmpi(mpcompcor_method,'fdr')
     pStruct = compute_pstructs(h,ClassPvals,ClassTotal{1},ClassTotal{2},cfg,settings);
 elseif strcmpi(mpcompcor_method,'cluster_based')
     % CLUSTER BASED CORRECTION
+    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail);
+    ClassPvals = squeeze(ClassPvals);
+    pValsUncorrected = ClassPvals;
     [ ClassPvals, pStruct ] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},cfg,settings,mask);
 elseif strcmpi(mpcompcor_method,'uncorrected')
     % NO MP CORRECTION
