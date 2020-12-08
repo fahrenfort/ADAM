@@ -378,6 +378,9 @@ else
         title(str2cell(regexprep(stats.condname,'_',' '),'-'),'FontSize',10);
     end
 end
+if strcmpi(plottype,'3D')
+    wraptext('IMPORTANT NOTE: A change was made to the plotting procedure of temporal generalization matrices and frequency plots in version 1.10 of ADAM. All uncorrected significant test points are now plotted as saturated points, regardless of the multiple comparison correction method. Cluster-based permutation corrected tests or FDR corrected tests are encircled by a dark red contour line. If no such line(s) appear(s), none of your tests survived multiple comparison correction.',80);
+end
 
 function [map, H, cfg] = subplot_MVPA(cfg,stats,cGraph,nGraph)
 map = [];
