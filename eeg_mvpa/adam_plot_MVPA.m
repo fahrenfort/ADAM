@@ -5,8 +5,9 @@ function map = adam_plot_MVPA(cfg,varargin)
 % with a thick line on the graph itself and/or with a line close to the time axis (see
 % plotsigline_method method below). For three-dimensional color graphs the uncorrected statistically
 % significant values are saturated, while the non-significant points are desaturated. The FDR or
-% cluster-based corrected values are encircled by a dark-red contour lines. Options exist to plot 
-% multiple conditions in one figure (in case of line plots) or in multiple subplots. By default, for
+% cluster-based corrected values are encircled by a dark-red contour line (for above-chance
+% decoding) or dark-blue contour line (for below chance decoding). Options exist to plot  multiple
+% conditions in one figure (in case of line plots) or in multiple subplots. By default, for
 % time-time or time-frequency maps, a blue-to-red colormap is used (instead of Matlab's default
 % 'jet' or 'parula').
 %
@@ -379,7 +380,7 @@ else
     end
 end
 if strcmpi(plottype,'3D')
-    wraptext('IMPORTANT NOTE: A change was made to the plotting procedure of temporal generalization matrices and frequency plots in version 1.10 of ADAM. All uncorrected significant test points are now plotted as saturated points, regardless of the multiple comparison correction method. Cluster-based permutation corrected tests or FDR corrected tests are encircled by a dark red contour line. If no such line(s) appear(s), none of your tests survived multiple comparison correction.',80);
+    wraptext('IMPORTANT NOTE: A change was made to the plotting procedure of temporal generalization matrices and frequency plots in version 1.10 of ADAM. All uncorrected significant test points are now plotted as saturated points, regardless of the multiple comparison correction method. Cluster-based permutation corrected tests or FDR corrected tests are encircled by a a dark-red contour line (for above chance decoding) or dark-blue contour line (for below chance decoding). If no such line(s) appear(s), none of your tests survived multiple comparison correction.',80);
 end
 
 function [map, H, cfg] = subplot_MVPA(cfg,stats,cGraph,nGraph)
@@ -721,6 +722,7 @@ if strcmpi(plottype,'2D')
     hold off;
 else
     % determine significant time points
+    origdata = data;
     if ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none')
         if exist('pValsUncorrected','Var')
             [data, map] = showstatsTFR(data,pValsUncorrected,acclim);
@@ -765,21 +767,15 @@ else
     
     % plot contour lines of significant values
     if ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none') && ~strcmpi(mpcompcor_method,'uncorrected')
-        contourP = pVals;
-        binary = zeros(size(contourP));
-        binary(contourP <.05) = 1;
-        [L, num] = bwlabel(binary);
-        % cut out blobs smaller than 5 pixels
-        for cBlobs =1:num
-            cN = sum(sum(L == cBlobs));
-            if cN<5
-                L(L == cBlobs) = 0;
-            end
-        end
-        contourP(L==0) = 1;
+        binary = zeros(size(pVals));
+        binary(pVals <.05) = 1;
+        binary(origdata<chance) = -binary(origdata<chance);
+        % make correctly scaled matrix
+        contourmatrix = ones(size(pVals))*chance;
+        contourmatrix(binary<0) = acclim(1) - 0.1;
+        contourmatrix(binary>0) = acclim(2) + 0.1;
         hold on;
-        % plot contour
-        contour(contourP);
+        contour(contourmatrix,acclim,'LineWidth',2);
     end
 
     % plot some help lines
