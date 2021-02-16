@@ -339,7 +339,7 @@ end
 % load data 
 for cFile = 1:numel(filenames)
     msettings = [];
-    msettings.channelset = bundlename_or_bundlelabels;
+    msettings.channelpool = bundlename_or_bundlelabels;
     msettings.erp_baseline = erp_baseline; % NOTE: different in RAW.
     msettings.resample_eeg = false; % NOTE: this line is different in RAW. No resampling done here (yet)...
     msettings.do_csd = do_csd;
