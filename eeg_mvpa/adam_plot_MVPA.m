@@ -755,7 +755,9 @@ else
         xlegend = 'training time in ms';
     end
     if swapaxes
+        origdata = permute(origdata,[2 1 3]); 
         data = permute(data,[2 1 3]);
+        pVals = permute(pVals,[2 1 3]);
         [xaxis,yaxis] = swapvars(xaxis,yaxis);
         [xticks,yticks] = swapvars(xticks,yticks);
         [xlegend,ylegend] = swapvars(xlegend,ylegend);
