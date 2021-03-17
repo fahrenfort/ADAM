@@ -31,21 +31,22 @@ ADAM is an open source Matlab Toolbox. It allows you to perform multivariate ana
 One of the big advantages of this toolbox is that it takes generic input formats for which many import functions are available (EEGLAB or FieldTrip), allowing researchers to do their own pre-processing any which way they like. The toolbox takes care of the intricacies of multivariate analyses (data handling), allowing a wealth of possibilities as specified above, and always has a group analysis as its endpoint. Although everything is scripted, the scripts are easy to use, doable also for novices.
 
 # Requirements
-- A recent version of Matlab (>=2012b, lower versions might or might not work) including the Statistics Toolbox and the Image Processing Toolbox. No special care was taken to exclude functions from other Matlab Toolboxes. Let me know if you find dependencies on other Toolboxes, I might be able to provide a workaround.
+- A recent version of Matlab (>=2012b, lower versions might or might not work) including the "Image processing toolbox", "Signal processing toolbox" and "Statistics toolbox". No special care was taken to exclude functions from other Matlab Toolboxes other than EEGLAB and FieldTrip. Let me know if you find dependencies on other Toolboxes, I might be able to provide a workaround.
 - A recent version of [EEGLAB](https://sccn.ucsd.edu/eeglab/downloadtoolbox.php) (>=13, lower versions might or might not work)
 - A recent install of [FieldTrip](http://www.fieldtriptoolbox.org/download) (>=2015, lower versions might or might not work)
 - A reasonably modern computer (>=8GB memory, enough HD space, modern processor, more is better)
 
 # Version
-The toolbox is currently in version 1.x.x
+The toolbox is currently in version 1.x.x continuous beta
 
 # Cite
 When you use the decoding (BDM) feature, please cite:<br>
 Fahrenfort, J. J., van Driel, J., van Gaal, S., & Olivers, C. N. L. (2018). From ERPs to MVPA Using the Amsterdam Decoding and Modeling Toolbox (ADAM). *Frontiers in Neuroscience*, 12. http://doi.org/10.3389/fnins.2018.00368
 
 When you use the forward modeling (FEM) feature, please cite:<br>
-Fahrenfort, J. J., Grubert, A., Olivers, C. N. L., & Eimer, M. (2017). Multivariate EEG analyses support high-resolution tracking of feature-based attentional selection. *Scientific Reports*, 7(1), 1886. http://doi.org/10.1038/s41598-017-01911-0
+Fahrenfort, J. J. (2020) Multivariate methods to track the spatiotemporal profile of feature-based attentional selection using EEG.  *Pollmann (Ed.), Spatial learning and attention guidance.* Neuromethods. New York, Springer. https://osf.io/srmt2/
 
 
-# Manual
-A citable tutorial article covering how to use the decoding features of the toolbox can be found here: http://doi.org/10.3389/fnins.2018.00368.
+# Manuals
+A citable tutorial article covering how to use the decoding features of the toolbox can be found here: http://doi.org/10.3389/fnins.2018.00368.<br>
+A citable tutorial article covering how to use the forward encoding features of the toolbox can be found here: https://osf.io/srmt2/
