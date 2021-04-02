@@ -26,6 +26,9 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2)
 %                              determined by indiv_pval) is significant. If if mpcompcor_method is
 %                              set to 'fdr', this is value that specifies the false discovery rate
 %                              q (see help fdr_bh for details).
+%       cfg.paired           = true; (default) for a paired t-test or false; for an unpaired
+%                              t-test.
+%       cfg.vartype          = 'equal' (default) whether an unpaired t-test assumes equal variances.
 %       cfg.tail             = 'both' (default); string specifiying whether statistical tests are
 %                              done right- ('right') or left-tailed ('left'), or two-tailed
 %                              ('both'). Right-tailed tests for positive values, left-tailed tests
@@ -79,7 +82,7 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2)
 %     faces); diffstats will then also be a 1x2 structure-array reflecting the contrast EEG>MEG for:
 %     famous vs non-famous, and famous vs scrambled.
 %
-% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018
+% part of the ADAM toolbox, by J.J.Fahrenfort, VU/UvA, 2017/2018/2021
 % 
 % See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
@@ -94,6 +97,8 @@ tail = 'both';
 cluster_pval = .05;
 indiv_pval = .05;
 mpcompcor_method = 'uncorrected';
+vartype = 'equal';
+paired = true;
 plot_dim = 'time_time';
 trainlim = [];
 testlim= [];
@@ -110,7 +115,7 @@ end
 
 % pack cfg with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,trainlim,testlim,reduce_dims,plot_dim,nameOfStruct2Update);
+cfg = v2struct(reduce_dims,tail,cluster_pval,indiv_pval,tail,mpcompcor_method,paired,vartype,trainlim,testlim,reduce_dims,plot_dim,nameOfStruct2Update);
 
 difstats = [];
 for cStats = 1:numel(stats1)
@@ -119,14 +124,30 @@ end
 
 function difstats = sub_compare_MVPA_stats(cfg,stats1,stats2,mask)
 % unpack cfg
+vartype = 'equal';
 v2struct(cfg);
 % compute some values
 ClassTotal{1} = stats1.indivClassOverTime;
 ClassTotal{2} = stats2.indivClassOverTime;
-nSubj = size(ClassTotal{1},1);
-difstats.ClassOverTime = shiftdim(mean(ClassTotal{1}-ClassTotal{2}));
-difstats.indivClassOverTime = ClassTotal{1}-ClassTotal{2};
-difstats.StdError = shiftdim(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj));
+% check whether to do paired or unpaired t-tests, in case someone did not specify
+if paired && size(ClassTotal{2},1) ~= size(ClassTotal{1},1)
+    paired = false;
+    disp('not the same number of subjects, so doing an unpaired test');
+end
+if paired
+    nSubj = size(ClassTotal{1},1);
+    difstats.ClassOverTime = shiftdim(mean(ClassTotal{1}-ClassTotal{2}));
+    difstats.indivClassOverTime = ClassTotal{1}-ClassTotal{2};
+    difstats.StdError = shiftdim(std(ClassTotal{1}-ClassTotal{2})/sqrt(nSubj));
+else
+    nSubj1 = size(ClassTotal{1},1);
+    nSubj2 = size(ClassTotal{2},1);
+    difstats.ClassOverTime = shiftdim(mean(ClassTotal{1}) - mean(ClassTotal{2}));
+    % equal variance
+    difstats.StdError = shiftdim(sqrt((((nSubj1-1)*std(ClassTotal{1}).^2+(nSubj2-1)*std(ClassTotal{2}).^2)/(nSubj1+nSubj2-2)) * (1/nSubj1+1/nSubj2)));
+    % unequal variance
+    difstats.StdError = shiftdim(sqrt(std(ClassTotal{1}).^2/nSubj1+std(ClassTotal{2}).^2/nSubj2));
+end
 if ~isempty(strfind(stats1.condname,'subtract')) || ~isempty(strfind(stats1.condname,'average'))
     difstats.condname = [stats1.condname ' - ' stats2.condname];
 else
@@ -141,26 +162,30 @@ if isempty(mask)
 	mask = ones([size(ClassTotal{1},2) size(ClassTotal{1},3)]);
 end
 
-% note that 'alpha' and 'tail' do not need to be specified explictly, the ttest and ttest2 functions
-% are backwards compatible with Matlab 2012b
+% note that 'alpha' and 'tail' need to be specified explictly using name/value pairs, the ttest and
+% ttest2 functions are no longer backwards compatible with Matlab 2012b
+if any(strcmpi(mpcompcor_method,{'fdr','cluster_based','uncorrected'}))
+    if paired
+        [h,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},'alpha',indiv_pval,'tail',tail);
+    else
+        [h,ClassPvals] = ttest2(ClassTotal{1},ClassTotal{2},'alpha',indiv_pval,'tail',tail,'vartype',vartype);
+    end
+    ClassPvals = squeeze(ClassPvals);
+else
+    cfg.mpcompcor_method = 'none';
+end
 if strcmpi(mpcompcor_method,'fdr')
     % FDR CORRECTION
-    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail);
-    ClassPvals = squeeze(ClassPvals);
     pValsUncorrected = ClassPvals;
     h = fdr_bh(ClassPvals,cluster_pval,'dep');
     ClassPvals(~h) = 1;
     pStruct = compute_pstructs(h,ClassPvals,ClassTotal{1},ClassTotal{2},cfg,settings);
 elseif strcmpi(mpcompcor_method,'cluster_based')
     % CLUSTER BASED CORRECTION
-    [~,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail);
-    ClassPvals = squeeze(ClassPvals);
     pValsUncorrected = ClassPvals;
     [ ClassPvals, pStruct ] = cluster_based_permutation(ClassTotal{1},ClassTotal{2},cfg,settings,mask);
 elseif strcmpi(mpcompcor_method,'uncorrected')
-    % NO MP CORRECTION
-    [h,ClassPvals] = ttest(ClassTotal{1},ClassTotal{2},indiv_pval,tail);
-    ClassPvals = squeeze(ClassPvals);
+    % NO MCP CORRECTION
     pStruct = compute_pstructs(squeeze(h),ClassPvals,ClassTotal{1},ClassTotal{2},cfg,settings);
 else
     % NO TESTING, PLOT ALL
