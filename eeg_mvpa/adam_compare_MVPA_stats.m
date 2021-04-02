@@ -143,10 +143,11 @@ else
     nSubj1 = size(ClassTotal{1},1);
     nSubj2 = size(ClassTotal{2},1);
     difstats.ClassOverTime = shiftdim(mean(ClassTotal{1}) - mean(ClassTotal{2}));
-    % equal variance
-    difstats.StdError = shiftdim(sqrt((((nSubj1-1)*std(ClassTotal{1}).^2+(nSubj2-1)*std(ClassTotal{2}).^2)/(nSubj1+nSubj2-2)) * (1/nSubj1+1/nSubj2)));
-    % unequal variance
-    difstats.StdError = shiftdim(sqrt(std(ClassTotal{1}).^2/nSubj1+std(ClassTotal{2}).^2/nSubj2));
+    if strcmpi(vartype,'equal') % equal variance
+        difstats.StdError = shiftdim(sqrt((((nSubj1-1)*std(ClassTotal{1}).^2+(nSubj2-1)*std(ClassTotal{2}).^2)/(nSubj1+nSubj2-2)) * (1/nSubj1+1/nSubj2)));
+    elseif strcmpi(vartype,'unequal') % unequal variance
+        difstats.StdError = shiftdim(sqrt(std(ClassTotal{1}).^2/nSubj1+std(ClassTotal{2}).^2/nSubj2));
+    end
 end
 if ~isempty(strfind(stats1.condname,'subtract')) || ~isempty(strfind(stats1.condname,'average'))
     difstats.condname = [stats1.condname ' - ' stats2.condname];
