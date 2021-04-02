@@ -46,6 +46,7 @@ cluster_pval = .05; % default = .05
 iterations = 1000;
 paired = true;
 tail = 'both';
+vartype = 'equal';
 v2struct(cfg);
 pval = [indiv_pval, cluster_pval];
 
@@ -55,15 +56,13 @@ if numel(data2_or_chance_level) == 1
 else
     data2 = data2_or_chance_level;
 end
-
 % check whether to do paired or unpaired t-tests, assumes paired when data size is equal (addmittedly a quick hack)
-if size(data2,1) ~= size(data1,1)
+if paired && size(data2,1) ~= size(data1,1)
     paired = false;
     disp('not the same number of subjects, so doing an unpaired test');
 end
-
 % step 1 to 5 compute observed cluster statistics
-[actPosSizes, actNegSizes, posLabels, negLabels, sigClusters] = compute_cluster_sizes(data1,data2,pval(1),tail,mask,connectivity,paired);
+[actPosSizes, actNegSizes, posLabels, negLabels, sigClusters] = compute_cluster_sizes(data1,data2,pval(1),tail,mask,connectivity,paired,vartype);
 clusterPvals = ones(size(sigClusters));
 
 % step 6 iterate to determine how often permuted clusters exceed the observed cluster threshold
@@ -90,7 +89,7 @@ for cIt = 1:iterations
     end
 
     % repeat step 1 to 5 recompute cluster sizes under random permutation
-    [randPosSizes, randNegSizes] = compute_cluster_sizes(randdata1,randdata2,pval(1),tail,mask,connectivity,paired);
+    [randPosSizes, randNegSizes] = compute_cluster_sizes(randdata1,randdata2,pval(1),tail,mask,connectivity,paired,vartype);
     maxRandSize = max([randPosSizes randNegSizes]);
 
     % count cluster p-values
@@ -138,7 +137,7 @@ end
 pStruct.posclusters = compute_pstruct(posLabels,clusterPvals,squeeze(mean(data1)-mean(data2)),cfg,settings,mask,connectivity);
 pStruct.negclusters = compute_pstruct(negLabels,clusterPvals,squeeze(mean(data2)-mean(data1)),cfg,settings,mask,connectivity);
 
-function [posSizes, negSizes, posLabels, negLabels, pVals] = compute_cluster_sizes(data1,data2,indiv_pval,tail,mask,connectivity,paired)
+function [posSizes, negSizes, posLabels, negLabels, pVals] = compute_cluster_sizes(data1,data2,indiv_pval,tail,mask,connectivity,paired,vartype)
 % step 1, determine 'actual' p values
 % restrict data
 for c = 1:size(data1)
@@ -150,12 +149,12 @@ end
 
 pVals = ones(size(mask));
 tVals = zeros(size(mask));
-% note that 'alpha' and 'tail' do not need to be specified, the ttest and ttest2 functions are
-% backwards compatible with Matlab 2012b
+% note that 'alpha' and 'tail' need to be specified explictly using name/value pairs, the ttest and
+% ttest2 functions are no longer backwards compatible with Matlab 2012b
 if paired
-    [~,pVals(mask),~,stats] = ttest(maskdata1,maskdata2,indiv_pval,tail);
+    [~,pVals(mask),~,stats] = ttest(maskdata1,maskdata2,'alpha',indiv_pval,'tail',tail);
 else
-    [~,pVals(mask),~,stats] = ttest2(maskdata1,maskdata2,indiv_pval,tail);    
+    [~,pVals(mask),~,stats] =  ttest2(maskdata1,maskdata2,'alpha',indiv_pval,'tail',tail,'vartype',vartype);  
 end
 tVals(mask) = squeeze(stats.tstat);
 
