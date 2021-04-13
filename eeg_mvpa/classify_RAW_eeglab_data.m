@@ -182,6 +182,7 @@ unbalance_classes = false;
 whiten = false;
 whiten_test_using_train = false;
 no_anti_alias = false;
+reproduce = false;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
         method = methods{c};
@@ -273,6 +274,9 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'no_anti_alias'}))
         no_anti_alias = true;
     end
+    if any(strcmpi(methods{c},{'reproduce'}))
+        reproduce = true;
+    end
 end
 if ~do_FEM && ~do_BDM
     do_BDM = true;
@@ -332,6 +336,12 @@ end
 % display class specification
 wraptext('These are the class specifications. Each row contains the event codes that go into a single class (first row training, second row testing):',80);
 celldisp(condSet,'class_spec');
+% set random number generator
+if reproduce
+    rng('default');
+else
+    rng('shuffle');
+end
 
 % Determine bundle name and/or electrode selection
 [channelset, bundlename_or_bundlelabels] = return_channel_bundle(channelset);
@@ -363,11 +373,8 @@ for cFile = 1:numel(filenames)
     msettings.clean_window = clean_window;
     msettings.shuffle_trials = true;
     [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,msettings);
-    
     % randomize labels for first level random permutation testing. NOTE: permuting all labels regardless of the conditions in the experiment
     if randomize_labels
-        rng default;
-        rng('shuffle'); % random every time
         FT_EEG(cFile).trialinfo = FT_EEG(cFile).trialinfo(randperm(numel(FT_EEG(cFile).trialinfo)));
     end
 end
