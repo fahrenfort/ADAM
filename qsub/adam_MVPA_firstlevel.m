@@ -266,6 +266,14 @@ function adam_MVPA_firstlevel(cfg)
 %                                    null-results under random permutation, which can subsequently
 %                                    be used as input for single subject random-permutation
 %                                    fixed-effects tests.
+%       cfg.reproduce              = 'no'; (default) when set to 'yes', it initializes the random
+%                                    number generator to the same sequence so that the
+%                                    randomizations will happen in exactly the same way every time
+%                                    you run a decoding analysis. This can be useful if you want to
+%                                    reproduce the exact same result after making some changes to
+%                                    your analysis pipeline to compare the differences. Normally
+%                                    this is set to 'no', so that you get truely random sequences
+%                                    every time you run the toolbox.
 %       cfg.qsub                   = Struct that allows running these analyses on a Linux computing
 %                                    cluster. When specifying this variable, the analysis will not
 %                                    run locally but attempt to generate qsub files to be submitted
@@ -395,6 +403,7 @@ clean_window = [];          % specifies the window used to reject muscle artifac
 sigma_basis_set = 0;        % specifies the width of the basis set (0 means box-car)
 whiten = 'no';              % specifies whether to whiten the data prior to decoding
 anti_alias = 'yes';         % specifies whether to apply a lowpass filter prior to downsampling
+reproduce = 'no';           % specifies whether to reset the random number generator
 
 % unpack cfg
 v2struct(cfg);
@@ -490,7 +499,12 @@ if strcmpi(anti_alias,'yes')
 else
     anti_alias = 'no_anti_alias';
 end
-str_settings = cell2csv({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window,anti_alias});
+if strcmpi(reproduce,'no')
+    reproduce = '';
+else
+    reproduce = 'reproduce';
+end
+str_settings = cell2csv({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window,anti_alias,reproduce});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';

@@ -199,8 +199,6 @@ end
 
 % destroy temporal order of trials
 if shuffle_trials
-    rng default;
-    rng('shuffle');
     shuffle_order = randperm(numel(FT_EEG.trialinfo));
     FT_EEG.trialinfo = FT_EEG.trialinfo(shuffle_order);
     FT_EEG.trial = FT_EEG.trial(shuffle_order,:,:);

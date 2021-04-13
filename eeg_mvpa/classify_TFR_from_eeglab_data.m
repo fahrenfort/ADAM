@@ -175,6 +175,7 @@ unbalance_events = false;
 unbalance_classes = false;
 whiten = false;
 whiten_test_using_train = false;
+reproduce = false;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'})) == 1
         method = methods{c};
@@ -266,6 +267,12 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'nowhiten'}))
         whiten = false;
     end
+    if any(strcmpi(methods{c},{'no_anti_alias'}))
+        no_anti_alias = true;
+    end
+    if any(strcmpi(methods{c},{'reproduce'}))
+        reproduce = true;
+    end
 end
 if ~do_FEM && ~do_BDM
     do_BDM = true;
@@ -322,6 +329,15 @@ if ~compute_performance && nFolds > 1
     compute_performance = true;
     wraptext('WARNING: Always computing performance when using leave-on-out. Only set cfg.compute_performance = ''no'' when you do not have useful class labels to compute performance with. Defaulting back to cfg.compute_performance = ''yes''.',80);
 end
+% display class specification
+wraptext('These are the class specifications. Each row contains the event codes that go into a single class (first row training, second row testing):',80);
+celldisp(condSet,'class_spec');
+% set random number generator
+if reproduce
+    rng('default');
+else
+    rng('shuffle');
+end
 
 % display class specification
 wraptext('These are the class specifications. Each row contains the event codes that go into a single class (first row training, second row testing):',80);
@@ -342,6 +358,7 @@ for cFile = 1:numel(filenames)
     msettings.channelpool = bundlename_or_bundlelabels;
     msettings.erp_baseline = erp_baseline; % NOTE: different in RAW.
     msettings.resample_eeg = false; % NOTE: this line is different in RAW. No resampling done here (yet)...
+    msettings.no_anti_alias = no_anti_alias;
     msettings.do_csd = do_csd;
     msettings.clean_data = clean_muscle;
     msettings.clean_window = clean_window;
@@ -349,15 +366,14 @@ for cFile = 1:numel(filenames)
     [FT_EEG(cFile), filenames{cFile}, chanlocs{cFile}] = read_raw_data(filepath,filenames{cFile},outpath,msettings);
     % randomize labels for first level random permutation testing. NOTE: permuting all observations/labels regardless of the conditions in the experiment
     if randomize_labels
-        rng default;
-        rng('shuffle'); % random every time
         FT_EEG(cFile).trialinfo = FT_EEG(cFile).trialinfo(randperm(numel(FT_EEG(cFile).trialinfo)));
     end
 end
 
- % duplicate data for testing if only one file is available
+% duplicate data for testing if only one file is available
 if numel(filenames) == 1
     FT_EEG(2) = FT_EEG;
+    chanlocs{2} = chanlocs{1};
 end
 
 % extract some relevant trial info, training and testing data
@@ -366,14 +382,14 @@ for cSet = 1:2
     if unbalance_events
         trialinfo{cSet} = FT_EEG(cSet).trialinfo;
     else
-        % bin/balance dataset (default action, this is not to achieve actual binnning, it just balances the dataset in case separate conditions still exist in each stimulus class)
+        % bin/balance dataset (default action, this is not to achieve actual binnning, it just applies within-class balancing of conditions)
         FT_EEG_BINNED(cSet) = compute_bins_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','original');
         trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo;
         oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;
-        % a bit of hack to assign an unknown event number to discarded trials
-        FT_EEG(cSet).trialinfo(setdiff(1:numel(FT_EEG(cSet).trialinfo),[oldindex{cSet}{:}])) = -99; 
+        % a bit of hack to assign event number -99 to unbalanced events (i.e. by selecting those events from thisCondSet that were not used to compute FT_EEG_BINNED)
+        FT_EEG(cSet).trialinfo(setdiff(find(ismember(FT_EEG(cSet).trialinfo,[thisCondSet{:}])),[oldindex{cSet}{:}])) = -99;
     end
-    % compute ERPs (baseline corrected, resampled, and channels already selected)
+    % compute ERPs (baseline corrected, resampled, channels already selected)
     FT_ERP{cSet} = compute_erp_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','bin');
     % also compute TFR for entire set
     [~, FT_TFR{cSet}] = compute_TFR_from_FT_EEG(FT_EEG(cSet),thisCondSet,resample_eeg,orig_method,tf_baseline,erp_baseline,frequencies);
