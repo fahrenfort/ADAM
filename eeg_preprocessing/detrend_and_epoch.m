@@ -119,7 +119,7 @@ if remove_bad_chans
     EEG_nobadchans = clean_channels(EEG_filt);
     orig_chanlocs = EEG.chanlocs;
     clean_chanlocs = EEG_nobadchans.chanlocs;
-    rej_channels = setdiff({orig_chanlocs.labels},{clean_chanlocs.labels});
+    rej_channels = setdiff({orig_chanlocs.labels},{clean_chanlocs.labels 'HEOG' 'VEOG' 'EOG' 'EXG1' 'EXG2' 'EXG3' 'EXG4' 'EXG5' 'EXG6' 'EXG7' 'EXG8'});
     % reject bad channels
     EEG = pop_select(EEG, 'nochannel', rej_channels);
     EEG_filt = pop_select(EEG_filt, 'nochannel', rej_channels);
@@ -127,6 +127,7 @@ end
 if mask_bad_data 
     % EEG_filt = pop_eegfiltnew(EEG_filt, 110, 140); % interested in muscle artefacts in particular, so band-pass between 110 and 140
     % create mask of the data that contains clean data (to mask out dirty parts for detrending)
+    % actually this is not necessary since glitches are already filtered out through iterative masking 
     for cChan = 1:size(EEG_filt.data,1)
         temp_EEG = pop_select(EEG_filt, 'channel', cChan);
         [~,clean_mask(cChan,:)] = clean_windows(temp_EEG,[],[-25,25]);
@@ -164,16 +165,16 @@ trialinfo(:,2) = trialinfo(:,2); % in milliseconds
 % eeg_data = eeg_data-repmat(mean(eeg_data,2),[1 size(eeg_data,2)]);
 
 % mirror-pad edges of the unepoched data, so that extracting wide padded epochs will not be problematic
-eeg_data = padarray(eeg_data,[0 pad_length*srate],'both','symmetric');
+eeg_data = padarray(eeg_data,[0 round(pad_length*srate)],'both','symmetric');
 
 % eeg_time_old = padarray(eeg_time,[0 pad_length*srate],NaN,'both'); -> this fills it with NaNs which we don't want
 % instead, let's mirror-pad the time array with time (also going negative) 
 eeg_time_step = (eeg_time(end)-eeg_time(1))/(numel(eeg_time)-1); % determine step size
-eeg_time = (eeg_time(1)-(eeg_time_step*pad_length*srate)):eeg_time_step:(eeg_time(end)+(eeg_time_step*pad_length*srate)); % create time line
+eeg_time = (eeg_time(1)-(eeg_time_step*round(pad_length*srate))):eeg_time_step:(eeg_time(end)+(eeg_time_step*round(pad_length*srate))); % create time line
 
 % create a mask for all trials
 if mask_bad_data
-    eeg_mask = padarray(clean_mask,[0 pad_length*srate],'both','symmetric'); % pad the clean_mask
+    eeg_mask = padarray(clean_mask,[0 round(pad_length*srate)],'both','symmetric'); % pad the clean_mask
 else
     eeg_mask = ones(size(eeg_data)); % no masking of bad data, just use the mirror-padded eeg_data
 end
@@ -205,8 +206,8 @@ for cTrials = 1:size(trialinfo,1)
     stop_ind = nearest(eeg_time,trialinfo(cTrials,2)+end_epoch);
     
     % extract wide padded trial
-    pad_time = eeg_time((start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
-    pad_data = eeg_data(:,(start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate));
+    pad_time = eeg_time((start_ind-round(pad_length/2*srate)):(stop_ind+round(pad_length/2*srate)));
+    pad_data = eeg_data(:,(start_ind-round(pad_length/2*srate)):(stop_ind+round(pad_length/2*srate)));
     
     temp_mask = eeg_mask; % copy from the source
     if strcmpi(preset_mask_on_trial, 'current') % mask only the current trial
@@ -215,7 +216,7 @@ for cTrials = 1:size(trialinfo,1)
         temp_mask(:,mask_startind:mask_stopind) = 0; % bugfix, missing channel in mask
     end
     % when preset_mask_on_trial == 'none', no preset masking is be applied
-    pad_mask = temp_mask(:,(start_ind-pad_length/2*srate):(stop_ind+pad_length/2*srate)); % bugfix, missing channel in mask
+    pad_mask = temp_mask(:,(start_ind-round(pad_length/2*srate)):(stop_ind+round(pad_length/2*srate))); % bugfix, missing channel in mask
     clear temp_mask;
     
     % Do detrending, ONLY if polynomial_order > 0
@@ -237,15 +238,15 @@ for cTrials = 1:size(trialinfo,1)
         % take out the regression line manually
         clean_data = pad_data - regressline2'; % manually take out regression slope from actual data
         % epoch original data to a narrow window
-        old_trial(cTrials,:,:) = pad_data_orig(:,(pad_length/2*srate+1):end-pad_length/2*srate);
+        old_trial(cTrials,:,:) = pad_data_orig(:,(round(pad_length/2*srate)+1):end-round(pad_length/2*srate));
     else
         clean_data = pad_data;
     end
     
     % epoch data to a narrow window
-    new_trial(cTrials,:,:) = clean_data(:,(pad_length/2*srate+1):end-pad_length/2*srate);
+    new_trial(cTrials,:,:) = clean_data(:,(round(pad_length/2*srate)+1):end-round(pad_length/2*srate));
     new_time = pad_time - eeg_time(zero_ind);
-    trial_time = new_time((pad_length/2*srate+1):end-pad_length/2*srate);
+    trial_time = new_time((round(pad_length/2*srate)+1):end-round(pad_length/2*srate));
     
     %% plot a trial halfway through the experiment for illustration purposes
     if cTrials == round(size(trialinfo,1)/2) && polynomial_order > 0
@@ -280,10 +281,11 @@ for cTrials = 1:size(trialinfo,1)
         title('raw data');
         minlim = min(min(pad_data_orig(elec_index,sample_index)));
         maxlim = top+(top/5);
-        ylim([minlim-top/5 maxlim]);
+        % ylim(sort([minlim-top/5 maxlim]));
+        ylim(sort([minlim+minlim/10 maxlim]));
         % ylim([-3 3]); % for figure 3, remove
         xlim([min(new_time) max(new_time)+(max(new_time)-min(new_time))/4]/1000);
-        xlim([-25 31.5]); % for figure 3, remove
+        % xlim([-25 31.5]); % for figure 3, remove
         % make mask for 10 electrodes, middle plot
         plot_mask = w2;
         plot_mask(plot_mask==0) = NaN;
@@ -303,7 +305,7 @@ for cTrials = 1:size(trialinfo,1)
         title('after 1st order polynomial removal');
         minlim = min(min(pad_data(elec_index,trial_index)));
         maxlim = top+(top/5);
-        ylim([minlim+minlim/10 maxlim]);
+        ylim(sort([minlim+minlim/10 maxlim]));
         % ylim([-2.5 2.5]); % for figure 3, remove
         xlim([min(new_time) max(new_time)+(max(new_time)-min(new_time))/4]/1000);
         % xlim([-25 31.5]); % for figure 3, remove
@@ -315,7 +317,7 @@ for cTrials = 1:size(trialinfo,1)
         title(['after ' num2str(polynomial_order) 'th order polynomial removal']);
         minlim = min(min(clean_data(elec_index,trial_index)));
         maxlim = max(max(clean_data(elec_index,trial_index)));
-        ylim([minlim+minlim/10  maxlim+maxlim/10]);
+        ylim(sort([minlim+minlim/10  maxlim+maxlim/10]));
         % ylim([-1 1]); % for figure 3, remove
         xlim([min(new_time) max(new_time)+(max(new_time)-min(new_time))/4]/1000);
         % xlim([-25 31.5]); % for figure 3, remove

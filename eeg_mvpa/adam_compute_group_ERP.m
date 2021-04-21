@@ -73,6 +73,8 @@ function stats = adam_compute_group_ERP(cfg,folder_name)
 %                              conditions specified in condition_def, which performs a
 %                              condition-comparison: the second condition is first subtracted from
 %                              the first condition, and the result is tested against zero.
+%       cfg.erpset           = 'test' (default) or 'train'. Specifies which set to test, in case
+%                              training and testing was done on different datasets.
 %       cfg.timelim          = [min max]; vector specifiyin a limited time range to analyze, if
 %                              desired; if not specified, the whole time range is used.
 %       cfg.plotsubjects     = false (default); or true; if true, the individual ERPs of all
@@ -146,6 +148,7 @@ if nargin<2
     folder_name = '';
 end
 plot_order = {};
+erpset = 'test';
 
 % backwards compatibility
 v2struct(cfg);
@@ -161,6 +164,7 @@ if exist('channels','var') && ~isfield(cfg,'channelpool')
     channelpool = channels;
     cfg.channelpool = channelpool;
 end
+cfg.erpset = erpset;
 
 % Main routine, is a folder name specified? If not, pop up selection dialog
 if isempty(folder_name)
@@ -311,7 +315,11 @@ for cSubj = 1:nSubj
     end
     
     if iscell(FT_ERP)
-        FT_ERP = FT_ERP{2};
+        if strcmpi(erpset,'train')
+            FT_ERP = FT_ERP{1};
+        else
+            FT_ERP = FT_ERP{2};
+        end
         if isfield(FT_ERP,'origindex')
             FT_ERP = rmfield(FT_ERP,'origindex');
         end
@@ -326,7 +334,12 @@ for cSubj = 1:nSubj
     if numel(FT_ERP) == 1
         settings.times = {FT_ERP.time, FT_ERP.time};
     else
-        settings.times = {FT_ERP{1}.time, FT_ERP{1}.time};
+        if strcmpi(erpset,'train')
+            settings.times = {FT_ERP{1}.time, FT_ERP{1}.time};
+        else
+            settings.times = {FT_ERP{2}.time, FT_ERP{2}.time};
+        end
+        
     end
     
     % possible use cases:
