@@ -95,8 +95,7 @@ function adam_MVPA_firstlevel(cfg)
 %                                    (false alarm rate),'mr' (miss rate),'cr' (correct rejection
 %                                    rate), in those cases ADAM assumes that that the first class
 %                                    contains the 'signal' stimulus and the second class contains
-%                                    the 'noise' stimulus. In the near future information prevalence
-%                                    will be implemented.
+%                                    the 'noise' stimulus.
 %       cfg.crossclass             = 'no'; (default) whether ('yes') or not ('no') to apply
 %                                    time-by-time cross-classification, yielding temporal
 %                                    generalization matrices; specifying 'no' will simply compute
@@ -159,30 +158,43 @@ function adam_MVPA_firstlevel(cfg)
 %                                    depiction of the artefacts that were removed (.png), as well as
 %                                    a list of the trial numbers that were removed (.txt).
 %       cfg.resample               = 'no' (default); or specify an integer to which to resample
-%                                    your data; this is recommended if you have a very high sampling
+%                                    your data; this is recommended if you have a high sampling
 %                                    rate (e.g. >250 Hz), especially if you want to perform
 %                                    cross-classification (temporal generalization, see under
 %                                    cfg.crossclass above).
-%                                    Note that resampling involves applying a lowpass filter to
-%                                    prevent aliasing. This can produce edged artefacts, and can
-%                                    have serious temporal effects. If you are interested in precise
-%                                    timing, you can turn this off by setting cfg.anti_alias = 'no';
-%                                    Also see: Vanrullen, R. (2011); Van Driel, J. et al. (2020)
-%                                    When resampling, it is further recommended that the original
-%                                    sampling frequency is a multiple of the frequency to which to
-%                                    downsample (e.g. if the original sampling frequency
-%                                    is 512Hz, do cfg.resample = 256; or cfg.resample = 128; etc)
-%                                    but this is not required. When decoding raw EEG, the signal is
-%                                    resampled using shape-preserving piecewise cubic interpolation.
+%       cfg.resample_method        = 'resample' (default) resamples the signal to a new sampling
+%                                    rate using shape-preserving piecewise cubic interpolation.
+%                                    Note that this applies a lowpass filter prior to resampling, to
+%                                    prevent aliasing. However, lowpass filters can produce edge
+%                                    artefacts, and temporal displacements, also see: Vanrullen, R.
+%                                    (2011). To prevent using a lowpass filter, use
+%                                    'downsample', which disables the anti-alias lowpass filter, as
+%                                    was done in Van Driel, J. et al. (2020). The disadvantage of
+%                                    downsample is that it takes every nth sample, discarding any
+%                                    samples in between. To utilize all time points, use 
+%                                    'average_timebin', which also turns off the anti-alias filter,
+%                                    but in addition averages across the time-bins that would
+%                                    otherwise be discarded (i.e. for example, when going from a
+%                                    sampling rate of 8 Hz to a sampling rate of 2 Hz, every four
+%                                    samples are being averaged to arrive at 2 Hz. 
+%                                    Note that for 'downsample' or 'average_timebin' to work, the
+%                                    new sampling frequency has to be a proper divisor of the
+%                                    original sampling rate , e.g. if the original sampling
+%                                    rate is 512Hz, one needs to pick cfg.resample = 256; or
+%                                    cfg.resample = 128; etc. If one fails to do so, the method
+%                                    reverts to 'resample' instead of 'downsample' or
+%                                    'average_timebin'.
 %                                    When time-frequency representations are computed prior to
 %                                    decoding, resampling is applied after time-frequency
 %                                    decomposition (so the TFRs are computed on the original data,
 %                                    prior to resampling).
-%       cfg.anti_alias             = 'yes' (default); set to 'no' to prevent anti-aliasing when
-%                                    resampling the data prior to decoding.
 %       cfg.erp_baseline           = 'no' (default); or specify a time window according to
 %                                    [begin,end]; always in SECONDS, e.g. cfg.erp_baseline =
 %                                    [-.25,0];
+%                                    Specify a different baseline for training and testing data
+%                                    using e.g. [-.25,0; -.5,0] for 250 ms baseline for training and
+%                                    500 ms baseline window for testing. To turn off baseline for
+%                                    the testing set, do [-.25,0; 0,0].
 %       cfg.tfr_baseline           = 'no' (default); or specify a time window according to
 %                                    [begin,end]; always in SECONDS, e.g. cfg.tfr_baseline =
 %                                    [-.45,-.2];
@@ -402,8 +414,9 @@ tfr_method = 'total';       % computes total power, alternative is 'induced' or 
 clean_window = [];          % specifies the window used to reject muscle artifacts
 sigma_basis_set = 0;        % specifies the width of the basis set (0 means box-car)
 whiten = 'no';              % specifies whether to whiten the data prior to decoding
-anti_alias = 'yes';         % specifies whether to apply a lowpass filter prior to downsampling
+anti_alias = 'yes';         % specifies whether to apply a lowpass filter prior to downsampling (deprecated)
 reproduce = 'no';           % specifies whether to reset the random number generator
+resample_method = 'resample'; % specifies the method to use for resampling ('resample' default, or 'downsample' or 'average_timebin')
 
 % unpack cfg
 v2struct(cfg);
@@ -494,17 +507,15 @@ end
 if ~isempty(sigma_basis_set)
     sigma_basis_set = sprintf('sigma%f',sigma_basis_set);
 end
-if strcmpi(anti_alias,'yes')
-    anti_alias = '';
-else
-    anti_alias = 'no_anti_alias';
+if strcmpi(anti_alias,'no')
+    resample_method = 'downsample';
 end
 if strcmpi(reproduce,'no')
     reproduce = '';
 else
     reproduce = 'reproduce';
 end
-str_settings = cell2csv({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window,anti_alias,reproduce});
+str_settings = cell2csv({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window,reproduce,resample_method});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
     crossclass = '0';
@@ -520,12 +531,20 @@ crossclass_resample = sprintf('%s,%s',crossclass,resample);
 if strcmpi(erp_baseline,'no') || isempty(erp_baseline)
     erp_baseline = '0,0';
 elseif ~ischar(erp_baseline)
-    erp_baseline = sprintf('%f,%f',erp_baseline);
+    if isvector(erp_baseline)
+        erp_baseline = sprintf('%f,%f',erp_baseline);
+    elseif ismatrix(erp_baseline)
+        erp_baseline = sprintf('%f,%f;%f,%f',erp_baseline);
+    end
 end
 if strcmpi(tfr_baseline,'no') || isempty(tfr_baseline)
     tfr_baseline = '0,0';
 elseif ~ischar(tfr_baseline)
-    tfr_baseline = sprintf('%f,%f',tfr_baseline);
+    if isvector(tfr_baseline)
+        tfr_baseline = sprintf('%f,%f',tfr_baseline);
+    elseif ismatrix(tfr_baseline)
+        tfr_baseline = sprintf('%f,%f;%f,%f',tfr_baseline);
+    end
 end
 tfr_and_erp_baseline = sprintf('%s;%s',tfr_baseline,erp_baseline);
 if isempty(frequencies)
@@ -549,7 +568,7 @@ if ~exist('qsub','var') || isempty(qsub) % run local
     for cChannels = 1:numel(channelpool) % channelpool{cChannels}
         for cSubj = 1:numel(filenames)
             for cRepeat = 1:repeat
-                try
+                %try
                     disp(['Analyzing subject ' filenames{cSubj} ]);
                     if strcmpi(raw_or_tfr,'raw')
                         classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,erp_baseline,class_spec{:});
@@ -557,12 +576,12 @@ if ~exist('qsub','var') || isempty(qsub) % run local
                         classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
                     end
                     disp('Done.');
-                catch ME
-                    disp(ME.message);
-                    disp('************************************************************************************************************');
-                    disp(['ERROR: could not analyze data from subject ' filenames{cSubj} '. Skipping and continuing to next subject.']);
-                    disp('************************************************************************************************************');
-                end
+%                 catch ME
+%                     disp(ME.message);
+%                     disp('************************************************************************************************************');
+%                     disp(['ERROR: could not analyze data from subject ' filenames{cSubj} '. Skipping and continuing to next subject.']);
+%                     disp('************************************************************************************************************');
+%                 end
             end
         end
    end

@@ -9,7 +9,7 @@ function compute_ICs_new(filepath,filename,outpath,interpolate_channels,cleandat
 % If highpass = .1; (default = 'no') the algorithm also applies a highpass filter prior to ICA.
 % If include_EOG = 'yes', the algorithm applies ICA to EOG channels too (default = 'no').
 %
-% J.J.Fahrenfort, VU, 2014, 2016, 2019
+% J.J.Fahrenfort, VU/UvA, 2014, 2016, 2019, 2021
 if nargin < 7
     include_EOG = true;
 end
@@ -88,30 +88,41 @@ end
 
 % apply highpass filter
 if highpass ~= false
+    disp('applying highpass filter prior to ICA');
     EEG = pop_eegfiltnew(EEG, highpass, 0);
+else
+    disp('no highpass filter is applied prior to ICA');
 end
 
-% interpolate bad channels
+% interpolate bad channels, only works on continuous data
 if interpolate_channels
+    disp(['attempting to identify and interpolate bad electrodes for ' filename ]);
+    % identify bad channels
+    rejected_electrodes = [];
     % read in text file that says which electrodes to interpolate (if present)
-    % This way you can use the same electrodes that are interpolated in the
-    % actual analysis dataset
-    if ~isempty(dir([filepath filesep 'interpolated_electrodes_*.txt'])) 
-        if exist([filepath filesep 'interpolated_electrodes_' filename '.txt'],'file')
-            disp(['loading electrodes to interpolate from file ' filename '.txt']);
-            rejected_electrodes = textread([filepath filesep 'interpolated_electrodes_' filename '.txt'],'%s');
-            indelec = find(ismember(channelnames,rejected_electrodes));
+    if exist([filepath filesep 'bad_channels_' filename '.txt'],'file')
+        disp(['loading electrodes to interpolate from file ' filename '.txt']);
+        rejected_electrodes = textread([filepath filesep 'bad_channels_' filename '.txt'],'%s');
+    elseif ismatrix(EEG.data) % otherwise try to find faulty electrodes (only works on continuous data)
+        % do this on high-pass filtered data, a little high-frequency noise is of no concern
+        if highpass == false
+            EEG_filt = pop_eegfiltnew(EEG, 1);
         else
-            indelec = []; % if no file is specified, no electrodes are interpolated
+            EEG_filt = EEG;
         end
-    else % or detect (really) bad electrodes 
         disp(['detecting bad elecrodes for ' filename ]);
-        [ ~, indelec ] = pop_rejchan(EEG, 'threshold',10, 'norm', 'on', 'measure', 'prob','elec',eeg_channels); 
+        EEG_nobadchans = clean_channels(EEG_filt);
+        clear EEG_filt;
+        clean_chanlocs = EEG_nobadchans.chanlocs;
+        rejected_electrodes = setdiff(channelnames,{clean_chanlocs.labels 'HEOG' 'VEOG' 'EOG' 'EXG1' 'EXG2' 'EXG3' 'EXG4' 'EXG5' 'EXG6' 'EXG7' 'EXG8'});
+    else
+        disp('cannot interpolate, only works on continuous data');
     end
-    rejected_electrodes = channelnames(indelec);
-    if ~isempty(rejected_electrodes)
-        EEG = pop_interp(EEG, indelec, 'spherical');
-        fid = fopen([outpath filesep 'interpolated_electrodes_' filename '.txt'], 'wt' );
+    rej_index = find(ismember(channelnames,rejected_electrodes));
+    % interpolate bad channels
+    if ~isempty(rej_index)
+        EEG = pop_interp(EEG, rej_index, 'spherical');
+        fid = fopen([outpath filesep 'bad_channels_' filename '.txt'], 'wt' );
         for c = 1:numel(rejected_electrodes)
             fprintf( fid, '%s\n', rejected_electrodes{c});
         end
@@ -120,8 +131,7 @@ if interpolate_channels
 end
 
 % muscle artifact detection, only works on epoched data
-if cleandata 
-    
+if cleandata && ~ismatrix(EEG.data)
     % remove bad data
     events = pop_exportepoch(EEG);              % these are the relevant events
     toreject = events > 10000;                  % identify events marked as bad
@@ -150,15 +160,15 @@ end
 
 % use only EEG channels or use EEG and EOG channels for ICA
 if include_EOG
-    chans4ICA = eeg_eog_channels;
+    chans4ICA = select_channels({EEG.chanlocs(:).labels},'EEG_EOG');
 else
-    chans4ICA = eeg_channels;
+    chans4ICA = select_channels({EEG.chanlocs(:).labels},'EEG');
 end
 disp(['running ICA on ' num2str(numel(chans4ICA)) ' channels.']);
 EEG = pop_runica(EEG,'icatype','runica','extended', 1,'chanind',chans4ICA);
 pop_saveset(EEG, 'filename',[filename '.set'],'filepath',outpath);
 
 % generate and save plot of the components, taking out EOG for clarity
-EEG = pop_select(EEG, 'channel', eeg_channels);
-pop_topoplot_savepng(EEG,0, 1:numel(eeg_channels), [outpath filesep filename '_ICs.png']);
+EEG = pop_select(EEG, 'channel', select_channels({EEG.chanlocs(:).labels},'EEG'));
+pop_topoplot_savepng(EEG,0, 1:numel(select_channels({EEG.chanlocs(:).labels},'EEG')), [outpath filesep filename '_ICs.png']);
 
