@@ -11,7 +11,7 @@ clean_window = [];
 clean_data = false;
 do_csd = false;
 resample_eeg = false;
-no_anti_alias = false;
+resample_method = 'resample';
 erp_baseline = 'no';
 channelpool = 'all';
 if nargin>3
@@ -118,19 +118,40 @@ end
 
 % resample EEG (this is only done in classify_RAW_eeglab_data, not in classify_TFR_from_eeglab_data)
 if resample_eeg
-    cfg = [];
-    cfg.resamplefs = resample_eeg;
-    if no_anti_alias
-        cfg.resamplemethod = 'downsample';  % does not apply anti-aliasing filter
+    fsample = (numel(FT_EEG.time)-1)/(FT_EEG.time(end) - FT_EEG.time(1));
+    if mod(fsample,resample_eeg) ~=0 && ~strcmpi(resample_method,'resample')
+        disp('Cannot use downsample or average_timebin method because new sampling rate is not a proper divisor of original sampling rate. Reverting to downsample method.')
+        resample_method = 'resample';
+    end
+    if strcmpi(resample_method,'average_timebin')
+        disp(['Original sampling rate is ' num2str(fsample) ' Hz.']);
+        disp('Resampling by averaging time samples in bin (no anti-alias filter).');
+        nsamples = fsample/resample_eeg;
+        centersample = ceil((nsamples+1)/2); % conservative estimate of center (always averaging across the past more than across the future)
+        minindex = centersample - 1;
+        plusindex = nsamples - centersample;
+        newtime = FT_EEG.time(centersample:nsamples:end);
+        cnew = 0;
+        newtrial= zeros(size(FT_EEG.trial,1),size(FT_EEG.trial,2),numel(newtime));
+        for csample = centersample:nsamples:size(FT_EEG.trial,3)
+            cnew = cnew + 1;
+            newtrial(:,:,cnew) = mean(FT_EEG.trial(:,:,(csample-minindex):(csample+plusindex)),3);
+        end
+        FT_EEG.time = newtime;
+        FT_EEG.trial = newtrial;
+        fsample = (numel(FT_EEG.time)-1)/(FT_EEG.time(end) - FT_EEG.time(1));
+        disp(['New sampling rate is ' num2str(fsample) ' Hz.']);
     else
-        cfg.resamplemethod = 'resample';  % applies anti-aliasing filter
+        cfg = [];
+        cfg.resamplefs = resample_eeg;
+        cfg.resamplemethod = resample_method;
+        cfg.detrend = 'no';
+        % turn off annoying FT warnings
+        if exist('ft_warning','file') == 2
+            ft_warning off;
+        end
+        FT_EEG = ft_resampledata(cfg,FT_EEG);
     end
-    cfg.detrend = 'no';
-    % turn off annoying FT warnings
-    if exist('ft_warning','file') == 2
-        ft_warning off;
-    end
-    FT_EEG = ft_resampledata(cfg,FT_EEG);
 end
 
 % custom function to select channels

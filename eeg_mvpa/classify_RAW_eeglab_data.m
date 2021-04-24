@@ -181,7 +181,7 @@ unbalance_events = false;
 unbalance_classes = false;
 whiten = false;
 whiten_test_using_train = false;
-no_anti_alias = false;
+resample_method = 'resample';
 reproduce = false;
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
@@ -271,11 +271,11 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'nowhiten'}))
         whiten = false;
     end
-    if any(strcmpi(methods{c},{'no_anti_alias'}))
-        no_anti_alias = true;
-    end
     if any(strcmpi(methods{c},{'reproduce'}))
         reproduce = true;
+    end
+    if any(strcmpi(methods{c},{'resample', 'downsample', 'average_timebin'}))
+        resample_method = methods{c};
     end
 end
 if ~do_FEM && ~do_BDM
@@ -340,7 +340,7 @@ celldisp(condSet,'class_spec');
 if reproduce
     rng('default');
 else
-    rng('shuffle');
+    rng('shuffle','twister');
 end
 
 % Determine bundle name and/or electrode selection
@@ -367,7 +367,7 @@ for cFile = 1:numel(filenames)
     msettings.channelpool = bundlename_or_bundlelabels;
     msettings.erp_baseline = erp_baseline{cFile};
     msettings.resample_eeg = resample_eeg; % NOTE: this line is different in TFR! Resampling here...
-    msettings.no_anti_alias = no_anti_alias;
+    msettings.resample_method = resample_method;
     msettings.do_csd = do_csd;
     msettings.clean_data = clean_muscle;
     msettings.clean_window = clean_window;
@@ -416,7 +416,7 @@ end
 % create file name based on train-test procedure
 if numel(filenames) == 1
     if nFolds == 1
-        train = ['_train_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,1),'UniformOutput',false),false,'_')]; if numel(train) > 25; train = ''; end;
+        train = ['_train_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,1),'UniformOutput',false),false,'_')];
         test = ['_test_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,2),'UniformOutput',false),false,'_')];
         filename = ['CLASS_PERF_' filenames{1} train test ];
     else
@@ -630,7 +630,7 @@ settings.filenames = filenames;
 settings.crossclass = crossclass;
 settings.erp_baseline = erp_baseline;
 settings.resample_eeg = resample_eeg; % NOTE: this line is different in TFR! Resampling here...
-settings.no_anti_alias = no_anti_alias;
+settings.resample_method = resample_method;
 settings.clean_window = clean_window;
 settings.BDM = do_BDM;
 settings.FEM = do_FEM;
