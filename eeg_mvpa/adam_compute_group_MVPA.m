@@ -582,7 +582,7 @@ for cSubj = 1:nSubj
 %             end
             mask = sum(mask,2);
         elseif strcmpi(reduce_dims,'avtest') && strcmpi(dimord,'time_time')
-            if isempty(trainlim)
+            if isempty(testlim)
                 disp('WARNING: you are averaging across ALL testing time points, are you sure that is what you want?');
             end
             ClassOverTime = mean(ClassOverTime,1); % IMPORTANT, TEST IS ON FIRST DIMENSION

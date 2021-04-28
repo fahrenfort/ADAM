@@ -238,10 +238,14 @@ if ~isempty(plot_order)
             error(['cannot find a unique condition for the pattern ' plot_order{cPlot} ' specified in cfg.plot_order, remove cfg.plot_order to plot these graphs.']);
         end
         newstats(cPlot) = stats(statindex);
-        new_line_colors{cPlot} = line_colors{statindex};
+        if strcmpi(plottype,'2D')
+            new_line_colors{cPlot} = line_colors{statindex};
+        end
     end
     stats = newstats;
-    line_colors = new_line_colors;
+    if strcmpi(plottype,'2D')
+        line_colors = new_line_colors;
+    end
 end
 
 % which are the raw stats and which are the difstats? Only use the raw stats for y-limits.
