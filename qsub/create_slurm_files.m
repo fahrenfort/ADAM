@@ -57,7 +57,7 @@ use_scratch = true;
 keep_together = false;
 send_mail = false;
 cores = 15;
-mcr_version = ''; % e.g. '/v718' for matlab 2012b; (or leave empty for the default mcr / latest version of matlab on your machine)
+mcr_version = 'MCR/R2020a'; % e.g. '/v718' for matlab 2012b; (or leave empty for the default mcr / latest version of matlab on your machine)
 mcr_set_cache = true; % may have to set to true for older versions of MCR, e.g. matlab 2012b
 mcr_cache_verbose = false; % produce info about cache creation (can be useful in case of problems)
 preload = ''; % e.g. '/sara/sw/mcr-r2016a/v901/bin/glnxa64/libmwosgserver.so'; (if you run into problems loading libraries during runtime)
@@ -185,7 +185,7 @@ for cMat = 1:numel(allMat)
             fprintf(fout,'export CACHEDIR=/dev/shm\n');
             if use_scratch
                 % build in some time to copy output back by breaking off jobs before the end
-                fprintf(fout,'module load sara-batch-resources\n');
+                % fprintf(fout,'module load sara-batch-resources\n'); no idea what this was, but it no longer exists 
                 % make sure directories exists
                 fprintf(fout,['mkdir -p ' scratchindir ' \n']); % don't need to parrelize this omitting ampersand ' &\n'
                 fprintf(fout,['mkdir -p ' scratchoutdir ' \n']);
@@ -195,9 +195,10 @@ for cMat = 1:numel(allMat)
                 % fprintf(fout,'(( timetorun = $SARA_BATCH_WALLTIME - 600 ))\n');
             end
             % load outdated module
-            fprintf(fout,'module load pre2019\n'); % load in previous module package environment
+            % fprintf(fout,'module load pre2019\n'); % load in previous module package environment
+            fprintf(fout,'module load 2020\n'); % load in previous module package environment
             % load matlab runtime
-            fprintf(fout,['module load mcr' mcr_version '\n']);
+            fprintf(fout,['module load ' mcr_version '\n']);
 %             if mcr_set_cache
 %                 fprintf(fout,'export MCR_CACHE_ROOT=`mktemp -d "$TMPDIR"/mcr.XXXXXXXXXX`\n');
 %             end
@@ -239,7 +240,8 @@ for cMat = 1:numel(allMat)
             line = [line ' "' combMat{cQsubs,cArgs} '" '];
         end
         % line = [line ' &\n']; % don't need to parrelize this omitting ampersand ' &\n'
-        line = [line ' \n']; % according to people at SURF, I can run this serially and be even more efficient due to multi-threading by Matlab
+        % quick test revealed that parralelizing is quicker
+        line = [line ' &\n']; % according to people at SURF, I can run this serially and be even more efficient due to multi-threading by Matlab
         % close qsub file once all cores are used or all commands have been issued
         if (mod(cQsubs,cores) == 0 && repeat > 1 && ~(cQsubs==size(combMat,1)))
             % pause till all previous are done
