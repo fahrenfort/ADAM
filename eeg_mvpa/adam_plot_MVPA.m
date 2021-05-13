@@ -383,7 +383,7 @@ else
         title(str2cell(regexprep(stats.condname,'_',' '),'-'),'FontSize',10);
     end
 end
-if strcmpi(plottype,'3D')
+if strcmpi(plottype,'3D') && ~plotsubjects
     wraptext('IMPORTANT NOTE: A change was made to the plotting procedure of temporal generalization matrices and frequency plots in version 1.10 of ADAM. All uncorrected significant test points are now plotted as saturated points, regardless of the multiple comparison correction method. Cluster-based permutation corrected tests or FDR corrected tests are encircled by a a dark-red contour line (for above chance decoding) or dark-blue contour line (for below chance decoding). If no such line(s) appear(s), none of your tests survived multiple comparison correction.',80);
 end
 
@@ -785,6 +785,9 @@ else
     end
 
     % plot some help lines
+    hold on;
+    plot([nearest(xaxis,0),nearest(xaxis,0)],[nearest(yaxis,min(yaxis)),nearest(yaxis,max(yaxis))],'k--');
+    plot([nearest(xaxis,min(xaxis)),nearest(xaxis,max(xaxis))],[nearest(yaxis,0),nearest(yaxis,0)],'k--');
     if ~isempty(referenceline)
         hold on;
         for c = 1:numel(referenceline)
