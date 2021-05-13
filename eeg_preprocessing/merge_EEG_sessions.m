@@ -55,6 +55,7 @@ if ~isempty(strfind(filenames,'*')) || ~isempty(strfind(filenames,'?'))
         filenames = filenames(max(strfind(filenames,','))+1:end);
     end
     filenames = dir([filepath filesep filenames]);
+    filenames = filenames(~startsWith({filenames.name}, '.'));
     filenames = {filenames(:).name};
     % make sure file names are sorted in alphabetical order in this case
     filenames = sort(filenames);
@@ -70,7 +71,7 @@ for cSubj = 1:numel(subjects)
     ALLEEG = []; EEG=[]; CURRENTSET=[];
     subjIndex = [];
     for c = 1:numel(filenames)
-        if ~isempty(regexp(filenames{c},subjects{cSubj}));
+        if ~isempty(regexp(filenames{c},subjects{cSubj}))
             subjIndex = [subjIndex c];
         end
     end

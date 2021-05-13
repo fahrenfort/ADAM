@@ -885,6 +885,26 @@ end
 settings.channels = channels(dataindex);
 settings.chanlocs = chanlocs(dataindex);
 
+% when plotting diagonal, time axes need to be the same between train and test
+if strcmpi(reduce_dims,'diag') && strcmpi(dimord,'time_time')
+     if ~isempty(trainlim) && ~isempty(testlim)
+         trainlim(1) = max([trainlim(1) testlim(1)]);
+         trainlim(2) = min([trainlim(2) testlim(2)]);
+         testlim = trainlim;
+     else
+         if ~isempty(trainlim)
+             testlim = trainlim;
+         elseif ~isempty(testlim)
+             trainlim = testlim;
+         else
+             % taking the maximal overlapping time window between train and test
+             trainlim(1) = max([min(times{1}) min(times{2})])*1000;
+             trainlim(2) = min([max(times{1}) max(times{2})])*1000;
+             testlim = trainlim;
+         end
+     end
+end
+
 % continue limit operation
 % NOTE: ClassOverTime has dimensions: test_time * train_time OR freq * time
 % In settings, times{1} is always train and times{2} is always test, but 
@@ -911,11 +931,6 @@ if ~isempty(trainlim)
     times{1} = times{1}(lim2); % that is why times{1}(lim2)!
 else
     lim2 = true(size(times{1}));
-end
-
-% if the diagonal is plotted in 2D, restriction should be matched
-if strcmpi(reduce_dims,'diag') && strcmpi(dimord,'time_time')
-    lim1 = lim2;
 end
 
 % consolidate
