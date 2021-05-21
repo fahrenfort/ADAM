@@ -116,6 +116,26 @@ if getweights
 end
 % add up to compute average of stats
 for cStats = 1:nStats
+    % create symmetry across the diagonal?
+    if symmetry
+        if size(stats(cStats).ClassOverTime,1) == size(stats(cStats).ClassOverTime,2)
+            tempClassOverTime = stats(cStats).ClassOverTime;
+            indivTempClassOverTime = stats(cStats).indivClassOverTime;
+            pairs = nchoosek(1:size(stats(cStats).ClassOverTime,1),2);
+            for cPairs = 1:size(pairs,1)
+                newPerf = mean([tempClassOverTime(pairs(cPairs,1),pairs(cPairs,2)) tempClassOverTime(pairs(cPairs,2),pairs(cPairs,1))]);
+                indivNewPerf = mean([indivTempClassOverTime(:,pairs(cPairs,1),pairs(cPairs,2)) indivTempClassOverTime(:,pairs(cPairs,2),pairs(cPairs,1))],2);
+                stats(cStats).ClassOverTime(pairs(cPairs,1),pairs(cPairs,2)) = newPerf;
+                stats(cStats).ClassOverTime(pairs(cPairs,2),pairs(cPairs,1)) = newPerf;
+                stats(cStats).indivClassOverTime(:,pairs(cPairs,1),pairs(cPairs,2)) = indivNewPerf;
+                stats(cStats).indivClassOverTime(:,pairs(cPairs,2),pairs(cPairs,1)) = indivNewPerf;
+            end
+            clear tempClassOverTime indivNewPerf;
+        else
+            disp('Sorry, cannot compute symmetrical temporal generalization as train and test axes are not the same size.');
+        end
+    end
+    % add up
     ClassOverTime = ClassOverTime + stats(cStats).ClassOverTime;
     indivClassOverTime = indivClassOverTime + stats(cStats).indivClassOverTime;
     % also compute average of weights

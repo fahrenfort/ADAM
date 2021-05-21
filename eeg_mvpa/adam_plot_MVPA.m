@@ -117,6 +117,7 @@ stats = concat_stats(varargin{:});
 
 % settting some defaults
 ploterp = false;
+symmetry = false;
 plot_model = 'BDM';
 ndec = 2;
 inverty = [];
@@ -318,7 +319,7 @@ end
 
 % pack config with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(nolatency,rawstats,rawchance,inverty,acclim,acctick,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,nameOfStruct2Update);
+cfg = v2struct(nolatency,rawstats,rawchance,inverty,acclim,acctick,chance,cent_acctick,line_colors,ndec,plottype,singleplot,swapaxes,referenceline,symmetry,nameOfStruct2Update);
 
 % make figure?
 if ~plotsubjects
@@ -754,6 +755,9 @@ else
     if strcmpi(ydim,'freq')
         ylegend = 'frequency in Hz';
         xlegend = 'time in ms';
+    elseif symmetry
+        ylegend = 'average of (testing,training) time in ms';
+        xlegend = 'average of (training,testing) time in ms';        
     else
         ylegend = 'testing time in ms';
         xlegend = 'training time in ms';
