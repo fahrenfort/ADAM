@@ -534,7 +534,7 @@ elseif ~ischar(erp_baseline)
     if isvector(erp_baseline)
         erp_baseline = sprintf('%f,%f',erp_baseline);
     elseif ismatrix(erp_baseline)
-        erp_baseline = sprintf('%f,%f;%f,%f',erp_baseline);
+        erp_baseline = sprintf('%f,%f;%f,%f',erp_baseline');
     end
 end
 if strcmpi(tfr_baseline,'no') || isempty(tfr_baseline)
@@ -543,7 +543,7 @@ elseif ~ischar(tfr_baseline)
     if isvector(tfr_baseline)
         tfr_baseline = sprintf('%f,%f',tfr_baseline);
     elseif ismatrix(tfr_baseline)
-        tfr_baseline = sprintf('%f,%f;%f,%f',tfr_baseline);
+        tfr_baseline = sprintf('%f,%f;%f,%f',tfr_baseline');
     end
 end
 tfr_and_erp_baseline = sprintf('%s;%s',tfr_baseline,erp_baseline);

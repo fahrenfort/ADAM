@@ -155,6 +155,7 @@ reduce_dims = '';
 freqlim = [];
 plotsubjects = false;
 singleplot = false;
+symmetry = false;
 
 % backwards compatibility
 plot_dim = 'time_time'; % default, 'time_time' or 'freq_time'
@@ -289,6 +290,7 @@ freqlim = [];
 exclsubj = [];
 compute_randperm = false;
 read_confidence = false;
+trysymmetry = false;
 v2struct(cfg);
 % general time limit
 if ~isempty(timelim) % timelim takes precedence
@@ -488,8 +490,41 @@ for cSubj = 1:nSubj
         [settings, cfg, lim1, lim2, dataindex ] = find_limits(settings, cfg, firstchanlocs);
         v2struct(cfg);
         
+        % create symmetry across the diagonal?
+        if symmetry
+            if size(ClassOverTime,1) == size(ClassOverTime,2)
+                tempClassOverTime = ClassOverTime;
+                pairs = nchoosek(1:size(ClassOverTime,1),2);
+                for cPairs = 1:size(pairs,1)
+                    newPerf = mean([tempClassOverTime(pairs(cPairs,1),pairs(cPairs,2)) tempClassOverTime(pairs(cPairs,2),pairs(cPairs,1))]);
+                    ClassOverTime(pairs(cPairs,1),pairs(cPairs,2)) = newPerf;
+                    ClassOverTime(pairs(cPairs,2),pairs(cPairs,1)) = newPerf;
+                end
+                clear tempClassOverTime;
+            elseif trysymmetry == false
+                trysymmetry = true;
+                disp('Cannot compute symmetrical temporal generalization as train and test axes are not the same size, will try again after limit operation.');
+            end
+        end
+        
         % limit ClassOverTime
         ClassOverTime = ClassOverTime(lim1,lim2);
+        
+        % create symmetry across the diagonal?
+        if symmetry && trysymmetry
+            if size(ClassOverTime,1) == size(ClassOverTime,2)
+                tempClassOverTime = ClassOverTime;
+                pairs = nchoosek(1:size(ClassOverTime,1),2);
+                for cPairs = 1:size(pairs,1)
+                    newPerf = mean([tempClassOverTime(pairs(cPairs,1),pairs(cPairs,2)) tempClassOverTime(pairs(cPairs,2),pairs(cPairs,1))]);
+                    ClassOverTime(pairs(cPairs,1),pairs(cPairs,2)) = newPerf;
+                    ClassOverTime(pairs(cPairs,2),pairs(cPairs,1)) = newPerf;
+                end
+                clear tempClassOverTime;
+            else
+                disp('Cannot compute symmetrical temporal generalization as train and test axes are not the same size even after limit operation.');
+            end
+        end
         
         % limit Confidence
         if read_confidence
