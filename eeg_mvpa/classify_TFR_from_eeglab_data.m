@@ -572,7 +572,7 @@ for cFreq = 1:numel(frequencies)
         end
         % (2) between-class balance train by oversampling minority class using ADASYN/SMOTE
         % STILL NEED TO CHECK INSIDE balance_FT_EEG IF FT_EEG IS NOT ALREADY BINNED:
-        if ~unbalance_classes
+        if ~unbalance_classes && ~unbalance_events % only works when events within classes are balanced, otherwise just discard, not that important
             train_FT_EEG = balance_FT_EEG(train_FT_EEG,train_condSet,whiten);
         end
         
