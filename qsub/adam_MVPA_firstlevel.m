@@ -79,6 +79,22 @@ function adam_MVPA_firstlevel(cfg)
 %                                    imbalanced learning (pp. 1322?1328). Presented at the 2008 IEEE
 %                                    International Joint Conference on Neural Networks (IJCNN 2008 -
 %                                    Hong Kong), IEEE. http://doi.org/10.1109/IJCNN.2008.4633969
+%       cfg.restrict_trainset      = 'no' (default) or either a single integer containing the
+%                                    allowed number of trials in the training set. This can be
+%                                    useful when comparing an analysis to another analysis that has
+%                                    fewer trials in the train set. Trial instances that exceed the
+%                                    allowed number are discarded (random selection). Note that
+%                                    when using k-folding, this restriction is applied to the entire
+%                                    set, PRIOR to k-folding, such that the total number of trials
+%                                    per class that is used for training can be even lower, i.e.
+%                                    divided by the number of folds. Thus, if each class is
+%                                    restricted to using 200 trials for training and cfg.nfolds = 2,
+%                                    then the actual number of trials per class used for training in
+%                                    any given fold is 100 (i.e. 200/2). Instead of a single
+%                                    integer, cfg.restrict_trainset can also be comma separated
+%                                    vector, equal to the number of participant indicated in
+%                                    cfg.filenames, so that each participant is limited by a
+%                                    participant-specific number.
 %       cfg.class_type             = 'linear' (default); classifier type, e.g. 'linear' or
 %                                    'diaglinear'; for other options see FITCDISCR (default Matlab
 %                                    discriminant analysis function, which ADAM uses at its core)
@@ -417,6 +433,7 @@ whiten = 'no';              % specifies whether to whiten the data prior to deco
 anti_alias = 'yes';         % specifies whether to apply a lowpass filter prior to downsampling (deprecated)
 reproduce = 'no';           % specifies whether to reset the random number generator
 resample_method = 'resample'; % specifies the method to use for resampling ('resample' default, or 'downsample' or 'average_timebin')
+restrict_trainset = 'no';   % specifies whether to restrict the number of trials in the training set
 
 % unpack cfg
 v2struct(cfg);
@@ -515,6 +532,21 @@ if strcmpi(reproduce,'no')
 else
     reproduce = 'reproduce';
 end
+if strcmpi(restrict_trainset,'no') || isempty(restrict_trainset)
+    restrict_trainset = cell(1,numel(filenames));
+elseif ~ischar(restrict_trainset)
+    if ~isscalar(restrict_trainset) && numel(restrict_trainset) ~= numel(filenames)
+        error('Number of trial restrictions in cfg.restrict_trainset is unequal to the number of files');
+    elseif isscalar(restrict_trainset)
+        restrict_trainset = repmat(restrict_trainset,1,numel(filenames)); % duplicate for each participant
+    end
+    temp = [];
+    for cSubj = 1:numel(restrict_trainset)
+        temp{cSubj} = sprintf(',restrict_trainset-%d',restrict_trainset(cSubj));
+    end
+    restrict_trainset = temp;
+end
+
 str_settings = cell2csv({class_method,class_type,model,sigma_basis_set,iterate_method,whiten,balance_events,balance_classes,bintrain,bintest,tfr_method,save_confidence,compute_performance,clean_window,reproduce,resample_method});
 % other settings
 if strcmpi(crossclass,'no') || isempty(crossclass)
@@ -571,9 +603,9 @@ if ~exist('qsub','var') || isempty(qsub) % run local
                 %try
                     disp(['Analyzing subject ' filenames{cSubj} ]);
                     if strcmpi(raw_or_tfr,'raw')
-                        classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,erp_baseline,class_spec{:});
+                        classify_RAW_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},[str_settings restrict_trainset{cSubj}],crossclass_resample,erp_baseline,class_spec{:});
                     elseif strcmpi(raw_or_tfr,'tfr')
-                        classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},str_settings,crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
+                        classify_TFR_from_eeglab_data(datadir,filenames{cSubj},outputdir,nfolds,channelpool{cChannels},[str_settings restrict_trainset{cSubj}],crossclass_resample,tfr_and_erp_baseline,frequencies,class_spec{:});
                     end
                     disp('Done.');
 %                 catch ME
