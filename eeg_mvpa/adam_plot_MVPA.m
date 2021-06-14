@@ -127,6 +127,9 @@ plot_order = [];
 figure_axis = 'horizontal';
 folder = '';
 startdir = '';
+if isfield(stats(1).cfg, 'symmetry')
+    symmetry = stats(1).cfg.symmetry;
+end
 if strcmpi(stats(1).settings.dimord, 'freq_time')
     swapaxes = false;
 else
@@ -725,7 +728,7 @@ if strcmpi(plottype,'2D')
     end
     set(ax,'YTickLabel',ticklabel);
     hold off;
-else
+else % 3D
     % determine significant time points
     origdata = data;
     if ~isempty(pVals) && ~strcmpi(mpcompcor_method,'none')

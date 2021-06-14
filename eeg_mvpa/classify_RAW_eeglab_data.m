@@ -183,6 +183,7 @@ whiten = false;
 whiten_test_using_train = false;
 resample_method = 'resample';
 reproduce = false;
+restrict_trainset = [];
 for c=1:numel(methods)
     if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
         method = methods{c};
@@ -277,6 +278,9 @@ for c=1:numel(methods)
     if any(strcmpi(methods{c},{'resample', 'downsample', 'average_timebin'}))
         resample_method = methods{c};
     end
+    if strncmpi(methods{c},'restrict_trainset',17)
+        restrict_trainset = str2double(strrep(methods{c}(18:end),'-',','));
+    end
 end
 if ~do_FEM && ~do_BDM
     do_BDM = true;
@@ -333,6 +337,9 @@ if ~compute_performance && nFolds > 1
     compute_performance = true;
     wraptext('WARNING: Always computing performance when using leave-on-out. Only set cfg.compute_performance = ''no'' when you do not have useful class labels to compute performance with. Defaulting back to cfg.compute_performance = ''yes''.',80);
 end
+if ~compute_performance
+    measuremethod = 'P(1stclass)'; % showing the average probability of the trial being classified as the first class in the class definition
+end
 % display class specification
 wraptext('These are the class specifications. Each row contains the event codes that go into a single class (first row training, second row testing):',80);
 celldisp(condSet,'class_spec');
@@ -385,18 +392,51 @@ if numel(filenames) == 1
     chanlocs{2} = chanlocs{1};
 end
 
-% extract some relevant trial info, training and testing data
+% extract trialinfo, balance bins and restrict trial numbers
 for cSet = 1:2
     thisCondSet = get_this_condset(condSet,cSet);
     if unbalance_events
-        trialinfo{cSet} = FT_EEG(cSet).trialinfo;
+        trialinfo{cSet} = FT_EEG(cSet).trialinfo; % use this for makefolds
     else
         % bin/balance dataset (default action, this is not to achieve actual binnning, it just applies within-class balancing of conditions)
         FT_EEG_BINNED(cSet) = compute_bins_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','original');
-        trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo;
-        oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;
-        % a bit of hack to assign event number -99 to unbalanced events (i.e. by selecting those events from thisCondSet that were not used to compute FT_EEG_BINNED)
-        FT_EEG(cSet).trialinfo(setdiff(find(ismember(FT_EEG(cSet).trialinfo,[thisCondSet{:}])),[oldindex{cSet}{:}])) = -99;
+        trialinfo{cSet} = FT_EEG_BINNED(cSet).trialinfo; % WE USE THIS BINNED TRIALINFO FOR MAKEFOLDS, THE ORIGINAL SETINDEX IS RECOVERED LATER ON!
+        oldindex{cSet} = FT_EEG_BINNED(cSet).oldindex;   % OLDINDEX IS USED FOR RECOVERY TO ORIGINAL SETINDEX
+        % a little hack to assign event number -99 to unbalanced events in FT_EEG (i.e. by selecting those events from thisCondSet that are not in FT_EEG_BINNED)
+        origindex = find(ismember(FT_EEG(cSet).trialinfo,[thisCondSet{:}])); % all indices
+        keepindex = [FT_EEG_BINNED(cSet).oldindex{:}]; % expand to get indices belonging to bins after balancing
+        removeindex = setdiff(origindex,keepindex);
+        FT_EEG(cSet).trialinfo(removeindex) = -99;
+    end
+    % limit trial numbers in each class of the training set if so desired, slightly complicated due to balancing
+    if cSet == 1 && ~isempty(restrict_trainset)
+        removeindex = [];
+        nClasses = numel(thisCondSet);
+        for cClass = 1:numel(thisCondSet)
+            nCodesInClass = numel(thisCondSet{cClass});
+            if unbalance_events % don't care about event codes
+                restrictN = floor(restrict_trainset/nClasses);
+            else % distribute evenly across instances in this class
+                restrictN = floor((restrict_trainset/nClasses)/nCodesInClass); % trialindex is binned, so divide by number of event codes in each class
+            end
+            origindex = find(ismember(trialinfo{cSet},thisCondSet{cClass}));
+            if numel(origindex) > restrictN
+                removeindex = [removeindex origindex(restrictN+1:end)];
+            else
+                disp('WARNING: There are fewer trial instances in this class than the number you want to limit them by, so keeping the original number.');
+            end
+        end
+        % assign event number -99 to remove events that exceed the restriction
+        trialinfo{cSet}(removeindex) = -99;
+        if unbalance_events
+            FT_EEG(cSet).trialinfo = trialinfo{cSet}; % also put the new trialinfo back in FT_EEG
+        else
+            % a little hack to assign event number -99 to unbalanced events in FT_EEG (i.e. by selecting those events from thisCondSet that were not used to compute FT_EEG_BINNED)
+            origindex = find(ismember(FT_EEG(cSet).trialinfo,[thisCondSet{:}])); % all indices before restricting
+            keepindex = [ FT_EEG_BINNED.oldindex{ismember(FT_EEG_BINNED(cSet).trialinfo,[thisCondSet{:}])}]; % expand to get indices belonging to bins after restricting
+            removeindex = setdiff(origindex,keepindex);
+            FT_EEG(cSet).trialinfo(removeindex) = -99;
+        end
     end
     % compute ERPs (baseline corrected, resampled, channels already selected)
     FT_ERP{cSet} = compute_erp_on_FT_EEG(FT_EEG(cSet),thisCondSet,'trial','bin');
@@ -446,7 +486,7 @@ end
 % within-class balancing: balance events within classes
 if unbalance_events
     wraptext('Within-class balancing is OFF, such that an unequal distribution of event codes is allowed to contribute to each stimulus class. Make sure you know what you are doing, this can have undesirable effects on how you interpret your results.',80);
-else
+else % HERE WE RECOVER THE ORIGINAL SETINDEX!
     [setindex{1}, setindex{2}] = unpack_binned(setindex{1}, setindex{2}, oldindex{1}, oldindex{2}); % unpack setindex{1} and setindex{2} to get back the original index
     wraptext('Within-class balancing is ON, such that event codes are evenly represented within each stimulus class. If event codes are very unevenly represented in your data, this can result in the loss of many trials. It does however, enforce a balanced design, which is important for interpretation. If this is undesirable behavior, specify ''unbalance_events'' in your methods.',80);
 end
@@ -645,6 +685,7 @@ settings.dimord = 'time_time';
 settings.measuremethod = measuremethod;
 settings.compute_performance = compute_performance;
 settings.save_confidence = save_confidence;
+settings.restrict_trainset = restrict_trainset;
 settings.trialinfo = settrialinfo;
 settings.trialindex = settrialindex;
 settings.condset = condSet;

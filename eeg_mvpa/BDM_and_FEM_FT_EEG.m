@@ -61,7 +61,7 @@ if compute_performance
 else
     labelsOfTestSet =  NaN(size(test_FT_EEG.trialinfo)); % when no meaningful class definition exists in the test set
 end
-    
+
 % initialize output
 FEM = [];
 BDM = [];
@@ -155,10 +155,10 @@ for t=1:size(allTrainData,2)
             if compute_performance
                 BDM.ClassOverTime(t2,t) = compute_class_performance(scores,labelsOfTestSet,measuremethod);
             else
-                BDM.ClassOverTime = NaN;
+                BDM.ClassOverTime = mean(scores(:,1),1); % return the probability of assigning the label of the first class
             end
             % save classifier confidence scores
-            if save_confidence && t == t2 % also returning confidence scores, only the diagonal (or we will run out of memory)
+            if save_confidence && t == t2 % also returning confidence scores, Only the diagonal or we will run out of memory, but can be changed if necessary.
                 BDM.ScoresOverTime(:,t,:) = scores;
             end
         end

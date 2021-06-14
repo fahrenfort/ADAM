@@ -18,7 +18,7 @@ function [ FT_EEG, newCondSet ] = compute_bins_on_FT_EEG(FT_EEG,condSet,field,la
 % condSet{1} = [ 1, 1, 1];
 % condSet{2} = [ 2, 2, 2];
 % averages 3 instances from condition 1 together into a single instance and averages 3 instances
-% from condition 2 together into a single instance Again, leftover trials are discarded (if there
+% from condition 2 together into a single instance. Again, leftover trials are discarded (if there
 % were 10 trials of condition 1, the new set will contain 3 trial averaged instances of condition 1,
 % and 1 'old' trial will be discarded.
 %
