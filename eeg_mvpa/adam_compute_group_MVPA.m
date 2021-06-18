@@ -71,6 +71,17 @@ function stats = adam_compute_group_MVPA(cfg,folder_name)
 %                              specified, classification is saved in one frequency-by-time matrix,
 %                              in which case leaving freqlim empty results in all frequencies
 %                              present in the data being analyzed.
+%       cfg.symmetry         = false; (default). When set to true, the temporal generalization
+%                              matrix is averaged across the diagonal, so that train to testing time
+%                              generalizations and test to train time generalizations are
+%                              effectively averaged. This can be a useful operation when train and
+%                              test time differ in their signal to noise ratio, so that certain
+%                              asymetries in the temporal generalization matrix are due to SNR
+%                              differences rather than interesting asymetries in generalization. For
+%                              example, some effects may show up when you train on time point X and
+%                              test on time point Y, but not when you train on time point Y but not
+%                              on time point X. Setting cfg.symmetry = true; resolves this by
+%                              simply averaging X->Y and Y->X generalizations.
 %       cfg.channelpool      = 'ALL_NOSELECTION' or other string, e.g. 'OCCIP', according to the
 %                              electrode selection at the level-1; only one pool can be specified
 %                              per group-level analysis. See the help of adam_MVPA_firstlevel and
