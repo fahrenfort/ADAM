@@ -301,6 +301,7 @@ freqlim = [];
 exclsubj = [];
 compute_randperm = false;
 read_confidence = false;
+symmetry = false;
 trysymmetry = false;
 v2struct(cfg);
 % general time limit
@@ -367,7 +368,7 @@ end
         
 % pack cfg with defaults
 nameOfStruct2Update = 'cfg';
-cfg = v2struct(freqlim,plotFreq,trainlim,testlim,tail,indiv_pval,cluster_pval,plot_model,mpcompcor_method,reduce_dims,freqlim,nameOfStruct2Update);
+cfg = v2struct(freqlim,plotFreq,trainlim,testlim,tail,indiv_pval,cluster_pval,plot_model,mpcompcor_method,reduce_dims,freqlim,symmetry,nameOfStruct2Update);
 
 % get filenames
 subjectfiles = dir([folder_name filesep  regexprep(channelpool,',','_') plotFreq{1} filesep '*.mat']);
