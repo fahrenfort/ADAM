@@ -302,7 +302,7 @@ if all(ismember(unique([trainevents{:}]),unique([testevents{:}])))
     allthesame = true;
 end
 % are class specifications overlapping within train or within test?
-if numel(unique([trainevents{:}])) < numel([trainevents{:}]) || numel(unique([testevents{:}])) < numel([testevents{:}])
+if compute_performance && (numel(unique([trainevents{:}])) < numel([trainevents{:}]) || numel(unique([testevents{:}])) < numel([testevents{:}]))
     error('ERROR: There is an overlap between events in your class definitions. Two different classes cannot contain the same event code.');
 end
 % check nFolds
