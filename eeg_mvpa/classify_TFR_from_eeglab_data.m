@@ -440,7 +440,15 @@ if numel(filenames) > 1 && ~all(strcmpi(channels{1},channels{2}))
 end
 
 % Generate indices for folds to do training and testing
-[setindex{1}, setindex{2}, nFolds] = make_folds(trialinfo{1},trialinfo{2},condSet,nFolds,~compute_performance);
+[setindex{1}, setindex{2}, nFolds] = make_folds(trialinfo{1},trialinfo{2},condSet,nFolds);
+
+% remove any duplicate trial instances in the test set when only determining labels (given that
+% the same class labels were probably entered for class 1 and class 2)
+if ~compute_performance
+    allindex = unique([setindex{2}{1}; setindex{2}{2}]);
+    setindex{2}{1} = allindex(1:end/2);
+    setindex{2}{2} = allindex(end/2:end);
+end
 
 % create file name based on train-test procedure
 if numel(filenames) == 1

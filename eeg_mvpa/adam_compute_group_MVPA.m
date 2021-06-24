@@ -547,37 +547,35 @@ for cSubj = 1:nSubj
             end
         end
         
-        % hack to compute onset latencies for first level random permutations
+        % hack to perform multiple comparison correction at single subject level, only works for diagonal
         if compute_randperm && exist(permfolder,'dir')
             pVals = pVals(lim1,lim2);
             pVals = diag(pVals);
-            
-            % compute actual
-            [obsPosSizes, obsNegSizes, posLabels, negLabels] = compute_clusters(diag(ClassOverTime),pVals,indiv_pval);
-
-            % mask containing significant points
-            sigMatrix = zeros(size(pVals));
-            sigMatrix(pVals < indiv_pval) = 1;
-            
-            % iterate to find max clusters under random permutation
-            % IMPLEMENT LATER WHEN I HAVE TIME
-            
-            % cut out insignificant points
-            randSizes = 5; % quick hack to identify max clusters without iteration, simply cut off at 5
-            labels = 1:max(unique(posLabels));
-            sizes2rm = find(obsPosSizes < max(randSizes));
-            for c = 1:numel(sizes2rm)
-                sigMatrix(posLabels==labels(sizes2rm(c))) = 0;
-                posLabels(posLabels==labels(sizes2rm(c))) = 0;
+            if strcmpi(mpcompcor_method,'fdr')
+                % FDR CORRECTION
+                ClassPvals = squeeze(pVals); % get from random permutation
+                pValsUncorrected = pVals;
+                h = fdr_bh(ClassPvals,cluster_pval,'dep');
+                ClassPvals(~h) = 1;
+                [~, ~, posLabels, negLabels] = compute_clusters(diag(ClassOverTime),pVals,indiv_pval); % compute actual
+                pStruct.posclusters = compute_pstruct(posLabels,ClassPvals,diag(ClassOverTime),cfg,settings);
+                pStruct.negclusters = compute_pstruct(negLabels,ClassPvals,diag(ClassOverTime),cfg,settings);
+            elseif strcmpi(mpcompcor_method,'cluster_based')
+                % CLUSTER BASED CORRECTION
+                error('Cluster based permutation testing is not yet implemented when doing single subject random permutation.');
+            elseif strcmpi(mpcompcor_method,'uncorrected')
+                % NO MP CORRECTION
+                ClassPvals = squeeze(pVals); % get from random permutation
+                h = ClassPvals < indiv_pval;
+                ClassPvals(~h) = 1;
+                [~, ~, posLabels, negLabels] = compute_clusters(diag(ClassOverTime),pVals,indiv_pval); % compute actual
+                pStruct.posclusters = compute_pstruct(posLabels,ClassPvals,diag(ClassOverTime),cfg,settings);
+                pStruct.negclusters = compute_pstruct(negLabels,ClassPvals,diag(ClassOverTime),cfg,settings);
+            else
+                % NO TESTING, PLOT ALL
+                ClassPvals = [];
             end
-            pVals = ~sigMatrix;
-            pStruct.posclusters = compute_pstruct(posLabels,pVals,diag(ClassOverTime),cfg,settings);
-%             obsolete now:
-%             if ~isempty(pStruct.posclusters)
-%                 onsetTimes(cSubj) = min([ pStruct.posclusters(:).start_time ]);
-%             else
-%                 onsetTimes(cSubj) = nan;
-%             end
+            pVals = ClassPvals;
         end
         
         % limit weights too
