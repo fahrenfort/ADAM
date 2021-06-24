@@ -1,4 +1,4 @@
-function [ trainIndx, testIndx, nFolds ] = make_folds(trialinfo1,trialinfo2,condSet,nFolds,labelsOnly)
+function [ trainIndx, testIndx, nFolds ] = make_folds(trialinfo1,trialinfo2,condSet,nFolds)
 % function to split up the dataset(s) into two sets, used for training and
 % testing, this function is used internally by classify_RAW_eeglab_data and
 % classify_TFR_from_eeglab_data
@@ -6,10 +6,6 @@ function [ trainIndx, testIndx, nFolds ] = make_folds(trialinfo1,trialinfo2,cond
 % testIndx{nFolds,nCondSet} contains index numbers of trialinfo2 for testing
 %
 % J.J.Fahrenfort, VU, 2015, 2016
-
-if nargin<5
-    labelsOnly = false;
-end
 
 % How many condition sets are there?
 nCondSet = numel(condSet);
@@ -54,9 +50,6 @@ for cCondSet=1:nCondSet
     % get testing trials
     thisCondSet = get_this_condset(condSet,2);
     testBool = shiftdim(ismember(trialinfo2,thisCondSet{cCondSet}));
-    if labelsOnly
-        testBool = ones(size(trialinfo2)); % pick all trials
-    end
     if ~any(testBool)
         error(['Cannot find trials of one or more of the conditions in ' cond_string(thisCondSet{cCondSet}) ' in the testing list: ' cond_string(unique(trialinfo2)')]);
     end
