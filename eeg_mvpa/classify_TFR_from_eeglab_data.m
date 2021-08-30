@@ -178,7 +178,7 @@ whiten_test_using_train = false;
 reproduce = false;
 restrict_trainset = [];
 for c=1:numel(methods)
-    if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'})) == 1
+    if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis', 'svm'}))
         method = methods{c};
     end
     if any(strcmpi(methods{c},{'total', 'evoked', 'induced'}))

@@ -126,8 +126,13 @@ for t=1:size(allTrainData,2)
     end
     % get BDM weights, use fitcdiscr from R2014a onwards
     if doBDM && ~verLessThan('matlab','8.3')
-        class_obj = compact(fitcdiscr(dataTrain,labelsOfTrainSet,'DiscrimType',method));
-        coeffs = class_obj.Coeffs;
+        if strcmpi(method,'svm')
+            class_obj = compact(fitcecoc(dataTrain,labelsOfTrainSet));
+            coeffs = NaN;
+        else
+            class_obj = compact(fitcdiscr(dataTrain,labelsOfTrainSet,'DiscrimType',method));
+            coeffs = class_obj.Coeffs;
+        end
     end
     % test loop (or diagonal)
     if ~crossclass
@@ -148,7 +153,7 @@ for t=1:size(allTrainData,2)
             else
                 [~,~,scores,~,coeffs] = classify(dataTest,dataTrain,labelsOfTrainSet,method);
             end
-            if ~exist('coeffs','var') || isempty(coeffs)
+            if ~exist('coeffs','var') || isempty(coeffs) && ~strcmpi(method,'svm')
                 error('Classify is not returning coefficients, maybe you are not using the matlab native classify function. Check whether you have the biosig plugin installed in eeglab: this toolbox contains a classify function that you should not be using -> remove it or remove the path that leads to it.');
             end
             % compute performance
@@ -196,24 +201,26 @@ for t=1:size(allTrainData,2)
     % difference between three classes/conditions is simply not that informative. In that case it is
     % better to run three two-class contrasts to visualize the differences.
     if doBDM
-        if ~verLessThan('matlab','8.3') % again, slightly different for more recent version of matlab
-            k=1;
-            for r=1:length(coeffs)-1
-                for c = r+1:length(coeffs)
-                    weights(:,k) = shiftdim(coeffs(r,c).Linear);
-                    k=k+1;
+        if ~strcmpi(method,'svm')
+            if ~verLessThan('matlab','8.3') % again, slightly different for more recent version of matlab
+                k=1;
+                for r=1:length(coeffs)-1
+                    for c = r+1:length(coeffs)
+                        weights(:,k) = shiftdim(coeffs(r,c).Linear);
+                        k=k+1;
+                    end
+                end
+            else
+                k=1;
+                for r=1:length(coeffs)-1
+                    for c = r+1:length(coeffs)
+                        weights(:,k) = shiftdim(coeffs(r,c).linear);
+                        k=k+1;
+                    end
                 end
             end
-        else
-            k=1;
-            for r=1:length(coeffs)-1
-                for c = r+1:length(coeffs)
-                    weights(:,k) = shiftdim(coeffs(r,c).linear);
-                    k=k+1;
-                end
-            end
+            BDM.WeightsOverTime(t,:) = mean(weights,2);
         end
-        BDM.WeightsOverTime(t,:) = mean(weights,2);
         
         % to compute activation patterns we need the covariance of the original (unwhitened) data
         if ~exist('matObj','var')
@@ -230,8 +237,10 @@ for t=1:size(allTrainData,2)
             realData = squeeze(matObj.trial(:,:,t)); % realData is trial x chan
         end
         % finally compute activation pattern according to Haufe
-        BDM.covPatternsOverTime(t,:) = cov(realData)*mean(weights,2);
-        BDM.corPatternsOverTime(t,:) = corr(realData)*mean(weights,2);
+        if ~strcmpi(method,'svm')
+            BDM.covPatternsOverTime(t,:) = cov(realData)*mean(weights,2);
+            BDM.corPatternsOverTime(t,:) = corr(realData)*mean(weights,2);
+        end
         clear realData;
     end
     

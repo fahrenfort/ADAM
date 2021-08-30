@@ -185,7 +185,7 @@ resample_method = 'resample';
 reproduce = false;
 restrict_trainset = [];
 for c=1:numel(methods)
-    if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis'}))
+    if any(strcmpi(methods{c},{'linear', 'quadratic', 'diagLinear', 'diagQuadratic', 'mahalanobis', 'svm'}))
         method = methods{c};
     end
     if strcmpi(methods{c},'bin')
