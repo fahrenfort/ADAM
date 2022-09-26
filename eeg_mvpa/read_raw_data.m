@@ -65,10 +65,6 @@ if exist('ft_warning','file') == 2
 end
 FT_EEG = ft_timelockbaseline(cfg,FT_EEG);
 
-% add sample info if missing
-if ~isfield(FT_EEG,'fsample')
-    FT_EEG.fsample = round((numel(FT_EEG.time)-1)/(FT_EEG.time(end)-FT_EEG.time(1)));
-end
 % add dimord info if missing
 if ~isfield(FT_EEG,'dimord')
     if size(FT_EEG.trial,1) == numel(FT_EEG.trialinfo) && size(FT_EEG.trial,2) == numel(FT_EEG.label) && size(FT_EEG.trial,3) == numel(FT_EEG.time)
@@ -76,14 +72,6 @@ if ~isfield(FT_EEG,'dimord')
     else
         error('The dimord field seems missing and/or dimensions in the dataset seem to be off. When you are using fieldtrip format, make sure the input files have dimord rpt_chan_time (trial x channel x time).');
     end
-end
-
-% double check whether all necessary fields are now present
-FT_FIELDS = fieldnames(FT_EEG);
-reqfields = {'fsample', 'label', 'trial', 'time', 'trialinfo', 'dimord'};
-absentfields = reqfields(~ismember(reqfields,FT_FIELDS));
-if ~isempty(absentfields)
-    error(['The following required fields are missing from your data: ' cell2csv(absentfields,true)]);
 end
 
 % keep track of index numbers
@@ -226,6 +214,18 @@ if shuffle_trials
     FT_EEG.origindex = origindex(shuffle_order);
 else
     FT_EEG.origindex = origindex;
+end
+
+% add sample info if missing
+if ~isfield(FT_EEG,'fsample')
+    FT_EEG.fsample = round((numel(FT_EEG.time)-1)/(FT_EEG.time(end)-FT_EEG.time(1)));
+end
+% double check whether all necessary fields are now present
+FT_FIELDS = fieldnames(FT_EEG);
+reqfields = {'fsample', 'label', 'trial', 'time', 'trialinfo', 'dimord'};
+absentfields = reqfields(~ismember(reqfields,FT_FIELDS));
+if ~isempty(absentfields)
+    error(['The following required fields are missing from your data: ' cell2csv(absentfields,true)]);
 end
 
 % remove superfluous fields

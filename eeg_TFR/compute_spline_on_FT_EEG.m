@@ -5,7 +5,9 @@ function FT_EEG_SPLINE = compute_spline_on_FT_EEG(FT_EEG,relevant_window_in_ms,f
 % relevant_window_in_ms sets the window to detect the peak of the spline in
 % milliseconds (defaults to [50,750]).
 % Johannes Fahrenfort, VU, 2016
-npadding = round(FT_EEG.fsample/4); % 250 ms
+
+fsample = round((numel(FT_EEG.time)-1)/(FT_EEG.time(end)-FT_EEG.time(1)));
+npadding = round(fsample/4); % 250 ms
 if nargin < 4
     basefreq = 8;
 end
@@ -48,7 +50,7 @@ for cTrial = 1:size(indata,1)
         paddata = padarray(data,npadding,'symmetric');
         peakindx = peakindx + npadding + window_indx(1) - 1; % new peakindex based on padded data
         % resample to max 8 hz
-        newstepsize = FT_EEG.fsample/basefreq;
+        newstepsize = fsample/basefreq;
         % get new indexes based on this sampling frequency
         indx = round(1:newstepsize:numel(paddata));
         peakdif = indx(nearest(indx,peakindx))-peakindx; % center around max (or min) of trial to get the peak out

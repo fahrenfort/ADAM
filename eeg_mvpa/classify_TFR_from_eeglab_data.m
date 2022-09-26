@@ -532,15 +532,16 @@ for cFld = 1:nFolds
         condSet_2use = get_this_condset(condSet,cSet);
         % compute time frequency power spectrum and save result for each fold
         % keep trying if running into memory issues (often temporary)
-        success = false; counterr = 0;
-        while ~success
-            try
+        % success = false; counterr = 0;
+        % while ~success
+        %    try
                 TFR_foldsave = compute_TFR_from_FT_EEG(FT_EEG_2use,condSet_2use,resample_eeg,method_2use,tf_baseline,erp_baseline,frequencies);
-                success = true;
-            catch ME
-                disp(ME); disp('Memory problem? Let''s wait a bit before trying again.'); counterr = counterr + 1; if counterr > 10; error('errrrr, tried 10 times, giving up now...'); end; pause(600); 
-            end
-        end
+        %         success = true;
+        %    catch ME
+        %        disp(ME); disp('Memory problem? Let''s wait a bit before trying again.'); counterr = counterr + 1; if counterr > 10; error('errrrr, tried 10 times, giving up now...'); end; pause(600); 
+        %    end
+        % end
+
         % temporarily save folded data
         [~,tmpf,~] = fileparts(tempname); % generates random filename
         fnames{cFld,cSet} = [filepath filesep '..' filesep TFR_foldsave.fname '_' filenames{1} '_fold' num2str(cFld) '_' num2str(cSet) '_' tmpf  '.mat'];
