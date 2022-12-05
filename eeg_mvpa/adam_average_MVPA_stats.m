@@ -3,7 +3,9 @@ function avstats = adam_average_MVPA_stats(cfg,varargin)
 % adam_compute_group_MVPA or from adam_compute_group_ERP, given that the stats have the same
 % dimensions (e.g. two time-time generalization matrices of equal size and same number of
 % participants; i.e. within-subject repeated measures design). Also performs statistical testing
-% against chance.
+% against chance. If the number of participants between stats is uneven, the function assumes 
+% it's a between-subjects design. In this case the average is still computed, but a statistical
+% analysis cannot be performed and error bars are omitted.
 %
 % Use as:
 %   avstats = adam_average_MVPA_stats(cfg,stats1,stats2,...);
@@ -58,7 +60,7 @@ function avstats = adam_average_MVPA_stats(cfg,varargin)
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %
-% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2018
+% part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2018, 2022
 %
 % See also ADAM_COMPUTE_GROUP_MVPA, ADAM_MVPA_FIRSTLEVEL, ADAM_PLOT_MVPA, ADAM_PLOT_BDM_WEIGHTS, FDR_BH
 
@@ -82,6 +84,7 @@ mpcompcor_method = 'uncorrected';
 plot_dim = 'time_time';
 trainlim = [];
 testlim = [];
+symmetry = false;
 % unpack original cfg
 if isfield(stats(1),'cfg')
     v2struct(stats(1).cfg);
@@ -137,7 +140,14 @@ for cStats = 1:nStats
     end
     % add up
     ClassOverTime = ClassOverTime + stats(cStats).ClassOverTime;
-    indivClassOverTime = indivClassOverTime + stats(cStats).indivClassOverTime;
+    if size(indivClassOverTime,1) == size(stats(cStats).indivClassOverTime,1)
+        eqsize = true; 
+        indivClassOverTime = indivClassOverTime + stats(cStats).indivClassOverTime;
+    else
+        eqsize = false;
+        mpcompcor_method = 'none';
+        disp('NOTE: not the same number of participants in stats variables, cannot compute error bars or do statistics on the average.');
+    end
     % also compute average of weights
     if getweights
         avWeights = avWeights + stats(cStats).weights.avWeights;
@@ -153,7 +163,11 @@ end
 % average and store
 nSubj = size(indivClassOverTime,1);
 ClassOverTime = ClassOverTime/nStats;
-indivClassOverTime = indivClassOverTime/nStats;
+if eqsize
+    indivClassOverTime = indivClassOverTime/nStats;
+else
+    indivClassOverTime = [];
+end
 avstats.ClassOverTime = ClassOverTime;
 avstats.indivClassOverTime = indivClassOverTime;
 if getweights
@@ -167,7 +181,7 @@ if getweights
     end
 end
 % re-compute SEMs
-if nSubj > 1
+if nSubj > 1 && eqsize
     avstats.StdError = shiftdim(std(avstats.indivClassOverTime)/sqrt(nSubj));
     if getweights
         avstats.weights.semCTF = shiftdim(std(avstats.weights.indivCTF))/sqrt(nSubj);

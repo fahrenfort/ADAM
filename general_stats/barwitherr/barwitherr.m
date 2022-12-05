@@ -65,11 +65,12 @@
 %                                       as lowerErrors and upperErrors even
 %                                       if symmetric.
 %   29/10/2014  Martina F. Callaghan    Updated for 2014b graphics
+%   03/06/2018  Martina F. Callaghan    Drawnow to facilitate graphics
+%                                       update. Needed when multiple groups
+%                                       added to the same plot.
 %
 %**************************************************************************
-
 function varargout = barwitherr(errors,varargin)
-
 % Check how the function has been called based on requirements for "bar"
 if nargin < 3
     % This is the same as calling bar(y)
@@ -90,7 +91,6 @@ else
         [tmp xOrder] = sort(varargin{1});
     end
 end
-
 % If an extra dimension is supplied for the errors then they are
 % assymetric split out into upper and lower:
 if ndims(errors) == ndims(values)+1
@@ -103,28 +103,27 @@ else
     lowerErrors = errors;
     upperErrors = errors;
 end
-
     
 % Check that the size of "errors" corresponsds to the size of the y-values.
 % Arbitrarily using lower errors as indicative.
 if any(size(values) ~= size(lowerErrors))
     error('The values and errors have to be the same length')
 end
-
 [nRows nCols] = size(values);
 handles.bar = bar(varargin{:}); % standard implementation of bar fn
 hold on
 hBar = handles.bar;
-
 if nRows > 1
     hErrorbar = zeros(1,nCols);
     for col = 1:nCols
         % Extract the x location data needed for the errorbar plots:
         if verLessThan('matlab', '8.4')
             % Original graphics:
+            drawnow;
             x = get(get(handles.bar(col),'children'),'xdata');
         else
             % New graphics:
+            drawnow;
             x =  handles.bar(col).XData + [handles.bar(col).XOffset];
         end
         % Use the mean x values to call the standard errorbar fn; the
@@ -145,9 +144,7 @@ else
     hErrorbar = errorbar(mean(x,1), values, lowerErrors, upperErrors, '.k');
     set(hErrorbar, 'marker', 'none')
 end
-
 hold off
-
 switch nargout
     case 1
         varargout{1} = hBar;

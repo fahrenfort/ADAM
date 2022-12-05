@@ -129,6 +129,26 @@ if resample_eeg
         FT_EEG.trial = newtrial;
         fsample = (numel(FT_EEG.time)-1)/(FT_EEG.time(end) - FT_EEG.time(1));
         disp(['New sampling rate is ' num2str(fsample) ' Hz.']);
+    elseif strcmpi(resample_method,'compress2features')
+        % turn neighboring samples into features
+        % mean baseline (or even z-score?) over this time window
+%         disp(['Original sampling rate is ' num2str(fsample) ' Hz.']);
+%         disp('Resampling by compressing time samples into extra features for the classifier (no anti-alias filter).');
+%         nsamples = fsample/resample_eeg;
+%         centersample = ceil((nsamples+1)/2); % conservative estimate of center (always averaging across the past more than across the future)
+%         minindex = centersample - 1;
+%         plusindex = nsamples - centersample;
+%         newtime = FT_EEG.time(centersample:nsamples:end);
+%         cnew = 0;
+%         newtrial= zeros(size(FT_EEG.trial,1),size(FT_EEG.trial,2),numel(newtime));
+%         for csample = centersample:nsamples:size(FT_EEG.trial,3)
+%             cnew = cnew + 1;
+%             newtrial(:,:,cnew) = mean(FT_EEG.trial(:,:,(csample-minindex):(csample+plusindex)),3);
+%         end
+%         FT_EEG.time = newtime;
+%         FT_EEG.trial = newtrial;
+%         fsample = (numel(FT_EEG.time)-1)/(FT_EEG.time(end) - FT_EEG.time(1));
+%         disp(['New sampling rate is ' num2str(fsample) ' Hz.']);
     else
         cfg = [];
         cfg.resamplefs = resample_eeg;

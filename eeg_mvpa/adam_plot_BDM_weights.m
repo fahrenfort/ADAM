@@ -15,7 +15,7 @@ function avweightstruct = adam_plot_BDM_weights(cfg,stats)
 % not classifier performance.
 %
 % Use as:
-%   adam_plot_BDM_weights(cfg);
+%   adam_plot_BDM_weights(cfg,stats);
 %
 % The cfg (configuration) input structure can contain the following:
 %  
@@ -89,6 +89,8 @@ plot_order = [];
 plotsubjects = false;
 timelim = 250;
 subplotdim = [];
+folder = '';
+startdir = '';
 
 % unpack config
 v2struct(cfg);
@@ -309,11 +311,11 @@ end
 set(gcf,'color','w');
 title(title_text,'FontSize', 12);
 if strcmp(imgtype,'vec') % chanlocs' +Y
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','plotrad',.65,'nosedir',nosedir,'emarker',{'.','k',5,1},'emarker2',{elecs,'.','k',15,1}); %
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','blank','electrodes','on','plotrad',.7,'nosedir',nosedir,'emarker',{'.','k',5,1},'emarker2',{elecs,'.','k',15,1},'electrodes','ptslabels'); %
 elseif strcmp(imgtype,'png')
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','off','plotrad',.65,'shading','interp','nosedir',nosedir,'hcolor','none');
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','off','plotrad',.7,'shading','interp','nosedir',nosedir,'hcolor','none');
 else
-    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','on','plotrad',.65,'nosedir',nosedir,'emarker2',{elecs,'o','k',10,1}); % 'electrodes','ptslabels', 'plotrad',.7
+    topoplot_jjf(plot_data,convertlocs(chanlocs,'cart2topo'),'maplimits',weightlim,'style','map','electrodes','on','plotrad',.7,'nosedir',nosedir,'emarker2',{elecs,'o','k',10,1}); % 'electrodes','ptslabels', 'plotrad',.7
     h = cbar('vert');
     set(get(h,'title'),'string',' ');
     %h = colorbar;
