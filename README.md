@@ -33,7 +33,7 @@ One of the big advantages of this toolbox is that it takes generic input formats
 # Requirements
 - A recent version of Matlab (>=2012b, lower versions might or might not work) including the "Image processing toolbox", "Signal processing toolbox" and "Statistics toolbox". No special care was taken to exclude functions from other Matlab Toolboxes other than EEGLAB and FieldTrip. Let me know if you find dependencies on other Toolboxes, I might be able to provide a workaround.
 - [EEGLAB](https://sccn.ucsd.edu/eeglab/downloadtoolbox.php) (>=13, lower versions might or might not work, very recent installs may or may not work. Currently using eeglab14_1_1b)
-- [FieldTrip](http://www.fieldtriptoolbox.org/download) (>=2015, lower versions might or might not work, very recent installs may are may not work. Currently using fieldtrip-20220925)
+- [FieldTrip](http://www.fieldtriptoolbox.org/download) (>=2015, lower versions might or might not work. **Recent installs of Fieldtrip also do not work at the moment, but the 2022 version still works fine.** I will hopefully fix this at some stage, but have not gotten around to that yet. Currently using fieldtrip-20220925)
 - A reasonably modern computer (>=8GB memory, enough HD space, modern processor, more is better)
 
 # Version
