@@ -384,7 +384,7 @@ if numel(stats)>1
 else
     map = subplot_MVPA(cfg,stats);
     if ~plotsubjects
-        title(str2cell(regexprep(stats.condname,'_',' '),'-'),'FontSize',10);
+        title(str2cell(regexprep(stats.condname,'_',' '),'-'),'FontSize',16);
     end
 end
 if strcmpi(plottype,'3D') && ~plotsubjects

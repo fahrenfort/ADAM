@@ -243,7 +243,7 @@ timelim = [];
 resample_eeg = 0;
 electrode_def = [];
 condition_def = [1,2]; % By default substracting cond1 - cond2
-electrode_method = 'keep';
+electrode_method = 'average';
 condition_method = 'keep';
 % unpack graphsettings
 plottype = '2D';

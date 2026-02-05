@@ -46,7 +46,7 @@ cluster_pval = .05; % default = .05
 iterations = 1000;
 paired = true;
 tail = 'both';
-vartype = 'equal';
+vartype = 'unequal'; % This is Welch's test, which is recommended to always use, see: https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
 v2struct(cfg);
 pval = [indiv_pval, cluster_pval];
 

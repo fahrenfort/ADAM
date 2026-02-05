@@ -60,7 +60,7 @@ elseif strcmpi(mpcompcor_method, 'uncorrected')
     if paired
         [~,clusterPvals] = ttest(subjweights1,subjweights2,'tail',tail);
     else
-        [~,clusterPvals] = ttest2(subjweights1,subjweights2,'tail',tail);
+        [~,clusterPvals] = ttest2(subjweights1,subjweights2,'tail',tail,'Vartype', 'unequal'); % This is Welch's test, which is recommended to always use, see: https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
     end
 elseif strcmpi(mpcompcor_method, 'fdr')
     error('fdr not yet implemented yet');

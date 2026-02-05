@@ -133,7 +133,9 @@ else
     % save property plots of to be removed ICs (do not include EOG, for clarity)
     for c=1:numel(ICs2reject)
         disp(['removing component: ' num2str(ICs2reject(c))]);
-        pop_prop_savepng(pop_select(EEG2, 'channel', select_channels({EEG2.chanlocs(:).labels},'EEG')), 0, ICs2reject(c), NaN, {'freqrange' [2 50] },[outpath filesep filename2 '_srce']);
+        if numel(filenames) > 1
+            pop_prop_savepng(pop_select(EEG2, 'channel', select_channels({EEG2.chanlocs(:).labels},'EEG')), 0, ICs2reject(c), NaN, {'freqrange' [2 50] },[outpath filesep filename2 '_srce']);
+        end
         pop_prop_savepng(pop_select(EEG, 'channel', select_channels({EEG.chanlocs(:).labels},'EEG')), 0, ICs2reject(c), NaN, {'freqrange' [2 50] },[outpath filesep filename1 '_dest']);
     end
     clear EEG2;

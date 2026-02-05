@@ -28,13 +28,15 @@ function difstats = adam_compare_MVPA_stats(cfg,stats1,stats2)
 %                              q (see help fdr_bh for details).
 %       cfg.paired           = true; (default) for a paired t-test or false; for an unpaired
 %                              t-test.
-%       cfg.vartype          = 'equal' (default) whether an unpaired t-test assumes equal variances.
+%       cfg.vartype          = 'unequal' (default)  This is Welch's test,
+%                              which is recommended to always use, see: 
+%                              https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html 
 %       cfg.tail             = 'both' (default); string specifiying whether statistical tests are
 %                              done right- ('right') or left-tailed ('left'), or two-tailed
 %                              ('both'). Right-tailed tests for positive values, left-tailed tests
 %                              for negative values, two-tailed tests test for both positive and
 %                              negative values.
-%       cfg.mask            =  Optionally, you can provide a mask: a binary matrix (for time-time
+%       cfg.mask             = Optionally, you can provide a mask: a binary matrix (for time-time
 %                              or time-frequency) or vector (for ERP or MVPA with reduced_dim) to
 %                              pre-select a 'region of interest' to constrain the comparison. You
 %                              can for example base the mask on a statistical outcome of the
@@ -124,6 +126,7 @@ end
 
 function difstats = sub_compare_MVPA_stats(cfg,stats1,stats2,mask)
 % unpack cfg
+tail = 'both';
 vartype = 'equal';
 v2struct(cfg);
 % compute some values

@@ -1,5 +1,5 @@
-function [d,beta] = sdt_dprime(pHit,pFA, cormethod, nSignal, nNoise)
-%  [d,beta] = sdt_dprime(pHit,pFA,cormethod,nSignal,nNoise)
+function [d,beta,criterion_c, ideal_c, ideal_obs] = sdt_dprime(pHit,pFA, cormethod, nSignal, nNoise)
+%  [d,beta,criterion_c, ideal_c, ideal_obs] = sdt_dprime(pHit,pFA,cormethod,nSignal,nNoise)
 
 %  pHit         hit rate: nHits/nSignal
 %  pFA          false alarm rate: nFalseAlarms/nNoise
@@ -21,7 +21,8 @@ function [d,beta] = sdt_dprime(pHit,pFA, cormethod, nSignal, nNoise)
 %  PFA is the proportion of "False Alarms": P(Yes|Noise)
 %  All numbers involved must be between 0 and 1.
 %  The function calculates the d-prime measure for each <H,FA> pair.
-%  The criterion value BETA can also be requested.
+%  The bias/criterion values beta or c, as well as the ideal observer
+%  criterion and performance scores can also be requested.
 %  Requires MATLAB's Statistical Toolbox.
 %
 %  References:
@@ -33,10 +34,11 @@ function [d,beta] = sdt_dprime(pHit,pFA, cormethod, nSignal, nNoise)
 %    estimated values ofd′. Behavior Research Methods, Instruments, & Computers, 27(1), 46–51.
 %  * Macmillan, N. A., & Kaplan, H. L. (1985). Detection theory analysis of group data: estimating
 %    sensitivity from average hit and false-alarm rates. Psychological Bulletin, 98(1), 185–199.
+%  * Wickens, T. D. (2002). Elementary signal detection theory (Oxford; New York). Oxford University Press.
 %  
 %  See also NORMINV, NORMPDF.
 
-if nargin < 3
+if nargin < 3 || isempty(cormethod)
     cormethod = 'arbitrary';
 end
 if nargin < 4
@@ -47,7 +49,7 @@ if nargin < 5
 end
 if nargin > 2
     if isempty(nSignal) || isempty(nNoise)
-        error('need to pass nSignal and nNoise to function to apply Hautus or MacMillan correction');
+        error('Need to also pass the number of signal (nSignal) and noise (nNoise) trials in the dataset to be able to apply Hautus or MacMillan correction.');
     end
     nHits   = pHit .* nSignal;
     nFA     = pFA .* nNoise;
@@ -60,10 +62,8 @@ if strcmpi(cormethod,'arbitrary')
 elseif strcmpi(cormethod,'hautus')
     nHits   = nHits + 0.5;
     nFA     = nFA + 0.5;
-    nSignal = nSignal + 1;
-    nNoise  = nNoise + 1;
-    pHit    = nHits./nSignal;
-    pFA     = nFA./nNoise;
+    pHit    = nHits./(nSignal+1);
+    pFA     = nFA./(nNoise+1);
 elseif strcmpi(cormethod,'macmillan')
     % replace 0 with 0.5/n and rates of 1 with (n-0.5)/n
     pHit(pHit==1)   = (nSignal(pHit==1)-0.5)./nSignal(pHit==1);
@@ -86,3 +86,18 @@ if (nargout > 1)
   beta = yHit ./ yFA ;
 end
 
+%-- If requested, calculate criterion c
+if (nargout > 2)
+  criterion_c = -(zHit + zFA)/2; % log beta, divide this by d' if you want to have a measure that is scaled by detectability
+end
+
+%-- If requested, calculate the ideal criterion and ideal observer score
+%-- Pc = propS.*pHit + propN.*(1-pFA); % the overall probability of being correct
+%-- Here we compute the ideal observer score, which is this probability under the ideal criterion given the ratio of signal to no signal trials
+if (nargout > 3)
+  propS = nSignal./(nSignal+nNoise);
+  propN = 1-propS;
+  ideal_c = log(propN./propS); % ideal criterion, see Wickens
+  ideal_l = d./2 + ideal_c./d;
+  ideal_obs = propS*(1-normcdf(ideal_l-d))+propN*normcdf(ideal_l); % ideal observer score, see Wickens
+end

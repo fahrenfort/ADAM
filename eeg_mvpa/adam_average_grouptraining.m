@@ -1,7 +1,19 @@
 function adam_average_grouptraining(cfg,folder_name)
-% ADAM_AVERAGE_ITERATIONS computes average across group-trained data for every subject, and saves the
+% ADAM_AVERAGE_GROUPTRAINING computes average across group-trained data for every subject, and saves the
 % result. Create group trained data by using file_list_grouptrain to create file combinations when
-% running the first level analysis using adam_MVPA_firstlevel.
+% running the first level analysis using adam_MVPA_firstlevel. 
+% 
+% The folder naming scheme for this function to work should be as follows:
+% Under the electrode pooling folder (e.g. 'ALL', 'ALL_NOSELECTION' or
+% 'OCCIP' etc), the individual files should be named using the following
+% naming scheme: 'CLASS_PERF_train_sub_X_test_sub_Y.mat' where each X
+% refers to a participant and each Y refers to a testing iteration of that
+% participant. So if you have four test files for a participant, you should
+% have the following files: 
+% CLASS_PERF_train_sub_1_test_sub_1.mat
+% CLASS_PERF_train_sub_1_test_sub_2.mat
+% CLASS_PERF_train_sub_1_test_sub_3.mat
+% CLASS_PERF_train_sub_1_test_sub_4.mat
 %
 % Use as:
 %   adam_average_grouptraining(cfg)
@@ -21,7 +33,7 @@ function adam_average_grouptraining(cfg,folder_name)
 %
 % The output (averaged result) is saved in the same folder, as though it would be a regular
 % analysis. This can subsequently be read in using adam_compute_group_MVPA. The analyses on which
-% these averages are based are moved to a subfolder which is called 'grouptrain'.
+% these averages are based are moved to a subfolder which is called 'grouptrain'. 
 % 
 % part of the ADAM toolbox, by J.J.Fahrenfort, VU, 2017/2018/2019
 % 
@@ -260,10 +272,11 @@ for cSubj = 1:nSubj
                     disp(['cannot read ' folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep iterations{cIt}]);
                 end
                 % confidence averaging not currently implemented, may do so later if useful
-
             elseif ~isempty(whos(matObj,'FEM'))
                 FEM = [];
                 % FEM averaging not currently implemented, may do so later if useful
+            else
+                disp(['cannot read BDM or FEM in ' folder_name filesep channelpool plotFreq{cFreq} filesep 'grouptrain' filesep iterations{cIt}]);
             end
         end % end iterations loop
         fprintf(1,' successfully averaged %d of %d iterations for subject %d (%s) \n', nIts, nSubj-1, cSubj, subjectfiles{cSubj});

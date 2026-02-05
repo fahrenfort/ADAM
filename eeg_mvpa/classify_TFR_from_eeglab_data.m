@@ -455,6 +455,8 @@ if numel(filenames) == 1
     if nFolds == 1
         train = ['_train_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,1),'UniformOutput',false),false,'_')];
         test = ['_test_' cell2csv(cellfun(@(x) cell2csv(x,false,'-'),get_this_condset(condSet,2),'UniformOutput',false),false,'_')];
+        % train = '_train';
+        % test = '_test_usingtriggercodes';
         filename = ['CLASS_PERF_' filenames{1} train test ];
     else
         filename = ['CLASS_PERF_' filenames{1} '_' num2str(nFolds) 'fold'];

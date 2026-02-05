@@ -1,5 +1,5 @@
 function pVals = barwithindiv(cfg,inputdata)
-% function barwithindiv(cfg,inputdata)
+% function pVals = barwithindiv(cfg,inputdata)
 % Makes a grouped bar plot with individual inputdata points connected to
 % each other, including p-values above each bar combination. Can be useful
 % when plotting data from a 2-factor factorial design.
@@ -23,7 +23,8 @@ function pVals = barwithindiv(cfg,inputdata)
 % defcfg.plotP = true;              % perform t-test and plot p-values, p-values are also returned by the function 
 % cfg.tail = 'both';                % indicate that t-test should be double sided, alternatively: 'right' or 'left' (see help ttest) 
 % defcfg.square = true;             % plot the axes as square or not
-
+%
+% J.J.Fahrenfort, VU 2022
 
 % defaults
 defcfg.linecolor = [.4 .4 .4];
@@ -40,6 +41,7 @@ defcfg.title = '';
 defcfg.plotP = true;    % perform t-test and plot p-values
 defcfg.tail = 'both';   % whether t-test is two-sided or one-sided (see help ttest) 
 defcfg.square = false;   % plot the axes as square
+defcfg.plotindiv = true;
 
 % enter default values
 vars = fieldnames(defcfg);
@@ -64,15 +66,19 @@ end
 
 groupMEANS = squeeze(mean(inputdata,1));
 % groupSE = squeeze(std(inputdata,1)/sqrt(size(inputdata,1)));
+
+% plot bars
 bh = bar(groupMEANS);
 %bh = barwitherr(groupSE,groupMEANS);
 if cfg.square
     axis square;
 end
 % plot individual lines
-for c = 1:size(inputdata,2)
-    hold on;
-    plot([c+bh(1).XOffset c+bh(2).XOffset],squeeze(inputdata(:,c,:)),'-o','color',cfg.linecolor);
+if cfg.plotindiv
+    for c = 1:size(inputdata,2)
+        hold on;
+        plot([c+bh(1).XOffset c+bh(2).XOffset],squeeze(inputdata(:,c,:)),'-o','color',cfg.linecolor);
+    end
 end
 for c=1:numel(bh)
     if isfield(cfg,'facecolor')

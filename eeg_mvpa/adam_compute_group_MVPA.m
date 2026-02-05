@@ -755,12 +755,12 @@ ClassAverage = shiftdim(squeeze(mean(ClassOverTimeAll{1},1)));
 ClassOverTimeAll{2} = repmat(chance,size(ClassOverTimeAll{1}));
 
 % statistical testing
-% note that 'alpha' and 'tail' do not need to be specified explictly, the ttest and ttest2 functions
-% are backwards compatible with Matlab 2012b
+% note that 'alpha' and 'tail' need to be specified explictly using name/value pairs, the ttest and
+% ttest2 functions are no longer backwards compatible with Matlab 2012b
 if nSubj > 1
     if strcmpi(mpcompcor_method,'fdr')
         % FDR CORRECTION
-        [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail);
+        [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'alpha',indiv_pval,'tail',tail);
         ClassPvals = squeeze(ClassPvals);
         pValsUncorrected = ClassPvals;
         h = fdr_bh(ClassPvals,cluster_pval,'dep');
@@ -768,13 +768,13 @@ if nSubj > 1
         pStruct = compute_pstructs(h,ClassPvals,ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings);
     elseif strcmpi(mpcompcor_method,'cluster_based')
         % CLUSTER BASED CORRECTION
-        [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail);
+        [~,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'alpha',indiv_pval,'tail',tail);
         ClassPvals = squeeze(ClassPvals);
         pValsUncorrected = ClassPvals;
         [ClassPvals, pStruct] = cluster_based_permutation(ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings,mask);
     elseif strcmpi(mpcompcor_method,'uncorrected')
         % NO MP CORRECTION
-        [h,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},indiv_pval,tail);
+        [h,ClassPvals] = ttest(ClassOverTimeAll{1},ClassOverTimeAll{2},'alpha',indiv_pval,'tail',tail);
         ClassPvals = squeeze(ClassPvals);
         pStruct = compute_pstructs(squeeze(h),ClassPvals,ClassOverTimeAll{1},ClassOverTimeAll{2},cfg,settings);
     else
